@@ -24,8 +24,6 @@
 #########################################################################
 
 import csv
-import decimal
-import importlib
 import logging
 import re
 import os
@@ -43,6 +41,10 @@ from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
 
 from .buffer import BufferManager
+from .maintenance import MaintenanceManager
+from .maxage import MaxageResolver
+from .query import QueryEngine
+from .timescale import TimescaleManager
 from .constants import (
     COL_ITEM,
     COL_ITEM_ID,
@@ -192,62 +194,6 @@ class Database(SmartPlugin):
             '11': [name_recreate_index, 'DROP INDEX {item}_name;'],
         }
 
-    # database_maxage_action: value expressions, one scalar per compaction
-    # interval. Deliberately mirrors (not DRY-shares) the fragments in
-    # _single()'s `queries` dict - reusing the exact same SQL text without
-    # refactoring _single()/_series() themselves, to avoid touching the
-    # already-working on-demand query path while adding this feature.
-    # 'diff'/'count' are intentionally left out for now ('diff' has two
-    # conflicting meanings between _single/_series; parameterised 'count'
-    # would need database_maxage_action to carry an expression, not just a
-    # bare function name). 'first'/'last' are handled separately below
-    # (_MAXAGE_EDGE_ACTIONS) - they pick a raw stored value rather than
-    # computing a scalar over val_num/val_bool, so str-typed items can be
-    # compacted too (nothing else here works for str).
-    _MAXAGE_AGGREGATE_EXPR = {
-        'avg': 'AVG(val_num * duration) / AVG(duration)',
-        'sum': 'SUM(val_num)',
-        'min': 'MIN(val_num)',
-        'max': 'MAX(val_num)',
-        'integrate': 'SUM(val_num * duration)',
-        'duty_cycle': 'SUM(val_bool * duration) / SUM(duration)',
-        'countall': 'COUNT(*)',
-    }
-
-    # 'first'/'last': keep the oldest/newest raw value in the interval as-is
-    # (via LogStore.edge_value's ORDER BY ... LIMIT 1), instead of computing
-    # anything over it. Maps action name -> SQL ORDER BY direction.
-    _MAXAGE_EDGE_ACTIONS = {'first': 'ASC', 'last': 'DESC'}
-
-    # Friendly driver names resolved to a real, importable DB-API2 module
-    # name in __init__() before self.driver is used anywhere - everything
-    # downstream still only ever sees the real module names.
-    _DRIVER_ALIASES = {'mysql': 'pymysql', 'mariadb': 'pymysql'}
-    # 'postgres'/'timescaledb' etc. don't map to one fixed module: psycopg2
-    # and psycopg (v3) are two different installable packages, so these are
-    # resolved by probing for whichever one is actually installed instead
-    # (see _resolve_postgres_driver_alias()).
-    _POSTGRES_DRIVER_ALIASES = frozenset({'postgres', 'postgresql', 'timescale', 'timescaledb'})
-
-    # item types each database_maxage_action is valid for. None = any type.
-    # Grounded in utils.encode_value(): val_num is populated for 'num' and
-    # 'bool' (bool encodes as float(value)), so avg/sum/min/max/integrate/
-    # duty_cycle (which read val_num/val_bool) do not work for str -
-    # duty_cycle would additionally store its float on-fraction back as the
-    # item's string value. first/last just read back whatever encode_value()
-    # already stored, so they work for every type, str included.
-    _MAXAGE_ACTION_VALID_TYPES = {
-        'avg': ('num', 'bool'),
-        'sum': ('num', 'bool'),
-        'min': ('num', 'bool'),
-        'max': ('num', 'bool'),
-        'integrate': ('num', 'bool'),
-        'duty_cycle': ('bool',),
-        'countall': None,
-        'first': None,
-        'last': None,
-    }
-
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin.
@@ -263,6 +209,10 @@ class Database(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
+
+        # Constructed first, before self._db or any other state exists - its driver-alias
+        # methods only touch self.logger, which is already set up by super().__init__() above.
+        self._timescale = TimescaleManager(self)
 
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
@@ -347,6 +297,9 @@ class Database(SmartPlugin):
         # val_quality column added in schema v7; include in log column list
         self._replace['log_columns'] = ', '.join(COL_LOG + ('val_quality',))
         self._buffer_mgr = BufferManager()
+        self._maxage = MaxageResolver(self)
+        self._maintenance = MaintenanceManager(self)
+        self._query_engine = QueryEngine(self)
         self._dump_lock = threading.Lock()
 
         self.skipping_dump = False
@@ -531,7 +484,7 @@ class Database(SmartPlugin):
 
             if self.has_iattr(item.conf, 'database_maxage_action'):
                 action = self.get_iattr_value(item.conf, 'database_maxage_action').lower()
-                valid_types = self._MAXAGE_ACTION_VALID_TYPES.get(action)
+                valid_types = self._maxage._MAXAGE_ACTION_VALID_TYPES.get(action)
                 if valid_types is not None and item.type() not in valid_types:
                     self.logger.error(
                         f"Item {item.property.path}: database_maxage_action '{action}' is not valid for "
@@ -1714,821 +1667,92 @@ class Database(SmartPlugin):
         self._log_store.set_quality(id, QUALITY_VALID, time=time, changed=changed, cur=cur, commit=with_commit)
 
     def build_orphanlist(self, log_activity=False):
-        """
-        Create a list of database entries which have no corresponding item in the item tree
-
-        Called once at run() and, if that attempt failed (no DB connection
-        yet), retried once per _dump() cycle until it succeeds - see
-        self._orphanlist_built.
-
-        :return: True if the list was actually (re)built against a live
-                 connection, False if the attempt failed (e.g. DB not
-                 connected) - an empty self.orphanlist alone doesn't tell
-                 the caller which of those happened.
-        :rtype: bool
-        """
-        if log_activity:
-            self.logger.info('build_orphan_list: Started')
-        self.orphanitemlist = []
-        self.orphanlist = []
-        # cleared up front, not just left at its previous value: a failed
-        # rebuild below wipes the list above regardless, so a stale True
-        # here would let remove_orphan_items() mistake "rebuild just
-        # failed" for "confirmed empty" on this attempt's now-empty list.
-        self._orphanlist_built = False
-
-        items = [item.property.path for item in self._buffer_mgr.items()]
-        # transaction() serializes this against self._db_maint's other
-        # users - the scheduler-driven maxage/orphan cleanup also runs on
-        # this same connection.
-        try:
-            with self._db_maint.transaction() as cur:
-                return_list = self.readItems(cur=cur)
-                if return_list:
-                    for item in return_list:
-                        if item[COL_ITEM_NAME] not in items:
-                            if log_activity:
-                                self.logger.info(f'- Found data for item w/o database attribute: {item[COL_ITEM_NAME]}')
-                            self.orphanitemlist.append(item)
-                            self.orphanlist.append(item[COL_ITEM_NAME])
-        except Exception as e:
-            self._log_db_exception(e, 'Database build_orphan_list failed: {}'.format(e), db=self._db_maint)
-            return False
-
-        self._orphanlist_built = True
-        self._count_orphanlogentries()
-        if log_activity:
-            self.logger.info('build_orphan_list: Finished')
-
-        return True
+        """See MaintenanceManager.build_orphanlist() (maintenance.py)."""
+        return self._maintenance.build_orphanlist(log_activity)
 
     def _count_orphanlogentries(self):
-        """
-        count number of log entries for all items in database
-
-        to be called by eval syntax checker
-        """
-        self.logger.info('_count_orphanlogentries: # orphan items = {}'.format(len(self.orphanlist)))
-        self._items_total_entries = 0
-        for item in self.orphanlist:
-            item_id = self.id(item, create=False)
-            if item_id is None:
-                self.logger.warning(f'_count_orphanlogentries: No valid id found for orphan item {item} - skipping')
-                continue
-            logcount = self.readLogCount(item_id)
-            logcount_str = f'{logcount:,}'.replace(',', '.')
-            self.logger.info(f'Orphan {item} (id={item_id}): {logcount_str} entries')
-            self._orphan_logcount[item_id] = logcount
-
-        return
+        """See MaintenanceManager.count_orphanlogentries() (maintenance.py)."""
+        return self._maintenance.count_orphanlogentries()
 
     def reassign_orphaned_id(self, orphan_id, to):
-        """
-        Reassign values from orphaned item ID to given item ID
-
-        :param orphan_id: item id of the orphaned item
-        :param to: item id of the target item
-        :type orphan_id: int
-        :type to: int
-        """
-        log_info = self.logger.info  # warning  # info
-        log_debug = self.logger.debug  # error  # debug
-        # transaction() serializes this against self._db_maint's other
-        # users. One transaction per UPDATE chunk, not one around the whole
-        # loop - the LIMIT batching exists to keep individual transactions
-        # bounded, and a partially-reassigned state is safe to resume from
-        # (remaining rows still carry orphan_id). The item row is only
-        # deleted once every log row has moved.
-        try:
-            log_info(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
-            with self._db_maint.transaction() as cur:
-                count = self.readLogCount(orphan_id, cur=cur)
-            log_debug(f'found {count} entries to reassign, reassigning {self.max_reassign_logentries} at once')
-
-            while count > 0:
-                log_debug(f'reassigning {min(count, self.max_reassign_logentries)} log entries')
-                with self._db_maint.transaction() as cur:
-                    # (item_id, time)-matched, double-wrapped subquery, not
-                    # rowid-based - same two reasons as the bulk-delete
-                    # statements' fix (remove_older_than_maxage(),
-                    # _delete_orphan()): {log} has no primary key so
-                    # MySQL/MariaDB exposes no rowid for it, and MariaDB
-                    # separately rejects LIMIT directly inside IN(subquery).
-                    self._execute(
-                        self._prepare(
-                            'UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid AND time IN '
-                            '(SELECT time FROM (SELECT time FROM {log} WHERE item_id = :orphanid '
-                            'LIMIT :limit) AS upd_batch);'
-                        ),
-                        {'newid': to, 'orphanid': orphan_id, 'limit': self.max_reassign_logentries},
-                        cur=cur,
-                    )
-                count -= self.max_reassign_logentries
-
-            with self._db_maint.transaction() as cur:
-                self._execute(
-                    self._prepare('DELETE FROM {item} WHERE id = :orphanid;'), {'orphanid': orphan_id}, cur=cur
-                )
-            log_info(f'reassigned orphaned id {orphan_id} to new id {to}')
-            log_debug('rebuilding orphan list')
-            self.build_orphanlist()
-        except Exception as e:
-            self._log_db_exception(e, f'error on reassigning id {orphan_id} to {to}: {e}', db=self._db_maint)
-            return e
+        """See MaintenanceManager.reassign_orphaned_id() (maintenance.py)."""
+        return self._maintenance.reassign_orphaned_id(orphan_id, to)
 
     def _delete_orphan(self, item_path):
-        """
-        Delete orphan item or logentries it
-
-        :param item_path: path_name of the (orphan) item to work on
-        :param limit: Maximum log entries to delete
-
-        :return: True, if item was deleted; False if only logentries were deleted
-        """
-        # This method deliberately has no except of its own - a failure
-        # propagates uncaught to remove_orphan_items()'s own try/except,
-        # which logs it and requeues the item for the next cycle. Both
-        # branches below use transaction() to serialize against
-        # self._db_maint's other users while preserving that.
-        item_id = self.id(item_path, create=False)
-        logcount = self.readLogCount(item_id)
-        if logcount == 0:
-            self.logger.info(f'_delete_orphan: Item {item_path} has no log entries')
-            with self._db_maint.transaction() as cur:
-                self._execute(self._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
-            self.logger.info(f'_delete_orphan: Deleted item entry for {item_path}')
-            return True
-
-        with self._db_maint.transaction() as cur:
-            # Not a bare DELETE...LIMIT (invalid SQLite syntax without a
-            # non-default compile flag) or a rowid-subquery ({log} has no
-            # primary key, and MySQL/MariaDB - unlike SQLite - has no
-            # queryable row id for a table without one). Matches on
-            # (item_id, time) instead, via the UNIQUE KEY
-            # {log}_{item}_id_time already on this table (see _setup).
-            # Double-wrapped, not single-wrap: MariaDB separately rejects
-            # LIMIT directly inside an IN(subquery).
-            self._execute(
-                self._prepare(
-                    'DELETE FROM {log} WHERE item_id = :id AND time IN (SELECT time FROM '
-                    '(SELECT time FROM {log} WHERE item_id = :id LIMIT :maxrecords) AS del_batch);'
-                ),
-                {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size},
-                cur=cur,
-            )
-        delete_orphan_chunk_size_str = f'{self.delete_orphan_chunk_size:,}'.replace(',', '.')
-        self.logger.info(
-            f'_delete_orphan: Deleted (up to) {delete_orphan_chunk_size_str} log entries for Item {item_path}'
-        )
-
-        return False
+        """See MaintenanceManager.delete_orphan() (maintenance.py)."""
+        return self._maintenance.delete_orphan(item_path)
 
     def remove_orphan_items(self):
-        """
-        Delete item and logdata of items that have no correspondance in itemtree
-        """
-        if len(self.orphanlist) == 0:
-            self.build_orphanlist()
-
-        if len(self.orphanlist) == 0:
-            if not self._orphanlist_built:
-                # build_orphanlist() just failed (e.g. DB not connected) -
-                # an empty list here doesn't mean "confirmed no orphans".
-                # Leave self.remove_orphan set so the next
-                # remove_older_than_maxage() cycle retries this instead of
-                # silently disabling cleanup over a connectivity hiccup.
-                self.logger.warning('remove_orphan_items: could not check for orphans (DB not connected), will retry')
-                return
-            self.remove_orphan = False
-            self.logger.info('remove_orphan_items: No orphans found, cleanup finished')
-            return
-
-        item = self.orphanlist.pop(0)
-        try:
-            deleted = self._delete_orphan(item)
-        except Exception as e:
-            # e.g. the maintenance connection (_db_maint) went stale independently
-            # of the main connection (see smarthomeNG/plugins#1004) - keep the item
-            # queued and retry on the next cycle instead of crashing the scheduler task.
-            self._log_db_exception(
-                e,
-                f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}',
-                db=self._db_maint,
-                fallback=self.logger.warning,
-            )
-            self.orphanlist.append(item)
-            return
-
-        if not deleted:
-            self.orphanlist.append(item)
-
-        if len(self.orphanlist) == 0:
-            self.remove_orphan = False
-            self.logger.info('remove_orphan_items: Database cleanup finished')
-
-        return
+        """See MaintenanceManager.remove_orphan_items() (maintenance.py)."""
+        return self._maintenance.remove_orphan_items()
 
     def cleanup(self):
-        """
-        Cleanup database
-        deletes item/log records in the database if the corresponding item does not exist any more
-
-        This is a public function of the plugin
-
-        :return:
-        """
-        self.remove_orphan = True
-        self.cleanup_active = True
-        self.logger.info('Database cleanup started (removal of entries without defined item)')
-        return
+        """See MaintenanceManager.cleanup() (maintenance.py)."""
+        return self._maintenance.cleanup()
 
     # ------------------------------------------------------
     #    Database specific stuff to support websocket/visu
     # ------------------------------------------------------
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
-        """
-        This method is called (via the item object) from the websocket plugin,
-        when a data series for an item is requested for the visu
-
-        It returns the data structure in the form needed by the websocket plugin to directly
-        return it to the visu
-
-        :param func:
-        :param start:
-        :param end:
-        :param count:
-        :param ratio:
-        :param update:
-        :param step:
-        :param sid:
-        :param item:
-
-        :return: data structure in the form needed by the websocket plugin return it to the visu
-        """
-        # self.logger.debug("_series: item={}, func={}, start={}, end={}, count={}".format(item, func, start, end, count))
-        init = not update
-        if sid is None:
-            sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
-        func, expression = self._expression(func)
-        # 'diff'/'differentiate' need LAG(...) OVER (ORDER BY time) computed
-        # per raw row before any GROUP BY - mixing a window function with an
-        # aggregate GROUP BY in one SELECT (the previous approach) errors
-        # outright under MySQL 8/5.7's default ONLY_FULL_GROUP_BY, and
-        # returns an undefined arbitrary-row's LAG value per bucket on
-        # MariaDB's default (permissive) mode - verified against a real
-        # MariaDB target. This subquery computes the per-row diff/time-gap
-        # first; the outer query then buckets by summing across rows in
-        # each bucket, which telescopes correctly across bucket boundaries
-        # (sum of consecutive diffs = last value - first value spanned).
-        diff_window_table = (
-            '(SELECT time, val_num, '
-            '(val_num - LAG(val_num,1) OVER (ORDER BY time)) AS diffval, '
-            '(time - LAG(time,1) OVER (ORDER BY time)) AS timegap '
-            'FROM {log} WHERE ' + self._fetch_log_base_where() + ') w'
-        )
-        queries = {
-            'avg': self._time_precision_query('MIN(time)')
-            + ', '
-            + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'avg.order': 'ORDER BY time ASC',
-            'integrate': self._time_precision_query('MIN(time)') + ', SUM(val_num * duration)',
-            # SUM(diffval): total net change during the bucket. Rows with no
-            # predecessor (diffval IS NULL - the very first row in range)
-            # are ignored by SUM, same as they always were as a single
-            # ungrouped row.
-            'diff': self._time_precision_query('MIN(time)') + ', SUM(diffval)',
-            'diff.table': diff_window_table,
-            'duration': self._time_precision_query('MIN(time)') + ', duration',
-            # differentiate (d/dt) is scaled to match the conversion from d/dt (kWh) = kWh: time is in ms, val_num in kWh, therefore scale by 1000ms and 3600s/h to obtain the result in kW:
-            # total change over the bucket / total time spanned by the
-            # bucket, in hours - the physically correct average rate over
-            # an interval built from irregular samples (not an average of
-            # per-row rates, which would over-weight short gaps). 3600.0
-            # (not 3600): SUM(timegap) is an integer column - on SQLite,
-            # dividing two integers is integer (floor) division, so any
-            # bucket spanning under an hour would floor-divide to 0 and
-            # then divide-by-zero to NULL; the float literal forces real
-            # division. MariaDB/MySQL always do real division for '/'
-            # regardless of operand type, so this was sqlite-only.
-            'differentiate': self._time_precision_query('MIN(time)')
-            + ', SUM(diffval) / (SUM(timegap) / (3600.0 * 1000))',
-            'differentiate.table': diff_window_table,
-            'count': self._time_precision_query('MIN(time)')
-            + ', SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall': self._time_precision_query('MIN(time)') + ', COUNT(*)',
-            'min': self._time_precision_query('MIN(time)') + ', MIN(val_num)',
-            'max': self._time_precision_query('MIN(time)') + ', MAX(val_num)',
-            'on': self._time_precision_query('MIN(time)')
-            + ', '
-            + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'on.order': 'ORDER BY time ASC',
-            # 'duty_cycle': same query as 'on' under its more descriptive name - both accepted, kept in sync.
-            'duty_cycle': self._time_precision_query('MIN(time)')
-            + ', '
-            + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'duty_cycle.order': 'ORDER BY time ASC',
-            'sum': self._time_precision_query('MIN(time)') + ', SUM(val_num)',
-            'raw': self._time_precision_query('time') + ', val_num',
-            'raw.order': 'ORDER BY time ASC',
-            'raw.group': '',
-        }
-        if func not in queries:
-            raise NotImplementedError
-
-        order = '' if func + '.order' not in queries else queries[func + '.order']
-        # (time - (time % :step)), not ROUND(time / :step): sqlite's integer
-        # '/' floors while MariaDB's decimal '/' + ROUND() rounds half-up,
-        # so the same data bucketed differently per backend. The modulo form
-        # is exact integer math on both and keeps sqlite's historical floor
-        # partitioning.
-        group = 'GROUP BY (time - (time % :step))' if func + '.group' not in queries else queries[func + '.group']
-        table = queries.get(func + '.table')
-        logs = self._fetch_log(
-            item, queries[func], start, end, step=step, count=count, group=group, order=order, table=table
-        )
-        native_tuples = self._native_cagg_series(func, logs['istart'], logs['iend'], logs['step'], logs['item'])
-        if native_tuples:
-            logs['tuples'] = native_tuples + logs['tuples']
-        tuples = logs['tuples']
-
-        # Append tuples by addition values (not for func differentiate)
-        if func != 'differentiate':
-            if tuples:
-                if logs['istart'] > tuples[0][0]:
-                    tuples[0] = (logs['istart'], tuples[0][1])
-                if end != 'now':
-                    tuples.append((logs['iend'], tuples[-1][1]))
-            else:
-                tuples = []
-            item_change = self._timestamp(logs['item'].last_change())
-            if item_change < logs['iend']:
-                value = float(logs['item']())
-                if item_change < logs['istart']:
-                    tuples.append((logs['istart'], value))
-                elif init:
-                    tuples.append((item_change, value))
-                if init:
-                    tuples.append((logs['iend'], value))
-
-        if expression['finalizer']:
-            tuples = self._finalize(expression['finalizer'], tuples)
-
-        result = {
-            'cmd': 'series',
-            'series': tuples,
-            'sid': sid,
-            'params': {
-                'update': True,
-                'item': item,
-                'func': func,
-                'start': logs['iend'],
-                'end': end,
-                'step': logs['step'],
-                'sid': sid,
-            },
-            'update': self.shtime.add_seconds(self.shtime.now(), int(logs['step'] / 1000)),
-        }
-        self.logger.dbgmed(
-            f'_series: {sid=}, {step=}, update={result["update"]}, delta={int(logs["step"] / 1000)}, now={self.shtime.now()}'
-        )
-        # self.logger.debug("_series: result={}".format(result))
-
-        return result
+        """See QueryEngine.series() (query.py)."""
+        return self._query_engine.series(func, start, end, count, ratio, update, step, sid, item)
 
     def _single(self, func, start, end='now', item=None):
-        """
-        This function is not used by any other plugin but can be used in logics
-
-        :param func:
-        :param start:
-        :param end:
-        :param item:
-        :return:
-        """
-        func, expression = self._expression(func)
-        queries = {
-            'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'integrate': 'SUM(val_num * duration)',
-            'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall': 'COUNT(*)',
-            'min': 'MIN(val_num)',
-            'max': 'MAX(val_num)',
-            'diff': 'MAX(val_num) - MIN(val_num)',
-            'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            # 'duty_cycle': same query as 'on' under its more descriptive name - both accepted, kept in sync.
-            'duty_cycle': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'sum': 'SUM(val_num)',
-            'raw': 'val_num',
-            'raw.order': 'ORDER BY time DESC',
-            'raw.group': '',
-        }
-        if func not in queries:
-            self.logger.warning('Unknown export function: {0}'.format(func))
-            return
-        native_result = self._native_cagg_single(func, start, end, item)
-        if native_result is not None:
-            return native_result[0]
-        order = '' if func + '.order' not in queries else queries[func + '.order']
-        logs = self._fetch_log(item, queries[func], start, end, order=order)
-        # Every func here except 'raw' is an ungrouped SQL aggregate
-        # (MIN/MAX/SUM/...), which always returns exactly one row - a NULL
-        # one if nothing matched, not zero rows. 'raw' has no aggregate and
-        # no GROUP BY (see 'raw.group': ''), so an empty range genuinely
-        # returns zero rows there - _fetchall() then returns [], not None,
-        # so an `is None` check alone let logs['tuples'][0][0] raise
-        # IndexError instead of reporting "no data" like every other func.
-        if not logs['tuples']:
-            return None
-        return logs['tuples'][0][0]
-
-    # func -> cagg re-aggregation expression, applied across every matching
-    # bucket row (see _native_cagg_single()). Ratio actions (avg/on/
-    # duty_cycle) sum both components first and divide once - never average
-    # the per-bucket wrapper view's already-divided value, which would be
-    # wrong the same way it would for the materialized view itself (see
-    # _create_native_cagg()'s own docstring). min/max compose validly
-    # because MIN-of-MINs/MAX-of-MAXs across a partition equals the overall
-    # MIN/MAX; sum/integrate/countall are already additive.
-    _NATIVE_CAGG_SINGLE_EXPR = {
-        'avg': 'SUM(sum_val_duration) / SUM(sum_duration)',
-        'integrate': 'SUM(sum_val_duration)',
-        'sum': 'SUM(sum_value)',
-        'min': 'MIN(min_value)',
-        'max': 'MAX(max_value)',
-        'countall': 'SUM(countall_value)',
-        'on': 'SUM(sum_val_bool_duration) / SUM(sum_duration)',
-        'duty_cycle': 'SUM(sum_val_bool_duration) / SUM(sum_duration)',
-    }
-    _NATIVE_CAGG_SINGLE_PRECISION_FUNCS = ('avg', 'on', 'duty_cycle')
+        """See QueryEngine.single() (query.py)."""
+        return self._query_engine.single(func, start, end, item)
 
     def _native_cagg_view(self, item):
-        """Resolve *item* to its native-mode cagg's table name, or None if
-        not covered - native mode inactive, or this item isn't one
-        _enable_timescale_native_aggregation() actually built a cagg for
-        (mirrors that method's own item-selection exactly: must be in
-        _native_relevant_items(), action must not resolve to 'delete')."""
-        if not self._timescale_native_aggregation:
-            return None
-        if item not in self._native_relevant_items():
-            return None
-        if self._maxage_action_for(item) == 'delete':
-            return None
-        interval_ms = self._maxage_interval_seconds_for(item) * 1000
-        return f'{self._replace["log"]}_cagg_{interval_ms // 1000}s'
+        """See QueryEngine.native_cagg_view() (query.py)."""
+        return self._query_engine.native_cagg_view(item)
 
     def _item_for_id(self, item_id):
-        """Resolve a database item_id back to its live Item object, cached.
-
-        readLogCount() only ever receives a raw id, not the item _single()/
-        _series() get directly, and native-mode cagg routing needs the real
-        item to check coverage. Cached permanently - an item's own database
-        id never changes once assigned, so there is no staleness to worry
-        about, only a one-time DB round-trip per id across this instance's
-        whole lifetime.
-        """
-        if item_id in self._item_by_id_cache:
-            return self._item_by_id_cache[item_id]
-        result = self._fetchall('SELECT name FROM {item} WHERE id=:id;', {'id': item_id})
-        item = self.items.return_item(result[0][0]) if result else None
-        self._item_by_id_cache[item_id] = item
-        return item
+        """See QueryEngine.item_for_id() (query.py)."""
+        return self._query_engine.item_for_id(item_id)
 
     def _native_cagg_single(self, func, start, end, item):
-        """_single()'s native-mode cagg path - deliberately narrow: only
-        handles the case where the *entire* [start, end) range predates the
-        raw floor (native retention has already dropped raw data for all of
-        it), so there is no straddling raw/cagg-only boundary to stitch
-        together. Any range that still overlaps raw-covered data falls
-        through to the normal, precise raw-log path unchanged - a real,
-        documented limitation (see timescale_native_aggregation's known
-        limitations), not silently approximated.
-
-        :returns: 1-tuple wrapping the (possibly None) result if this range
-            was handled via the cagg; bare None if not applicable at all -
-            the caller must fall through to the normal raw-log path in that
-            case, not treat it as "no data".
-        """
-        expr = self._NATIVE_CAGG_SINGLE_EXPR.get(func)
-        if expr is None:
-            return None
-        _item = self.items.return_item(item)
-        cagg_name = self._native_cagg_view(_item)
-        if cagg_name is None:
-            return None
-        item_id = self.id(_item, create=False)
-        if item_id is None:
-            return None
-        oldest = self._log_store.oldest_time(item_id)
-        if oldest is None:
-            # No raw data at all (never logged, or a genuinely empty item) -
-            # let the normal path report "no data" the same way it always has.
-            return None
-        istart = self._parse_ts(start)
-        iend = self._parse_ts(end)
-        if iend > oldest:
-            return None  # touches still-raw territory - use the precise raw path, not a coarser cagg stitch
-        if func in self._NATIVE_CAGG_SINGLE_PRECISION_FUNCS:
-            expr = self._precision_query(expr)
-        result = self._fetchall(
-            f'SELECT {expr} FROM {cagg_name} WHERE item_id=:id AND bucket >= :time_start AND bucket < :time_end;',
-            {'id': item_id, 'time_start': istart, 'time_end': iend},
-        )
-        if not result:
-            return (None,)
-        return (result[0][0],)
+        """See QueryEngine.native_cagg_single() (query.py)."""
+        return self._query_engine.native_cagg_single(func, start, end, item)
 
     def _native_cagg_series(self, func, istart, iend, step, item):
-        """_series()'s native-mode cagg supplement - covers whatever portion
-        of [istart, iend) predates the raw floor, re-bucketed to the
-        caller's own :step width via the same modulo-regroup _series()
-        already uses for raw data (`bucket - (bucket % :step)` instead of
-        `time - (time % :step)`). Reuses _NATIVE_CAGG_SINGLE_EXPR - valid
-        per-bucket here for the same reason it's valid for _single()'s
-        whole-range case: SUM-of-SUMs/MIN-of-MINs/MAX-of-MAXs compose
-        correctly across a re-partition into wider buckets.
-
-        A :step finer than the cagg's own interval_ms needs no special
-        case: each existing cagg row still lands in its own sub-bucket via
-        plain GROUP BY, which never synthesizes an empty-bucket row -
-        confirmed live to behave identically to how a plain raw-log query
-        already handles a step finer than the actual data density (sparse,
-        real rows only, no interpolation, no error).
-
-        Takes istart/iend/step/item already resolved by the caller's own
-        _fetch_log() call (not start/end/item as given by the user) so
-        _fetch_log() itself stays completely unchanged - this only
-        prepends extra tuples to its result, on the same istart/iend/step
-        basis it already used for the raw portion.
-
-        :returns: list of (bucket, value) tuples for the cagg-covered
-            portion, to prepend to _fetch_log()'s own tuples; None if not
-            applicable at all (not native mode, item not covered, func has
-            no cagg column, or nothing in this range predates the raw
-            floor) - the caller then uses today's raw-only result unchanged.
-        """
-        expr = self._NATIVE_CAGG_SINGLE_EXPR.get(func)
-        if expr is None or not step or step <= 0:
-            return None
-        cagg_name = self._native_cagg_view(item)
-        if cagg_name is None:
-            return None
-        item_id = self.id(item, create=False)
-        if item_id is None:
-            return None
-        oldest = self._log_store.oldest_time(item_id)
-        if oldest is None:
-            return None
-        cagg_end = min(iend, oldest)
-        if istart >= cagg_end:
-            return None  # nothing in this range predates the raw floor
-        if func in self._NATIVE_CAGG_SINGLE_PRECISION_FUNCS:
-            expr = self._precision_query(expr)
-        result = self._fetchall(
-            f'SELECT (bucket - (bucket % :step)) AS out_bucket, {expr} FROM {cagg_name} '
-            'WHERE item_id=:id AND bucket >= :time_start AND bucket < :time_end '
-            'GROUP BY out_bucket ORDER BY out_bucket;',
-            {'id': item_id, 'time_start': istart, 'time_end': cagg_end, 'step': step},
-        )
-        if not result:
-            return None
-        return [(row[0], row[1]) for row in result]
+        """See QueryEngine.native_cagg_series() (query.py)."""
+        return self._query_engine.native_cagg_series(func, istart, iend, step, item)
 
     def _native_cagg_count(self, item, item_id, time_start, time_end):
-        """readLogCount()'s native-mode cagg supplement - adds
-        SUM(countall_value) from the cagg for whatever portion of
-        [time_start, time_end] predates the raw floor, on top of the
-        caller's own already-computed raw COUNT(*). Purely additive: the
-        raw count already correctly reflects only the rows actually still
-        present, needs no clipping.
-
-        :returns: cagg-side row count (int, possibly 0) if applicable;
-            None if not applicable at all (not native mode, item not
-            covered, or the whole requested range is already raw-covered)
-            - the caller then uses its raw-only count unchanged.
-        """
-        cagg_name = self._native_cagg_view(item)
-        if cagg_name is None:
-            return None
-        oldest = self._log_store.oldest_time(item_id)
-        if oldest is None:
-            return None
-        if time_start is not None and time_start >= oldest:
-            return None  # whole requested range is already raw-covered
-        cagg_end = oldest if time_end is None else min(time_end, oldest)
-        where = 'item_id=:id AND bucket < :time_end'
-        params = {'id': item_id, 'time_end': cagg_end}
-        if time_start is not None:
-            where += ' AND bucket >= :time_start'
-            params['time_start'] = time_start
-        result = self._fetchall(f'SELECT SUM(countall_value) FROM {cagg_name} WHERE {where};', params)
-        if not result or result[0][0] is None:
-            return 0
-        return int(result[0][0])
+        """See QueryEngine.native_cagg_count() (query.py)."""
+        return self._query_engine.native_cagg_count(item, item_id, time_start, time_end)
 
     def _expression(self, func):
-        expression = {'params': {'op': '!=', 'value': '0'}, 'finalizer': None}
-        if ':' in func:
-            expression['finalizer'] = func[: func.index(':')]
-            func = func[func.index(':') + 1 :]
-        if func == 'count' or func.startswith('count'):
-            parts = re.match(r'(count)((<>|!=|<|=|>)(\d+))?', func)
-            func = 'count'
-            if parts and parts.group(3) is not None:
-                expression['params']['op'] = parts.group(3)
-            if parts and parts.group(4) is not None:
-                expression['params']['value'] = parts.group(4)
-        return func, expression
+        """See QueryEngine.expression() (query.py)."""
+        return self._query_engine.expression(func)
 
     def _finalize(self, func, tuples):
-        if func == 'diff':
-            final_tuples = []
-            for i in range(1, len(tuples) - 1):
-                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i - 1][1]))
-            return final_tuples
-        else:
-            return tuples
+        """See QueryEngine.finalize() (query.py)."""
+        return self._query_engine.finalize(func, tuples)
 
     def _precision_query(self, query):
-        if self._precision >= 0:
-            # CAST(... AS DECIMAL(30,10)), not a bare ROUND(double precision, integer) - PostgreSQL has
-            # no such overload (only ROUND(numeric, integer)), and AVG()/SUM() over real/bigint columns
-            # produce double precision. DECIMAL, not NUMERIC - MariaDB rejects NUMERIC as a CAST target
-            # (DECIMAL is the one spelling all three backends accept). (30,10): generous headroom for
-            # val_num*duration without overflow, well past double precision's own ~15-17 significant
-            # digits, so nothing meaningful is lost before the final ROUND to self._precision.
-            return 'ROUND(CAST({} AS DECIMAL(30,10)), {})'.format(query, self._precision)
-        return query
+        """See QueryEngine.precision_query() (query.py)."""
+        return self._query_engine.precision_query(query)
 
     def _time_precision_query(self, query):
-        if self._time_precision < 3:
-            return 'ROUND({}, {})'.format(query, self._time_precision - 3)
-        return query
+        """See QueryEngine.time_precision_query() (query.py)."""
+        return self._query_engine.time_precision_query(query)
 
     def _fetch_log_base_where(self):
-        """The WHERE clause shared by every _fetch_log() query: item/quality
-        filtering plus the one-row-before-:time_start lookback that lets a
-        row spanning into the requested range still contribute its
-        duration. Factored out so a caller building its own subquery (e.g.
-        _series()'s diff/differentiate window-function subquery) can apply
-        the identical filter instead of duplicating it.
-        """
-        return (
-            'item_id = :id AND '
-            '(val_quality IS NULL OR val_quality = 0) AND '
-            'time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND '
-            'time <= :time_end AND '
-            'time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start)'
-        )
+        """See QueryEngine.fetch_log_base_where() (query.py)."""
+        return self._query_engine.fetch_log_base_where()
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', table=None):
-        _item = self.items.return_item(item)
-
-        istart = self._parse_ts(start)
-        iend = self._parse_ts(end)
-        inow = self._parse_ts('now')
-        id = self.id(_item, create=False)
-
-        if inow > iend:
-            inow = iend
-
-        if step is None:
-            if count != 0:
-                step = int((iend - istart) / int(count))
-            else:
-                step = iend - istart
-
-        if self._buffer_mgr.pending_count(_item):
-            self._dump(items=[_item])
-
-        params = {'id': id, 'time_start': istart, 'time_end': iend, 'inow': inow, 'step': step}
-        duration_now = 'COALESCE(duration, :inow - time)'
-
-        # Duration calculation (S=Start, E=End):
-        duration = (
-            '('
-            #    ----------|<--------------------------->|---------->
-            # 1. Duration for items within the given start/end range
-            #    -----------------[S]======[E]---------------------->
-            'COALESCE(duration * (time >= :time_start) * (time + duration <= :time_end), 0) + '
-            # 2. Duration for items partially before start but ends after start
-            #    -----[S]======[E]---------------------------------->
-            'COALESCE(duration / duration * (time + duration - :time_start) * (time < :time_start) * (time + duration >= :time_start), 0) + '
-            #    ----------------------------------[S]======[E]----->
-            # 3. Duration for items partially after end but starts before end
-            'COALESCE(duration_now / duration_now * (:time_end - time) * (time + duration_now >= :time_end), 0)'
-            ')'
-        )
-
-        # Replace duration fields with calculated durations from previous
-        # generated expressions to include all three cases.
-        columns = columns.replace('duration', duration)
-
-        # Create base query including the replaced columns
-        # val_quality != 0 rows (no-data gaps) are excluded entirely - not
-        # just their value (NULL propagation already skips that in e.g.
-        # AVG(val_num*duration)) but their duration too, since otherwise a
-        # gap's duration would still count in a denominator like
-        # AVG(duration) while its value silently drops out of the
-        # numerator, skewing the result instead of the gap contributing
-        # nothing as intended.
-        base_where = self._fetch_log_base_where()
-        if table is None:
-            # Default shape: aggregate columns select directly off {log}.
-            query = 'SELECT ' + columns + ' FROM {log} WHERE ' + base_where + ' ' + group + ' ' + order
-        else:
-            # table is a caller-built "(SELECT ... FROM {log} WHERE ...) alias"
-            # subquery (e.g. one computing a window function per raw row) -
-            # the caller is responsible for applying base_where itself inside
-            # that subquery; columns/group/order here then operate on the
-            # subquery's already-filtered, already-windowed output rows.
-            query = 'SELECT ' + columns + ' FROM ' + table + ' ' + group + ' ' + order
-
-        # Replace duration_now with value from start time til current time to
-        # get a duration value referring to the current timestamp - if required.
-        query = query.replace('duration_now', duration_now)
-
-        logs = self._fetchall(query, params)
-        if logs:
-            # MariaDB/MySQL return Decimal (not float) for SUM()/AVG() over
-            # exact-numeric columns - e.g. 'on''s SUM(val_bool * duration),
-            # both integer-typed columns (val_num's own aggregates stay
-            # DOUBLE/float, since it's an approximate-numeric column;
-            # sqlite never returns Decimal at all). Decimal arithmetic
-            # doesn't mix with float - _finalize()'s 'diff' subtracts
-            # adjacent tuple values directly, and _series() injects plain
-            # float boundary values via float(item()), so a Decimal row
-            # next to a float one would raise TypeError. Coercing here, at
-            # the single choke point both _series() and _single() read
-            # through, avoids the driver-dependent type difference
-            # entirely rather than patching each affected func downstream.
-            logs = [tuple(float(v) if isinstance(v, decimal.Decimal) else v for v in row) for row in logs]
-
-        return {'tuples': logs, 'item': _item, 'istart': istart, 'iend': iend, 'step': step, 'count': count}
+        """See QueryEngine.fetch_log() (query.py)."""
+        return self._query_engine.fetch_log(item, columns, start, end, step, count, group, order, table)
 
     def _parse_ts(self, dts):
-        """
-        Parse a duration-timestamp in the form '1w 2y 3h 1d 39i 15s' and return the duration in seconds as
-        an integer value
-
-        :return:
-        """
-        ts = self._timestamp(self.shtime.now())
-        try:
-            return min(ts, int(dts))  # rts, if dts is an integer value, return now, if dts is a timestamp in th future
-        except (TypeError, ValueError):
-            pass
-
-        duration = 0
-        if isinstance(dts, str):
-            if dts == 'now':
-                duration = 0
-            else:
-                for frame in dts.split(' '):
-                    if frame != 'now':
-                        duration += self._parse_single(frame)
-
-        if duration < 0:
-            duration = 0
-
-        ts = ts - int(duration)
-        return ts
+        """See QueryEngine.parse_ts() (query.py)."""
+        return self._query_engine.parse_ts(dts)
 
     def _parse_single(self, frame):
-        """
-        Parse one frame of a duration-timestamp to a duration (in seconds)
-
-        :param frame:
-        :return:
-        """
-        second = 1000
-        minute = 60 * 1000
-        hour = 60 * minute
-        day = 24 * hour
-        week = 7 * day
-        month = 30 * day
-        year = 365 * day
-
-        _frames = {'s': second, 'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
-        try:
-            return int(frame)
-        except (TypeError, ValueError):
-            pass
-        ts = self._timestamp(self.shtime.now())
-        # if frame == 'now':
-        #     fac = 0
-        #     frame = 0
-        if frame[-1] in _frames:
-            fac = _frames[frame[-1]]
-            frame = frame[:-1]
-        else:
-            # return parameter unchaned
-            return frame
-        try:
-            ts = int(float(frame) * fac)
-        except (TypeError, ValueError):
-            self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
-        return ts
+        """See QueryEngine.parse_single() (query.py)."""
+        return self._query_engine.parse_single(frame)
 
     # --------------------------------------------------------
     #    Database buffer routines (dump, insert and remove)
@@ -2696,551 +1920,40 @@ class Database(SmartPlugin):
     # ------------------------------------------
 
     def _maxage_action_for(self, item):
-        """
-        Resolve database_maxage_action for *item*, falling back to the
-        plugin-level default_maxage_action when the item doesn't set its
-        own. The item attribute deliberately has no schema default in
-        plugin.yaml, so has_iattr() can distinguish "unset" from
-        "explicitly delete" - mirrors the existing default_maxage pattern.
-
-        Also the single enforcement point for the type-compatibility check
-        (see _MAXAGE_ACTION_VALID_TYPES): an invalid action for this item's
-        type always resolves to 'delete' here, regardless of whether
-        parse_item()'s startup validation ran, so a bad config can never
-        reach _compact_maxage() and run e.g. SUM(val_num) against a str
-        item (val_num is always NULL there).
-
-        :param item: item to resolve the action for
-        :return: one of _MAXAGE_AGGREGATE_EXPR's or _MAXAGE_EDGE_ACTIONS' keys, or 'delete'
-        """
-        if self.has_iattr(item.conf, 'database_maxage_action'):
-            action = self.get_iattr_value(item.conf, 'database_maxage_action').lower()
-        else:
-            action = self._default_maxage_action
-
-        if action == 'on':
-            # Legacy alias for 'duty_cycle' - kept for configs that already
-            # quote it (unquoted 'on' is YAML bool True and never reaches
-            # here as this string in the first place).
-            action = 'duty_cycle'
-
-        if action == 'delete':
-            return 'delete'
-
-        known = action in self._MAXAGE_AGGREGATE_EXPR or action in self._MAXAGE_EDGE_ACTIONS
-        valid_types = self._MAXAGE_ACTION_VALID_TYPES.get(action)
-        if not known or (valid_types is not None and item.type() not in valid_types):
-            return 'delete'
-        return action
+        """See MaxageResolver.action_for() (maxage.py)."""
+        return self._maxage.action_for(item)
 
     def _maxage_interval_seconds_for(self, item):
-        """
-        Resolve database_maxage_interval for *item* in seconds, falling
-        back to the plugin-level default_maxage_interval. Same format as
-        cycle/autotimer (lib.shtime.Shtime.to_seconds) - no 'd' (days)
-        suffix supported.
-
-        :param item: item to resolve the interval for
-        :return: interval in seconds (int), never 0 or negative
-        """
-        if self.has_iattr(item.conf, 'database_maxage_interval'):
-            interval = self.get_iattr_value(item.conf, 'database_maxage_interval')
-        else:
-            interval = self._default_maxage_interval
-
-        seconds = self.shtime.to_seconds(interval, test=True)
-        if not seconds or seconds <= 0:
-            self.logger.warning(
-                f"Item {item.property.path}: invalid database_maxage_interval '{interval}', using 86400s (24h)"
-            )
-            return 86400
-        return int(seconds)
+        """See MaxageResolver.interval_seconds_for() (maxage.py)."""
+        return self._maxage.interval_seconds_for(item)
 
     def _compact_maxage(self, item, item_id, itempath, time_end, action):
-        """
-        Compact log entries older than maxage into one aggregate value per
-        database_maxage_interval, instead of deleting them (called from
-        remove_older_than_maxage() instead of the delete path when *action*
-        is not 'delete').
-
-        No persisted resume cursor is kept: the next interval to compact is
-        always simply the oldest remaining raw data for this item
-        (self._log_store.oldest_time - a cheap MIN(time) index seek).
-        Compaction always proceeds oldest-first and only deletes an
-        interval's raw rows in the same transaction as writing its
-        aggregate, so this is self-healing across restarts/crashes by
-        construction - there is no separate state file to get out of sync.
-
-        Bounded by self.max_aggregate_intervals per call (the aggregate-mode
-        analogue of max_delete_logentries' row-count bound - one interval's
-        aggregate query can still cover an arbitrary number of raw rows for
-        a hot item, so the bound here is on intervals, not rows).
-
-        Changing an item's database_maxage_interval after some data is
-        already compacted is safe for avg/min/max/sum/integrate/duty_cycle -
-        an old aggregate row swept into a differently-sized new interval
-        still combines correctly (the schema's uniform (time,duration,value)
-        shape makes AVG(x)/AVG(y) reduce to SUM(x)/SUM(y) regardless of row
-        count, and MIN/MAX/SUM are trivially associative). It is NOT safe
-        for countall: an old aggregate row representing N original raw rows
-        counts as 1 row, silently undercounting. Accepted as-is - this only
-        happens on a deliberate config change, not spontaneously, and is not
-        worth a schema change to detect for one action's edge case.
-
-        :param item: the item being compacted
-        :param item_id: database id of item
-        :param itempath: item.property.path, for logging
-        :param time_end: datetime - the maxage cutoff; only intervals
-            entirely older than this are touched
-        :param action: resolved database_maxage_action (already validated
-            via _maxage_action_for - never 'delete' here)
-        """
-        edge_order = self._MAXAGE_EDGE_ACTIONS.get(action)
-        expr = None if edge_order else self._MAXAGE_AGGREGATE_EXPR[action]
-        interval_ms = self._maxage_interval_seconds_for(item) * 1000
-        cutoff_ms = self._timestamp(time_end)
-        item_type = item.type()
-
-        intervals_done = 0
-        stalled = False
-        connection_failed = False
-        while intervals_done < self.max_aggregate_intervals:
-            try:
-                # exclude_duration=interval_ms: skip rows this method already produced itself -
-                # without it, oldest_time() can't tell a just-compacted row from raw data (both are
-                # plain (time, duration, value) rows), so it re-selects the same already-compacted
-                # interval forever and never reaches newer raw data (found live 2026-09-04).
-                oldest = self._log_store.oldest_time(item_id, exclude_duration=interval_ms)
-            except Exception as e:
-                # Same self-healing case as the transaction() except-block
-                # below - a connection error reading oldest_time() itself
-                # means nothing this cycle can proceed; requeue below rather
-                # than trusting a follow-up oldest_time() call to succeed.
-                self._log_db_exception(
-                    e,
-                    f'remove_older_: {itempath} could not read oldest log time, giving up this cycle: {e}',
-                    exc_info=True,
-                )
-                connection_failed = True
-                break
-            if oldest is None:
-                break  # nothing left to compact
-
-            interval_start = (oldest // interval_ms) * interval_ms
-            interval_end = interval_start + interval_ms
-            if interval_end > cutoff_ms:
-                break  # this interval isn't entirely past the cutoff yet - leave it raw
-
-            # transaction() ensures a failure here (e.g. a protocol
-            # desync/dropped connection mid-statement) triggers a rollback
-            # before the lock releases - without it, self._conn's broken
-            # state is left uncleaned for the next caller to inherit.
-            # timeout=300 preserves the original hardcoded value (still
-            # independent of db_query_timeout - a separate, already-
-            # documented issue). The value read (edge/aggregate) happens
-            # inside this same transaction(), not before it - _dump() runs
-            # under a different lock (_dump_lock, not self._db._fdb_lock)
-            # and could otherwise write a new row into this exact interval
-            # between an earlier read and this delete, which would then be
-            # deleted without ever having contributed to the value just
-            # computed.
-            try:
-                with self._db.transaction(timeout=300) as cur:
-                    # Cross-checked against item.last_change(), not the buffer (forgotten once
-                    # flushed) - a crash orphan looks identical in storage but fails this check.
-                    open_time = self._log_store.find_open(item_id, cur=cur)
-                    open_in_interval = open_time is not None and interval_start <= open_time < interval_end
-                    open_is_live = open_in_interval and self._timestamp(item.last_change()) == open_time
-
-                    if edge_order:
-                        # 'first'/'last': keep the actual oldest/newest raw
-                        # value as-is (works for str too - encode_value/
-                        # decode_value round-trip it via val_str, unlike the
-                        # val_num-based aggregate expressions).
-                        edge = self._log_store.edge_value(
-                            item_id, edge_order, time_start=interval_start - 1, time_end=interval_end, cur=cur
-                        )
-                        value = self._item_value_tuple_rev(item_type, edge) if edge else None
-                    elif open_is_live and action in ('avg', 'integrate', 'duty_cycle'):
-                        # Clipped to interval_end, not "now" - a provable bound (still open, so
-                        # certainly still this value then), same technique as _series()'s duration_now.
-                        clipped_expr = expr.replace('duration', f'COALESCE(duration, {interval_end} - time)')
-                        value = self._log_store.aggregate(
-                            item_id, clipped_expr, time_start=interval_start - 1, time_end=interval_end, cur=cur
-                        )
-                    else:
-                        value = self._log_store.aggregate(
-                            item_id, expr, time_start=interval_start - 1, time_end=interval_end, cur=cur
-                        )
-
-                    if value is None:
-                        # Valid rows may remain unrepresented (e.g. a crash orphan) - leave the
-                        # interval raw rather than delete without writing anything; gap-only
-                        # intervals are still cleaned up.
-                        valid_rows = self._log_store.count(
-                            item_id, time_start=interval_start - 1, time_end=interval_end, exclude_gaps=True, cur=cur
-                        )
-                        if valid_rows:
-                            self.logger.warning(
-                                f'remove_older_: {itempath} interval at {interval_start} has {valid_rows} '
-                                f"valid rows but action '{action}' produced no value (all durations NULL?) - "
-                                f'leaving interval raw'
-                            )
-                            stalled = True
-                            break
-
-                    # Re-anchor before delete: moving to interval_end makes the delete below
-                    # (time < interval_end) naturally skip it - value/quality untouched.
-                    if open_is_live:
-                        self._log_store.reanchor_open(item_id, open_time, interval_end, cur=cur)
-
-                    # delete before insert: interval_start is derived from
-                    # the oldest raw row's own timestamp, so a raw row can
-                    # legally sit at exactly that timestamp - inserting
-                    # the aggregate there first would collide with the
-                    # (item_id, time) unique constraint. Both statements
-                    # still share one transaction, so a crash between them
-                    # can never leave a duplicate aggregate behind on the
-                    # next run's self-healing resume.
-                    self._log_store.delete_range(item_id, time_start=interval_start - 1, time_end=interval_end, cur=cur)
-                    if value is not None:
-                        now_ms = self._timestamp(self.shtime.now())
-                        entry = BufferEntry(
-                            time=interval_start, duration=interval_ms, value=value, quality=QUALITY_VALID
-                        )
-                        self._log_store.insert(item_id, entry, item_type, now_ms, cur=cur)
-            except TimeoutError:
-                self.logger.info(
-                    f'remove_older_: {itempath} could not acquire database lock, giving up this compaction cycle'
-                    f'{self._db.lock_holder_description()}'
-                )
-                connection_failed = True
-                break
-            except Exception as e:
-                # transaction() already rolled back and reset connection
-                # state - the interval stays raw, exactly like the
-                # TimeoutError case above, and the next cycle's oldest_time()
-                # picks it back up unchanged. A connection error here is the
-                # same self-healing case _dump() already handles quietly;
-                # anything else is a real bug worth the loud ERROR - same
-                # exc_info=True traceback _dump() already gives that case,
-                # since this runs on every scheduler cycle just as often.
-                self._log_db_exception(
-                    e, f'remove_older_: {itempath} compaction failed, giving up this cycle: {e}', exc_info=True
-                )
-                connection_failed = True
-                break
-
-            intervals_done += 1
-
-        if intervals_done:
-            self.logger.info(
-                f"remove_older_: {itempath} compacted {intervals_done} interval(s) using action='{action}'"
-            )
-
-        # more intervals might already be past the cutoff but weren't
-        # reached this cycle (max_aggregate_intervals) - requeue like the
-        # delete path does. If we stopped because the next interval isn't
-        # past the cutoff yet, this correctly does not requeue. A stalled
-        # interval (left raw above) blocks everything behind it - requeuing
-        # would just spin on it within the same cycle.
-        if connection_failed:
-            # Can't reliably tell if there's more work without querying the
-            # DB again, which is exactly what just failed - requeue
-            # unconditionally so this item is retried next cycle rather
-            # than waiting for the worklist to rotate all the way around.
-            self._maxage_worklist.append(item)
-        else:
-            oldest = self._log_store.oldest_time(item_id)
-            if not stalled and oldest is not None and oldest + interval_ms <= cutoff_ms:
-                self._maxage_worklist.append(item)
+        """See MaintenanceManager.compact_maxage() (maintenance.py)."""
+        return self._maintenance.compact_maxage(item, item_id, itempath, time_end, action)
 
     def remove_older_than_maxage(self):
-        """
-        Remove log entries older than maxage of an item
-
-        Called by scheduler
-        """
-        if self.lock_remove_older:
-            if not self._remove_older_skipped:
-                self.logger.info('remove_older_than_maxage task is manually locked')
-                self._remove_older_skipped = True
-            return
-
-        if not self._db.connected():
-            self.logger.warning('remove_older_than_maxage skipped because db is not connected')
-            return False
-
-        # prevent creation of more than one thread
-        current_thread = threading.current_thread()
-        current_thread_name = current_thread.name
-        for t in threading.enumerate():
-            if t is current_thread:
-                continue
-            if t.name == current_thread_name:
-                if not self._remove_older_skipped:
-                    self.logger.info(
-                        'remove_older_than_maxage skipped because a thread with this task is already running'
-                    )
-                self._remove_older_skipped = True
-                return
-
-        self._remove_older_skipped = False
-
-        if self.remove_orphan:
-            self.remove_orphan_items()
-
-        # go to work
-        if self._maxage_worklist == []:
-            # Fill work list, if it is empty
-            if self._default_maxage == 0:
-                self._maxage_worklist = [i for i in self._items_with_maxage]
-            else:
-                self._maxage_worklist = [i for i in self._handled_items]
-            self.logger.info(f'remove_older_: Worklist filled with {len(self._maxage_worklist)} items')
-
-        if not self._maxage_worklist:
-            return  # nothing to do this cycle (no items with 'database' set)
-
-        item = self._maxage_worklist.pop(0)
-        itempath = item.property.path
-
-        item_id = None  # initialise before try so the except clause can reference it safely
-        try:
-            item_id = self.id(item, create=False)
-        except Exception:
-            if item_id is None:
-                self.logger.info(f'remove_older_: no id for item {itempath}')
-            else:
-                self.logger.critical(f'remove_older_: no id for item {itempath}')
-            return
-
-        time_end = self.get_maxage_ts(item)
-        if time_end is None:
-            # no usable maxage for this item (e.g. an invalid database_maxage
-            # value, already logged by get_maxage_ts) - nothing to do
-            return
-        timestamp_end = self._timestamp(time_end)
-
-        maxage_action = self._maxage_action_for(item)
-        if maxage_action != 'delete':
-            # compaction always replaces raw rows with an aggregate row in
-            # the same transaction as deleting them, so the item's log can
-            # never end up empty as a side effect - the database: init
-            # last-value-preservation logic below is a delete-path-only
-            # concern and doesn't apply here.
-            self._compact_maxage(item, item_id, itempath, time_end, maxage_action)
-            logcount = self.readLogCount(item_id)
-            self._item_logcount[item_id] = logcount
-            self._webdata[item.property.path].update({'logcount': logcount})
-            return
-
-        # if delete would also remove the last logged value for the item then there might be no chance for
-        # ``database: init`` to retrieve the latest value.
-        remaining = 1
-        if self.get_iattr_value(item.conf, 'database').lower() == 'init':
-            # find out if there are still log entries after deletion of the logs
-            remaining = self.readLogCount(
-                item_id, time_start=self._timestamp(time_end + datetime.timedelta(microseconds=1))
-            )
-            # remaining can be larger than self._item_logcount[item_id], it depends on the rate of database updates
-            # self.logger.info(f"remove_older_: {itempath} has attribute init with {self._item_logcount[item_id]} log entries and will have {remaining} log entries after deletion")
-
-        if remaining <= 0:
-            # no log entries will be there after deletion, need to go back in time for the latest logentry
-            try:
-                new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
-            except Exception as e:
-                # Can't safely proceed without this - deleting blind here
-                # risks wiping an item's last remaining value. Requeue and
-                # retry next cycle, same as every other connection-loss path
-                # in this function.
-                self._log_db_exception(
-                    e,
-                    f'remove_older_: {itempath} could not read latest log entry, retrying next cycle: {e}',
-                    exc_info=True,
-                )
-                self._maxage_worklist.append(item)
-                return
-            if new_must_keep_timestamp is None:
-                return
-            new_must_keep_time = self._datetime(new_must_keep_timestamp)
-            self.logger.info(
-                f'remove_older_: {itempath} no remaining log entry between {time_end} and now, thus can not remove log entries older than maxage, latest log is {new_must_keep_time}'
-            )
-            time_end = new_must_keep_time + datetime.timedelta(microseconds=-1)
-            timestamp_end = self._timestamp(time_end)
-
-        # readLogCount's time_end is inclusive (time <= time_end) but
-        # deleteLog()/delete_range's is exclusive (time < time_end) - the
-        # "- 1" (timestamps are integer ms) makes this count match exactly
-        # what the deletion below will remove; without it, a log entry
-        # landing exactly on timestamp_end would be counted here but left
-        # behind by the actual DELETE.
-        count_log_records_to_delete = self.readLogCount(item_id, time_end=timestamp_end - 1)
-        count_log_records_to_delete_str = f'{count_log_records_to_delete:,}'.replace(',', '.')
-        max_delete_logentries_str = f'{self.max_delete_logentries:,}'.replace(',', '.')
-        time_end_str = time_end.strftime('%d.%m.%Y - %H:%M')
-        self.logger.debug(
-            f'remove_older_: {itempath} remove older than {time_end_str} - {count_log_records_to_delete_str} records to delete'
-        )
-
-        if count_log_records_to_delete > self.max_delete_logentries:
-            time_start_deletion = time.time()
-            # transaction() commits this DELETE itself, rather than relying
-            # on some unrelated later commit()
-            # Not a bare DELETE...ORDER BY...LIMIT (invalid SQLite syntax
-            # without a non-default compile flag) or a rowid-subquery (the
-            # {log} table has no primary key, and MySQL/MariaDB - unlike
-            # SQLite - has no queryable row id for a table without one).
-            # Matches on (item_id, time) instead, via the UNIQUE KEY
-            # Double-wrapped, not single-wrap: MariaDB separately rejects
-            # LIMIT directly inside an IN(subquery).
-            try:
-                with self._db.transaction(timeout=300) as cur:
-                    self._execute(
-                        self._prepare(
-                            'DELETE FROM {log} WHERE item_id = :id AND time IN (SELECT time FROM '
-                            '(SELECT time FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords) '
-                            'AS del_batch);'
-                        ),
-                        {'id': item_id, 'maxrecords': self.max_delete_logentries},
-                        cur=cur,
-                    )
-            except TimeoutError:
-                self.logger.info(
-                    f'remove_older_: {itempath} could not acquire database lock for deletion, retrying next cycle'
-                    f'{self._db.lock_holder_description()}'
-                )
-                self._maxage_worklist.append(item)
-                return
-            except Exception as e:
-                # Same self-healing case as _compact_maxage()'s equivalent
-                # except-block - requeue so this item's batch delete is
-                # retried next cycle instead of waiting for the worklist to
-                # rotate all the way around. Same exc_info=True convention
-                # as that block too, for the same reason.
-                self._log_db_exception(
-                    e, f'remove_older_: {itempath} deletion failed, retrying next cycle: {e}', exc_info=True
-                )
-                self._maxage_worklist.append(item)
-                return
-            time_used_for_deletion = time.time() - time_start_deletion
-            self.logger.info(
-                f'remove_older_: {itempath} deleted {max_delete_logentries_str} of {count_log_records_to_delete_str} log entries - took {time_used_for_deletion:.2f} seconds, averaging {100 * time_used_for_deletion / self.max_delete_logentries:.4f} seconds per 100 entries'
-            )
-
-            # Re-Add item to worklist, since there are more records to be deleted
-            self._maxage_worklist.append(item)
-
-        elif count_log_records_to_delete:
-            time_start_deletion = time.time()
-            self.deleteLog(item_id, time_end=timestamp_end)
-            time_used_for_deletion = time.time() - time_start_deletion
-            time_end_str = time_end.strftime('%d.%m.%Y - %H:%M')
-            self.logger.info(
-                f'remove_older_: {itempath} deleted {count_log_records_to_delete_str} log entries until {time_end_str} took {time_used_for_deletion:.2f} seconds, averaging {100 * time_used_for_deletion / count_log_records_to_delete:.4f} seconds per 100 entries'
-            )
-
-        # update the logCount for the item
-        logcount = self.readLogCount(item_id)
-        self._item_logcount[item_id] = logcount
-        self._webdata[item.property.path].update({'logcount': logcount})
-
-        return
+        """See MaintenanceManager.remove_older_than_maxage() (maintenance.py)."""
+        return self._maintenance.remove_older_than_maxage()
 
     def get_maxage_ts(self, item):
-        """
-        Get the actual maxage-timestamp for a given item
-
-        :param item:
-
-        :return:
-        """
-        maxage = None
-        if self.has_iattr(item.conf, 'database_maxage'):
-            maxage = self.get_iattr_value(item.conf, 'database_maxage')
-        elif self._default_maxage > 0:
-            maxage = self._default_maxage
-
-        if maxage:
-            try:
-                maxage = float(maxage)
-            except (TypeError, ValueError):
-                self.logger.warning(
-                    f"Item {item.property.path}: database_maxage value '{maxage}' is not a number, ignoring"
-                )
-                return None
-            if maxage > 0:
-                dt = self.shtime.now()
-                dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-                dt = dt - datetime.timedelta(maxage)
-                return dt
-        return None
+        """See MaintenanceManager.get_maxage_ts() (maintenance.py)."""
+        return self._maintenance.get_maxage_ts(item)
 
     def _count_logentries(self):
-        """
-        count number of log entries for all items in database
-
-        called by scheduler once on start
-        """
-        self.logger.info('_count_logentries: # handled items = {}'.format(len(self._handled_items)))
-        self._items_still_counting = True
-        self._items_total_entries = 0
-        for item in self._handled_items:
-            item_id = self.id(item, create=False)
-            logcount = self.readLogCount(item_id)
-            self._item_logcount[item_id] = logcount
-            self._items_total_entries += logcount
-            self._webdata[item.property.path].update({'logcount': logcount})
-            # self._webdata[item.property.path].update({'logcount': f"{logcount:,}".replace(',', '.')})
-
-        self._items_still_counting = False
-        return
+        """See MaintenanceManager.count_logentries() (maintenance.py)."""
+        return self._maintenance.count_logentries()
 
     # ------------------------------------------
     #    Database specific stuff
     # ------------------------------------------
 
     def _resolve_driver_alias(self, driver_value):
-        """Resolve a friendly driver name (e.g. 'mysql', 'timescaledb') to
-        the real, importable DB-API2 module name lib.db.Database expects.
-        Returns *driver_value* unchanged if it isn't a known alias -
-        including when it's already a real module name.
-
-        :param driver_value: the raw 'driver' parameter value.
-        :returns: a real DB-API2 module name.
-        """
-        driver_lower = driver_value.lower()
-        if driver_lower in self._DRIVER_ALIASES:
-            return self._DRIVER_ALIASES[driver_lower]
-        if driver_lower in self._POSTGRES_DRIVER_ALIASES:
-            return self._resolve_postgres_driver_alias(driver_value)
-        return driver_value
+        """See TimescaleManager.resolve_driver_alias() (timescale.py)."""
+        return self._timescale.resolve_driver_alias(driver_value)
 
     def _resolve_postgres_driver_alias(self, alias):
-        """Probe for whichever of psycopg2/psycopg is actually installed,
-        preferring psycopg2. Falls back to 'psycopg2' (without having
-        confirmed it imports) if neither is found, so the resulting error
-        from lib.db.Database's own import attempt names a real package
-        instead of the friendly alias someone would otherwise need to
-        search for.
-
-        :param alias: the friendly name as configured (only used for logging).
-        :returns: 'psycopg2' or 'psycopg'.
-        """
-        for candidate in ('psycopg2', 'psycopg'):
-            try:
-                importlib.import_module(candidate)
-            except ImportError:
-                continue
-            self.logger.info(f"Database: driver '{alias}' resolved to '{candidate}'")
-            return candidate
-        self.logger.warning(
-            f"Database: driver '{alias}' requires psycopg2 or psycopg to be installed, neither found - "
-            "falling back to 'psycopg2'"
-        )
-        return 'psycopg2'
+        """See TimescaleManager.resolve_postgres_driver_alias() (timescale.py)."""
+        return self._timescale.resolve_postgres_driver_alias(alias)
 
     def _resolve_sqlite_database_path(self, connect):
         """
@@ -3321,459 +2034,56 @@ class Database(SmartPlugin):
         level(msg, exc_info=exc_info and not is_conn_err)
 
     def _enable_timescale_hypertable(self):
-        """Activate the TimescaleDB extension and convert {log} into a hypertable.
-
-        Called once, from _initialize_db()'s self._db setup path only - both
-        operations are database-global, not per-connection, so running them
-        again from self._db_maint's own init would just be redundant work
-        against the already-converted table (create_hypertable() is called
-        with if_not_exists=True, so it's harmless, just wasted).
-
-        Non-fatal on any failure (missing extension on the server,
-        insufficient privilege, ...): logs a clear warning and leaves the
-        table as a plain table - every other part of the plugin works
-        identically either way, since a hypertable is queried exactly like
-        a regular table.
-        """
-        log_table = self._replace['log']
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute('CREATE EXTENSION IF NOT EXISTS timescaledb;', cur=cur)
-        except Exception as e:
-            self.logger.warning(
-                f'Database: timescale_hypertable is enabled but the TimescaleDB extension could not be '
-                f'activated ({e}) - continuing with {log_table} as a plain table'
-            )
-            return
-        try:
-            # create_hypertable()'s first argument is typed regclass, not a
-            # raw SQL identifier position - it accepts a plain string that
-            # casts, so it binds through the normal :name mechanism like
-            # any other value (confirmed against a live instance) rather
-            # than needing hand-rolled identifier quoting.
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    "SELECT create_hypertable(:table, 'time', chunk_time_interval => :chunk_ms, "
-                    'if_not_exists => TRUE, migrate_data => TRUE);',
-                    {'table': log_table, 'chunk_ms': self._timescale_chunk_interval_ms},
-                    cur=cur,
-                )
-            self.logger.notice(
-                f'Database: {log_table} converted to a TimescaleDB hypertable '
-                f'(chunk_time_interval={self._timescale_chunk_interval_ms}ms)'
-            )
-        except Exception as e:
-            self.logger.warning(f'Database: could not convert {log_table} to a hypertable ({e})')
+        """See TimescaleManager.enable_hypertable() (timescale.py)."""
+        return self._timescale.enable_hypertable()
 
     def _enable_timescale_compression(self):
-        """Enable native columnar compression on {log} and add a policy compressing
-        everything older than one chunk width, leaving the current chunk alone.
-
-        The current chunk is the only one that can hold a mutable "open row" (see
-        _compact_maxage()'s find_open()/open_time handling) - every item's live
-        interval is always within it, so leaving exactly that one chunk uncompressed
-        is sufficient; no separate threshold is needed since it's already the same
-        interval as timescale_chunk_interval. compress_after reuses
-        self._timescale_chunk_interval_ms directly rather than a second parameter.
-
-        Compaction eventually reaching an already-compressed chunk (at whatever
-        database_maxage the item configures) forces a one-time decompress on that
-        chunk - acceptable, since compaction only ever touches a given interval
-        once. A manual WebIf edit/delete on old data forces the same one-time
-        decompress; also acceptable, since that's a rare, human-triggered path, not
-        one of the plugin's high-throughput core methods.
-
-        Non-fatal on any failure, same rationale as _enable_timescale_hypertable():
-        leaves {log} uncompressed, every other part of the plugin is unaffected.
-        """
-        log_table = self._replace['log']
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    f'ALTER TABLE {log_table} SET (timescaledb.compress, '
-                    "timescaledb.compress_segmentby = 'item_id', "
-                    "timescaledb.compress_orderby = 'time DESC');",
-                    cur=cur,
-                )
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    'SELECT add_compression_policy(:table, compress_after => :compress_after_ms, '
-                    'if_not_exists => TRUE);',
-                    {'table': log_table, 'compress_after_ms': self._timescale_chunk_interval_ms},
-                    cur=cur,
-                )
-            self.logger.notice(
-                f'Database: {log_table} compression enabled (compress_after={self._timescale_chunk_interval_ms}ms)'
-            )
-        except Exception as e:
-            self.logger.warning(f'Database: could not enable compression on {log_table} ({e})')
+        """See TimescaleManager.enable_compression() (timescale.py)."""
+        return self._timescale.enable_compression()
 
     def _native_relevant_items(self):
-        """Items native-mode aggregation must consider - mirrors
-        remove_older_than_maxage()'s own worklist-fill precedent exactly
-        (all handled items if default_maxage is set instance-wide,
-        otherwise only items with their own database_maxage)."""
-        return list(self._handled_items) if self._default_maxage > 0 else list(self._items_with_maxage)
+        """See MaxageResolver.native_relevant_items() (maxage.py)."""
+        return self._maxage.native_relevant_items()
 
     def _enable_timescale_native_aggregation(self):
-        """Register the integer-now function TimescaleDB needs for continuous
-        aggregates on this bigint-epoch-ms schema, then create one continuous
-        aggregate per distinct database_maxage_interval actually in use
-        (grouped across items - one cagg per interval width, not per item or
-        per action, matching the 2026-09-03 prototype's finding that actions
-        are cheap extra SELECT-list columns on a shared view).
-
-        Called once from run(), not _initialize_db()'s setup path - unlike
-        hypertable/compression, this needs the real item list
-        (_items_with_maxage/_handled_items), which parse_item() has not
-        populated yet at __init__()'s own _initialize_db() call.
-
-        Items resolving to action 'delete' are skipped entirely - native
-        retention (if enabled) handles them directly by dropping raw chunks,
-        no aggregate needed. Non-fatal on any failure, same rationale as
-        hypertable/compression: leaves native aggregation inactive for the
-        affected interval, every other part of the plugin is unaffected.
-        """
-        log_table = self._replace['log']
-        now_func = f'{log_table}_time_now'
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    f'CREATE OR REPLACE FUNCTION {now_func}() RETURNS BIGINT LANGUAGE SQL STABLE AS '
-                    # CAST(... AS BIGINT), not ::bigint - lib.db's :name param regex (r':(\w+)') also
-                    # matches the second colon of a :: cast, misreading it as a missing bind param.
-                    '$$ SELECT CAST(extract(epoch from now()) * 1000 AS BIGINT) $$;',
-                    cur=cur,
-                )
-        except Exception as e:
-            self.logger.warning(
-                f'Database: could not create the integer-now function for native aggregation ({e}) - '
-                'native mode cannot activate'
-            )
-            return
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute(f"SELECT set_integer_now_func('{log_table}', '{now_func}');", cur=cur, quiet=True)
-        except Exception as e:
-            # set_integer_now_func() is not idempotent - it errors on every call after the first,
-            # even re-registering the same function, unlike every other IF NOT EXISTS-style call
-            # here. "already set" is the expected, harmless case on every restart after the first
-            # successful one; anything else is a real failure. quiet=True above since this
-            # expected case would otherwise ERROR-log on every single restart - this except
-            # block already reports the genuinely-bad case itself, just without lib.db's noise.
-            if 'already set' not in str(e).lower():
-                self.logger.warning(
-                    f'Database: could not register integer-now function for native aggregation ({e}) - '
-                    'native mode cannot activate'
-                )
-                return
-
-        intervals_ms = set()
-        for item in self._native_relevant_items():
-            if self._maxage_action_for(item) == 'delete':
-                continue
-            intervals_ms.add(self._maxage_interval_seconds_for(item) * 1000)
-        for interval_ms in sorted(intervals_ms):
-            self._create_native_cagg(log_table, interval_ms)
+        """See TimescaleManager.enable_native_aggregation() (timescale.py)."""
+        return self._timescale.enable_native_aggregation()
 
     def _create_native_cagg(self, log_table, interval_ms):
-        """Create one continuous aggregate (+ thin wrapper view + refresh
-        policy) for a single database_maxage_interval width, materializing
-        every 2026-09-03 prototype-proven action as its own column: additive
-        aggregates (sum/min/max/countall) directly, ratio-based ones
-        (avg/duty_cycle/integrate) as component sums divided in the wrapper
-        view (never pre-divided - that breaks incremental refresh, since
-        only additive aggregates re-merge validly across partial refreshes),
-        and first/last via TimescaleDB's core first()/last() aggregate
-        functions across all three value columns (val_str/val_num/val_bool),
-        matching LogStore.edge_value()'s own all-three-columns shape.
-
-        Deliberately always materializes all columns regardless of which
-        actions any given item actually configures - SQL aggregates over an
-        item's always-NULL columns (e.g. val_bool for a 'num' item) just
-        produce NULL harmlessly, and one shared, simple column set per
-        interval is far easier to keep correct than tracking which actions
-        are in use at each width. WITH NO DATA defers the full historical
-        backfill to the refresh policy's own incremental catch-up, avoiding
-        one large synchronous materialization at creation time.
-        """
-        cagg_name = f'{log_table}_cagg_{interval_ms // 1000}s'
-        final_view = f'{cagg_name}_final'
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    f'CREATE MATERIALIZED VIEW IF NOT EXISTS {cagg_name} WITH (timescaledb.continuous) AS '
-                    f'SELECT time_bucket({interval_ms}, time) AS bucket, item_id, '
-                    'SUM(val_num * duration) AS sum_val_duration, '
-                    'SUM(duration) AS sum_duration, '
-                    'SUM(val_bool * duration) AS sum_val_bool_duration, '
-                    'SUM(val_num) AS sum_value, '
-                    'MIN(val_num) AS min_value, '
-                    'MAX(val_num) AS max_value, '
-                    'COUNT(*) AS countall_value, '
-                    'first(val_str, time) AS first_val_str, '
-                    'first(val_num, time) AS first_val_num, '
-                    'first(val_bool, time) AS first_val_bool, '
-                    'last(val_str, time) AS last_val_str, '
-                    'last(val_num, time) AS last_val_num, '
-                    'last(val_bool, time) AS last_val_bool '
-                    f'FROM {log_table} GROUP BY bucket, item_id WITH NO DATA;',
-                    cur=cur,
-                )
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    f'CREATE OR REPLACE VIEW {final_view} AS SELECT bucket, item_id, '
-                    'sum_val_duration / NULLIF(sum_duration, 0) AS avg_value, '
-                    'sum_val_duration AS integrate_value, '
-                    'sum_val_bool_duration / NULLIF(sum_duration, 0) AS duty_cycle_value, '
-                    'sum_value, min_value, max_value, countall_value, '
-                    'first_val_str, first_val_num, first_val_bool, '
-                    f'last_val_str, last_val_num, last_val_bool FROM {cagg_name};',
-                    cur=cur,
-                )
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    f"SELECT add_continuous_aggregate_policy('{cagg_name}', start_offset => NULL, "
-                    f"end_offset => {interval_ms}, schedule_interval => INTERVAL '1 hour', if_not_exists => TRUE);",
-                    cur=cur,
-                )
-            self.logger.notice(f'Database: created native cagg {cagg_name} (interval={interval_ms}ms)')
-        except Exception as e:
-            self.logger.warning(f'Database: could not create native cagg {cagg_name} ({e})')
+        """See TimescaleManager.create_native_cagg() (timescale.py)."""
+        return self._timescale.create_native_cagg(log_table, interval_ms)
 
     def _enable_timescale_native_retention(self):
-        """Add a retention policy dropping raw chunks once they're older
-        than the longest configured database_maxage across all relevant
-        items, plus one chunk width as a safety margin (covers downtime -
-        see plugin.yaml's own parameter description). Safe specifically
-        because native aggregation (see above) already materializes
-        aggregates into their own, separate hypertable before this ever
-        runs - dropping a raw chunk here never touches cagg-owned storage.
-
-        Skips (with a warning, non-fatal) if no item and no default_maxage
-        configures a maxage at all - there is nothing to retain against.
-
-        DESIGN DECISION - deliberate, not a gap: this is one global
-        threshold for the whole hypertable, not a per-item one. A
-        database_maxage_action: delete item configured for e.g. 5 days
-        still keeps its raw data until the *longest* maxage among every
-        item sharing its chunks has passed, the same as every other item -
-        native mode never runs remove_older_than_maxage()'s old per-item
-        row-by-row DELETE either (see _start_schedulers()), even for
-        delete-action items specifically. This is intentional, not an
-        oversight to "fix" by resurrecting manual deletion for delete-only
-        items: doing so would defeat the reason a coarse global threshold
-        is acceptable at all - native columnar compression (Tier 2 part 3,
-        measured 17.39x on real data) already absorbs the cost of keeping
-        raw data around longer than any single item strictly needs, so
-        precise per-item pruning stops being worth the complexity once
-        compression is doing the real work. If timescale_native_retention
-        is off entirely, the same logic still applies one step further:
-        nothing prunes raw data at all, indefinitely - also deliberate, not
-        a gap (see timescale_native_retention's own plugin.yaml
-        description).
-        """
-        log_table = self._replace['log']
-        max_maxage_days = self._default_maxage if self._default_maxage > 0 else 0.0
-        for item in self._items_with_maxage:
-            if self.has_iattr(item.conf, 'database_maxage'):
-                try:
-                    max_maxage_days = max(max_maxage_days, float(self.get_iattr_value(item.conf, 'database_maxage')))
-                except (TypeError, ValueError):
-                    continue
-        if max_maxage_days <= 0:
-            self.logger.warning(
-                'Database: timescale_native_retention is enabled but no item (or default_maxage) configures a '
-                'database_maxage - nothing to retain against, skipping'
-            )
-            return
-        drop_after_ms = int(max_maxage_days * 86400000) + self._timescale_chunk_interval_ms
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    'SELECT add_retention_policy(:table, drop_after => :drop_after_ms, if_not_exists => TRUE);',
-                    {'table': log_table, 'drop_after_ms': drop_after_ms},
-                    cur=cur,
-                )
-            self.logger.notice(f'Database: native retention enabled on {log_table} (drop_after={drop_after_ms}ms)')
-        except Exception as e:
-            self.logger.warning(f'Database: could not enable native retention on {log_table} ({e})')
+        """See TimescaleManager.enable_native_retention() (timescale.py)."""
+        return self._timescale.enable_native_retention()
 
     def _native_retention_active_in_db(self):
-        """True if a native retention (chunk-drop) job is currently
-        scheduled against {log}, regardless of what this instance's own
-        config claims - a TimescaleDB policy is the database server's own
-        background job, entirely independent of shng being up, down, or
-        ever started (see _reconcile_native_retention_reality())."""
-        log_table = self._replace['log']
-        result = self._fetchall(
-            "SELECT 1 FROM timescaledb_information.jobs WHERE proc_name = 'policy_retention' "
-            'AND hypertable_name = :table LIMIT 1;',
-            {'table': log_table},
-        )
-        return bool(result)
+        """See TimescaleManager.native_retention_active_in_db() (timescale.py)."""
+        return self._timescale.native_retention_active_in_db()
 
     def _hypertable_active_in_db(self):
-        """True if {log} is currently a TimescaleDB hypertable in the real
-        database, regardless of what timescale_hypertable currently says -
-        same reality-over-config rationale as _native_retention_active_in_db().
-        Raises like that method does; callers needing a non-raising check
-        (e.g. against a plain PostgreSQL server with no TimescaleDB
-        extension) should use timescale_status()."""
-        log_table = self._replace['log']
-        result = self._fetchall(
-            'SELECT 1 FROM timescaledb_information.hypertables WHERE hypertable_name = :table LIMIT 1;',
-            {'table': log_table},
-        )
-        return bool(result)
+        """See TimescaleManager.hypertable_active_in_db() (timescale.py)."""
+        return self._timescale.hypertable_active_in_db()
 
     def _native_cagg_active_in_db(self):
-        """True if at least one native TimescaleDB continuous aggregate
-        exists for {log} in the real database, regardless of what
-        timescale_native_aggregation currently says - same reality-over-
-        config rationale as _native_retention_active_in_db()."""
-        log_table = self._replace['log']
-        result = self._fetchall(
-            'SELECT 1 FROM timescaledb_information.continuous_aggregates WHERE hypertable_name = :table LIMIT 1;',
-            {'table': log_table},
-        )
-        return bool(result)
+        """See TimescaleManager.native_cagg_active_in_db() (timescale.py)."""
+        return self._timescale.native_cagg_active_in_db()
 
     def timescale_status(self):
-        """Reality-checked TimescaleDB status for {log}, independent of
-        what timescale_hypertable/timescale_native_aggregation/
-        timescale_native_retention currently say in plugin.yaml - config
-        can drift from the database's actual state (see
-        _reconcile_native_retention_reality()'s docstring for why). Used by
-        the dashboard's database-properties widget to show what's actually
-        active, not what's configured.
-
-        A value of None means the check itself failed (e.g. the
-        TimescaleDB extension isn't installed, so its catalog views don't
-        exist) - distinct from False, which means the check ran and found
-        the feature inactive.
-
-        :return: {'hypertable': bool | None, 'native_cagg': bool | None,
-            'native_retention': bool | None}, or {} for a non-psycopg driver.
-        """
-        if self.driver.lower() not in lib.db.Database._psycopg_driver_names:
-            return {}
-        checks = {
-            'hypertable': self._hypertable_active_in_db,
-            'native_cagg': self._native_cagg_active_in_db,
-            'native_retention': self._native_retention_active_in_db,
-        }
-        status = {}
-        for key, check in checks.items():
-            try:
-                status[key] = check()
-            except Exception as e:
-                self.logger.warning(f'Database: could not check {key} status ({e})')
-                status[key] = None
-        return status
+        """See TimescaleManager.status() (timescale.py)."""
+        return self._timescale.status()
 
     def _disable_native_retention_policy(self):
-        """Remove an active retention policy - the one deliberate exception
-        to this plugin never tearing down a TimescaleDB policy on its own
-        (see timescale_compress/timescale_native_retention's own plugin.yaml
-        descriptions on why that's normally not done). Justified here
-        specifically because remove_retention_policy() only stops *future*
-        drops - it cannot undo chunks already gone - so automating it
-        carries none of the casual-reversal risk that ruled out automatic
-        teardown everywhere else.
-
-        :returns: True if the policy was actually removed, False on failure -
-            the caller falls back to _force_native_mode_for_safety() when
-            False, since the policy stays active either way.
-        """
-        log_table = self._replace['log']
-        try:
-            with self._db.transaction() as cur:
-                self._db.execute(
-                    'SELECT remove_retention_policy(:table, if_exists => TRUE);', {'table': log_table}, cur=cur
-                )
-            self.logger.critical(f'Database: removed the active native retention policy on {log_table}.')
-            return True
-        except Exception as e:
-            self.logger.critical(f'Database: could not remove the active native retention policy on {log_table} ({e}).')
-            return False
+        """See TimescaleManager.disable_native_retention_policy() (timescale.py)."""
+        return self._timescale.disable_native_retention_policy()
 
     def _force_native_mode_for_safety(self, reason):
-        """Force timescale_native_aggregation to True for this run only -
-        never rewrites plugin.yaml. Shared by every _reconcile_native_
-        retention_reality() branch that ends up here, so the corrective
-        action and its message stay identical regardless of which
-        real/configured-state mismatch triggered it.
-
-        :param reason: One sentence, no trailing period - what was found
-            that makes this necessary.
-        """
-        self.logger.critical(
-            f'Database: {reason} - forcing native mode for THIS RUN to prevent data loss. Stopping shng does NOT '
-            'stop the retention policy. Edit plugin.yaml (timescale_native_aggregation: true) to make this '
-            'permanent and clear this warning.'
-        )
-        self._timescale_native_aggregation = True
+        """See TimescaleManager.force_native_mode_for_safety() (timescale.py)."""
+        return self._timescale.force_native_mode_for_safety(reason)
 
     def _reconcile_native_retention_reality(self):
-        """Called once per run(), before any native-mode setup: checks
-        whether a retention policy is *actually* active against the real
-        database, independent of what timescale_native_retention/
-        timescale_native_aggregation currently say - config can drift from
-        reality (an admin edits plugin.yaml while shng is stopped, an
-        unattended restart never surfaces a critical log to anyone), and a
-        TimescaleDB retention policy runs on its own schedule regardless of
-        shng's state, so passive logging alone cannot prevent the unsafe
-        combination (native retention dropping chunks while plugin-mode
-        compaction stores aggregates in-place in those same chunks) from
-        silently causing data loss. 2026-09-04 design decision: self-correct
-        rather than merely warn, since a wrong auto-correction is a loud,
-        recoverable inconvenience (edit plugin.yaml, done) while leaving the
-        unsafe combination running is an irreversible one.
-
-        Four cases, always logged at CRITICAL except the last:
-
-        - Active + configured active, but timescale_native_aggregation is
-          False: force native mode for this run.
-        - Active but configured off: remove the policy. If that fails,
-          same forced-native fallback as above - the policy stays active
-          either way, so the run still needs to be safe under it.
-        - Not active, but configured active with timescale_native_aggregation
-          False: refuse to enable it this run - nothing dangerous is
-          happening yet, so no self-correction is needed, just don't create
-          it.
-        - Not active, configured active, timescale_native_aggregation
-          already True: the normal, safe, aligned state - no warning,
-          proceeds as usual.
-        """
-        try:
-            active = self._native_retention_active_in_db()
-        except Exception as e:
-            self.logger.warning(f'Database: could not check for an active native retention policy ({e})')
-            return
-
-        if active and self._timescale_native_retention:
-            if not self._timescale_native_aggregation:
-                self._force_native_mode_for_safety(
-                    'native retention is active but timescale_native_aggregation is not enabled'
-                )
-        elif active and not self._timescale_native_retention:
-            self.logger.critical(
-                'Database: native retention is active but timescale_native_retention is False in plugin.yaml - '
-                'removing the policy to match configured intent. This does not undo raw data already deleted.'
-            )
-            removed = self._disable_native_retention_policy()
-            if not removed and not self._timescale_native_aggregation:
-                self._force_native_mode_for_safety(
-                    'native retention is active, not configured, and could not be removed'
-                )
-        elif not active and self._timescale_native_retention and not self._timescale_native_aggregation:
-            self.logger.critical(
-                'Database: timescale_native_retention is enabled but timescale_native_aggregation is not - '
-                'refusing to enable retention this run. Set timescale_native_aggregation: true to enable '
-                'native retention.'
-            )
-            self._timescale_native_retention = False
+        """See TimescaleManager.reconcile_native_retention_reality() (timescale.py)."""
+        return self._timescale.reconcile_native_retention_reality()
 
     def _mark_db_broken(self, e):
         """Called once, when either connection's setup() raises

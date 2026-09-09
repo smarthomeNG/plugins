@@ -48,7 +48,7 @@ class TestDriverAliases(TestDatabaseBase):
                 raise ImportError('simulated: psycopg2 not installed')
             return mock.DEFAULT
 
-        with mock.patch('plugins.database.importlib.import_module', side_effect=fake_import):
+        with mock.patch('plugins.database.timescale.importlib.import_module', side_effect=fake_import):
             resolved = plugin._resolve_postgres_driver_alias('postgresql')
         self.assertEqual('psycopg', resolved)
 
@@ -58,6 +58,6 @@ class TestDriverAliases(TestDatabaseBase):
         # calls are filtered before assertLogs ever sees them; see
         # test_timescale_hypertable.py's identical, already-documented case.
         plugin = self.plugin()
-        with mock.patch('plugins.database.importlib.import_module', side_effect=ImportError('simulated')):
+        with mock.patch('plugins.database.timescale.importlib.import_module', side_effect=ImportError('simulated')):
             resolved = plugin._resolve_postgres_driver_alias('timescale')
         self.assertEqual('psycopg2', resolved)
