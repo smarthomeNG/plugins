@@ -67,10 +67,14 @@ class SmartVisuGenerator:
         self.thisplg_dir = os.path.dirname(os.path.abspath(__file__))
         self.shng_tpldir = os.path.join(self.thisplg_dir, 'tplNG')
 
+        # get smartVISU integrated templates directory
         self.sv_tpldir = os.path.join(self.smartvisu_dir, 'pages', '_template')
-        self.gen_tpldir = os.path.join(self.smartvisu_dir, 'pages', 'base', 'tplNG')
+
+        # set working directory for generating pages
         if self.smartvisu_version >= '2.9':
-            self.gen_tpldir = os.path.join(self.smartvisu_dir, 'dropins')
+            self.gen_tpldir = os.path.join(self.smartvisu_dir, 'dropins', 'shtemplates')
+        else:
+            self.gen_tpldir = os.path.join(self.smartvisu_dir, 'pages', 'base', 'tplNG')
 
         self.tmpdir = os.path.join(self.smartvisu_dir, 'temp')
         self.pages_dir = os.path.join(self.smartvisu_dir, 'pages', 'smarthome')
@@ -173,7 +177,7 @@ class SmartVisuGenerator:
                 else:
                     heading_buttons_icon = []  # create empty list, if no icons are defined
 
-                # Determine activ Button and set html class for it
+                # Determine active Button and set html class for it
                 heading_buttons_active = [''] * button_count
 
                 for i in range(0, len(heading_buttons_room)):
@@ -493,13 +497,18 @@ class SmartVisuGenerator:
         self.write_navigation_and_pages('category', 'category_menu.html')
         self.write_navigation_and_pages('room_lite', 'roomlite_nav.html')
 
-        # copy templates from plugin's template folder to pages folder for templates
+        # copy templates from working directory to pages folder 
         self.copy_tpl('rooms.html')
         self.copy_tpl('rooms_lite.html')
         self.copy_tpl('category.html')
         self.copy_tpl('index.html')
-        self.copy_tpl('visu.css')
         self.copy_tpl('infoblock.html')
+        
+        # copy stylesheet to ./dropins folder
+        try:
+            shutil.copy(os.path.join(self.gen_tpldir, 'shstyles.css'), os.path.join(self.smartvisu_dir, 'dropins', 'shstyles.css'))
+        except Exception:
+            self.logger.error(f"Could not copy shstyles.css from {self.gen_tpldir} to {os.path.join(self.smartvisu_dir, 'dropins', 'shstyles.css')}")
 
     #########################################################################
 
@@ -757,25 +766,38 @@ class SmartVisuGenerator:
             self.logger.warning(f'copy_templates: Could not find source directory {self.shng_tpldir}')
             return
 
+        # create working directory
+        try:
+            os.mkdir(self.gen_tpldir)
+        except Exception:
+            pass
+
         if self.smartvisu_version >= '2.9':
             for fn in os.listdir(self.shng_tpldir):
+                # move existing templates from old to new working directory
+                if (os.path.isfile(os.path.join(self.smartvisu_dir, 'dropins', fn))):
+                    self.logger.debug(
+                        f"copy_templates: Moving template '{fn}' from old to new working directory: smartVISU v{self.smartvisu_version} ({self.gen_tpldir})"
+                    )
+                    shutil.move(os.path.join(self.smartvisu_dir, 'dropins', fn), self.gen_tpldir)
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
                     self.logger.debug(
                         f"copy_templates: Copying template '{fn}' from plugin to smartVISU v{self.smartvisu_version} ({self.gen_tpldir})"
                     )
                     shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
+            # copy smartVISU integrated templates to pages folder
             shutil.copy2(os.path.join(self.sv_tpldir, 'index.html'), self.pages_dir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'rooms.html'), self.pages_dir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'visu.css'), self.pages_dir)
             if self.smartvisu_version >= '3.2':
                 shutil.copy2(os.path.join(self.sv_tpldir, 'infoblock.html'), self.gen_tpldir)
+            # issue a warning if there is still a 'visu.css' in the  ./dropins folder
+            if (os.path.isfile(os.path.join(self.smartvisu_dir, 'dropins', 'visu.css'))):
+                self.logger.warning(
+                    f"copy_templates: probably old 'visu.css' found in {self.smartvisu_dir}/dropins. Please check / delete manually."
+                )
 
         else:  # sv v2.7 & v2.8
-            # create output directory
-            try:
-                os.mkdir(self.gen_tpldir)
-            except Exception:
-                pass
             # Open file for twig import statements (for root.html)
             for fn in os.listdir(self.shng_tpldir):
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
