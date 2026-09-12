@@ -775,11 +775,15 @@ class SmartVisuGenerator:
         if self.smartvisu_version >= '2.9':
             for fn in os.listdir(self.shng_tpldir):
                 # move existing templates from old to new working directory
-                if (os.path.isfile(os.path.join(self.smartvisu_dir, 'dropins', fn))):
+                if (os.path.isfile(os.path.join(self.smartvisu_dir, 'dropins', fn)) and not fn == 'shstyles.css'):
                     self.logger.debug(
                         f"copy_templates: Moving template '{fn}' from old to new working directory: smartVISU v{self.smartvisu_version} ({self.gen_tpldir})"
                     )
-                    shutil.move(os.path.join(self.smartvisu_dir, 'dropins', fn), self.gen_tpldir)
+                    try:
+                        shutil.move(os.path.join(self.smartvisu_dir, 'dropins', fn), self.gen_tpldir)
+                    except Exception:                 
+                        self.logger.error(f'Could not move {fn} from {self.smartvisu_dir}/dropins to {self.gen_tpldir}. Please check manually.')
+ 
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
                     self.logger.debug(
                         f"copy_templates: Copying template '{fn}' from plugin to smartVISU v{self.smartvisu_version} ({self.gen_tpldir})"
