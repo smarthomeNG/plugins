@@ -22,6 +22,48 @@ welches bereits mit Python oder MySQL gebundeled ist, und über das
 optional mit der `TimescaleDB <https://www.timescale.com/>`_ Extension - siehe
 "PostgreSQL+TimescaleDB Unterstützung" weiter unten).
 
+Installation der Datenbank
+===========================
+
+.. index:: database; Datenbank installieren
+
+Alle drei Datenbanken speichern die gleichen Daten im gleichen Schema; das Plugin verhält sich
+aus Sicht der Items identisch. Der Unterschied liegt im Installationsaufwand und darin, was mit
+großen Datenmengen passiert:
+
++------------------------+--------------------------------+--------------------------------+--------------------------------------+
+|                        | SQLite3                        | MySQL/MariaDB                  | PostgreSQL+TimescaleDB               |
++========================+================================+================================+======================================+
+| Installationsaufwand   | keiner (in Python enthalten)   | Serverpaket installieren und   | Serverpaket installieren, optional   |
+|                        |                                | einrichten                     | zusätzlich TimescaleDB-Paketquelle   |
+|                        |                                |                                | einrichten                           |
++------------------------+--------------------------------+--------------------------------+--------------------------------------+
+| Datenhaltung           | eine einzelne Datei            | eigener Datenbankserver        | eigener Datenbankserver              |
+|                        |                                | (Client/Server)                | (Client/Server)                      |
++------------------------+--------------------------------+--------------------------------+--------------------------------------+
+| Gut geeignet für       | kleine bis mittlere            | einen bereits vorhandenen      | sehr große Logbestände (Millionen    |
+|                        | Installationen                 | MySQL/MariaDB-Server mitnutzen | Zeilen), native Kompression und      |
+|                        |                                |                                | Aggregation direkt auf dem           |
+|                        |                                |                                | Datenbankserver                      |
++------------------------+--------------------------------+--------------------------------+--------------------------------------+
+| Standard im Plugin     | ja (``driver: sqlite3``)       | nein                           | nein                                 |
++------------------------+--------------------------------+--------------------------------+--------------------------------------+
+
+Im Zweifel ist SQLite3 der einfachste Einstieg und für die meisten Installationen ausreichend.
+SQLite3 ist Teil der Python Standardbibliothek und damit bereits vorhanden, sobald Python selbst
+installiert ist - es ist keine weitere Installation notwendig. Das Plugin legt die Datenbankdatei
+beim ersten Start selbstständig an.
+
+Wer stattdessen MySQL/MariaDB oder PostgreSQL+TimescaleDB nutzen möchte, findet die Installation
+und Grundeinrichtung des jeweiligen Datenbankservers auf den folgenden Seiten:
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   user_doc/mysql
+   user_doc/timescale
+
 Konfiguration
 =============
 
