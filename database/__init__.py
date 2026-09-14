@@ -1694,13 +1694,15 @@ class Database(SmartPlugin):
     #    Database specific stuff to support websocket/visu
     # ------------------------------------------------------
 
-    def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+    def _series(
+        self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None, executor=None
+    ):
         """See QueryEngine.series() (query.py)."""
-        return self._query_engine.series(func, start, end, count, ratio, update, step, sid, item)
+        return self._query_engine.series(func, start, end, count, ratio, update, step, sid, item, executor)
 
-    def _single(self, func, start, end='now', item=None):
+    def _single(self, func, start, end='now', item=None, executor=None):
         """See QueryEngine.single() (query.py)."""
-        return self._query_engine.single(func, start, end, item)
+        return self._query_engine.single(func, start, end, item, executor)
 
     def _native_cagg_view(self, item):
         """See QueryEngine.native_cagg_view() (query.py)."""
@@ -1710,13 +1712,13 @@ class Database(SmartPlugin):
         """See QueryEngine.item_for_id() (query.py)."""
         return self._query_engine.item_for_id(item_id)
 
-    def _native_cagg_single(self, func, start, end, item):
+    def _native_cagg_single(self, func, start, end, item, executor=None):
         """See QueryEngine.native_cagg_single() (query.py)."""
-        return self._query_engine.native_cagg_single(func, start, end, item)
+        return self._query_engine.native_cagg_single(func, start, end, item, executor)
 
-    def _native_cagg_series(self, func, istart, iend, step, item):
+    def _native_cagg_series(self, func, istart, iend, step, item, executor=None):
         """See QueryEngine.native_cagg_series() (query.py)."""
-        return self._query_engine.native_cagg_series(func, istart, iend, step, item)
+        return self._query_engine.native_cagg_series(func, istart, iend, step, item, executor)
 
     def _native_cagg_count(self, item, item_id, time_start, time_end):
         """See QueryEngine.native_cagg_count() (query.py)."""
@@ -1742,9 +1744,11 @@ class Database(SmartPlugin):
         """See QueryEngine.fetch_log_base_where() (query.py)."""
         return self._query_engine.fetch_log_base_where()
 
-    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', table=None):
+    def _fetch_log(
+        self, item, columns, start, end, step=None, count=100, group='', order='', table=None, executor=None
+    ):
         """See QueryEngine.fetch_log() (query.py)."""
-        return self._query_engine.fetch_log(item, columns, start, end, step, count, group, order, table)
+        return self._query_engine.fetch_log(item, columns, start, end, step, count, group, order, table, executor)
 
     def _parse_ts(self, dts):
         """See QueryEngine.parse_ts() (query.py)."""

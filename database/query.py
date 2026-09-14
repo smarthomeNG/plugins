@@ -57,7 +57,9 @@ class QueryEngine:
     def __init__(self, plugin):
         self._plugin = plugin
 
-    def series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+    def series(
+        self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None, executor=None
+    ):
         """
         This method is called (via the item object) from the websocket plugin,
         when a data series for an item is requested for the visu
@@ -74,6 +76,11 @@ class QueryEngine:
         :param step:
         :param sid:
         :param item:
+        :param executor: Optional ``fetchall(query, params)`` callable to run the assembled
+            query through instead of the owning plugin's own connection (``plugin._fetchall``,
+            the default when omitted) - lets a caller on a different connection (e.g. db_addon)
+            reuse this dialect/cagg-aware query logic without funneling through this plugin's
+            connection and its lock. See doc/dev/database/database.md §8.
 
         :return: data structure in the form needed by the websocket plugin return it to the visu
         """
@@ -103,7 +110,14 @@ class QueryEngine:
             'avg': self.time_precision_query('MIN(time)')
             + ', '
             + self.precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'avg.order': 'ORDER BY time ASC',
+            # MIN(time), not bare time - avg/on/duty_cycle are always bucketed by the
+            # step GROUP BY below (no .group override), and ordering by a column
+            # that's neither grouped nor aggregated is rejected outright by Postgres
+            # ("column log.time must appear in the GROUP BY clause or be used in an
+            # aggregate function"). MIN(time) is the same aggregate already used in
+            # the SELECT list. raw.order is untouched - raw.group overrides to no
+            # GROUP BY at all, so its bare `time` has nothing to conflict with.
+            'avg.order': 'ORDER BY MIN(time) ASC',
             'integrate': self.time_precision_query('MIN(time)') + ', SUM(val_num * duration)',
             # SUM(diffval): total net change during the bucket. Rows with no
             # predecessor (diffval IS NULL - the very first row in range)
@@ -134,12 +148,12 @@ class QueryEngine:
             'on': self.time_precision_query('MIN(time)')
             + ', '
             + self.precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'on.order': 'ORDER BY time ASC',
+            'on.order': 'ORDER BY MIN(time) ASC',
             # 'duty_cycle': same query as 'on' under its more descriptive name - both accepted, kept in sync.
             'duty_cycle': self.time_precision_query('MIN(time)')
             + ', '
             + self.precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'duty_cycle.order': 'ORDER BY time ASC',
+            'duty_cycle.order': 'ORDER BY MIN(time) ASC',
             'sum': self.time_precision_query('MIN(time)') + ', SUM(val_num)',
             'raw': self.time_precision_query('time') + ', val_num',
             'raw.order': 'ORDER BY time ASC',
@@ -157,9 +171,20 @@ class QueryEngine:
         group = 'GROUP BY (time - (time % :step))' if func + '.group' not in queries else queries[func + '.group']
         table = queries.get(func + '.table')
         logs = plugin._fetch_log(
-            item, queries[func], start, end, step=step, count=count, group=group, order=order, table=table
+            item,
+            queries[func],
+            start,
+            end,
+            step=step,
+            count=count,
+            group=group,
+            order=order,
+            table=table,
+            executor=executor,
         )
-        native_tuples = plugin._native_cagg_series(func, logs['istart'], logs['iend'], logs['step'], logs['item'])
+        native_tuples = plugin._native_cagg_series(
+            func, logs['istart'], logs['iend'], logs['step'], logs['item'], executor=executor
+        )
         if native_tuples:
             logs['tuples'] = native_tuples + logs['tuples']
         tuples = logs['tuples']
@@ -208,7 +233,7 @@ class QueryEngine:
 
         return result
 
-    def single(self, func, start, end='now', item=None):
+    def single(self, func, start, end='now', item=None, executor=None):
         """
         This function is not used by any other plugin but can be used in logics
 
@@ -216,6 +241,7 @@ class QueryEngine:
         :param start:
         :param end:
         :param item:
+        :param executor: See series()'s docstring - same optional connection override.
         :return:
         """
         plugin = self._plugin
@@ -239,11 +265,11 @@ class QueryEngine:
         if func not in queries:
             plugin.logger.warning('Unknown export function: {0}'.format(func))
             return
-        native_result = plugin._native_cagg_single(func, start, end, item)
+        native_result = plugin._native_cagg_single(func, start, end, item, executor=executor)
         if native_result is not None:
             return native_result[0]
         order = '' if func + '.order' not in queries else queries[func + '.order']
-        logs = plugin._fetch_log(item, queries[func], start, end, order=order)
+        logs = plugin._fetch_log(item, queries[func], start, end, order=order, executor=executor)
         # Every func here except 'raw' is an ungrouped SQL aggregate
         # (MIN/MAX/SUM/...), which always returns exactly one row - a NULL
         # one if nothing matched, not zero rows. 'raw' has no aggregate and
@@ -289,7 +315,7 @@ class QueryEngine:
         plugin._item_by_id_cache[item_id] = item
         return item
 
-    def native_cagg_single(self, func, start, end, item):
+    def native_cagg_single(self, func, start, end, item, executor=None):
         """_single()'s native-mode cagg path - deliberately narrow: only
         handles the case where the *entire* [start, end) range predates the
         raw floor (native retention has already dropped raw data for all of
@@ -326,7 +352,7 @@ class QueryEngine:
             return None  # touches still-raw territory - use the precise raw path, not a coarser cagg stitch
         if func in self._NATIVE_CAGG_SINGLE_PRECISION_FUNCS:
             expr = self.precision_query(expr)
-        result = plugin._fetchall(
+        result = (executor or plugin._fetchall)(
             f'SELECT {expr} FROM {cagg_name} WHERE item_id=:id AND bucket >= :time_start AND bucket < :time_end;',
             {'id': item_id, 'time_start': istart, 'time_end': iend},
         )
@@ -334,7 +360,7 @@ class QueryEngine:
             return (None,)
         return (result[0][0],)
 
-    def native_cagg_series(self, func, istart, iend, step, item):
+    def native_cagg_series(self, func, istart, iend, step, item, executor=None):
         """_series()'s native-mode cagg supplement - covers whatever portion
         of [istart, iend) predates the raw floor, re-bucketed to the
         caller's own :step width via the same modulo-regroup _series()
@@ -381,7 +407,7 @@ class QueryEngine:
             return None  # nothing in this range predates the raw floor
         if func in self._NATIVE_CAGG_SINGLE_PRECISION_FUNCS:
             expr = self.precision_query(expr)
-        result = plugin._fetchall(
+        result = (executor or plugin._fetchall)(
             f'SELECT (bucket - (bucket % :step)) AS out_bucket, {expr} FROM {cagg_name} '
             'WHERE item_id=:id AND bucket >= :time_start AND bucket < :time_end '
             'GROUP BY out_bucket ORDER BY out_bucket;',
@@ -481,7 +507,7 @@ class QueryEngine:
             'time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start)'
         )
 
-    def fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', table=None):
+    def fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', table=None, executor=None):
         plugin = self._plugin
         _item = plugin.items.return_item(item)
 
@@ -506,18 +532,30 @@ class QueryEngine:
         duration_now = 'COALESCE(duration, :inow - time)'
 
         # Duration calculation (S=Start, E=End):
+        #
+        # Every boolean comparison below is wrapped in CASE WHEN ... THEN 1 ELSE 0
+        # END rather than multiplied into the expression directly - sqlite3/pymysql
+        # implicitly coerce a boolean to 0/1 in an arithmetic context, but PostgreSQL
+        # doesn't ("operator does not exist: bigint * boolean") and has no bool->int
+        # cast either; CASE WHEN is the one portable way to turn a comparison into a
+        # number on all three backends. Same category of Postgres strictness
+        # precision_query() below already works around for ROUND()/DECIMAL.
         duration = (
             '('
             #    ----------|<--------------------------->|---------->
             # 1. Duration for items within the given start/end range
             #    -----------------[S]======[E]---------------------->
-            'COALESCE(duration * (time >= :time_start) * (time + duration <= :time_end), 0) + '
+            'COALESCE(duration * (CASE WHEN time >= :time_start THEN 1 ELSE 0 END) * '
+            '(CASE WHEN time + duration <= :time_end THEN 1 ELSE 0 END), 0) + '
             # 2. Duration for items partially before start but ends after start
             #    -----[S]======[E]---------------------------------->
-            'COALESCE(duration / duration * (time + duration - :time_start) * (time < :time_start) * (time + duration >= :time_start), 0) + '
+            'COALESCE(duration / duration * (time + duration - :time_start) * '
+            '(CASE WHEN time < :time_start THEN 1 ELSE 0 END) * '
+            '(CASE WHEN time + duration >= :time_start THEN 1 ELSE 0 END), 0) + '
             #    ----------------------------------[S]======[E]----->
             # 3. Duration for items partially after end but starts before end
-            'COALESCE(duration_now / duration_now * (:time_end - time) * (time + duration_now >= :time_end), 0)'
+            'COALESCE(duration_now / duration_now * (:time_end - time) * '
+            '(CASE WHEN time + duration_now >= :time_end THEN 1 ELSE 0 END), 0)'
             ')'
         )
 
@@ -549,7 +587,7 @@ class QueryEngine:
         # get a duration value referring to the current timestamp - if required.
         query = query.replace('duration_now', duration_now)
 
-        logs = plugin._fetchall(query, params)
+        logs = (executor or plugin._fetchall)(query, params)
         if logs:
             # MariaDB/MySQL return Decimal (not float) for SUM()/AVG() over
             # exact-numeric columns - e.g. 'on''s SUM(val_bool * duration),

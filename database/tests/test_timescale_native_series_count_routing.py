@@ -108,7 +108,7 @@ class TestSeriesUsesNativeCaggSupplement(TestDatabaseBase):
         with mock.patch.object(plugin, '_fetch_log', return_value=fake_logs):
             with mock.patch.object(plugin, '_native_cagg_series', return_value=[(0, 1.0)]) as native:
                 result = plugin._series('avg', 0, 1000, item='main.num')
-        native.assert_called_once_with('avg', 0, 1000, 100, item_obj)
+        native.assert_called_once_with('avg', 0, 1000, 100, item_obj, executor=None)
         # (1000, 9.0) is _series()'s own pre-existing end-boundary append
         # (end != 'now' extends the last value forward to iend) - unrelated
         # to native routing, confirms prepending composes correctly with it.
