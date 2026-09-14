@@ -9,6 +9,10 @@
 
 @CHARSET "UTF-8";
 
+/** reduce icon size in header menu 
+ * uncomment for small displays if there is not enough space for the desired quantity of menu items
+ * better solution: reduce icons on small displays with classes .hide-phone and .hide-smallphone
+ 
 @media (max-width: 768px) {
     .ui-header {
         height: 45px;
@@ -24,6 +28,7 @@
         margin: 0 0 6px 30px;
     }
 }
+*/
 
 .nav-custom .ui-btn {
 	padding-top: 40px !important;
