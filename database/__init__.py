@@ -39,6 +39,7 @@ from lib.shtime import Shtime
 from lib.item import Items
 
 from lib.model.smartplugin import SmartPlugin
+from lib.module import Modules
 
 from .buffer import BufferManager
 from .maintenance import MaintenanceManager
@@ -1682,9 +1683,29 @@ class Database(SmartPlugin):
         """See MaintenanceManager.delete_orphan() (maintenance.py)."""
         return self._maintenance.delete_orphan(item_path)
 
+    def delete_orphan_now(self, item_path):
+        """See MaintenanceManager.delete_orphan_now() (maintenance.py)."""
+        return self._maintenance.delete_orphan_now(item_path)
+
     def remove_orphan_items(self):
         """See MaintenanceManager.remove_orphan_items() (maintenance.py)."""
         return self._maintenance.remove_orphan_items()
+
+    def audit_maxage(self):
+        """See MaintenanceManager.audit_maxage() (maintenance.py)."""
+        return self._maintenance.audit_maxage()
+
+    def adminui_url_root(self):
+        """
+        Base URL of the shngadmin frontend, for building links from the web interface
+        into shngadmin - reuses the admin module's own url_root rather than a
+        separate plugin parameter, since that module already resolves it from the
+        http module's ip/port and the admin module's suburl.
+
+        :return: base URL (no trailing slash), or '' if the admin module isn't loaded
+        """
+        mod_admin = Modules.get_instance().get_module('admin')
+        return mod_admin.url_root if mod_admin else ''
 
     def cleanup(self):
         """See MaintenanceManager.cleanup() (maintenance.py)."""

@@ -28,6 +28,32 @@ plugin_translations:
     'Database Items':     {'de': '=', 'en': '='}
     'Verwaiste Items':    {'de': '=', 'en': 'Orphan Items'}
     'Parameter':          {'de': '=', 'en': 'Parameters'}
+    'Löschen':            {'de': '=', 'en': 'Delete'}
+    'Item':               {'de': '=', 'en': '='}
+    'Aufbewahrungs-Audit':
+        'de': '='
+        'en': 'Retention Audit'
+    'Keine Auffälligkeiten gefunden.':
+        'de': '='
+        'en': 'No issues found.'
+    'Items ohne eigenes database_maxage_action':
+        'de': '='
+        'en': 'Items without their own database_maxage_action'
+    'Diese Items haben ein wirksames maximales Alter, löschen ältere Daten aber über die geerbte Standardaktion statt über eine eigene, bewusst gesetzte database_maxage_action.':
+        'de': '='
+        'en': 'These items have an effective maximum age, but delete older data via the inherited default action instead of their own, deliberately set database_maxage_action.'
+    'geerbte Aktion':
+        'de': '='
+        'en': 'inherited action'
+    'Items ohne max. Alter (unbegrenztes Wachstum)':
+        'de': '='
+        'en': 'Items without max. age (unbounded growth)'
+    'Wollen Sie das verwaiste Item':
+        'de': '='
+        'en': 'Do you want to permanently delete the orphan item'
+    'und alle zugehörigen Daten endgültig löschen?':
+        'de': '='
+        'en': 'and all its associated data?'
 
     'Wert':               {'de': '=', 'en': 'Value'}
     'DB-ID':              {'de': '=', 'en': '='}

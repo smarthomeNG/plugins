@@ -157,10 +157,19 @@
 
 
 {% if len(p.orphanlist) > 0 %}
-	{% set tabcount = 3 %}
-{%  endif %}
+	{% set tab3title = _('Verwaiste Items') %}
+{% else %}
+	{% set tab3title = "hidden" %}
+{% endif %}
 
-{% set tab3title = _('Verwaiste Items') %}
+{% if len(silent_delete_items) > 0 %}
+	{% set tab4title = '<span class="text-danger-emphasis">' ~ _('Aufbewahrungs-Audit') ~ '</span>' %}
+{% else %}
+	{% set tab4title = _('Aufbewahrungs-Audit') %}
+{% endif %}
+
+{% set tabcount = 4 %}
+
 {% block bodytab3 %}
 
 <script type="text/javascript">
@@ -190,7 +199,26 @@
 			success: function() {
 				document.getElementById('orphanModal').style.display = 'none';
 				// reload page to reflect recalculated orphans
-				setTimeout(window.location.reload(), 3000); 
+				setTimeout(window.location.reload(), 3000);
+			}
+		})
+	}
+
+	function deleteOrphanNow(orphanItem) {
+		if (!confirm('{{ _('Wollen Sie das verwaiste Item') }} ' + orphanItem + ' {{ _('und alle zugehörigen Daten endgültig löschen?') }}')) {
+			return;
+		}
+		$.ajax({
+			type: "POST",
+			url: "delete_orphan_now",
+			data: JSON.stringify({"orphan_path": orphanItem}),
+			contentType: 'application/json',
+			dataType: 'json',
+			error: function() {
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+			},
+			success: function() {
+				setTimeout(window.location.reload(), 1000);
 			}
 		})
 	}
@@ -236,6 +264,7 @@
 			<th>{{ _('Typ') }}</th>
 			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			<th>{{ _('Neuzuweisung') }}</th>
+			<th>{{ _('Löschen') }}</th>
 			{%  if p.count_logentries %}
 				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
@@ -266,6 +295,9 @@
 				<td id="{{ item }}_orphan_reassign">
 					<button type="button" id="orphanBtn" class="btn btn-danger btn-sm" value="{{ itemid }}-{{ item }}" onclick="document.getElementById('orphan-item-name').textContent = '{{ item }}'; document.getElementById('orphan-item-id').textContent = '{{ itemid }}'; document.getElementById('orphanModal').style.display = 'block';"><i class="fas fa-share"></i></button>
 				</td>
+				<td id="{{ item }}_orphan_delete">
+					<button type="button" class="btn btn-danger btn-sm" onclick="deleteOrphanNow('{{ item }}')"><i class="fas fa-trash"></i></button>
+				</td>
 				{%  if p.count_logentries %}
 					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[p.id(item, create=False)] }}</td>
 				{% endif %}
@@ -275,6 +307,78 @@
 	</table>
 </div>
 {% endblock bodytab3 %}
+
+{% block bodytab4 %}
+{% set adminui_url = p.adminui_url_root() %}
+<div class="container-fluid m-2 table-resize">
+	{% if len(unbounded_items) == 0 and len(silent_delete_items) == 0 %}
+		<p>{{ _('Keine Auffälligkeiten gefunden.') }}</p>
+	{% endif %}
+
+	{% if len(silent_delete_items) > 0 %}
+		<h5 class="text-danger-emphasis">{{ _('Items ohne eigenes database_maxage_action') }}</h5>
+		<p>{{ _('Diese Items haben ein wirksames maximales Alter, löschen ältere Daten aber über die geerbte Standardaktion statt über eine eigene, bewusst gesetzte database_maxage_action.') }}</p>
+		<table id="audittable_delete">
+			<thead>
+			<tr>
+				<th></th>
+				<th>{{ _('Item') }}</th>
+				<th>{{ _('konfiguriertes max. Alter') }}</th>
+				<th>{{ _('geerbte Aktion') }}</th>
+				<th>{{ _('Aktionen') }}</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for item in silent_delete_items %}
+				<tr>
+					<td></td>
+					<td>{{ item.property.path }}</td>
+					<td>
+						{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
+							{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}
+						{% else %}
+							default: {{ p._default_maxage }} {{ _('Tage') }}
+						{% endif %}
+					</td>
+					<td>{{ p._maxage.action_for(item) }}</td>
+					<td>
+						{% if adminui_url %}
+							<a class="btn btn-shng btn-sm" href="{{ adminui_url }}/items?select={{ item.property.path | urlencode }}" target="_blank"><i class="fas fa-pen"></i></a>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
+
+	{% if len(unbounded_items) > 0 %}
+		<h5>{{ _('Items ohne max. Alter (unbegrenztes Wachstum)') }}</h5>
+		<table id="audittable_unbounded">
+			<thead>
+			<tr>
+				<th></th>
+				<th>{{ _('Item') }}</th>
+				<th>{{ _('Aktionen') }}</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for item in unbounded_items %}
+				<tr>
+					<td></td>
+					<td>{{ item.property.path }}</td>
+					<td>
+						{% if adminui_url %}
+							<a class="btn btn-shng btn-sm" href="{{ adminui_url }}/items?select={{ item.property.path | urlencode }}" target="_blank"><i class="fas fa-pen"></i></a>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
+</div>
+{% endblock bodytab4 %}
 
 {% block buttons %}
 {%  if p.driver == 'sqlite3' %}

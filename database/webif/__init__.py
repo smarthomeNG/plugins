@@ -213,6 +213,8 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
 
+        unbounded_items, silent_delete_items = self.plugin.audit_maxage()
+
         return tmpl.render(
             p=self.plugin,
             webif_pagelength=pagelength,
@@ -222,6 +224,8 @@ class WebInterface(SmartPluginWebIf):
             item_id=item_id,
             delete_triggered=delete_triggered,
             language=self.plugin.get_sh().get_defaultlanguage(),
+            unbounded_items=unbounded_items,
+            silent_delete_items=silent_delete_items,
         )
 
     @cherrypy.expose
@@ -245,6 +249,27 @@ class WebInterface(SmartPluginWebIf):
             return json.dumps(result)
         else:
             self.logger.warning(f'reassigning orphaned id {orphan_id} to new id {new_id} failed')
+
+    @cherrypy.expose
+    def delete_orphan_now(self):
+        cl = cherrypy.request.headers['Content-Length']
+        if not cl:
+            return
+        try:
+            rawbody = cherrypy.request.body.read(int(cl))
+            data = json.loads(rawbody)
+        except Exception:
+            return
+        orphan_path = data.get('orphan_path')
+        if orphan_path is None:
+            self.logger.warning('delete_orphan_now: no orphan_path given')
+            return
+        try:
+            self.plugin.delete_orphan_now(orphan_path)
+        except Exception as e:
+            self._log_webif_error(f'database webif delete_orphan_now (orphan_path={orphan_path!r})', e)
+            return
+        return json.dumps({'operation': 'request', 'result': 'success'})
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):

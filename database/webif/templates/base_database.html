@@ -47,6 +47,25 @@
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {% endif %}
 
+      if ($('#audittable_delete').length) {
+        audittable_delete = $('#audittable_delete').DataTable( {
+          columnDefs: [
+          { responsivePriority: 1, targets: 1 },
+          { className: "item", targets: 1 },
+          { className: "maxage", targets: 2 },
+          { className: "no-sort actions", targets: -1 }
+          ].concat($.fn.dataTable.defaults.columnDefs)});
+      }
+
+      if ($('#audittable_unbounded').length) {
+        audittable_unbounded = $('#audittable_unbounded').DataTable( {
+          columnDefs: [
+          { responsivePriority: 1, targets: 1 },
+          { className: "item", targets: 1 },
+          { className: "no-sort actions", targets: -1 }
+          ].concat($.fn.dataTable.defaults.columnDefs)});
+      }
+
       detailtable = $('#item_details_table').DataTable( {
         order: [[2, 'desc']],
         columnDefs: [

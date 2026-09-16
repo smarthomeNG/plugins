@@ -218,6 +218,26 @@ class MaintenanceManager:
 
         return False
 
+    def delete_orphan_now(self, item_path):
+        """
+        Delete an orphan item and all its log data in one unbounded pass, triggered
+        by a direct user action rather than the scheduled cleanup cycle.
+
+        Unlike delete_orphan(), which chunks by delete_orphan_chunk_size for the
+        unattended scheduled cleanup, this mirrors deleteLog()'s own unguarded
+        single-item deletion (the plugin's existing pattern for a user-initiated
+        "delete now" click) and additionally removes the now-empty item row.
+
+        :param item_path: path_name of the (orphan) item to delete
+        """
+        plugin = self._plugin
+        item_id = plugin.id(item_path, create=False)
+        plugin.deleteLog(item_id)
+        with plugin._db_maint.transaction() as cur:
+            plugin._execute(plugin._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
+        plugin.logger.info(f'delete_orphan_now: Deleted orphan item {item_path} (id={item_id}) and its log data')
+        plugin.build_orphanlist()
+
     def remove_orphan_items(self):
         """
         Delete item and logdata of items that have no correspondance in itemtree
@@ -675,6 +695,26 @@ class MaintenanceManager:
         plugin._webdata[item.property.path].update({'logcount': logcount})
 
         return
+
+    def audit_maxage(self):
+        """
+        Check every handled item's effective retention config for two accident-prone
+        cases: no maxage in effect at all (unbounded growth), and a maxage in effect
+        where the item relies on the inherited database_maxage_action rather than
+        setting its own (silently deletes if that default is - or ever becomes -
+        'delete', unlike an item that names 'delete' itself).
+
+        :return: (unbounded, silent_delete) - two lists of items
+        """
+        plugin = self._plugin
+        unbounded = []
+        silent_delete = []
+        for item in plugin._handled_items:
+            if plugin.get_maxage_ts(item) is None:
+                unbounded.append(item)
+            elif not plugin.has_iattr(item.conf, 'database_maxage_action'):
+                silent_delete.append(item)
+        return unbounded, silent_delete
 
     def get_maxage_ts(self, item):
         """
