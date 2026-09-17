@@ -60,7 +60,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, reload=None):
+    def index(self, reload=None, action=None):
         """
         Build index.html for cherrypy
 
@@ -68,6 +68,12 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+
+        if action is not None:
+            if  action == "midnight":
+                self.plugin._midnight()
+
+
         tmpl = self.tplenv.get_template('index.html')
         # Setting pagelength (max. number of table entries per page) for web interface
         try:

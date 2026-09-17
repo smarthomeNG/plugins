@@ -146,28 +146,21 @@ class fronius(SmartPlugin):
         p_load = response['Body']['Data']['Site']['P_Load']
 
         # Calculates the sum and store it in a file so that it survives a restart
-#        try:
-#            file = open(self._datafile, 'r')
-#        except FileNotFoundError:
-#            self.logger.error('Datafile not found')
-#            file = open(self._datafile, 'w')
-#            file.write('0')
-#            self.p_pv_day = 0
-#        try:            
-#            self.p_pv_day = float(file.readline())
-#        except Exception:
-#            self.logger.error('No data in datafile')
-#            self.p_pv_day = 0
-#        file.close()
-
         try:
-            with open(self._datafile, 'r') as file:
-                self.p_pv_day = float(file.readline())
-            if not self.p_pv_day:
-                self.logger.error('no data in file ' + self._datafile)
-                self.p_pv_day = 0
-        except OSError as e:
-            self.logger.error(f'I/O error({e.errno0}): {e.stderror}')
+            file = open(self._datafile, 'r')
+        except FileNotFoundError:
+            self.logger.error('Datafile not found')
+            file = open(self._datafile, 'w')
+            file.write('0.0')
+            self.p_pv_day = 0
+            file.close()
+        file = open(self._datafile, 'r')
+        try:            
+            self.p_pv_day = float(file.readline())
+        except Exception:
+            self.logger.error('No data in datafile')
+            self.p_pv_day = 0
+        file.close()
 
         self.p_pv_day = self.p_pv_day + (p_pv * self.poll_cycle / 3600.0) 
         with open(self._datafile, 'w') as file:
@@ -201,9 +194,9 @@ class fronius(SmartPlugin):
         for item in self._items:
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day_database':
                 item(self.p_pv_day, self.get_shortname())
-        self.p_pv_day = 0
+        self.p_pv_day = 0.0
         with open(self._datafile, 'w') as file:
-            file.write('0')
+            file.write(str(self.p_pv_day))
 
     # -------------- properties for the web interface -------------------------
     @property

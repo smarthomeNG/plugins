@@ -25,6 +25,14 @@
 	}
 
     }
+
+
+    function midnight() {
+
+                window.location.href='?action=midnight';
+                return false;
+        }
+
 </script>
 {% endblock pluginscripts %}
 
@@ -96,3 +104,8 @@
         </table>
 
 {% endblock bodytab1 %}
+
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" title="{{ _('Midnight') }}" onclick="midnight()">{{ _('Midnight') }}</button>
+
+{% endblock buttons %}
