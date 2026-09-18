@@ -16,6 +16,9 @@ class TestConvertLegacyItemSchema(TestDatabaseBase):
             'CREATE TABLE item (id INTEGER, name varchar(255), time BIGINT,'
             ' val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);'
         )
+        # migrations 5/6 create these unconditionally, on every driver, including legacy tables.
+        conn.execute('CREATE UNIQUE INDEX item_id ON item (id);')
+        conn.execute('CREATE INDEX item_name ON item (name);')
         for item_id, name in rows:
             conn.execute(
                 'INSERT INTO item (id, name, time, val_str, val_num, val_bool, changed)'

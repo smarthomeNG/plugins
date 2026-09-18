@@ -256,6 +256,9 @@ class MaintenanceManager:
         backup_name = f'item_backup_{int(plugin.shtime.now().timestamp())}'
         with plugin._db_maint.transaction() as cur:
             plugin._execute(plugin._prepare('ALTER TABLE {item} RENAME TO ' + backup_name + ';'), {}, cur=cur)
+            # ALTER TABLE RENAME leaves attached indexes under their old {item}_id/{item}_name names.
+            plugin._execute(plugin._prepare('DROP INDEX IF EXISTS {item}_id;'), {}, cur=cur)
+            plugin._execute(plugin._prepare('DROP INDEX IF EXISTS {item}_name;'), {}, cur=cur)
             plugin._execute(
                 plugin._prepare(
                     'CREATE TABLE {item} (id INTEGER PRIMARY KEY, name varchar(255), time BIGINT,'
