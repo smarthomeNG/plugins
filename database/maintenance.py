@@ -238,6 +238,47 @@ class MaintenanceManager:
         plugin.logger.info(f'delete_orphan_now: Deleted orphan item {item_path} (id={item_id}) and its log data')
         plugin.build_orphanlist()
 
+    def convert_legacy_item_schema(self):
+        """
+        Rebuilds a legacy sqlite3 item table (see
+        store.ItemStore.id_is_autoincrement()) with a real
+        ``INTEGER PRIMARY KEY`` id column, copying every existing row
+        across unchanged. The old table is renamed to
+        ``item_backup_<unix timestamp>`` rather than dropped. Triggered
+        from the webif.
+
+        :return: the backup table's name, or None if the table already has the current schema
+        """
+        plugin = self._plugin
+        if plugin._item_store.id_is_autoincrement():
+            return None
+
+        backup_name = f'item_backup_{int(plugin.shtime.now().timestamp())}'
+        with plugin._db_maint.transaction() as cur:
+            plugin._execute(plugin._prepare('ALTER TABLE {item} RENAME TO ' + backup_name + ';'), {}, cur=cur)
+            plugin._execute(
+                plugin._prepare(
+                    'CREATE TABLE {item} (id INTEGER PRIMARY KEY, name varchar(255), time BIGINT,'
+                    ' val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);'
+                ),
+                {},
+                cur=cur,
+            )
+            plugin._execute(
+                plugin._prepare(
+                    'INSERT INTO {item} (id, name, time, val_str, val_num, val_bool, changed) '
+                    f'SELECT id, name, time, val_str, val_num, val_bool, changed FROM {backup_name};'
+                ),
+                {},
+                cur=cur,
+            )
+            plugin._execute(plugin._prepare('CREATE UNIQUE INDEX {item}_id ON {item} (id);'), {}, cur=cur)
+            plugin._execute(plugin._prepare('CREATE INDEX {item}_name ON {item} (name);'), {}, cur=cur)
+
+        plugin._item_store._id_autoincrement = True
+        plugin.logger.info(f'convert_legacy_item_schema: converted, old table kept as {backup_name}')
+        return backup_name
+
     def remove_orphan_items(self):
         """
         Delete item and logdata of items that have no correspondance in itemtree

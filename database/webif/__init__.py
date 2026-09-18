@@ -272,6 +272,15 @@ class WebInterface(SmartPluginWebIf):
         return json.dumps({'operation': 'request', 'result': 'success'})
 
     @cherrypy.expose
+    def convert_legacy_item_schema(self):
+        try:
+            backup_name = self.plugin.convert_legacy_item_schema()
+        except Exception as e:
+            self._log_webif_error('database webif convert_legacy_item_schema', e)
+            return
+        return json.dumps({'operation': 'request', 'result': 'success', 'backup_name': backup_name})
+
+    @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):
         """Return data to update the webpage - thin wrapper, see _get_data_html()."""
         try:

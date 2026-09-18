@@ -49,6 +49,7 @@ class ItemStore:
         self._db = db
         self._tn = table_names
         self.logger = logger or logging.getLogger(__name__)
+        self._id_autoincrement = None
 
     def _sql(self, query: str) -> str:
         return apply_table_names(query, self._tn)
@@ -81,6 +82,9 @@ class ItemStore:
         those, ``INSERT ... RETURNING id`` gets the same race-free guarantee
         in the same round-trip instead.
 
+        Falls back to :meth:`_insert_legacy_sqlite` when
+        :meth:`id_is_autoincrement` is false.
+
         :param name: Full item path (e.g. ``'solar.power'``).
         :param cur:  Optional cursor for transaction batching.
         :returns:    The new integer item ID.
@@ -95,6 +99,8 @@ class ItemStore:
                         'INSERT INTO {item}(name) VALUES(:name) RETURNING id;', {'name': name}, cur=tcur
                     )
             return int(row[0])
+        if not self.id_is_autoincrement(cur=cur):
+            return self._insert_legacy_sqlite(name, cur=cur)
         if cur is not NO_CURSOR:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=cur)
             return int(cur.lastrowid)
@@ -105,6 +111,45 @@ class ItemStore:
         with self._db.transaction() as tcur:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=tcur)
             return int(tcur.lastrowid)
+
+    def id_is_autoincrement(self, cur=NO_CURSOR) -> bool:
+        """Whether the ``item`` table's ``id`` column is sqlite3's
+        ``INTEGER PRIMARY KEY`` rowid alias, as opposed to a plain column.
+        Always true for every other driver. Checked once via
+        ``PRAGMA table_info`` and cached for the life of this instance.
+
+        :param cur: Optional cursor to run the check on.
+        :returns:   True if ``id`` autoincrements (or the driver isn't sqlite3).
+        """
+        if getattr(self._db._dbapi, '__name__', '') != 'sqlite3':
+            return True
+        if self._id_autoincrement is None:
+            rows = self._fetchall('PRAGMA table_info({item});', cur=cur)
+            self._id_autoincrement = any(row[1] == 'id' and row[5] for row in rows)
+        return self._id_autoincrement
+
+    def _insert_legacy_sqlite(self, name: str, cur=NO_CURSOR) -> int:
+        """Assigns ``id`` as ``MAX(id)+1`` instead of relying on
+        autoincrement, for a sqlite3 ``item`` table where
+        :meth:`id_is_autoincrement` is false. The read and the insert
+        always run inside one held lock - the caller's transaction if
+        *cur* is given, otherwise one opened here.
+
+        :param name: Full item path.
+        :param cur:  Optional cursor for transaction batching.
+        :returns:    The new integer item ID.
+        """
+
+        def _do(c):
+            row = self._fetchone('SELECT MAX(id) FROM {item};', cur=c)
+            new_id = 1 if row[0] is None else row[0] + 1
+            self._execute('INSERT INTO {item}(id, name) VALUES(:id, :name);', {'id': new_id, 'name': name}, cur=c)
+            return new_id
+
+        if cur is not NO_CURSOR:
+            return _do(cur)
+        with self._db.transaction() as tcur:
+            return _do(tcur)
 
     def update(self, item_id: int, time: int, val, item_type: str, changed: int, cur=NO_CURSOR) -> None:
         """Update the latest-value row for *item_id*.

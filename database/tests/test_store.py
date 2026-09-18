@@ -357,6 +357,78 @@ class TestItemStoreInsertOnPsycopg(unittest.TestCase):
         self.assertIsNone(self.store.find('gone'))
 
 
+class _LegacyMockDB(_MockDB):
+    """Same as _MockDB, but with a plain, non-key id column on the item
+    table instead of sqlite3's INTEGER PRIMARY KEY rowid alias."""
+
+    def _setup(self):
+        c = self._conn.cursor()
+        c.execute(
+            'CREATE TABLE item (id INTEGER,'
+            ' name VARCHAR(255), time BIGINT, val_str TEXT,'
+            ' val_num REAL, val_bool BOOLEAN, changed BIGINT)'
+        )
+        c.execute(
+            'CREATE TABLE log (time BIGINT, item_id INTEGER, duration BIGINT,'
+            ' val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT,'
+            ' val_quality TINYINT DEFAULT 0)'
+        )
+        self._conn.commit()
+        c.close()
+
+
+class TestItemStoreLegacySqliteSchema(unittest.TestCase):
+    """Covers store.py's id_is_autoincrement()/_insert_legacy_sqlite()
+    against a sqlite3 item table whose id column is plain, not the
+    rowid alias."""
+
+    def setUp(self):
+        self.db = _LegacyMockDB()
+        self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_id_is_autoincrement_false_for_legacy_table(self):
+        self.assertFalse(self.store.id_is_autoincrement())
+
+    def test_id_is_autoincrement_true_for_current_schema(self):
+        self.assertTrue(ItemStore(_MockDB(), TABLE_NAMES).id_is_autoincrement())
+
+    def test_insert_actually_sets_the_id_column(self):
+        new_id = self.store.insert('test.one')
+        row = self.store.find('test.one')
+        self.assertIsNotNone(row, 'the row must exist')
+        self.assertEqual(new_id, row[0], "the row's own id column must equal what insert() returned")
+
+    def test_insert_assigns_sequential_ids_via_max_plus_one(self):
+        id1 = self.store.insert('test.one')
+        id2 = self.store.insert('test.two')
+        self.assertEqual(1, id1)
+        self.assertEqual(2, id2)
+
+    def test_update_after_insert_actually_takes_effect(self):
+        # lastrowid-based id would make this UPDATE's WHERE id=... match nothing.
+        item_id = self.store.insert('test.one')
+        self.store.update(item_id, time=1000, val=42.0, item_type='num', changed=1000)
+        row = self.store.find('test.one')
+        self.assertEqual(1000, row[2], 'time')
+        self.assertAlmostEqual(42.0, row[4], msg='val_num')
+
+    def test_autoincrement_check_runs_only_once(self):
+        calls = {'fetchall': 0}
+        orig_fetchall = self.db.fetchall
+
+        def spy_fetchall(*a, **kw):
+            calls['fetchall'] += 1
+            return orig_fetchall(*a, **kw)
+
+        self.db.fetchall = spy_fetchall
+        self.store.insert('test.one')
+        self.store.insert('test.two')
+        self.assertEqual(1, calls['fetchall'], 'PRAGMA table_info must be checked once and cached, not per insert')
+
+
 class TestLogStore(unittest.TestCase):
     def setUp(self):
         self.db = _MockDB()

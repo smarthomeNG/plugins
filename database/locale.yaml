@@ -121,6 +121,21 @@ plugin_translations:
     'Datenbank-Cleanup starten':
         'de': '='
         'en': 'Start Database-Cleanup'
+    'Altes Item-Tabellenformat erkannt':
+        'de': '='
+        'en': 'Old item table format detected'
+    'Neue Items erhalten keine funktionierende Datenbank-ID, solange dies nicht konvertiert wird. Die alte Tabelle bleibt dabei als Sicherung erhalten.':
+        'de': '='
+        'en': 'New items get no working database ID until this is converted. The old table is kept as a backup.'
+    'Konvertieren':
+        'de': '='
+        'en': 'Convert'
+    'Item-Tabelle jetzt konvertieren? Die alte Tabelle bleibt unter einem Sicherungsnamen erhalten.':
+        'de': '='
+        'en': 'Convert the item table now? The old table is kept under a backup name.'
+    'Konvertiert. Die alte Tabelle wurde gesichert als:':
+        'de': '='
+        'en': 'Converted. The old table was backed up as:'
     'Cleanup ist aktiv':
         'de': '='
         'en': 'Cleanup is active'

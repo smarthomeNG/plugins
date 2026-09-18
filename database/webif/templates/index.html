@@ -45,6 +45,27 @@
 		}
 		return false;
 	}
+
+	function convertLegacyItemSchema() {
+		if (!confirm('{{ _('Item-Tabelle jetzt konvertieren? Die alte Tabelle bleibt unter einem Sicherungsnamen erhalten.') }}')) {
+			return;
+		}
+		$.ajax({
+			type: "POST",
+			url: "convert_legacy_item_schema",
+			contentType: 'application/json',
+			dataType: 'json',
+			error: function() {
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+			},
+			success: function(response) {
+				if (response.backup_name) {
+					alert('{{ _('Konvertiert. Die alte Tabelle wurde gesichert als:') }} ' + response.backup_name);
+				}
+				window.location.reload();
+			}
+		})
+	}
 </script>
 
 {% if delete_triggered %}
@@ -54,6 +75,14 @@
 		<button type="button" class="close" data-hide="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
+	</div>
+{% endif %}
+
+{% if p.item_table_needs_conversion() %}
+	<div class="mb-2 alert alert-warning" role="alert">
+		<strong>{{ _('Altes Item-Tabellenformat erkannt') }}</strong><br/>
+		{{ _('Neue Items erhalten keine funktionierende Datenbank-ID, solange dies nicht konvertiert wird. Die alte Tabelle bleibt dabei als Sicherung erhalten.') }}
+		<button type="button" class="btn btn-warning btn-sm" onclick="convertLegacyItemSchema()">{{ _('Konvertieren') }}</button>
 	</div>
 {% endif %}
 

@@ -1687,6 +1687,14 @@ class Database(SmartPlugin):
         """See MaintenanceManager.delete_orphan_now() (maintenance.py)."""
         return self._maintenance.delete_orphan_now(item_path)
 
+    def item_table_needs_conversion(self):
+        """True if the item table is a legacy, non-autoincrement sqlite3 install (see store.ItemStore.id_is_autoincrement())."""
+        return not self._item_store.id_is_autoincrement()
+
+    def convert_legacy_item_schema(self):
+        """See MaintenanceManager.convert_legacy_item_schema() (maintenance.py)."""
+        return self._maintenance.convert_legacy_item_schema()
+
     def remove_orphan_items(self):
         """See MaintenanceManager.remove_orphan_items() (maintenance.py)."""
         return self._maintenance.remove_orphan_items()
