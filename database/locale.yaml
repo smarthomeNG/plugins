@@ -103,6 +103,9 @@ plugin_translations:
     'CSV Export nicht verfügbar':
         'de': '='
         'en': 'CSV Export not available'
+    'Noch keine Datenbank-ID':
+        'de': '='
+        'en': 'No database ID yet'
     'Historische Daten':
         'de': '='
         'en': 'Historical Data'
