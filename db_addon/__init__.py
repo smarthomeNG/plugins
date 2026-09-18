@@ -2623,7 +2623,7 @@ class DatabaseAddOn(SmartPlugin):
         """
 
         try:
-            self.db_driver = self._db_plugin.get_parameter_value('driver')
+            self.db_driver = self._db_plugin.driver
         except Exception as e:
             self.logger.error(
                 f"Error {e} occurred during getting database plugin parameter 'driver'. DatabaseAddOn Plugin not loaded."
@@ -2634,6 +2634,8 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.debug("Database is of type 'mysql' found.")
             if self.db_driver.lower() == 'sqlite3':
                 self.logger.debug("Database is of type 'sqlite' found.")
+            if self.db_driver.lower() in lib.db.Database._psycopg_driver_names:
+                self.logger.debug("Database is of type 'postgres'/'timescaledb' found.")
 
         # get database plugin parameters
         try:
@@ -2825,6 +2827,13 @@ class DatabaseAddOn(SmartPlugin):
             )
             return error_result
 
+        if group2 and func not in QUERY_FUNCS_WITH_GROUP2:
+            self.logger.error(
+                f'Requested {group2=} for {func=} on item={database_item.property.path} not supported; '
+                f'group2 is only valid for {QUERY_FUNCS_WITH_GROUP2}. Query cancelled.'
+            )
+            return error_result
+
         # define start and end of query as timestamp in microseconds
         ts_start, ts_end = self._get_start_end_as_timestamp(timeframe, start, end)
         oldest_log = self._get_oldest_log(database_item)
@@ -2884,7 +2893,19 @@ class DatabaseAddOn(SmartPlugin):
             'group2': group2,
             'ignore_value_list': ignore_value_list,
         }
-        query_result = self._query_log_timestamp(**query_params)
+        if self._db_plugin._buffer_mgr.pending_count(database_item):
+            self._db_plugin._dump(items=[database_item])
+
+        query_result = None
+        if not group and not group2:
+            native_result = self._db_plugin._native_cagg_single(
+                func, ts_start, ts_end, database_item.property.path, executor=self._fetchall
+            )
+            if native_result is not None:
+                query_result = [(ts_end, native_result[0])]
+
+        if query_result is None:
+            query_result = self._query_log_timestamp(**query_params)
 
         if self.debug_log.prepare:
             self.logger.debug(f"  result of '_query_log_timestamp' {query_result=}")
@@ -3085,18 +3106,18 @@ class DatabaseAddOn(SmartPlugin):
 
         # define query parts
         _select = {
-            'avg': 'time, AVG(val_num * duration) / AVG(duration) as value ',
-            'avg1': 'time, AVG(value) as value FROM (SELECT time, ROUND(AVG(val_num), 1) as value ',
-            'min': 'time, MIN(val_num) as value ',
-            'max': 'time, MAX(val_num) as value ',
-            'max1': 'time, MAX(value) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
-            'sum': 'time, SUM(val_num) as value ',
-            'on': 'time, SUM(val_bool * duration) / SUM(duration) as value ',
-            'integrate': 'time, SUM(val_num * duration) as value ',
-            'sum_max': 'time, SUM(value) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
-            'sum_avg': 'time, SUM(value) as value FROM (SELECT time, ROUND(AVG(val_num * duration) / AVG(duration), 1) as value ',
-            'sum_min_neg': 'time, SUM(value) as value FROM (SELECT time, IF(min(val_num) < 0, ROUND(MIN(val_num), 1), 0) as value ',
-            'diff_max': 'time, value1 - LAG(value1) OVER (ORDER BY time) AS value FROM (SELECT time, ROUND(MAX(val_num), 1) as value1 ',
+            'avg': 'MIN(time), AVG(val_num * duration) / AVG(duration) as value ',
+            'avg1': 'MIN(time), AVG(value) as value FROM (SELECT MIN(time), ROUND(CAST(AVG(val_num) AS DECIMAL(30,10)), 1) as value ',
+            'min': 'MIN(time), MIN(val_num) as value ',
+            'max': 'MIN(time), MAX(val_num) as value ',
+            'max1': 'MIN(time), MAX(value) as value FROM (SELECT MIN(time), ROUND(CAST(MAX(val_num) AS DECIMAL(30,10)), 1) as value ',
+            'sum': 'MIN(time), SUM(val_num) as value ',
+            'on': 'MIN(time), SUM(val_bool * duration) / SUM(duration) as value ',
+            'integrate': 'MIN(time), SUM(val_num * duration) as value ',
+            'sum_max': 'MIN(time), SUM(value) as value FROM (SELECT MIN(time), ROUND(CAST(MAX(val_num) AS DECIMAL(30,10)), 1) as value ',
+            'sum_avg': 'MIN(time), SUM(value) as value FROM (SELECT MIN(time), ROUND(CAST(AVG(val_num * duration) / AVG(duration) AS DECIMAL(30,10)), 1) as value ',
+            'sum_min_neg': 'MIN(time), SUM(value) as value FROM (SELECT MIN(time), CASE WHEN min(val_num) < 0 THEN ROUND(CAST(MIN(val_num) AS DECIMAL(30,10)), 1) ELSE 0 END as value ',
+            'diff_max': 'time, value1 - LAG(value1) OVER (ORDER BY time) AS value FROM (SELECT MIN(time), ROUND(CAST(MAX(val_num) AS DECIMAL(30,10)), 1) as value1 ',
             'next': 'time, val_num as value ',
             'raw': 'time, val_num as value ',
             'first': 'time, val_num as value ',
@@ -3151,11 +3172,21 @@ class DatabaseAddOn(SmartPlugin):
             'hour': "GROUP BY strftime('%Y%m%d%H', datetime((time/1000),'unixepoch')) ",
         }
 
+        _group_by_postgres = {
+            'year': "GROUP BY date_trunc('year', to_timestamp(time/1000)) ",
+            'month': "GROUP BY date_trunc('month', to_timestamp(time/1000)) ",
+            'week': "GROUP BY date_trunc('week', to_timestamp(time/1000)) ",
+            'day': "GROUP BY date_trunc('day', to_timestamp(time/1000)) ",
+            'hour': "GROUP BY date_trunc('hour', to_timestamp(time/1000)) ",
+        }
+
         # select query parts depending in db driver
         if self.db_driver.lower() == 'pymysql':
             _group_by = _group_by_sql
         elif self.db_driver.lower() == 'sqlite3':
             _group_by = _group_by_sqlite
+        elif self.db_driver.lower() in lib.db.Database._psycopg_driver_names:
+            _group_by = _group_by_postgres
         else:
             self.logger.error('DB Driver unknown')
             return
@@ -3195,9 +3226,6 @@ class DatabaseAddOn(SmartPlugin):
 
         # assemble query
         query = f'SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by.get(group, "")}{_order.get(func, "")}{_limit.get(func, "")}{_table_alias.get(func, "")}{_group_by.get(group2, "")}'.strip()
-
-        if self.db_driver.lower() == 'sqlite3':
-            query = query.replace('IF', 'IIF')
 
         # do debug log
         if self.debug_log.prepare:
@@ -3625,3 +3653,4 @@ ALLOWED_QUERY_FUNCS = [
     'last',
 ]
 ALLOWED_RESULT_TYPES = ['total', 'month', 'day']
+QUERY_FUNCS_WITH_GROUP2 = ['avg1', 'max1', 'sum_max', 'sum_avg', 'sum_min_neg', 'diff_max']
