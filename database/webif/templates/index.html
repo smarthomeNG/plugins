@@ -2,7 +2,7 @@
 {% set update_interval = [(((10 * (p._handled_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
 
 {% set dataSet = 'overview' %}
-{% set tab1title = _('Database Items') %}
+{% set tab1title = _('Database Items') ~ ' (' ~ len(p._handled_items) ~ ')' %}
 
 {% block pluginstyles %}
 <link rel="stylesheet" href="static/style.css">
@@ -190,16 +190,18 @@
 {% endblock bodytab1 %}
 
 
+{% set audit_flagged_count = len(unbounded_items) + len(silent_delete_items) %}
+
 {% if len(p.orphanlist) > 0 %}
-	{% set tab3title = _('Verwaiste Items') %}
+	{% set tab3title = _('Verwaiste Items') ~ ' (' ~ len(p.orphanlist) ~ ')' %}
 {% else %}
 	{% set tab3title = "hidden" %}
 {% endif %}
 
 {% if len(silent_delete_items) > 0 %}
-	{% set tab4title = '<span class="text-danger-emphasis">' ~ _('Aufbewahrungs-Audit') ~ '</span>' %}
+	{% set tab4title = '<span class="text-danger-emphasis">' ~ _('Aufbewahrungs-Audit') ~ ' (' ~ audit_flagged_count ~ ')</span>' %}
 {% else %}
-	{% set tab4title = _('Aufbewahrungs-Audit') %}
+	{% set tab4title = _('Aufbewahrungs-Audit') ~ ' (' ~ audit_flagged_count ~ ')' %}
 {% endif %}
 
 {% set tabcount = 4 %}

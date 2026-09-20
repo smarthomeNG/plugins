@@ -18,7 +18,9 @@
         { className: "type", targets: 3 },
         { className: "value", targets: 4 },
         { className: "id", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        {%  if p.count_logentries %}
         { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        {% endif %}
         { className: "maxage", targets: -2 },
         { className: "no-sort actions", targets: -1 }
         ].concat($.fn.dataTable.defaults.columnDefs)});
@@ -32,7 +34,7 @@
         { className: "type", targets: 3 },
         { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
         { className: "reassign", targets: 5 },
-        { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        { className: "logcount", targets: 7, render: $.fn.dataTable.render.number('.', ',', 0, '') },
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {% else %}
       orphantable = $('#orphantable').DataTable( {
