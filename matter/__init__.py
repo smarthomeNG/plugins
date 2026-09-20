@@ -73,6 +73,7 @@ class Matter(SmartPlugin):
         self.primary_interface = self.get_parameter_value('primary_interface') or None
 
         # -- server role config --
+        self.server_enabled = self.get_parameter_value('server_enabled')
         self.server_sidecar_entry = self.path_join(
             self.get_plugin_dir(), self.get_parameter_value('server_sidecar_entry')
         )
@@ -106,6 +107,7 @@ class Matter(SmartPlugin):
         self._late_commission_results: collections.deque = collections.deque(maxlen=10)
 
         # -- bridge role config --
+        self.bridge_enabled = self.get_parameter_value('bridge_enabled')
         self.bridge_sidecar_entry = self.path_join(
             self.get_plugin_dir(), self.get_parameter_value('bridge_sidecar_entry')
         )
@@ -143,14 +145,19 @@ class Matter(SmartPlugin):
 
     async def _plugin_coro(self):
         stop_task = asyncio.create_task(self.wait_for_asyncio_termination(), name='matter-stop-watcher')
-        server_task = asyncio.create_task(server.run_forever(self), name='matter-server-role-work')
-        bridge_task = asyncio.create_task(bridge.run_forever(self), name='matter-bridge-work')
+        tasks = {stop_task}
+        if self.server_enabled:
+            tasks.add(asyncio.create_task(server.run_forever(self), name='matter-server-role-work'))
+        if self.bridge_enabled:
+            tasks.add(asyncio.create_task(bridge.run_forever(self), name='matter-bridge-work'))
         try:
-            await asyncio.wait({stop_task, server_task, bridge_task}, return_when=asyncio.FIRST_COMPLETED)
+            await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         finally:
-            for task in (stop_task, server_task, bridge_task):
+            for task in tasks:
                 if not task.done():
                     task.cancel()
+            # Safe to call unconditionally even for a role that was never enabled -
+            # both cleanup() functions no-op on their still-None sidecar/client state.
             await server.cleanup(self)
             await bridge.cleanup(self)
 

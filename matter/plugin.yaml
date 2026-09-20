@@ -25,6 +25,13 @@ parameters:
             de: 'Pfad zum Node.js-Binary (muss die von matter-server geforderte Version erfüllen, siehe user_doc.rst)'
             en: 'Path to the Node.js binary (must satisfy the version required by matter-server, see user_doc.rst)'
 
+    server_enabled:
+        type: bool
+        default: true
+        description:
+            de: 'Server-Rolle (Kommissionierung/Steuerung echter Matter-Geräte) aktivieren.'
+            en: 'Enable the server role (commissioning/controlling real Matter devices).'
+
     server_sidecar_entry:
         type: str
         default: 'sidecar/node_modules/matter-server/dist/esm/MatterServer.js'
@@ -87,6 +94,13 @@ parameters:
         description:
             de: 'Wartezeit (Sekunden) auf die Antwort von matter-server auf einen Kopplungsversuch (commission_with_code), bevor das Plugin selbst aufgibt. matter-server versucht dabei jede bekannte Netzwerkadresse des Geräts mit bis zu 30s Timeout und plant intern bis zu 255s für einen Kopplungsversuch ein - ein realer Versuch dauerte schon einmal ca. 3 Minuten bis zur echten Antwort. Kommt die Antwort trotzdem später als dieser Timeout, wird sie nicht verworfen, sondern im Webif nachträglich als Hinweis angezeigt. Für Tests kann ein kürzerer Wert sinnvoll sein, um schneller ein Fehlschlagen zu sehen - auf Kosten davon, öfter in den verzögerten Hinweis statt die direkte Fehlermeldung zu laufen.'
             en: 'How long (seconds) to wait for matter-servers answer to a pairing attempt (commission_with_code) before the plugin itself gives up. matter-server tries every known network address for the device with up to a 30s timeout each and internally budgets up to 255s for one pairing attempt - a real attempt was observed taking close to 3 minutes before the actual answer arrived. If the answer still arrives after this timeout, it is not discarded - it is shown in the webif afterwards as a delayed notice instead. A shorter value can be useful for testing, to see a failure faster - at the cost of hitting the delayed notice instead of the direct error message more often.'
+
+    bridge_enabled:
+        type: bool
+        default: true
+        description:
+            de: 'Bridge-Rolle (shng-Items für andere Matter-Ökosysteme sichtbar machen) aktivieren.'
+            en: 'Enable the bridge role (exposing shng items to other Matter ecosystems).'
 
     bridge_sidecar_entry:
         type: str
