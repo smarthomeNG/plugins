@@ -189,8 +189,8 @@ class fronius(SmartPlugin):
     # stores the value in the database item if it exists. 
 
     def _midnight(self):
-        self.logger.error('Midnight')
-        self.logger.error(self.p_pv_day)
+        self.logger.debug('Midnight')
+        self.logger.debug(self.p_pv_day)
         for item in self._items:
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day_database':
                 item(self.p_pv_day, self.get_shortname())
