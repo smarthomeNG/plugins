@@ -234,8 +234,7 @@
 			},
 			success: function() {
 				document.getElementById('orphanModal').style.display = 'none';
-				// reload page to reflect recalculated orphans
-				setTimeout(window.location.reload(), 3000);
+				window.location.reload();
 			}
 		})
 	}
@@ -254,7 +253,7 @@
 				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
 			},
 			success: function() {
-				setTimeout(window.location.reload(), 1000);
+				window.location.reload();
 			}
 		})
 	}
@@ -288,7 +287,7 @@
 		{% if p.remove_orphan or len(p.orphanlist) == 0 %}
 			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
 		{% else %}
-			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Datenbank-Cleanup starten') }}</button>
+			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup').done(function() { window.location.reload(); }); $('#cleanup').show(); }">{{ _('Datenbank-Cleanup starten') }}</button>
 		{% endif %}
 	</div>
 
