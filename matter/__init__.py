@@ -85,6 +85,7 @@ class Matter(SmartPlugin):
         self.server_fabric_label = self.get_parameter_value('server_fabric_label')
         self.server_commission_timeout = self.get_parameter_value('server_commission_timeout')
         self.server_bluetooth_adapter = self.get_parameter_value('server_bluetooth_adapter') or None
+        self.server_otbr_rest_url = self.get_parameter_value('server_otbr_rest_url')
 
         self.items = Items.get_instance()
 
@@ -221,6 +222,9 @@ class Matter(SmartPlugin):
 
     def thread_dataset_is_set(self) -> bool:
         return server.thread_dataset_is_set(self)
+
+    def fetch_thread_dataset_from_otbr(self) -> str:
+        return server.fetch_thread_dataset_from_otbr(self)
 
     def describe_mapping(self, item) -> str:
         return server.describe_mapping(self, item)

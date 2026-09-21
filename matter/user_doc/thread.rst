@@ -11,6 +11,28 @@ Matter-over-Thread-Geräte (Türkontakte, Hygrometer, viele batteriebetriebene S
 zusätzliche, physische Infrastruktur, die Matter-over-Wifi-Geräte (z.B. smarte Steckdosen) nicht
 benötigen. Diese Seite beschreibt, was zusätzlich nötig ist und wie es eingerichtet wird.
 
+Matter, Thread und Border Router: Begriffsklärung
+====================================================
+
+**Matter** ist der Anwendungs-Layer-Standard, den dieses Plugin implementiert - Gerätetypen,
+Cluster, Befehle, Kommissionierung. Matter läuft immer über IP, benötigt aber einen
+Transportweg darunter: WLAN, Ethernet oder Thread.
+
+**Thread** ist einer dieser Transportwege - ein stromsparendes 802.15.4-Funk-Mesh-Netz mit
+eigenem IPv6-Adressraum, für batteriebetriebene Geräte gedacht, für die WLAN zu stromhungrig
+wäre. Thread-Geräte bilden untereinander ein eigenes Mesh, das nicht Teil des normalen LANs/WLANs
+ist.
+
+Ein **Thread Border Router (TBR)** verbindet dieses Thread-Mesh mit dem normalen IP-Netz
+(Routing zwischen Thread und LAN, mDNS-Weiterleitung). Ohne TBR bleibt das Thread-Mesh vom Rest
+des Netzes isoliert.
+
+matter-server (der Sidecar dieses Plugins) ist ein Matter-**Controller** - er kommissioniert
+Geräte und spricht die Matter-Anwendungsschicht, spannt aber selbst kein Netz auf. Bei
+WLAN-Geräten verlässt er sich auf ein bereits bestehendes WLAN; bei Thread-Geräten entsprechend
+auf einen bereits bestehenden, separat eingerichteten TBR. Der Rest dieser Seite beschreibt genau
+diese zusätzliche, für Thread nötige Infrastruktur.
+
 Übersicht: was zusätzlich benötigt wird
 ========================================
 
@@ -239,13 +261,24 @@ einen weiteren, einmaligen Schritt: matter-server muss wissen, welche Zugangsdat
 für das Thread-Netz übergeben soll. Diese werden **nicht automatisch** vom Border Router
 übernommen - sie müssen einmalig eingetragen werden.
 
-1. Aktives Dataset des Border Routers auslesen (Hex-Format):
+Im Webinterface unter "Thread Netzwerk-Zugangsdaten" gibt es dafür zwei Wege:
 
-   .. code-block:: bash
+- **Automatisch vom Border Router abrufen** (Button "Automatisch vom Border Router abrufen").
+  Holt das aktive Dataset per ``GET /node/dataset/active`` direkt von OTBRs eigener REST-API und
+  registriert es. Setzt voraus, dass der Plugin-Parameter ``server_otbr_rest_url`` auf eine vom
+  shng-Host aus erreichbare OTBR-REST-API zeigt - der Default ``http://localhost:8081`` passt,
+  wenn OTBR auf demselben Host wie shng läuft. Der Button erscheint nur, wenn dieser Parameter
+  nicht leer ist.
+- **Manuell eintragen**, falls OTBRs REST-API vom shng-Host aus nicht erreichbar ist (anderer
+  Host, abweichender Port, Firewall):
 
-      docker exec otbr ot-ctl dataset active -x
+  1. Aktives Dataset des Border Routers auslesen (Hex-Format):
 
-2. Im Webinterface unter "Thread Netzwerk-Zugangsdaten" den Hex-String eintragen und absenden.
+     .. code-block:: bash
+
+        docker exec otbr ot-ctl dataset active -x
+
+  2. Den Hex-String in das Eingabefeld eintragen und absenden.
 
 Die Zugangsdaten werden dauerhaft in matter-servers eigenem Speicher abgelegt (kein erneutes
 Eintragen nach einem Neustart nötig) - eine einmalige Einrichtung pro Thread-Netz, kein Schritt

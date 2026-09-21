@@ -38,6 +38,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import functools
+import urllib.error
+import urllib.request
 
 import lib.shyaml as shyaml
 
@@ -702,6 +704,27 @@ def thread_dataset_is_set(plugin) -> bool:
     if plugin.server_client is None or plugin.server_client.server_info is None:
         return False
     return bool(plugin.server_client.server_info.get('thread_credentials_set'))
+
+
+def fetch_thread_dataset_from_otbr(plugin) -> str:
+    """
+    Fetches the border router's active operational dataset directly from OTBR's own
+    REST API (GET /node/dataset/active with Accept: text/plain, which returns the raw
+    hex TLV - same endpoint/header matter-server's own @matter/thread-br-client uses)
+    and registers it via set_thread_dataset(), sparing the user a manual
+    'docker exec ... ot-ctl dataset active -x' plus copy-paste.
+    """
+    url = plugin.server_otbr_rest_url.rstrip('/') + '/node/dataset/active'
+    request = urllib.request.Request(url, headers={'Accept': 'text/plain'})
+    try:
+        with urllib.request.urlopen(request, timeout=5) as response:
+            dataset = response.read().decode('utf-8').strip()
+    except urllib.error.URLError as ex:
+        raise ValueError(f"could not reach the border router's REST API at {url}: {ex}") from ex
+    if not dataset:
+        raise ValueError(f'no active Thread dataset set on the border router at {url}')
+    set_thread_dataset(plugin, dataset)
+    return dataset
 
 
 def describe_mapping(plugin, item) -> str:

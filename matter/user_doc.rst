@@ -33,7 +33,12 @@ Matter-over-Thread-Geräte anbinden
 
 Türkontakte, Hygrometer und ähnliche batteriebetriebene Sensoren nutzen meist Thread statt Wifi
 und benötigen dafür zusätzliche, physische Infrastruktur (einen Thread Border Router, einen
-Bluetooth-Adapter) sowie einen einmaligen Einrichtungsschritt im Webinterface - siehe:
+Bluetooth-Adapter) sowie einen einmaligen Einrichtungsschritt im Webinterface.
+
+Grund für den Unterschied: Wifi-Geräte hängen direkt im bestehenden LAN/WLAN, das matter-server
+ohnehin schon erreicht - keine weitere Einrichtung nötig. Thread-Geräte bilden dagegen ihr
+eigenes, vom LAN getrenntes Funk-Mesh; ohne eine Brücke dorthin (Thread Border Router) bleiben
+sie für matter-server unerreichbar, unabhängig von allem anderen in diesem Plugin. Details:
 
 .. toctree::
    :maxdepth: 1
@@ -142,9 +147,31 @@ der **Entfernen**-Button verwendet werden.
 Aktueller Umfang
 ================
 
-**server-Rolle**: Sidecar-Überwachung, WS-Client, Item-Mapping (generisches Attribut/Befehl, plus
-``matter_switch``-Kurzform für bool-On/Off-Cluster), Endpoint-/Cluster-Discovery-Browser und
-Copy-Paste-Item-Generator-YAML im Webif.
+**server-Rolle**:
 
-**bridge-Rolle**: nur ``switch``/``contact``/``temperature_sensor``, Live-Hinzufügen/-Entfernen
-von Accessories ohne bridge-Neustart, Webif-Kopplung.
+- Sidecar-Prozessüberwachung (automatischer Neustart mit Backoff)
+- WebSocket-Client zu matter-server (Kommissionierung, Attribut-Lesen/Schreiben, Befehle,
+  Subscriptions)
+- Item-Mapping: generische ``matter_attribute``/``matter_command``-Attribute sowie die
+  ``matter_switch``-Kurzform für bool-On/Off-Cluster
+- ``matter_alias``: node_id-Indirektion für eine über Rekommissionierung hinweg stabile
+  Item-Zuordnung
+- Endpoint-/Cluster-Discovery-Browser (Discovery-Tab)
+- Item-Vorschlag pro Gerät: Copy-Paste-YAML oder direktes Anlegen als echte Items
+  ("Item erstellen"-Button) unter einem gemeinsamen ``matter_devices``-Basis-Item
+- ``item_structs`` mit generischen Cluster-Vorlagen (``switch``, ``electrical_power_measurement``,
+  ``contact``, ``temperature_sensor``, ``humidity_sensor``, ``battery``) sowie fertigen
+  Geräte-Vorlagen (``shelly_plug_m_3gen``/``_simple``)
+- Matter-over-Thread: Bluetooth-basierte Erstkopplung, Verwaltung der Thread
+  Netzwerk-Zugangsdaten im Webinterface (manuell oder automatisch von der Border-Router-REST-API
+  abgerufen)
+- Gerät mit einem weiteren Controller teilen (neues Kopplungsfenster, QR-Code), Fabric-Liste mit
+  Entfernen-Option je Fabric
+- Gezielt erzwungenes Neu-Interview eines Geräts, Anzeige der aktuell verbundenen IP-Adresse(n)
+
+**bridge-Rolle**:
+
+- Expose-Typen ``switch``, ``contact``, ``temperature_sensor``
+- Live-Hinzufügen/-Entfernen von Accessories ohne bridge-Neustart
+- Webif-Kopplung mit anderen Matter-Controllern (QR-Code/Code), Fabric-Liste mit
+  Entfernen-Option je Fabric

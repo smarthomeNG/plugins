@@ -74,6 +74,13 @@ parameters:
             de: 'HCI-ID des Bluetooth-Adapters (--bluetooth-adapter, z.B. "0" fuer hci0), nicht die MAC-Adresse. Noetig fuer die Erstkommissionierung eines noch nicht vernetzten Matter-over-Thread-Geraets (BLE-basierte Uebergabe der Thread-Zugangsdaten). Leer = matter-servers eigener Default (kein Bluetooth).'
             en: 'HCI ID of the Bluetooth adapter (--bluetooth-adapter, e.g. "0" for hci0), not the MAC address. Needed for initial commissioning of a not-yet-networked Matter-over-Thread device (BLE-based handoff of Thread credentials). Empty = matter-servers own default (no Bluetooth).'
 
+    server_otbr_rest_url:
+        type: str
+        default: 'http://localhost:8081'
+        description:
+            de: 'Basis-URL der REST-API des Thread Border Routers (OTBR), fuer den "Automatisch abrufen"-Button bei den Thread Netzwerk-Zugangsdaten (GET /node/dataset/active). Nur relevant, wenn der Border Router erreichbar ist - Default passt, wenn er auf demselben Host wie shng laeuft. Leer = Button wird nicht angezeigt, Zugangsdaten muessen manuell eingefuegt werden.'
+            en: 'Base URL of the Thread Border Routers (OTBR) REST API, used by the "Fetch automatically" button for the Thread network credentials (GET /node/dataset/active). Only relevant if the border router is reachable - the default is correct when it runs on the same host as shng. Empty = button is hidden, credentials must be pasted in manually.'
+
     server_alias_base_item:
         type: str
         default: 'matter.aliases'

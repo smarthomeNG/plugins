@@ -81,6 +81,7 @@ class WebInterface(SmartPluginWebIf):
         create_item_node_id=None,
         thread_dataset=None,
         thread_dataset_clear=None,
+        thread_dataset_fetch=None,
     ):
         """
         Render the plugin's index page - the server-role view by default, or
@@ -117,7 +118,10 @@ class WebInterface(SmartPluginWebIf):
         `thread_dataset` registers the border router's active operational
         dataset (hex TLV) so a Thread device can receive network credentials
         during commissioning - a one-time setup per Thread network, not per
-        commission attempt - all happen before the page is (re-)rendered.
+        commission attempt; `thread_dataset_fetch` does the same but pulls the
+        dataset itself from the border router's REST API (see
+        server/__init__.py's fetch_thread_dataset_from_otbr()) instead of
+        requiring it pasted in - all happen before the page is (re-)rendered.
 
         A POST (any action param set) redirects to this same page afterward
         instead of rendering directly - see __init__'s self._flash comment
@@ -184,6 +188,15 @@ class WebInterface(SmartPluginWebIf):
                     self.plugin.set_thread_dataset(thread_dataset)
                 except Exception as ex:
                     self.logger.error(f'setting thread dataset failed: {ex}')
+                    thread_dataset_error = str(ex)
+        elif thread_dataset_fetch:
+            if self.plugin.thread_dataset_is_set():
+                thread_dataset_error = 'already set - clear it first'
+            else:
+                try:
+                    self.plugin.fetch_thread_dataset_from_otbr()
+                except Exception as ex:
+                    self.logger.error(f'fetching thread dataset from OTBR failed: {ex}')
                     thread_dataset_error = str(ex)
 
         unlink_error = None

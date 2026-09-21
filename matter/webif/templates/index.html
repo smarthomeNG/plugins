@@ -247,6 +247,12 @@
 	{% if not thread_dataset_is_set %}
 	<div class="mb-2">
 		<h5>{{ _('Thread Netzwerk-Zugangsdaten') }}</h5>
+		{% if p.server_otbr_rest_url %}
+		<form method="post" action="" class="d-inline mb-2">
+			<button type="submit" name="thread_dataset_fetch" value="1" class="btn btn-shng btn-sm"><i class="fas fa-download"></i>&nbsp;{{ _('Automatisch vom Border Router abrufen') }}</button>
+		</form>
+		<div class="mb-1 text-muted">{{ _('oder manuell') }}:</div>
+		{% endif %}
 		<form method="post" action="" id="thread_dataset_form">
 			<div class="form-row align-items-center">
 				<div class="col-auto">
