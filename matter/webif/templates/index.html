@@ -13,12 +13,23 @@
 			<td class="py-1"><strong>{{ _('Bridge verbunden') }}</strong></td>
 			<td class="py-1">{% if p.bridge_client and p.bridge_client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>{{ _('Bekannte Geräte') }}</strong></td>
-			<td class="py-1">{{ devices|length }}</td>
-			<td class="py-1" width="50px"></td>
 			{% if p.primary_interface %}
 			<td class="py-1"><strong>{{ _('Netzwerk-Interface') }}</strong></td>
 			<td class="py-1">{{ p.primary_interface }}</td>
+			{% endif %}
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Bekannte Geräte') }}</strong></td>
+			<td class="py-1">{{ devices|length }}</td>
+			<td class="py-1" width="50px"></td>
+			{% if thread_dataset_is_set %}
+			<td class="py-1"><strong>{{ _('Thread Netzwerk') }}</strong></td>
+			<td class="py-1" colspan="4">
+				{{ _('Gesetzt') }}
+				<form method="post" action="" class="d-inline">
+					<button type="submit" name="thread_dataset_clear" value="1" class="btn btn-outline-danger btn-sm ml-2">{{ _('Löschen') }}</button>
+				</form>
+			</td>
 			{% endif %}
 		</tr>
 	</tbody>
@@ -50,6 +61,13 @@
 		// handleUpdatedData) - appended to body, not tied to any one tab, so a
 		// late answer shows up regardless of which tab is currently active.
 		$('body').append('<div id="matter_toast_container" style="position:fixed; top:70px; right:20px; z-index:1050; max-width:400px;"></div>');
+
+		{% if created_item_paths %}
+			showMatterToast('alert-success', "{{ _('Item(s) erstellt') }}: {{ created_item_paths | join(', ') }}");
+		{% endif %}
+		{% if create_item_error %}
+			showMatterToast('alert-danger', "{{ _('Item-Erstellung fehlgeschlagen') }}: {{ create_item_error }}");
+		{% endif %}
 
 		var pairingForm = document.getElementById('pairing_form');
 		if (pairingForm) {
@@ -106,6 +124,10 @@
 
 	function suggestItem(nodeId) {
 		shngPost('', {suggest_item_node_id: nodeId});
+	}
+
+	function createItem(nodeId) {
+		shngPost('', {create_item_node_id: nodeId});
 	}
 
 	function copyToClipboard(elementId, btn) {
@@ -220,6 +242,28 @@
 				</div>
 			</div>
 		{% endif %}
+	</div>
+
+	{% if not thread_dataset_is_set %}
+	<div class="mb-2">
+		<h5>{{ _('Thread Netzwerk-Zugangsdaten') }}</h5>
+		<form method="post" action="" id="thread_dataset_form">
+			<div class="form-row align-items-center">
+				<div class="col-auto">
+					<input type="text" class="form-control" name="thread_dataset" placeholder="{{ _('Aktives Dataset des Border Routers (Hex, z.B. ot-ctl dataset active -x)') }}" size="60">
+				</div>
+				<div class="col-auto">
+					<button type="submit" class="btn btn-shng btn-sm"><i class="fas fa-wifi"></i>&nbsp;{{ _('Setzen') }}</button>
+				</div>
+			</div>
+		</form>
+	</div>
+	{% endif %}
+	{% if thread_dataset_error %}
+		<div class="mb-2"><div class="alert alert-danger mt-2">{{ _('Thread Netzwerk-Zugangsdaten') }}: {{ thread_dataset_error }}</div></div>
+	{% endif %}
+
+	<div class="mb-2">
 		{% if fabrics_error %}
 			<div class="alert alert-danger mt-2">{{ _('Fabrics konnten nicht gelesen werden') }}: {{ fabrics_error }}</div>
 		{% endif %}
@@ -327,6 +371,9 @@
 					</button>
 					<button type="button" class="btn btn-shng btn-sm" onclick="suggestItem({{ device.node_id }})" title="{{ _('Item-Definition für dieses Gerät anzeigen (Copy-Paste)') }}">
 						<i class="fas fa-code"></i>&nbsp;{{ _('Item-Definition') }}
+					</button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="createItem({{ device.node_id }})" title="{{ _('Item-Definition als echtes Item unter matter_devices anlegen') }}">
+						<i class="fas fa-plus"></i>&nbsp;{{ _('Item erstellen') }}
 					</button>
 					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice({{ device.node_id }}, '{{ device.label }}')" title="{{ _('Funktioniert auch bei nicht erreichbarem Gerät (lokales Vergessen als Fallback)') }}">
 						<i class="fas fa-unlink"></i>&nbsp;{{ _('Entkoppeln') }}

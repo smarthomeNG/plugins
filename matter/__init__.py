@@ -80,9 +80,11 @@ class Matter(SmartPlugin):
         self.server_sidecar_port = self.get_parameter_value('server_sidecar_port')
         self.server_enable_test_net_dcl = self.get_parameter_value('server_enable_test_net_dcl')
         self.server_alias_base_item = self.get_parameter_value('server_alias_base_item')
+        self.server_generated_items_file = self.get_parameter_value('server_generated_items_file')
         self.server_fabric_vendor_id = self.get_parameter_value('server_fabric_vendor_id')
         self.server_fabric_label = self.get_parameter_value('server_fabric_label')
         self.server_commission_timeout = self.get_parameter_value('server_commission_timeout')
+        self.server_bluetooth_adapter = self.get_parameter_value('server_bluetooth_adapter') or None
 
         self.items = Items.get_instance()
 
@@ -156,8 +158,7 @@ class Matter(SmartPlugin):
             for task in tasks:
                 if not task.done():
                     task.cancel()
-            # Safe to call unconditionally even for a role that was never enabled -
-            # both cleanup() functions no-op on their still-None sidecar/client state.
+            # Safe even for a role never enabled - cleanup() no-ops on still-None sidecar/client state.
             await server.cleanup(self)
             await bridge.cleanup(self)
 
@@ -212,11 +213,23 @@ class Matter(SmartPlugin):
     def commission(self, code: str) -> dict:
         return server.commission(self, code)
 
+    def set_thread_dataset(self, dataset: str) -> None:
+        server.set_thread_dataset(self, dataset)
+
+    def clear_thread_dataset(self) -> None:
+        server.clear_thread_dataset(self)
+
+    def thread_dataset_is_set(self) -> bool:
+        return server.thread_dataset_is_set(self)
+
     def describe_mapping(self, item) -> str:
         return server.describe_mapping(self, item)
 
     def list_nodes(self) -> list:
         return server.list_nodes(self)
+
+    def create_suggested_items(self, node_id: int) -> list:
+        return server.create_suggested_items(self, node_id)
 
     def get_discovery_rows(self) -> list:
         return server.get_discovery_rows(self)

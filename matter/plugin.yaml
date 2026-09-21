@@ -67,12 +67,26 @@ parameters:
             de: 'Netzwerk-Interface fuer lokale Adressen (--primary-interface). Auf Hosts mit mehreren Interfaces auf demselben Subnetz kann die automatische Auswahl ein Interface wählen, über das das Zielgerät nicht erreichbar ist - dann explizit setzen (z.B. en0).'
             en: 'Network interface for link-local addresses (--primary-interface). On hosts with multiple interfaces on the same subnet, automatic selection can pick one the target device is not reachable through - set explicitly (e.g. en0) if commissioning times out with "unreachable" address warnings.'
 
+    server_bluetooth_adapter:
+        type: str
+        default: ''
+        description:
+            de: 'HCI-ID des Bluetooth-Adapters (--bluetooth-adapter, z.B. "0" fuer hci0), nicht die MAC-Adresse. Noetig fuer die Erstkommissionierung eines noch nicht vernetzten Matter-over-Thread-Geraets (BLE-basierte Uebergabe der Thread-Zugangsdaten). Leer = matter-servers eigener Default (kein Bluetooth).'
+            en: 'HCI ID of the Bluetooth adapter (--bluetooth-adapter, e.g. "0" for hci0), not the MAC address. Needed for initial commissioning of a not-yet-networked Matter-over-Thread device (BLE-based handoff of Thread credentials). Empty = matter-servers own default (no Bluetooth).'
+
     server_alias_base_item:
         type: str
         default: 'matter.aliases'
         description:
             de: 'Item, unter dem Alias-Definitionen liegen (direkte Kind-Items, jeweils Typ num mit dem aktuellen node_id als Wert - siehe matter_alias). Muss bereits existieren, wird vom Plugin nicht angelegt. Fehlt es, bleibt die Alias-Funktion inaktiv, ohne den Rest des Plugins zu beeinträchtigen. Sollte sich zwischen mehreren Instanzen unterscheiden, falls beide matter_alias nutzen - ein node_id ist nur innerhalb der Fabric der jeweiligen Instanz gueltig, ein geteiltes Basis-Item wuerde Aliase beider Fabrics ununterscheidbar vermischen.'
             en: 'Item under which alias definitions live (direct child items, each type num holding the current node_id as its value - see matter_alias). Must already exist, the plugin never creates it. If missing, alias support just stays inactive, the rest of the plugin is unaffected. Should differ between instances if both use matter_alias - a node_id is only meaningful within its own instances fabric, a shared base item would mix both fabrics aliases indistinguishably.'
+
+    server_generated_items_file:
+        type: str
+        default: 'matter_devices.yaml'
+        description:
+            de: 'Datei (im items-Verzeichnis), in der per "Item erstellen"-Button erzeugte Geräte-Items landen, als Kind-Items unter dem automatisch angelegten Basis-Item matter_devices. Datei und Basis-Item werden bei Bedarf automatisch angelegt.'
+            en: 'File (in the items directory) that items created via the "Create item" button are written to, as child items under the automatically-created matter_devices base item. Both the file and the base item are created automatically as needed.'
 
     server_fabric_vendor_id:
         type: int
@@ -308,6 +322,41 @@ item_structs:
             matter_cluster: 1026
             matter_attribute: 0
             on_update: .. = value / 100.0
+
+    humidity_sensor:
+        remark: aktuelle relative Luftfeuchtigkeit in %
+        type: num
+
+        humidity_raw:
+            remark: aktuelle relative Luftfeuchtigkeit in 1/100 % (Roh-Wert)
+            type: num
+            matter_cluster: 1029
+            matter_attribute: 0
+            on_update: .. = value / 100.0
+
+    battery:
+        # Mixin, not a root - lives on the device's root endpoint (0), not an application endpoint.
+        percent:
+            remark: Batteriestand in %
+            type: num
+
+            percent_raw:
+                remark: Batteriestand in halben Prozent (Roh-Wert)
+                type: num
+                matter_cluster: 47
+                matter_attribute: 12
+                on_update: .. = value / 2.0
+
+        voltage:
+            remark: Batteriespannung in V
+            type: num
+
+            voltage_mv:
+                remark: Batteriespannung in mV (Roh-Wert)
+                type: num
+                matter_cluster: 47
+                matter_attribute: 11
+                on_update: .. = value / 1000.0
 
     #
     # Ready-made structs for known and tested devices, built on the generic structs above (same

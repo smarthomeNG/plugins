@@ -39,6 +39,8 @@ import asyncio
 import contextlib
 import functools
 
+import lib.shyaml as shyaml
+
 from ..clusters import switch_info
 from ..mapping import (
     AttributeMapping,
@@ -49,7 +51,7 @@ from ..mapping import (
     report_mapping_key,
 )
 from .client import MatterCommandError, MatterServerClient
-from .discovery import discovery_rows, generate_suggested_item, node_summary
+from .discovery import build_suggested_items, discovery_rows, generate_suggested_item, node_summary
 from .sidecar import RESTART_BACKOFF_SECONDS, MatterServerSidecar, SidecarStartError
 
 DEFAULT_ALIAS_BASE_REMARK = 'matter alias base item, child items are alias definitions, do not change'
@@ -68,6 +70,7 @@ async def run_forever(plugin):
         primary_interface=plugin.primary_interface,
         fabric_vendor_id=plugin.server_fabric_vendor_id,
         fabric_label=plugin.server_fabric_label,
+        bluetooth_adapter=plugin.server_bluetooth_adapter,
     )
     try:
         await plugin.server_sidecar.start()
@@ -326,7 +329,7 @@ def parse_alias_definition_item(plugin, item):
 
 
 def update_alias_item(plugin, item, caller=None, source=None, dest=None):
-    """Fires on any write to an alias definition item - keeps plugin._server_aliases in sync regardless of write source."""
+    """Fires on any write to an alias definition item - keeps plugin._server_aliases in sync regardless of source."""
     config = plugin.get_item_config(item)
     name = config.get('matter_alias_name')
     if name is None:
@@ -682,6 +685,25 @@ def commission(plugin, code: str) -> dict:
     )
 
 
+def set_thread_dataset(plugin, dataset: str) -> None:
+    """One-time-per-network setup: register the border router's active operational dataset
+    (hex TLV) so commission_with_code() can hand it to a joining Thread device."""
+    plugin.run_asyncio_coro(plugin.server_client.set_thread_dataset(dataset))
+
+
+def clear_thread_dataset(plugin) -> None:
+    """Removes the registered Thread dataset - see set_thread_dataset()."""
+    plugin.run_asyncio_coro(plugin.server_client.remove_thread_dataset())
+
+
+def thread_dataset_is_set(plugin) -> bool:
+    """Whether a Thread dataset is currently registered - degrades to False, not an
+    error, if the sidecar isn't connected yet (mirrors get_bridge_status())."""
+    if plugin.server_client is None or plugin.server_client.server_info is None:
+        return False
+    return bool(plugin.server_client.server_info.get('thread_credentials_set'))
+
+
 def describe_mapping(plugin, item) -> str:
     """
     Reads the mapping objects parse_item stored, not item.conf directly -
@@ -759,6 +781,33 @@ def get_suggested_item_yaml(plugin, node_id: int) -> str | None:
     if node is None:
         return None
     return generate_suggested_item(node, device_label=_device_label(node_summary(node)))
+
+
+def create_suggested_items(plugin, node_id: int) -> list[str]:
+    """
+    Creates the suggested item(s) for one device (discovery.py's build_suggested_items()) as real
+    items, each a direct child of matter_devices (auto-created empty if missing, same as every
+    other missing ancestor - see lib.item.items.Items.create_item()'s create_missing_parents),
+    persisted to plugin.server_generated_items_file. Returns the created item(s)' full paths - one
+    per covered endpoint, see build_suggested_items() for when a device gets more than one.
+    Raises ValueError if there's nothing to suggest for this node, or if any target path already
+    exists (e.g. a re-suggest after commissioning a different device onto a reused node_id).
+    """
+    node = next((n for n in list_nodes(plugin) if n['node_id'] == node_id), None)
+    if node is None:
+        raise ValueError(f'node {node_id} not found')
+    items = build_suggested_items(node, device_label=_device_label(node_summary(node)))
+    if items is None:
+        raise ValueError('no suggested item for this device')
+
+    filename = shyaml.strip_yaml_extension(plugin.server_generated_items_file)
+    paths = [f'matter_devices.{key}' for key in items]
+    for path in paths:
+        if plugin.items.return_item(path) is not None:
+            raise ValueError(f"'{path}' already exists")
+    for path, config in zip(paths, items.values()):
+        plugin.items.create_item(path, config, filename=filename, create_missing_parents=True)
+    return paths
 
 
 def get_node_summaries(plugin) -> list:

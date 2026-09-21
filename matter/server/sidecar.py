@@ -76,6 +76,7 @@ class MatterServerSidecar:
         primary_interface: str | None = None,
         fabric_vendor_id: int = 65521,
         fabric_label: str = 'SmartHomeNG',
+        bluetooth_adapter: str | None = None,
     ):
         self.node_binary = node_binary
         self.entry_path = entry_path
@@ -91,6 +92,8 @@ class MatterServerSidecar:
         # even though the device is on the same LAN - found via a real device,
         # not something the loopback-only software example ever exercised.
         self.primary_interface = primary_interface
+        # HCI id (e.g. '0' for hci0), not a MAC - needed for BLE commissioning of un-networked Thread devices.
+        self.bluetooth_adapter = bluetooth_adapter
 
         self._process: asyncio.subprocess.Process | None = None
         self._log_task: asyncio.Task | None = None
@@ -125,6 +128,8 @@ class MatterServerSidecar:
             args.append('--enable-test-net-dcl')
         if self.primary_interface:
             args += ['--primary-interface', self.primary_interface]
+        if self.bluetooth_adapter:
+            args += ['--bluetooth-adapter', self.bluetooth_adapter]
         return args
 
     async def start(self) -> None:

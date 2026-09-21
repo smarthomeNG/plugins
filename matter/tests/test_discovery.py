@@ -8,7 +8,7 @@ matter-server's get_nodes(), captured from a real device, not fabricated.
 
 import ruamel.yaml as yaml  # not pyyaml - see discovery.py's import comment
 
-from plugins.matter.server.discovery import discovery_rows, generate_suggested_item, node_summary
+from plugins.matter.server.discovery import build_suggested_items, discovery_rows, generate_suggested_item, node_summary
 
 SAMPLE_NODE = {
     'node_id': 1,
@@ -127,6 +127,23 @@ def test_generate_suggested_item_no_covered_clusters_returns_none():
     assert generate_suggested_item(node) is None
 
 
+def test_build_suggested_items_returns_a_plain_dict_not_yaml_text():
+    items = build_suggested_items(SAMPLE_NODE)
+    assert isinstance(items, dict)
+    assert items['matter_node_1']['struct'] == ['matter.switch', 'matter.electrical_power_measurement']
+
+
+def test_build_suggested_items_no_covered_clusters_returns_none():
+    node = {'node_id': 3, 'available': True, 'attributes': {'1/999/65533': 2}}
+    assert build_suggested_items(node) is None
+
+
+def test_generate_suggested_item_is_build_suggested_items_dumped_to_yaml():
+    text = generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
+    items = build_suggested_items(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
+    assert yaml.safe_load(text) == items
+
+
 def test_generate_suggested_item_covered_clusters_on_different_endpoints_produce_one_block_each():
     # OnOff on endpoint 1, ElectricalPowerMeasurement on endpoint 2 - two separate physical signals
     # on two separate endpoints (unlike SAMPLE_NODE's single-endpoint combined device). Real need:
@@ -140,6 +157,26 @@ def test_generate_suggested_item_covered_clusters_on_different_endpoints_produce
     assert parsed['matter_node_4_ep1']['matter_endpoint'] == 1
     assert parsed['matter_node_4_ep2']['struct'] == 'matter.electrical_power_measurement'
     assert parsed['matter_node_4_ep2']['matter_endpoint'] == 2
+
+
+def test_generate_suggested_item_real_ikea_timmerflotte_temperature_and_humidity_sensor():
+    # Real device: PowerSource/Temperature/Humidity each on their own endpoint (0/1/2), not combined.
+    node = {
+        'node_id': 8,
+        'available': True,
+        'attributes': {
+            '0/40/3': 'TIMMERFLOTTE temp/hmd sensor',
+            '0/47/11': 3039,
+            '0/47/12': 200,
+            '1/1026/0': 3542,
+            '2/1029/0': 2681,
+        },
+    }
+    parsed = yaml.safe_load(generate_suggested_item(node, device_label='TIMMERFLOTTE temp/hmd sensor'))
+    assert set(parsed.keys()) == {'matter_node_8_ep0', 'matter_node_8_ep1', 'matter_node_8_ep2'}
+    assert parsed['matter_node_8_ep0']['struct'] == 'matter.battery'
+    assert parsed['matter_node_8_ep1']['struct'] == 'matter.temperature_sensor'
+    assert parsed['matter_node_8_ep2']['struct'] == 'matter.humidity_sensor'
 
 
 def test_generate_suggested_item_bridge_with_three_single_cluster_endpoints():

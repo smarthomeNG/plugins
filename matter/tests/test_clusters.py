@@ -38,6 +38,29 @@ def test_temperature_measurement_divisor_matches_bridge_js_scaling():
     assert decode_value(0x402, 0, 2150) == 21.5
 
 
+def test_relative_humidity_measurement_cluster_name():
+    assert cluster_name(0x405) == 'RelativeHumidityMeasurement'
+
+
+def test_relative_humidity_measurement_divisor():
+    # verified against a real IKEA TIMMERFLOTTE: raw 2681 -> 26.81%
+    assert decode_value(0x405, 0, 2681) == 26.81
+
+
+def test_power_source_cluster_name():
+    assert cluster_name(0x2F) == 'PowerSource'
+
+
+def test_power_source_bat_voltage_divisor():
+    # verified against a real IKEA TIMMERFLOTTE: raw 3039 (mV) -> 3.039V
+    assert decode_value(0x2F, 11, 3039) == 3.039
+
+
+def test_power_source_bat_percent_remaining_divisor():
+    # verified against a real IKEA TIMMERFLOTTE: raw 200 (half-percent units) -> 100%
+    assert decode_value(0x2F, 12, 200) == 100.0
+
+
 def test_known_attribute_info():
     info = attribute_info(0x06, 0)
     assert info.name == 'OnOff'
@@ -75,6 +98,12 @@ def test_switch_info_unknown_cluster_returns_none():
 def test_device_type_name_known():
     # verified against real hardware: Shelly Plug M Gen3 reports device type 266
     assert device_type_name(0x010A) == 'On/Off Plug-in Unit'
+
+
+def test_device_type_name_temperature_and_humidity_sensor():
+    # verified against real hardware: IKEA TIMMERFLOTTE reports 770/775 on its two endpoints
+    assert device_type_name(0x0302) == 'Temperature Sensor'
+    assert device_type_name(0x0307) == 'Humidity Sensor'
 
 
 def test_device_type_name_unknown_falls_back_to_numeric():

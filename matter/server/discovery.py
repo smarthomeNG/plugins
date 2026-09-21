@@ -139,9 +139,9 @@ def _dump_yaml(data: dict[str, Any]) -> str:
     )
 
 
-def generate_suggested_item(node: dict[str, Any], device_label: str | None = None) -> str | None:
+def build_suggested_items(node: dict[str, Any], device_label: str | None = None) -> dict[str, Any] | None:
     """
-    Suggested item config for one node, as a copy-paste struct reference - not a per-attribute
+    Suggested item config for one node, as a plain dict keyed by item name - not a per-attribute
     dump. Only clusters with a real, curated plugin.yaml struct (clusters.py's CLUSTER_STRUCTS)
     are suggested; everything else is intentionally left out (see this module's own docstring for
     why - the Discovery tab already covers "raw, uncurated data").
@@ -159,8 +159,8 @@ def generate_suggested_item(node: dict[str, Any], device_label: str | None = Non
     physical device this is), struct: second (what kind of item this is, self-explanatory via
     naming), matter_node/matter_endpoint last (Matter-internal plumbing, least relevant to a human
     scanning the block) - real user feedback on the previous per-attribute output, not an arbitrary
-    choice. _dump_yaml()'s ruamel dumper preserves dict insertion order, so this is enforced simply
-    by building each dict in this exact key order.
+    choice. Both generate_suggested_item()'s YAML dump and create_suggested_items()'s live item
+    creation rely on this exact insertion order being preserved.
     """
     node_id = node['node_id']
     by_endpoint_cluster = _group_by_endpoint_cluster(node)
@@ -196,7 +196,13 @@ def generate_suggested_item(node: dict[str, Any], device_label: str | None = Non
         key = f'matter_node_{node_id}_ep{endpoint_id}' if multi else f'matter_node_{node_id}'
         items[key] = item
 
-    return _dump_yaml(items)
+    return items
+
+
+def generate_suggested_item(node: dict[str, Any], device_label: str | None = None) -> str | None:
+    """Same suggestion as build_suggested_items(), as copy-paste YAML text (or None, unchanged)."""
+    items = build_suggested_items(node, device_label)
+    return _dump_yaml(items) if items is not None else None
 
 
 def node_summary(node: dict[str, Any]) -> dict[str, Any]:

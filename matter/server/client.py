@@ -82,12 +82,7 @@ class MatterServerClient:
         self._ws = None
         self._receive_task: asyncio.Task | None = None
         self._pending: dict[str, tuple[asyncio.Future, str]] = {}
-        # message_id -> (command, timed_out_at) for a request send_command() gave up
-        # waiting on - matter-server can still answer it later (a real commission_with_code
-        # call was observed taking ~3 minutes end to end; see commission_with_code's own
-        # docstring). Without this, that answer arrives with no pending future to resolve
-        # and would be silently dropped as "unsolicited". Pruned by age, not by count -
-        # this is expected to stay near-empty in normal operation.
+        # message_id -> (command, timed_out_at) for a late answer with no pending future to resolve; pruned by age.
         self._timed_out: dict[str, tuple[str, float]] = {}
         self._msg_id_counter = itertools.count(1)
         self.server_info: dict | None = None
@@ -188,24 +183,53 @@ class MatterServerClient:
 
     # -- convenience wrappers for matter-server's own commands --
 
-    async def commission_with_code(self, code: str, network_only: bool = True, timeout: float = 300.0) -> dict:
+    async def commission_with_code(self, code: str, network_only: bool = False, timeout: float = 300.0) -> dict:
         """
-        300s, not send_command()'s 30s default: matter-server's own commissioner
-        tries every discovered candidate address with a 30s timeout each
-        (ControllerCommissioner.js, Seconds(30)) and a later phase explicitly
-        budgets up to 255s ("two ~2-minute server-side retry windows", same
-        source) before giving up - a real commission attempt was observed
-        taking ~3 minutes end to end before matter-server's own final answer
-        arrived, well past the old 30s default. 300s is a safety margin above
-        that documented ceiling, not a value derived from interface/candidate
-        count - more candidates change how many attempts happen, not the
-        per-attempt or overall ceiling, which matter-server controls either
-        way. Even if this timeout is still hit, the answer isn't lost - see
-        _remember_timeout()/on_late_result.
+        timeout defaults to 300s, well above send_command()'s own 30s: matter-server's
+        commissioner tries every discovered candidate address with a 30s timeout each
+        and budgets up to 255s overall before giving up (ControllerCommissioner.js);
+        a full commission attempt can take close to 3 minutes end to end. If this
+        timeout is hit anyway, the answer isn't lost - see _remember_timeout()/
+        on_late_result.
+
+        network_only=False: on-network (UDP) discovery always runs regardless of this
+        flag - it only controls whether BLE is also tried in parallel
+        (WebSocketControllerHandler.js: `if (!network_only && bleEnabled)`). False is
+        required for a not-yet-networked Matter-over-Thread device, which has no other
+        way to receive its Thread credentials, and is harmless for an already-on-network
+        device (UDP still wins that race the same way). matter-server's own bleEnabled
+        (set from --bluetooth-adapter at startup) already gates this safely on an
+        instance with no adapter configured.
         """
         return await self.send_command(
             'commission_with_code', {'code': code, 'network_only': network_only}, timeout=timeout
         )
+
+    async def set_thread_dataset(self, dataset: str, credential_id: str | None = None) -> dict:
+        """
+        Registers a Thread operational dataset (hex TLV, e.g. from `ot-ctl dataset active -x`
+        on the border router) under credential_id (matter-server's own default credential slot
+        if omitted). Persists in matter-server's own storage - a one-time setup per Thread
+        network, not a per-commission-attempt call. commission_with_code() only hands a device
+        Thread credentials if a dataset is already registered here.
+        """
+        args = {'dataset': dataset}
+        if credential_id is not None:
+            args['id'] = credential_id
+        result = await self.send_command('set_thread_dataset', args)
+        if self.server_info is not None:
+            self.server_info['thread_credentials_set'] = True
+        return result
+
+    async def remove_thread_dataset(self, credential_id: str | None = None) -> dict:
+        """Removes a previously-registered Thread dataset (see set_thread_dataset())."""
+        args = {}
+        if credential_id is not None:
+            args['id'] = credential_id
+        result = await self.send_command('remove_thread_dataset', args)
+        if self.server_info is not None:
+            self.server_info['thread_credentials_set'] = False
+        return result
 
     async def get_nodes(self, only_available: bool = False) -> list:
         return await self.send_command('get_nodes', {'only_available': only_available})

@@ -28,6 +28,19 @@ einzige Installation::
 
 Das installiert sowohl den matter-server-Sidecar als auch die von ``bridge.js`` benötigten Pakete.
 
+Matter-over-Thread-Geräte anbinden
+===================================
+
+Türkontakte, Hygrometer und ähnliche batteriebetriebene Sensoren nutzen meist Thread statt Wifi
+und benötigen dafür zusätzliche, physische Infrastruktur (einen Thread Border Router, einen
+Bluetooth-Adapter) sowie einen einmaligen Einrichtungsschritt im Webinterface - siehe:
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   user_doc/thread
+
 Konfiguration
 =============
 

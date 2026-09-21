@@ -89,6 +89,13 @@ CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
     # Spec 1.6 7.19.2.9) - divisor 100 converts to plain degrees C, same pattern as
     # ElectricalPowerMeasurement above.
     0x402: ('TemperatureMeasurement', {0: AttributeInfo('MeasuredValue', 'num', 100, '°C')}),
+    # Application Cluster Spec 2.6 - divisor validated against a real IKEA TIMMERFLOTTE.
+    0x405: ('RelativeHumidityMeasurement', {0: AttributeInfo('MeasuredValue', 'num', 100, '%')}),
+    # Core Spec Power Source Cluster (0x002F), root endpoint - verified against a real IKEA TIMMERFLOTTE.
+    0x2F: (
+        'PowerSource',
+        {11: AttributeInfo('BatVoltage', 'num', 1000, 'V'), 12: AttributeInfo('BatPercentRemaining', 'num', 2, '%')},
+    ),
 }
 
 
@@ -136,6 +143,8 @@ CLUSTER_STRUCTS: dict[int, str] = {
     0x90: 'electrical_power_measurement',  # ElectricalPowerMeasurement
     0x45: 'contact',  # BooleanState
     0x402: 'temperature_sensor',  # TemperatureMeasurement
+    0x405: 'humidity_sensor',  # RelativeHumidityMeasurement
+    0x2F: 'battery',  # PowerSource
 }
 
 
@@ -152,6 +161,8 @@ CLUSTER_STRUCT_LABELS: dict[str, str] = {
     'electrical_power_measurement': 'Energiemessung',
     'contact': 'Kontakt',
     'temperature_sensor': 'Temperatursensor',
+    'humidity_sensor': 'Feuchtesensor',
+    'battery': 'Batterie',
 }
 
 
@@ -162,7 +173,9 @@ def cluster_struct_label(struct_name: str) -> str:
 
 # Device Library Spec device type IDs -> human name; unregistered types fall back to their raw number.
 DEVICE_TYPES: dict[int, str] = {
-    0x010A: 'On/Off Plug-in Unit'  # 266 - verified against real Shelly Plug M Gen3
+    0x010A: 'On/Off Plug-in Unit',  # 266 - verified against real Shelly Plug M Gen3
+    0x0302: 'Temperature Sensor',  # 770 - verified against real IKEA TIMMERFLOTTE
+    0x0307: 'Humidity Sensor',  # 775 - verified against real IKEA TIMMERFLOTTE
 }
 
 

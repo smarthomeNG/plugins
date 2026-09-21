@@ -78,6 +78,9 @@ class WebInterface(SmartPluginWebIf):
         open_bridge_window=None,
         remove_bridge_fabric_index=None,
         suggest_item_node_id=None,
+        create_item_node_id=None,
+        thread_dataset=None,
+        thread_dataset_clear=None,
     ):
         """
         Render the plugin's index page - the server-role view by default, or
@@ -105,10 +108,16 @@ class WebInterface(SmartPluginWebIf):
         an existing alias points to; `alias_remove_name` deletes an alias
         definition; `suggest_item_node_id` computes the copy-paste item
         suggestion for that node (see server/discovery.py's
-        generate_suggested_item()); `open_bridge_window` reopens the bridge's own basic
+        generate_suggested_item()); `create_item_node_id` creates that same
+        suggestion as real item(s) under matter_devices (see
+        server/__init__.py's create_suggested_items());
+        `open_bridge_window` reopens the bridge's own basic
         commissioning window (view=bridge only); `remove_bridge_fabric_index`
-        removes one controller from the bridge (view=bridge only) - all
-        happen before the page is (re-)rendered.
+        removes one controller from the bridge (view=bridge only);
+        `thread_dataset` registers the border router's active operational
+        dataset (hex TLV) so a Thread device can receive network credentials
+        during commissioning - a one-time setup per Thread network, not per
+        commission attempt - all happen before the page is (re-)rendered.
 
         A POST (any action param set) redirects to this same page afterward
         instead of rendering directly - see __init__'s self._flash comment
@@ -157,6 +166,25 @@ class WebInterface(SmartPluginWebIf):
             except Exception as ex:
                 self.logger.error(f'commissioning with code failed: {ex}')
                 commission_error = str(ex)
+
+        thread_dataset_error = None
+        thread_dataset = (thread_dataset or '').strip()
+        if thread_dataset_clear:
+            try:
+                self.plugin.clear_thread_dataset()
+            except Exception as ex:
+                self.logger.error(f'clearing thread dataset failed: {ex}')
+                thread_dataset_error = str(ex)
+        elif thread_dataset:
+            if self.plugin.thread_dataset_is_set():
+                # Guards a stale/resubmitted form - the UI hides the input once one is set.
+                thread_dataset_error = 'already set - clear it first'
+            else:
+                try:
+                    self.plugin.set_thread_dataset(thread_dataset)
+                except Exception as ex:
+                    self.logger.error(f'setting thread dataset failed: {ex}')
+                    thread_dataset_error = str(ex)
 
         unlink_error = None
         if unlink_node_id:
@@ -255,6 +283,15 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f'suggesting an item for node {suggest_item_node_id} failed: {ex}')
                 suggested_item_error = str(ex)
 
+        create_item_error = None
+        created_item_paths = None
+        if create_item_node_id:
+            try:
+                created_item_paths = self.plugin.create_suggested_items(int(create_item_node_id))
+            except Exception as ex:
+                self.logger.error(f'creating item(s) for node {create_item_node_id} failed: {ex}')
+                create_item_error = str(ex)
+
         self._flash = {
             'commission_result': commission_result,
             'commission_error': commission_error,
@@ -269,6 +306,9 @@ class WebInterface(SmartPluginWebIf):
             'alias_error': alias_error,
             'suggested_item_result': suggested_item_result,
             'suggested_item_error': suggested_item_error,
+            'thread_dataset_error': thread_dataset_error,
+            'created_item_paths': created_item_paths,
+            'create_item_error': create_item_error,
         }
         raise cherrypy.HTTPRedirect('index')
 
@@ -293,6 +333,10 @@ class WebInterface(SmartPluginWebIf):
             discovery_rows=self.plugin.get_discovery_rows(),
             suggested_item_result=flash.get('suggested_item_result'),
             suggested_item_error=flash.get('suggested_item_error'),
+            thread_dataset_error=flash.get('thread_dataset_error'),
+            thread_dataset_is_set=self.plugin.thread_dataset_is_set(),
+            created_item_paths=flash.get('created_item_paths'),
+            create_item_error=flash.get('create_item_error'),
         )
 
     def _render_bridge(self, flash: dict):

@@ -49,6 +49,16 @@ def test_fabric_label_is_configurable():
     assert args[args.index('--default-fabric-label') + 1] == 'My Home'
 
 
+def test_bluetooth_adapter_absent_by_default():
+    args = _sidecar()._build_args()
+    assert '--bluetooth-adapter' not in args
+
+
+def test_bluetooth_adapter_is_configurable():
+    args = _sidecar(bluetooth_adapter='0')._build_args()
+    assert args[args.index('--bluetooth-adapter') + 1] == '0'
+
+
 class _FakeClock:
     """Stands in for time.monotonic() - advanced explicitly by _FakeProcess.wait()
     below to simulate "this much time passed while the process was running",
