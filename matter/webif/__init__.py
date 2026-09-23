@@ -6,11 +6,10 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Web interface for the Matter plugin: pairing-code form, endpoint/cluster
-#  discovery browser, and a per-device "suggest an item" action producing
-#  copy-paste struct-reference YAML (see server/discovery.py's own
-#  docstring for why this suggests plugin.yaml item_structs references
-#  rather than a full per-attribute dump or a written file).
+#  Web interface for the Matter plugin: a server view (devices, items,
+#  discovery, aliases) and a bridge view. Every POST runs the actions its
+#  fields select, stores their results as a one-shot flash for that view,
+#  and redirects to a plain GET (Post-Redirect-Get).
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -27,399 +26,349 @@
 #
 #########################################################################
 
+from __future__ import annotations
+
+import html
 import json
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping
 
 import cherrypy
 import segno
 
 from lib.model.smartplugin import SmartPluginWebIf
 
+from ..server import NodesSnapshot, ServerRole
+from ..server.discovery import discovery_rows, node_summary
+
+if TYPE_CHECKING:
+    from .. import Matter
+    from ..bridge import BridgeRole
+
+View = Literal['server', 'bridge']
+Flash = dict[str, Any]
+TEMPLATES: dict[View, str] = {'server': 'index.html', 'bridge': 'bridge.html'}
+
+
+@dataclass(frozen=True)
+class WebifAction:
+    """A POST field that triggers an action on one view; run() returns the flash entries to show."""
+
+    trigger: str
+    view: View
+    run: Callable[[WebInterface, Mapping[str, str]], Flash]
+
+
+def _attempt(logger, error_key: str, label: str, action: Callable[[], Flash | None]) -> Flash:
+    """Run an action; an exception becomes an error flash entry (and a log line) instead of a failed page."""
+    try:
+        return action() or {}
+    except Exception as ex:
+        logger.error(f'{label} failed: {ex}')
+        return {error_key: str(ex) or type(ex).__name__}
+
+
+def _escaped(value: Any) -> Any:
+    """Strings HTML-escaped for the auto-update poll, which inserts values as HTML."""
+    return html.escape(value) if isinstance(value, str) else value
+
 
 class WebInterface(SmartPluginWebIf):
-    def __init__(self, webif_dir, plugin):
+    def __init__(self, webif_dir, plugin: Matter):
         self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.tplenv = self.init_template_environment(autoescape_templates=tuple(TEMPLATES.values()))
+        # One shared slot per view - a single-admin tool; two tabs posting at once may swap results.
+        self._flash: dict[View, Flash] = {}
 
-        self.tplenv = self.init_template_environment()
+    # -- role access --
 
-        # Post-Redirect-Get support: index() renders directly after a POST
-        # action, so the last request in the browser's history was a POST -
-        # pressing F5 asks to resubmit it (e.g. re-commissioning a device),
-        # which is essentially always the wrong thing to do. Every action's
-        # result is stashed here and index() redirects to itself afterward,
-        # so the browser's last request becomes a plain GET; the redirected-to
-        # GET shows the stashed result once, then clears it - a minimal
-        # hand-rolled flash message, not CherryPy sessions (unused anywhere
-        # else in shng - not worth adding for one plugin). Single shared slot,
-        # not per-session: fine for a single-admin local tool, would show the
-        # wrong tab's result if two browser tabs both submitted actions around
-        # the same time - an accepted, narrow edge case, not engineered around.
-        self._flash: dict | None = None
+    def _server(self) -> ServerRole:
+        if self.plugin.server is None:
+            raise ValueError('the server role is disabled (server_enabled)')
+        return self.plugin.server
 
-    @cherrypy.expose
-    def index(
-        self,
-        view=None,
-        reload=None,
-        pairing_code=None,
-        unlink_node_id=None,
-        share_node_id=None,
-        fabrics_node_id=None,
-        remove_fabric_node_id=None,
-        remove_fabric_index=None,
-        interview_node_id=None,
-        ip_addresses_node_id=None,
-        alias_create_name=None,
-        alias_create_node_id=None,
-        alias_repoint_name=None,
-        alias_repoint_node_id=None,
-        alias_remove_name=None,
-        open_bridge_window=None,
-        remove_bridge_fabric_index=None,
-        suggest_item_node_id=None,
-        create_item_node_id=None,
-        thread_dataset=None,
-        thread_dataset_clear=None,
-        thread_dataset_fetch=None,
-    ):
-        """
-        Render the plugin's index page - the server-role view by default, or
-        the separate bridge-role view when `view=bridge` (see index.html's
-        "Bridge" header button and bridge.html's own "Server" button back -
-        a distinct top-level page, not another tab, so the bridge role isn't
-        structurally capped to competing with the server role's 6 tabs for
-        space; same mechanism the `database` plugin uses for its item-detail
-        drill-down). A POST with `pairing_code` (via the page's own pairing
-        form) triggers commissioning; a POST with `unlink_node_id` (via a
-        per-row button on the devices table) decommissions that node;
-        `share_node_id` opens a fresh commissioning window on that node (for
-        a second controller, e.g. Apple Home, to join); `fabrics_node_id`
-        lists that node's current fabrics; `remove_fabric_node_id`+
-        `remove_fabric_index` removes one; `interview_node_id` forces a
-        fresh attribute read, replacing matter-server's cached copy the
-        Devices/Discovery tabs otherwise show unchanged since the last
-        commission/reconnect; `ip_addresses_node_id` looks up which address
-        (and network interface) that node's operational session is
-        currently using - on-demand, not shown by default, since it's a
-        diagnostic for a specific misbehaving device, not steady-state info
-        (see client.py's get_node_ip_addresses()); `alias_create_name`+
-        `alias_create_node_id` creates a new alias definition item;
-        `alias_repoint_name`+`alias_repoint_node_id` changes which node_id
-        an existing alias points to; `alias_remove_name` deletes an alias
-        definition; `suggest_item_node_id` computes the copy-paste item
-        suggestion for that node (see server/discovery.py's
-        generate_suggested_item()); `create_item_node_id` creates that same
-        suggestion as real item(s) under matter_devices (see
-        server/__init__.py's create_suggested_items());
-        `open_bridge_window` reopens the bridge's own basic
-        commissioning window (view=bridge only); `remove_bridge_fabric_index`
-        removes one controller from the bridge (view=bridge only);
-        `thread_dataset` registers the border router's active operational
-        dataset (hex TLV) so a Thread device can receive network credentials
-        during commissioning - a one-time setup per Thread network, not per
-        commission attempt; `thread_dataset_fetch` does the same but pulls the
-        dataset itself from the border router's REST API (see
-        server/__init__.py's fetch_thread_dataset_from_otbr()) instead of
-        requiring it pasted in - all happen before the page is (re-)rendered.
+    def _bridge(self) -> BridgeRole:
+        if self.plugin.bridge is None:
+            raise ValueError('the bridge role is disabled (bridge_enabled)')
+        return self.plugin.bridge
 
-        A POST (any action param set) redirects to this same page afterward
-        instead of rendering directly - see __init__'s self._flash comment
-        for why. Plain GETs (including the one the browser makes right after
-        that redirect) fall through to the render at the bottom, showing
-        whatever the redirect just stashed - once. A bridge-view POST
-        redirects to `index?view=bridge`, not bare `index`, so the browser
-        lands back on the bridge view, not the server view.
-        """
-        if cherrypy.request.method != 'POST':
-            flash = self._flash or {}
-            self._flash = None
-            if view == 'bridge':
-                return self._render_bridge(flash)
-            return self._render(flash)
+    def _nodes(self) -> NodesSnapshot:
+        server = self.plugin.server
+        if server is None:
+            return NodesSnapshot(error='the server role is disabled')
+        return server.nodes_snapshot()
 
-        if view == 'bridge':
-            open_bridge_window_error = None
-            if open_bridge_window:
-                try:
-                    self.plugin.open_bridge_commissioning_window()
-                except Exception as ex:
-                    self.logger.error(f'opening bridge commissioning window failed: {ex}')
-                    open_bridge_window_error = str(ex)
+    # -- actions --
 
-            remove_bridge_fabric_error = None
-            if remove_bridge_fabric_index is not None:
-                try:
-                    self.plugin.remove_bridge_fabric(int(remove_bridge_fabric_index))
-                except Exception as ex:
-                    self.logger.error(f'removing bridge fabric {remove_bridge_fabric_index} failed: {ex}')
-                    remove_bridge_fabric_error = str(ex)
+    def _commission(self, params: Mapping[str, str]) -> Flash:
+        code = params['pairing_code'].strip()
+        if not code:
+            return {}
 
-            self._flash = {
-                'open_bridge_window_error': open_bridge_window_error,
-                'remove_bridge_fabric_error': remove_bridge_fabric_error,
-            }
-            raise cherrypy.HTTPRedirect('index?view=bridge')
+        def commission() -> None:
+            self._server().start_commission(code)
 
-        commission_error = None
-        commission_result = None
-        pairing_code = (pairing_code or '').strip()
-        if pairing_code:
-            try:
-                commission_result = self.plugin.commission(pairing_code)
-            except Exception as ex:
-                self.logger.error(f'commissioning with code failed: {ex}')
-                commission_error = str(ex)
+        return _attempt(self.logger, 'commission_error', 'commissioning', commission)
 
-        thread_dataset_error = None
-        thread_dataset = (thread_dataset or '').strip()
-        if thread_dataset_clear:
-            try:
-                self.plugin.clear_thread_dataset()
-            except Exception as ex:
-                self.logger.error(f'clearing thread dataset failed: {ex}')
-                thread_dataset_error = str(ex)
-        elif thread_dataset:
-            if self.plugin.thread_dataset_is_set():
-                # Guards a stale/resubmitted form - the UI hides the input once one is set.
-                thread_dataset_error = 'already set - clear it first'
-            else:
-                try:
-                    self.plugin.set_thread_dataset(thread_dataset)
-                except Exception as ex:
-                    self.logger.error(f'setting thread dataset failed: {ex}')
-                    thread_dataset_error = str(ex)
-        elif thread_dataset_fetch:
-            if self.plugin.thread_dataset_is_set():
-                thread_dataset_error = 'already set - clear it first'
-            else:
-                try:
-                    self.plugin.fetch_thread_dataset_from_otbr()
-                except Exception as ex:
-                    self.logger.error(f'fetching thread dataset from OTBR failed: {ex}')
-                    thread_dataset_error = str(ex)
-
-        unlink_error = None
-        if unlink_node_id:
-            try:
-                self.plugin.remove_node(int(unlink_node_id))
-            except Exception as ex:
-                self.logger.error(f'removing node {unlink_node_id} failed: {ex}')
-                unlink_error = str(ex)
-
-        share_error = None
-        share_result = None
-        if share_node_id:
-            try:
-                share_result = {
-                    'node_id': int(share_node_id),
-                    **self.plugin.open_commissioning_window(int(share_node_id)),
-                }
-                share_result['qr_svg'] = self._qr_svg(share_result['setup_qr_code'])
-            except Exception as ex:
-                self.logger.error(f'opening commissioning window for node {share_node_id} failed: {ex}')
-                share_error = str(ex)
-
-        if remove_fabric_node_id and remove_fabric_index is not None:
-            try:
-                self.plugin.remove_matter_fabric(int(remove_fabric_node_id), int(remove_fabric_index))
-            except Exception as ex:
-                self.logger.error(
-                    f'removing fabric {remove_fabric_index} from node {remove_fabric_node_id} failed: {ex}'
-                )
-            else:
-                # Show the updated list right away rather than leaving the page
-                # looking like nothing happened.
-                fabrics_node_id = remove_fabric_node_id
-
-        fabrics_error = None
-        fabrics_result = None
-        if fabrics_node_id:
-            try:
-                fabrics_result = {
-                    'node_id': int(fabrics_node_id),
-                    'fabrics': self.plugin.get_matter_fabrics(int(fabrics_node_id)),
-                }
-            except Exception as ex:
-                self.logger.error(f'listing fabrics for node {fabrics_node_id} failed: {ex}')
-                fabrics_error = str(ex)
-
-        interview_error = None
-        if interview_node_id:
-            try:
-                self.plugin.interview_node(int(interview_node_id))
-            except Exception as ex:
-                self.logger.error(f'interviewing node {interview_node_id} failed: {ex}')
-                interview_error = str(ex)
-
-        ip_addresses_error = None
-        ip_addresses_result = None
-        if ip_addresses_node_id:
-            try:
-                ip_addresses_result = {
-                    'node_id': int(ip_addresses_node_id),
-                    'addresses': self.plugin.get_node_ip_addresses(int(ip_addresses_node_id)),
-                }
-            except Exception as ex:
-                self.logger.error(f'getting IP addresses for node {ip_addresses_node_id} failed: {ex}')
-                ip_addresses_error = str(ex)
-
-        alias_error = None
-        if alias_create_name and alias_create_node_id:
-            try:
-                self.plugin.create_alias(alias_create_name.strip(), int(alias_create_node_id))
-            except Exception as ex:
-                self.logger.error(f"creating alias '{alias_create_name}' failed: {ex}")
-                alias_error = str(ex)
-        elif alias_repoint_name and alias_repoint_node_id:
-            try:
-                self.plugin.repoint_alias(alias_repoint_name, int(alias_repoint_node_id))
-            except Exception as ex:
-                self.logger.error(f"repointing alias '{alias_repoint_name}' failed: {ex}")
-                alias_error = str(ex)
-        elif alias_remove_name:
-            try:
-                self.plugin.remove_alias(alias_remove_name)
-            except Exception as ex:
-                self.logger.error(f"removing alias '{alias_remove_name}' failed: {ex}")
-                alias_error = str(ex)
-
-        suggested_item_error = None
-        suggested_item_result = None
-        if suggest_item_node_id:
-            try:
-                suggested_item_result = {
-                    'node_id': int(suggest_item_node_id),
-                    'yaml': self.plugin.get_suggested_item_yaml(int(suggest_item_node_id)),
-                }
-            except Exception as ex:
-                self.logger.error(f'suggesting an item for node {suggest_item_node_id} failed: {ex}')
-                suggested_item_error = str(ex)
-
-        create_item_error = None
-        created_item_paths = None
-        if create_item_node_id:
-            try:
-                created_item_paths = self.plugin.create_suggested_items(int(create_item_node_id))
-            except Exception as ex:
-                self.logger.error(f'creating item(s) for node {create_item_node_id} failed: {ex}')
-                create_item_error = str(ex)
-
-        self._flash = {
-            'commission_result': commission_result,
-            'commission_error': commission_error,
-            'unlink_error': unlink_error,
-            'share_result': share_result,
-            'share_error': share_error,
-            'fabrics_result': fabrics_result,
-            'fabrics_error': fabrics_error,
-            'interview_error': interview_error,
-            'ip_addresses_result': ip_addresses_result,
-            'ip_addresses_error': ip_addresses_error,
-            'alias_error': alias_error,
-            'suggested_item_result': suggested_item_result,
-            'suggested_item_error': suggested_item_error,
-            'thread_dataset_error': thread_dataset_error,
-            'created_item_paths': created_item_paths,
-            'create_item_error': create_item_error,
-        }
-        raise cherrypy.HTTPRedirect('index')
-
-    def _render(self, flash: dict):
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(
-            p=self.plugin,
-            items=self.plugin.get_matter_items(),
-            devices=self.plugin.get_node_summaries(),
-            commission_result=flash.get('commission_result'),
-            commission_error=flash.get('commission_error'),
-            unlink_error=flash.get('unlink_error'),
-            share_result=flash.get('share_result'),
-            share_error=flash.get('share_error'),
-            fabrics_result=flash.get('fabrics_result'),
-            fabrics_error=flash.get('fabrics_error'),
-            interview_error=flash.get('interview_error'),
-            ip_addresses_result=flash.get('ip_addresses_result'),
-            ip_addresses_error=flash.get('ip_addresses_error'),
-            aliases=self.plugin.get_aliases(),
-            alias_error=flash.get('alias_error'),
-            discovery_rows=self.plugin.get_discovery_rows(),
-            suggested_item_result=flash.get('suggested_item_result'),
-            suggested_item_error=flash.get('suggested_item_error'),
-            thread_dataset_error=flash.get('thread_dataset_error'),
-            thread_dataset_is_set=self.plugin.thread_dataset_is_set(),
-            created_item_paths=flash.get('created_item_paths'),
-            create_item_error=flash.get('create_item_error'),
+    def _thread_dataset(self, params: Mapping[str, str]) -> Flash:
+        dataset = params['thread_dataset'].strip()
+        if not dataset:
+            return {}
+        server = self._server()
+        if server.thread_dataset_is_set():
+            return {'thread_dataset_error': 'already set - clear it first'}
+        return _attempt(
+            self.logger, 'thread_dataset_error', 'setting thread dataset', lambda: server.set_thread_dataset(dataset)
         )
 
-    def _render_bridge(self, flash: dict):
-        bridge_status = self.plugin.get_bridge_status()
-        # Computed here, not in the template, for the same reason share_result's qr_svg
-        # already is - _qr_svg() needs self, not available as a bare Jinja filter.
-        bridge_qr_svg = self._qr_svg(bridge_status['qr_pairing_code']) if bridge_status.get('available') else None
-        tmpl = self.tplenv.get_template('bridge.html')
-        return tmpl.render(
+    def _thread_dataset_fetch(self, params: Mapping[str, str]) -> Flash:
+        server = self._server()
+        if server.thread_dataset_is_set():
+            return {'thread_dataset_error': 'already set - clear it first'}
+
+        def fetch() -> None:
+            server.fetch_thread_dataset_from_otbr()
+
+        return _attempt(self.logger, 'thread_dataset_error', 'fetching thread dataset from OTBR', fetch)
+
+    def _thread_dataset_clear(self, params: Mapping[str, str]) -> Flash:
+        return _attempt(
+            self.logger,
+            'thread_dataset_error',
+            'clearing thread dataset',
+            lambda: self._server().clear_thread_dataset(),
+        )
+
+    def _unlink(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['unlink_node_id'])
+        return _attempt(
+            self.logger, 'unlink_error', f'removing node {node_id}', lambda: self._server().remove_node(node_id)
+        )
+
+    def _share(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['share_node_id'])
+
+        def share() -> Flash:
+            result = {'node_id': node_id, **self._server().open_commissioning_window(node_id)}
+            result['qr_svg'] = self._qr_svg(result['setup_qr_code'])
+            return {'share_result': result}
+
+        return _attempt(self.logger, 'share_error', f'opening commissioning window for node {node_id}', share)
+
+    def _remove_fabric(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['remove_fabric_node_id'])
+        fabric_index = int(params['remove_fabric_index'])
+        flash = _attempt(
+            self.logger,
+            'fabrics_error',
+            f'removing fabric {fabric_index} from node {node_id}',
+            lambda: self._server().remove_matter_fabric(node_id, fabric_index),
+        )
+        return flash or self._fabrics({'fabrics_node_id': str(node_id)})
+
+    def _fabrics(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['fabrics_node_id'])
+        return _attempt(
+            self.logger,
+            'fabrics_error',
+            f'listing fabrics for node {node_id}',
+            lambda: {'fabrics_result': {'node_id': node_id, 'fabrics': self._server().matter_fabrics(node_id)}},
+        )
+
+    def _interview(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['interview_node_id'])
+        return _attempt(
+            self.logger,
+            'interview_error',
+            f'interviewing node {node_id}',
+            lambda: self._server().interview_node(node_id),
+        )
+
+    def _ip_addresses(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['ip_addresses_node_id'])
+        return _attempt(
+            self.logger,
+            'ip_addresses_error',
+            f'getting IP addresses for node {node_id}',
+            lambda: {
+                'ip_addresses_result': {'node_id': node_id, 'addresses': self._server().node_ip_addresses(node_id)}
+            },
+        )
+
+    def _alias_create(self, params: Mapping[str, str]) -> Flash:
+        name = params['alias_create_name'].strip()
+        node_id = params.get('alias_create_node_id')
+        if not name or not node_id:
+            return {}
+        return _attempt(
+            self.logger,
+            'alias_error',
+            f"creating alias '{name}'",
+            lambda: self._server().create_alias(name, int(node_id)),
+        )
+
+    def _alias_repoint(self, params: Mapping[str, str]) -> Flash:
+        name = params['alias_repoint_name']
+        node_id = params.get('alias_repoint_node_id')
+        if not node_id:
+            return {}
+        return _attempt(
+            self.logger,
+            'alias_error',
+            f"repointing alias '{name}'",
+            lambda: self._server().repoint_alias(name, int(node_id)),
+        )
+
+    def _alias_remove(self, params: Mapping[str, str]) -> Flash:
+        name = params['alias_remove_name']
+        return _attempt(
+            self.logger, 'alias_error', f"removing alias '{name}'", lambda: self._server().remove_alias(name)
+        )
+
+    def _suggest_item(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['suggest_item_node_id'])
+        return _attempt(
+            self.logger,
+            'suggested_item_error',
+            f'suggesting an item for node {node_id}',
+            lambda: {
+                'suggested_item_result': {'node_id': node_id, 'yaml': self._server().suggested_item_yaml(node_id)}
+            },
+        )
+
+    def _create_item(self, params: Mapping[str, str]) -> Flash:
+        node_id = int(params['create_item_node_id'])
+        return _attempt(
+            self.logger,
+            'create_item_error',
+            f'creating item(s) for node {node_id}',
+            lambda: {'created_item_paths': self._server().create_suggested_items(node_id)},
+        )
+
+    def _open_bridge_window(self, params: Mapping[str, str]) -> Flash:
+        return _attempt(
+            self.logger,
+            'open_bridge_window_error',
+            'opening bridge commissioning window',
+            lambda: self._bridge().open_commissioning_window(),
+        )
+
+    def _remove_bridge_fabric(self, params: Mapping[str, str]) -> Flash:
+        fabric_index = int(params['remove_bridge_fabric_index'])
+        return _attempt(
+            self.logger,
+            'remove_bridge_fabric_error',
+            f'removing bridge fabric {fabric_index}',
+            lambda: self._bridge().remove_fabric(fabric_index),
+        )
+
+    ACTIONS: tuple[WebifAction, ...] = (
+        WebifAction('pairing_code', 'server', _commission),
+        WebifAction('thread_dataset_clear', 'server', _thread_dataset_clear),
+        WebifAction('thread_dataset', 'server', _thread_dataset),
+        WebifAction('thread_dataset_fetch', 'server', _thread_dataset_fetch),
+        WebifAction('unlink_node_id', 'server', _unlink),
+        WebifAction('share_node_id', 'server', _share),
+        WebifAction('remove_fabric_node_id', 'server', _remove_fabric),
+        WebifAction('fabrics_node_id', 'server', _fabrics),
+        WebifAction('interview_node_id', 'server', _interview),
+        WebifAction('ip_addresses_node_id', 'server', _ip_addresses),
+        WebifAction('alias_create_name', 'server', _alias_create),
+        WebifAction('alias_repoint_name', 'server', _alias_repoint),
+        WebifAction('alias_remove_name', 'server', _alias_remove),
+        WebifAction('suggest_item_node_id', 'server', _suggest_item),
+        WebifAction('create_item_node_id', 'server', _create_item),
+        WebifAction('open_bridge_window', 'bridge', _open_bridge_window),
+        WebifAction('remove_bridge_fabric_index', 'bridge', _remove_bridge_fabric),
+    )
+
+    def run_actions(self, view: View, params: Mapping[str, str]) -> Flash:
+        """Run every action of *view* whose trigger field is present, in ACTIONS order; returns the merged flash."""
+        flash: Flash = {}
+        for action in self.ACTIONS:
+            if action.view == view and action.trigger in params:
+                try:
+                    flash.update(action.run(self, params))
+                except (KeyError, ValueError) as ex:
+                    self.logger.error(f'webif action {action.trigger}: invalid request ({ex})')
+                    flash['request_error'] = f'invalid request: {ex}'
+        return flash
+
+    # -- pages --
+
+    @cherrypy.expose
+    def index(self, view: str | None = None, **params: str):
+        """
+        Server view by default, bridge view with view=bridge. A POST runs the
+        selected actions and redirects to a GET of the same view, which shows
+        their results once.
+        """
+        page: View = 'bridge' if view == 'bridge' else 'server'
+        if cherrypy.request.method == 'POST':
+            self._flash[page] = self.run_actions(page, params)
+            raise cherrypy.HTTPRedirect('index?view=bridge' if page == 'bridge' else 'index')
+
+        flash = self._flash.pop(page, {})
+        if page == 'bridge':
+            return self._render_bridge(flash)
+        return self._render_server(flash)
+
+    def _render_server(self, flash: Flash):
+        snapshot = self._nodes()
+        server = self.plugin.server
+        return self.tplenv.get_template(TEMPLATES['server']).render(
             p=self.plugin,
-            bridge_status=bridge_status,
-            bridge_qr_svg=bridge_qr_svg,
-            bridge_fabrics=self.plugin.get_bridge_fabrics(),
-            bridge_items=self.plugin.get_bridge_items(),
-            open_bridge_window_error=flash.get('open_bridge_window_error'),
-            remove_bridge_fabric_error=flash.get('remove_bridge_fabric_error'),
+            server=server,
+            items=self.plugin.mapped_items(),
+            devices=[node_summary(node) for node in snapshot.nodes],
+            nodes_error=snapshot.error,
+            discovery_rows=[row for node in snapshot.nodes for row in discovery_rows(node)],
+            aliases=server.aliases.snapshot() if server else {},
+            thread_dataset_is_set=server.thread_dataset_is_set() if server else False,
+            commission_jobs=server.commission_jobs() if server else [],
+            flash=flash,
+        )
+
+    def _render_bridge(self, flash: Flash):
+        bridge = self.plugin.bridge
+        status = bridge.bridge_status() if bridge else {'available': False}
+        qr_svg = self._qr_svg(status['qr_pairing_code']) if status.get('available') else None
+        return self.tplenv.get_template(TEMPLATES['bridge']).render(
+            p=self.plugin,
+            bridge=bridge,
+            bridge_status=status,
+            bridge_qr_svg=qr_svg,
+            bridge_fabrics=bridge.bridge_fabrics() if bridge else [],
+            bridge_items=bridge.bridged_items() if bridge else [],
+            flash=flash,
         )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):
         """
-        Periodic live-update data for the standard shng webif auto-refresh
-        mechanism (see doc/user/.../webinterface_automatic_update.rst) -
-        item values (Items tab), device availability (Devices tab, drives
-        disabling Share/Fabrics/Neu einlesen while a device is unreachable,
-        see index.html), and raw discovery values (Discovery tab). All three
-        are cheap: matter-server's own get_nodes() is a synchronous local
-        cache read, no live query to the actual devices - safe at the
-        default update_interval. 'discovery' is keyed the same way the
-        Discovery table's own row IDs are built (index.html), node_id and
-        path joined with '_' - path alone ("endpoint/cluster/attribute")
-        isn't unique across nodes, only per-node.
-
-        Discovery values only change when a device reports a new value on
-        its own (matter-server pushes those into its cache asynchronously) or
-        after a manual "Neu einlesen" - this poll never triggers a fresh
-        device read itself, same "cached, not live-queried" contract the
-        Discovery tab's own caption already states. Payload size grows with
-        total known attribute count across every commissioned node, unlike
-        items/devices which stay proportional to configured items/devices -
-        fine at today's device counts, worth revisiting if that ever becomes
-        large enough to matter.
+        Periodic auto-update data: item values (Items tab), device availability
+        (Devices tab), cached discovery values keyed '<node_id>_<path>'
+        (Discovery tab), and commissioning job states. matter-server's
+        get_nodes() is a local cache read, fetched once per poll.
         """
-        if dataSet is None:
-            data = {
-                'items': {item.property.path: item() for item in self.plugin.get_matter_items()},
-                'devices': {device['node_id']: device['available'] for device in self.plugin.get_node_summaries()},
-                'discovery': {
-                    f'{row["node_id"]}_{row["path"]}': row['value'] for row in self.plugin.get_discovery_rows()
-                },
-                # Drained once, not re-sent on the next poll - a commission_with_code answer
-                # that arrived after this client's own timeout already gave up on it (see
-                # server/client.py's _timed_out/on_late_result). Almost always empty.
-                'late_commission_results': self.plugin.get_late_commission_results(),
-            }
-            try:
-                return json.dumps(data)
-            except Exception as ex:
-                self.logger.error(f'get_data_html exception: {ex}')
-        return json.dumps({})
+        if dataSet is not None:
+            return json.dumps({})
+        snapshot = self._nodes()
+        server = self.plugin.server
+        data = {
+            'items': {item.property.path: _escaped(item()) for item in self.plugin.mapped_items()},
+            'devices': {node['node_id']: node['available'] for node in snapshot.nodes},
+            'discovery': {
+                f'{row["node_id"]}_{row["path"]}': _escaped(row['value'])
+                for node in snapshot.nodes
+                for row in discovery_rows(node)
+            },
+            'commission_jobs': server.commission_jobs() if server else [],
+        }
+        return json.dumps(data, default=str)
 
     def _qr_svg(self, text: str) -> str:
-        """
-        Inline-embeddable SVG for a Matter QR pairing code. segno - chosen
-        over qrcode/pyqrcode after comparing actual output: segno's SVG for
-        this exact kind of content is ~935 bytes (one combined <path>),
-        qrcode's default SvgPathImage is ~4.7KB (one <path> per module) -
-        and neither needs Pillow or any other dependency for SVG output.
-        svg_inline() specifically omits the XML declaration/namespace that a
-        standalone SVG file needs, producing markup meant to be embedded
-        directly in HTML - exactly the Jinja `{{ ... | safe }}` use here.
-        """
+        """Inline SVG (no XML declaration) of a Matter QR pairing code, for embedding with |safe."""
         return segno.make(text).svg_inline(scale=4, border=2)

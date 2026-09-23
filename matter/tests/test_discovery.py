@@ -8,7 +8,13 @@ matter-server's get_nodes(), captured from a real device, not fabricated.
 
 import ruamel.yaml as yaml  # not pyyaml - see discovery.py's import comment
 
-from plugins.matter.server.discovery import build_suggested_items, discovery_rows, generate_suggested_item, node_summary
+from plugins.matter.server.discovery import (
+    build_suggested_items,
+    discovery_rows,
+    generate_suggested_item,
+    node_summary,
+    parse_nodes,
+)
 
 SAMPLE_NODE = {
     'node_id': 1,
@@ -224,3 +230,36 @@ def test_node_summary_missing_basic_information_is_empty_not_error():
     assert summary['product'] == ''
     assert summary['device_type'] == ''
     assert summary['label'] == 'Node 2'
+
+
+def test_named_instance_suggestion_binds_struct_and_addressing_to_the_instance():
+    items = build_suggested_items(SAMPLE_NODE, instance='two')
+
+    item = items['matter_node_1']
+    assert item['struct'] == ['matter.switch@two', 'matter.electrical_power_measurement@two']
+    assert item['matter_node@two'] == 1
+    assert item['matter_endpoint@two'] == 1
+    assert 'matter_node' not in item
+
+
+def test_parse_nodes_skips_malformed_entries():
+    nodes = parse_nodes([SAMPLE_NODE, {'node_id': 'x', 'attributes': {}}, 'garbage', {'node_id': 2}])
+
+    assert [node['node_id'] for node in nodes] == [1]
+    assert nodes[0]['available'] is True
+
+
+def test_parse_nodes_non_list_is_empty():
+    assert parse_nodes({'error': 'nope'}) == []
+
+
+def test_node_summary_tolerates_unexpected_device_type_shape():
+    node = {**SAMPLE_NODE, 'attributes': {**SAMPLE_NODE['attributes'], '1/29/0': 'garbage'}}
+
+    assert node_summary(node)['device_type'] == ''
+
+
+def test_discovery_rows_skip_non_attribute_paths():
+    node = {**SAMPLE_NODE, 'attributes': {'1/6/0': True, 'weird': 1}}
+
+    assert [row['path'] for row in discovery_rows(node)] == ['1/6/0']

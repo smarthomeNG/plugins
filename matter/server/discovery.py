@@ -6,33 +6,12 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Turn a matter-server node's cached attribute dump (from get_nodes(),
-#  already fetched during commissioning's device interview) into (a) flat
-#  rows for the webif's discovery browser table and (b) a suggested item
-#  config, as copy-paste YAML, for clusters with a real curated
-#  plugin.yaml struct (clusters.py's CLUSTER_STRUCTS).
-#
-#  Earlier versions of this module dynamically re-derived a full raw
-#  per-attribute item tree instead of using shng's own item_structs
-#  mechanism, reasoning that struct templates are static (resolved once at
-#  plugin-load time) with no "repeat N times" directive, so they couldn't
-#  fit a device whose endpoint/cluster layout is only known after
-#  commissioning. That reasoning only actually blocks baking matter_node/
-#  matter_endpoint into a struct (genuinely per-device, only known at
-#  runtime) - it says nothing about matter_cluster (spec-defined,
-#  universal) or matter_attribute (same). Structs can be, and now are,
-#  written device-agnostically at the cluster level; matter_node/
-#  matter_endpoint are supplied once by the tiny suggestion this module
-#  generates, then inherited by every descendant item via this plugin's
-#  own Item.find_attribute() ancestor-walk - see plugin.yaml's own
-#  `switch`/`electrical_power_measurement` structs.
-#
-#  Clusters with no curated struct are deliberately not suggested at all -
-#  the Discovery tab (discovery_rows() below) already shows every raw
-#  attribute for exactly that "not curated yet" case, and the low-level
-#  matter_attribute/matter_command item attributes remain the documented
-#  fallback. Building a second, item-generator-flavored copy of that data
-#  would just duplicate Discovery, not add anything.
+#  Turns matter-server's cached node dump (get_nodes()) into flat rows for
+#  the webif's discovery table, device table summaries, and suggested item
+#  configs built on the generic plugin.yaml structs. The structs carry
+#  matter_cluster/matter_attribute; a suggestion only adds matter_node and
+#  matter_endpoint, inherited by every descendant item. Clusters without a
+#  struct are not suggested - the discovery table covers their raw data.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -51,46 +30,81 @@
 
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
-from typing import Any
+from typing import Any, TypedDict
 
 import ruamel.yaml as yaml
 
-from ..clusters import (
-    attribute_info,
-    cluster_name,
-    cluster_struct_label,
-    cluster_struct_name,
-    decode_value,
-    device_type_name,
-)
+from ..clusters import attribute_info, cluster_name, cluster_struct, decode_value, device_type_name
 
-# BasicInformation cluster (Core Spec 11.1), attributes used for the device
-# table: VendorName, ProductName, NodeLabel (user-settable, RW).
+# BasicInformation cluster (Core Spec 11.1): VendorName, ProductName, NodeLabel (user-settable).
 BASIC_INFORMATION_CLUSTER = 0x28
 VENDOR_NAME_ATTR = 0x01
 PRODUCT_NAME_ATTR = 0x03
 NODE_LABEL_ATTR = 0x05
 
-# Descriptor cluster (Core Spec 9.5), DeviceTypeList attribute - present on
-# every endpoint; endpoint 0's entry is the RootNode type (not useful for
-# display), so the device table uses the first non-root endpoint's primary
-# device type instead.
+# Descriptor cluster (Core Spec 9.5) DeviceTypeList - endpoint 0 only carries the RootNode type.
 DESCRIPTOR_CLUSTER = 0x1D
 DEVICE_TYPE_LIST_ATTR = 0x00
 
 
-def _split_path(path: str) -> tuple[int, int, int]:
-    endpoint_id, cluster_id, attribute_id = path.split('/')
-    return int(endpoint_id), int(cluster_id), int(attribute_id)
+class MatterNode(TypedDict):
+    """One node of matter-server's get_nodes()/start_listening() answer, as far as this plugin reads it."""
+
+    node_id: int
+    available: bool
+    attributes: dict[str, Any]
 
 
-def discovery_rows(node: dict[str, Any]) -> list[dict[str, Any]]:
+class NodeSummary(TypedDict):
+    node_id: int
+    available: bool
+    label: str
+    node_label: str
+    vendor: str
+    product: str
+    device_type: str
+
+
+def parse_nodes(raw: Any, logger: logging.Logger | None = None) -> list[MatterNode]:
+    """
+    Validate matter-server's node list at the boundary: malformed entries
+    are skipped with a warning instead of failing every consumer later.
+    """
+    if not isinstance(raw, list):
+        if logger is not None:
+            logger.warning(f'unexpected node list from matter-server: {raw!r}')
+        return []
+    nodes: list[MatterNode] = []
+    for entry in raw:
+        node_id = entry.get('node_id') if isinstance(entry, dict) else None
+        attributes = entry.get('attributes') if isinstance(entry, dict) else None
+        if not isinstance(node_id, int) or not isinstance(attributes, dict):
+            if logger is not None:
+                logger.warning(f'skipping malformed node from matter-server: {entry!r}')
+            continue
+        nodes.append(MatterNode(node_id=node_id, available=bool(entry.get('available')), attributes=attributes))
+    return nodes
+
+
+def _split_path(path: str) -> tuple[int, int, int] | None:
+    parts = path.split('/')
+    if len(parts) != 3 or not all(part.isdigit() for part in parts):
+        return None
+    endpoint_id, cluster_id, attribute_id = (int(part) for part in parts)
+    return endpoint_id, cluster_id, attribute_id
+
+
+def discovery_rows(node: MatterNode) -> list[dict[str, Any]]:
     """Flatten one node's cached attribute dump into sorted discovery-table rows."""
     node_id = node['node_id']
     rows = []
     for path, value in node['attributes'].items():
-        endpoint_id, cluster_id, attribute_id = _split_path(path)
+        split = _split_path(path)
+        if split is None:
+            continue
+        endpoint_id, cluster_id, attribute_id = split
         info = attribute_info(cluster_id, attribute_id)
         rows.append(
             {
@@ -109,24 +123,17 @@ def discovery_rows(node: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def _group_by_endpoint_cluster(node: dict[str, Any]) -> dict[tuple[int, int], dict[int, Any]]:
-    by_endpoint_cluster: dict[tuple[int, int], dict[int, Any]] = defaultdict(dict)
-    for path, value in node['attributes'].items():
-        endpoint_id, cluster_id, attribute_id = _split_path(path)
-        by_endpoint_cluster[(endpoint_id, cluster_id)][attribute_id] = value
-    return by_endpoint_cluster
+def _clusters_by_endpoint(node: MatterNode) -> dict[int, set[int]]:
+    clusters: dict[int, set[int]] = defaultdict(set)
+    for path in node['attributes']:
+        split = _split_path(path)
+        if split is not None:
+            clusters[split[0]].add(split[1])
+    return clusters
 
 
 class _OrderPreservingSafeDumper(yaml.SafeDumper):
-    """
-    yaml.SafeDumper unconditionally sorts plain-dict keys alphabetically on output
-    (ruamel.yaml.representer.BaseRepresenter.__init__ hardcodes
-    sort_base_mapping_type_on_output = True, not exposed as a yaml.dump() kwarg) - key order came
-    back alphabetical instead of the intended remark/struct/matter_node/matter_endpoint order.
-    Overridden here rather than switching to collections.OrderedDict, which dumps as an ugly
-    !!omap-tagged sequence instead of plain YAML mappings - not what a copy-paste suggestion
-    should look like.
-    """
+    """SafeDumper that keeps dict insertion order - ruamel's SafeDumper sorts plain dict keys by default."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -139,103 +146,103 @@ def _dump_yaml(data: dict[str, Any]) -> str:
     )
 
 
-def build_suggested_items(node: dict[str, Any], device_label: str | None = None) -> dict[str, Any] | None:
+def _instance_attr(attr: str, instance: str) -> str:
+    return f'{attr}@{instance}' if instance else attr
+
+
+def build_suggested_items(
+    node: MatterNode, device_label: str | None = None, instance: str = ''
+) -> dict[str, Any] | None:
     """
-    Suggested item config for one node, as a plain dict keyed by item name - not a per-attribute
-    dump. Only clusters with a real, curated plugin.yaml struct (clusters.py's CLUSTER_STRUCTS)
-    are suggested; everything else is intentionally left out (see this module's own docstring for
-    why - the Discovery tab already covers "raw, uncurated data").
+    Suggested item config for one node, keyed by item name - one block per
+    endpoint that has at least one cluster with a generic struct, None if no
+    endpoint has one. A single block is keyed `matter_node_<id>`, several are
+    `matter_node_<id>_ep<endpoint>` (e.g. a bridge exposing one sensor per
+    endpoint).
 
-    Returns None when the device has no CLUSTER_STRUCTS-covered cluster at all. Otherwise emits one
-    item block per covered endpoint - real need, not speculative: the bridge role routinely exposes
-    several single-cluster endpoints under one node (e.g. a switch, a contact sensor, and a
-    temperature sensor each on their own endpoint), unlike a single real device's several clusters
-    usually sharing one endpoint.
-    A single covered endpoint keeps the original bare `matter_node_<id>` key (unchanged, still what
-    most real single-purpose devices produce); more than one gets `matter_node_<id>_ep<endpoint_id>`
-    per block instead, since YAML mapping keys must be unique.
-
-    Key order within each item block is deliberate: remark first (fastest way to identify which
-    physical device this is), struct: second (what kind of item this is, self-explanatory via
-    naming), matter_node/matter_endpoint last (Matter-internal plumbing, least relevant to a human
-    scanning the block) - real user feedback on the previous per-attribute output, not an arbitrary
-    choice. Both generate_suggested_item()'s YAML dump and create_suggested_items()'s live item
-    creation rely on this exact insertion order being preserved.
+    Key order is remark, struct, matter_node, matter_endpoint - what the
+    item is first, Matter plumbing last. For a named plugin *instance* the
+    struct reference and the matter_* attributes carry `@<instance>`, which
+    shng's struct expansion propagates to the struct's own
+    `<attr>@instance` attributes.
     """
     node_id = node['node_id']
-    by_endpoint_cluster = _group_by_endpoint_cluster(node)
+    structs_by_endpoint: dict[int, list] = {}
+    for endpoint_id, cluster_ids in sorted(_clusters_by_endpoint(node).items()):
+        structs = [spec for spec in (cluster_struct(cluster_id) for cluster_id in sorted(cluster_ids)) if spec]
+        if structs:
+            structs_by_endpoint[endpoint_id] = structs
 
-    by_endpoint: dict[int, list[str]] = defaultdict(list)
-    for endpoint_id, cluster_id in sorted(by_endpoint_cluster):
-        struct_name = cluster_struct_name(cluster_id)
-        if struct_name is not None:
-            by_endpoint[endpoint_id].append(struct_name)
-
-    if not by_endpoint:
+    if not structs_by_endpoint:
         return None
 
-    multi = len(by_endpoint) > 1
+    multi = len(structs_by_endpoint) > 1
+    suffix = f'@{instance}' if instance else ''
     items: dict[str, Any] = {}
-    for endpoint_id, struct_names in sorted(by_endpoint.items()):
-        # remark leads with what the item IS (function label(s), e.g. "Schalter"), then which
-        # physical device it belongs to - a bare device name told the user nothing about what a
-        # given suggestion actually does once there was more than one device on the page (real
-        # feedback: "the remark still only copies the name of the bridge"). Always set now (used
-        # to be conditional on device_label alone) - the function label is always known here,
-        # unlike device_label which the caller may not have.
-        item: dict[str, Any] = {}
-        function_labels = [cluster_struct_label(name) for name in struct_names]
-        remark = ', '.join(function_labels)
+    for endpoint_id, structs in structs_by_endpoint.items():
+        remark = ', '.join(spec.label for spec in structs)
         if device_label:
             remark += f' - {device_label}'
-        item['remark'] = remark
-        struct_refs = [f'matter.{name}' for name in struct_names]
-        item['struct'] = struct_refs[0] if len(struct_refs) == 1 else struct_refs
-        item['matter_node'] = node_id
-        item['matter_endpoint'] = endpoint_id
+        struct_refs = [f'matter.{spec.name}{suffix}' for spec in structs]
         key = f'matter_node_{node_id}_ep{endpoint_id}' if multi else f'matter_node_{node_id}'
-        items[key] = item
-
+        items[key] = {
+            'remark': remark,
+            'struct': struct_refs[0] if len(struct_refs) == 1 else struct_refs,
+            _instance_attr('matter_node', instance): node_id,
+            _instance_attr('matter_endpoint', instance): endpoint_id,
+        }
     return items
 
 
-def generate_suggested_item(node: dict[str, Any], device_label: str | None = None) -> str | None:
-    """Same suggestion as build_suggested_items(), as copy-paste YAML text (or None, unchanged)."""
-    items = build_suggested_items(node, device_label)
+def generate_suggested_item(node: MatterNode, device_label: str | None = None, instance: str = '') -> str | None:
+    """build_suggested_items() as copy-paste YAML text (or None)."""
+    items = build_suggested_items(node, device_label, instance)
     return _dump_yaml(items) if items is not None else None
 
 
-def node_summary(node: dict[str, Any]) -> dict[str, Any]:
-    """One row's worth of device-table info: name/vendor/product/device type, from the cached interview."""
+def _first_device_type(attrs: dict[str, Any]) -> str:
+    endpoints = sorted(
+        {split[0] for split in (_split_path(path) for path in attrs) if split and split[1] == DESCRIPTOR_CLUSTER}
+    )
+    for endpoint_id in endpoints:
+        if endpoint_id == 0:
+            continue
+        device_types = attrs.get(f'{endpoint_id}/{DESCRIPTOR_CLUSTER}/{DEVICE_TYPE_LIST_ATTR}')
+        if isinstance(device_types, list) and device_types and isinstance(device_types[0], dict):
+            device_type_id = device_types[0].get('0')
+            if isinstance(device_type_id, int):
+                return device_type_name(device_type_id)
+    return ''
+
+
+def node_summary(node: MatterNode) -> NodeSummary:
+    """
+    Device-table row for a node. 'label' (node_label > product > "Node N")
+    is for contexts needing some readable text; the table itself shows the
+    raw node_label, blank when unset.
+    """
     node_id = node['node_id']
     attrs = node['attributes']
+    vendor = str(attrs.get(f'0/{BASIC_INFORMATION_CLUSTER}/{VENDOR_NAME_ATTR}') or '')
+    product = str(attrs.get(f'0/{BASIC_INFORMATION_CLUSTER}/{PRODUCT_NAME_ATTR}') or '')
+    node_label = str(attrs.get(f'0/{BASIC_INFORMATION_CLUSTER}/{NODE_LABEL_ATTR}') or '')
+    return NodeSummary(
+        node_id=node_id,
+        available=node['available'],
+        label=node_label or product or f'Node {node_id}',
+        node_label=node_label,
+        vendor=vendor,
+        product=product,
+        device_type=_first_device_type(attrs),
+    )
 
-    vendor = attrs.get(f'0/{BASIC_INFORMATION_CLUSTER}/{VENDOR_NAME_ATTR}') or ''
-    product = attrs.get(f'0/{BASIC_INFORMATION_CLUSTER}/{PRODUCT_NAME_ATTR}') or ''
-    node_label = attrs.get(f'0/{BASIC_INFORMATION_CLUSTER}/{NODE_LABEL_ATTR}') or ''
-    # NodeLabel is user-settable (client.py's write_attribute) and empty on
-    # most devices out of the box - 'label' with the product/node_id
-    # fallback is only for contexts needing *some* readable text (e.g. the
-    # unlink confirm dialog). The device table itself shows raw node_label,
-    # blank rather than a duplicate of Produkt when nothing's been set.
-    label = node_label or product or f'Node {node_id}'
 
-    device_type = ''
-    endpoint_ids = sorted({_split_path(path)[0] for path in attrs if _split_path(path)[1] == DESCRIPTOR_CLUSTER})
-    for endpoint_id in endpoint_ids:
-        if endpoint_id == 0:
-            continue  # RootNode type, not useful for display
-        device_types = attrs.get(f'{endpoint_id}/{DESCRIPTOR_CLUSTER}/{DEVICE_TYPE_LIST_ATTR}')
-        if device_types:
-            device_type = device_type_name(device_types[0]['0'])
-            break
-
-    return {
-        'node_id': node_id,
-        'available': node.get('available'),
-        'label': label,
-        'node_label': node_label,
-        'vendor': vendor,
-        'product': product,
-        'device_type': device_type,
-    }
+def device_label(summary: NodeSummary) -> str:
+    """
+    Which physical device a suggestion belongs to, for its remark: vendor and
+    product, plus node_label in parentheses if set and different from product.
+    """
+    base = f'{summary["vendor"]} {summary["product"]}'.strip() or f'Node {summary["node_id"]}'
+    if summary['node_label'] and summary['node_label'] != summary['product']:
+        return f'{base} ({summary["node_label"]})'
+    return base

@@ -3,15 +3,21 @@
 {% set logo_frame = false %}
 {% set update_interval = 5000 %}
 
+{% macro role_state(role) -%}
+	{%- if role is none -%}{{ _('deaktiviert') }}
+	{%- else -%}{{ role.status.state.value }}{% if role.status.detail %} ({{ role.status.detail }}){% endif %}
+	{%- endif -%}
+{%- endmacro %}
+
 {% block headtable %}
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>{{ _('Server verbunden') }}</strong></td>
-			<td class="py-1">{% if p.server_client and p.server_client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Server') }}</strong></td>
+			<td class="py-1">{{ role_state(server) }}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>{{ _('Bridge verbunden') }}</strong></td>
-			<td class="py-1">{% if p.bridge_client and p.bridge_client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Bridge') }}</strong></td>
+			<td class="py-1">{{ role_state(p.bridge) }}</td>
 			<td class="py-1" width="50px"></td>
 			{% if p.primary_interface %}
 			<td class="py-1"><strong>{{ _('Netzwerk-Interface') }}</strong></td>
@@ -45,6 +51,26 @@
 
 {% block pluginscripts %}
 <script>
+	const MATTER_TEXT = {
+		commissionSucceeded: {{ _('Kopplung erfolgreich')|tojson }},
+		commissionFailed: {{ _('Kopplung fehlgeschlagen')|tojson }},
+		itemsCreated: {{ _('Item(s) erstellt')|tojson }},
+		itemsCreateFailed: {{ _('Item-Erstellung fehlgeschlagen')|tojson }},
+		confirmUnlink: {{ _('Gerät wirklich entkoppeln?')|tojson }},
+		unlinkHint: {{ _('Das Gerät muss danach neu gekoppelt werden, um es wieder nutzen zu können.')|tojson }},
+		confirmRemoveFabric: {{ _('Fabric wirklich entfernen?')|tojson }},
+		removeFabricHint: {{ _('Falls dies die eigene Fabric dieses Plugins ist, stattdessen den Entkoppeln-Button verwenden - sonst bleibt der lokale Geräte-Datensatz von shng veraltet stehen.')|tojson }},
+		confirmRemoveAlias: {{ _('Alias wirklich entfernen?')|tojson }},
+		removeAliasHint: {{ _('Items, die diesen Alias verwenden, verwerfen Schreibzugriffe, bis der Alias wieder existiert.')|tojson }},
+		selectDevice: {{ _('Bitte ein Gerät auswählen')|tojson }},
+		copied: {{ _('Kopiert')|tojson }},
+		pending: {{ _('läuft')|tojson }},
+		succeeded: {{ _('erfolgreich')|tojson }},
+		failed: {{ _('fehlgeschlagen')|tojson }},
+	};
+	// commission job_id -> last state seen by this page, to toast each job's completion once
+	const matterJobStates = {{ commission_jobs|tojson }}.reduce(function (acc, job) { acc[job.job_id] = job.state; return acc; }, {});
+
 	$(document).ready( function () {
 		$(window).trigger('datatables_defaults');
 		try {
@@ -57,101 +83,68 @@
 			console.warn("Datatable JS not loaded, showing standard tables without sort/filter " + e);
 		}
 
-		// Fixed-position toast container for late_commission_results (see
-		// handleUpdatedData) - appended to body, not tied to any one tab, so a
-		// late answer shows up regardless of which tab is currently active.
 		$('body').append('<div id="matter_toast_container" style="position:fixed; top:70px; right:20px; z-index:1050; max-width:400px;"></div>');
 
-		{% if created_item_paths %}
-			showMatterToast('alert-success', "{{ _('Item(s) erstellt') }}: {{ created_item_paths | join(', ') }}");
+		{% if flash.created_item_paths %}
+			showMatterToast('alert-success', MATTER_TEXT.itemsCreated + ': ' + {{ flash.created_item_paths|join(', ')|tojson }});
 		{% endif %}
-		{% if create_item_error %}
-			showMatterToast('alert-danger', "{{ _('Item-Erstellung fehlgeschlagen') }}: {{ create_item_error }}");
+		{% if flash.create_item_error %}
+			showMatterToast('alert-danger', MATTER_TEXT.itemsCreateFailed + ': ' + {{ flash.create_item_error|tojson }});
 		{% endif %}
-
-		var pairingForm = document.getElementById('pairing_form');
-		if (pairingForm) {
-			pairingForm.addEventListener('submit', function () {
-				var btn = document.getElementById('pairing_submit_btn');
-				var codeInput = pairingForm.querySelector('[name="pairing_code"]');
-				if (!codeInput || !codeInput.value.trim()) return;  // let the empty-code case submit/redirect normally
-				btn.disabled = true;
-				var started = Date.now();
-				var label = btn.innerHTML;
-				var tick = function () {
-					var elapsed = Math.floor((Date.now() - started) / 1000);
-					btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp;' +
-						"{{ _('Kopplung läuft') }}... " + elapsed + 's' +
-						' <span class="small">({{ _("kann bis zu ca. 3-5 Minuten dauern") }})</span>';
-				};
-				tick();
-				setInterval(tick, 1000);
-			});
-		}
 	});
 
 	function showMatterToast(alertClass, text) {
-		var $toast = $('<div class="alert ' + alertClass + ' alert-dismissible fade show shadow-sm" role="alert">' +
-			text +
-			'<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-			'</div>');
+		const $toast = $('<div role="alert" class="alert alert-dismissible fade show shadow-sm"></div>').addClass(alertClass);
+		$toast.append($('<span></span>').text(text));
+		$toast.append('<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
 		$('#matter_toast_container').append($toast);
 		setTimeout(function () { $toast.alert('close'); }, 20000);
 	}
 
-	function unlinkDevice(nodeId, label) {
-		if (confirm("{{ _('Gerät wirklich entkoppeln?') }} (" + label + ", node_id=" + nodeId + ")\n\n" +
-		            "{{ _('Das Gerät muss danach neu gekoppelt werden, um es wieder nutzen zu können.') }}")) {
-			shngPost('', {unlink_node_id: nodeId});
+	function unlinkDevice(button) {
+		if (confirm(MATTER_TEXT.confirmUnlink + ' (' + button.dataset.label + ', node_id=' + button.dataset.nodeId + ')\n\n' + MATTER_TEXT.unlinkHint)) {
+			shngPost('', {unlink_node_id: button.dataset.nodeId});
 		}
 	}
 
-	function shareDevice(nodeId) {
-		shngPost('', {share_node_id: nodeId});
+	function removeFabric(button) {
+		if (confirm(MATTER_TEXT.confirmRemoveFabric + ' (' + button.dataset.label + ', fabric_index=' + button.dataset.fabricIndex + ')\n\n' + MATTER_TEXT.removeFabricHint)) {
+			shngPost('', {remove_fabric_node_id: button.dataset.nodeId, remove_fabric_index: button.dataset.fabricIndex});
+		}
 	}
 
-	function showFabrics(nodeId) {
-		shngPost('', {fabrics_node_id: nodeId});
-	}
-
-	function interviewNode(nodeId) {
-		shngPost('', {interview_node_id: nodeId});
-	}
-
-	function showIpAddresses(nodeId) {
-		shngPost('', {ip_addresses_node_id: nodeId});
-	}
-
-	function suggestItem(nodeId) {
-		shngPost('', {suggest_item_node_id: nodeId});
-	}
-
-	function createItem(nodeId) {
-		shngPost('', {create_item_node_id: nodeId});
+	function nodeAction(field, nodeId) {
+		const params = {};
+		params[field] = nodeId;
+		shngPost('', params);
 	}
 
 	function copyToClipboard(elementId, btn) {
-		var text = document.getElementById(elementId).innerText;
-		navigator.clipboard.writeText(text).then(function () {
-			var original = btn.innerHTML;
-			btn.innerHTML = '<i class="fas fa-check"></i>&nbsp;{{ _("Kopiert") }}';
+		navigator.clipboard.writeText(document.getElementById(elementId).innerText).then(function () {
+			const original = btn.innerHTML;
+			btn.textContent = MATTER_TEXT.copied;
 			setTimeout(function () { btn.innerHTML = original; }, 2000);
 		});
 	}
 
-	function removeFabric(nodeId, fabricIndex, label) {
-		if (confirm("{{ _('Fabric wirklich entfernen?') }} (" + label + ", fabric_index=" + fabricIndex + ")\n\n" +
-		            "{{ _('Falls dies die eigene Fabric dieses Plugins ist, stattdessen den Entkoppeln-Button verwenden - sonst bleibt der lokale Geräte-Datensatz von shng veraltet stehen.') }}")) {
-			shngPost('', {remove_fabric_node_id: nodeId, remove_fabric_index: fabricIndex});
+	function repointAlias(button) {
+		const name = button.dataset.alias;
+		const nodeId = document.getElementById('alias_repoint_select_' + name).value;
+		if (!nodeId) {
+			alert(MATTER_TEXT.selectDevice);
+			return;
+		}
+		shngPost('', {alias_repoint_name: name, alias_repoint_node_id: nodeId});
+	}
+
+	function removeAlias(button) {
+		const name = button.dataset.alias;
+		if (confirm(MATTER_TEXT.confirmRemoveAlias + ' (' + name + ')\n\n' + MATTER_TEXT.removeAliasHint)) {
+			shngPost('', {alias_remove_name: name});
 		}
 	}
 
-	// Share/Fabrics/Neu einlesen all need a live device to talk to - disabling
-	// them while unavailable avoids the confusing case of clicking one and
-	// getting a low-level timeout/connection error that obscures the real,
-	// simple reason (device offline). Unlink is deliberately left enabled -
-	// it already falls back to a local-only forget if the device can't be
-	// reached, so it's still meaningful exactly when a device is unavailable.
+	// Share/Fabrics/Neu einlesen need a reachable device; Unlink stays enabled (falls back to a local forget).
 	function setDeviceAvailability(nodeId, available) {
 		$('#' + nodeId + '_available').text(available);
 		$('#' + nodeId + '_share_btn').prop('disabled', !available);
@@ -159,41 +152,35 @@
 		$('#' + nodeId + '_interview_btn').prop('disabled', !available);
 	}
 
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet !== null) return;
-		var data = JSON.parse(response);
-		for (var path in data.items) {
-			shngInsertText(path + '_value', data.items[path], 'maintable', 2);
-		}
-		for (var nodeId in data.devices) {
-			setDeviceAvailability(nodeId, data.devices[nodeId]);
-		}
-		for (var key in data.discovery) {
-			shngInsertText('discovery_' + key + '_value', data.discovery[key], 'discoverytable', 2);
-		}
-		(data.late_commission_results || []).forEach(function (r) {
-			if (r.success) {
-				showMatterToast('alert-success', "{{ _('Kopplung (verzögert) erfolgreich') }}: " + r.detail);
-			} else {
-				showMatterToast('alert-warning', "{{ _('Kopplung (verzögert) fehlgeschlagen') }}: " + r.detail);
+	function updateCommissionJobs(jobs) {
+		jobs.forEach(function (job) {
+			$('#commission_job_' + job.job_id + '_state').text(MATTER_TEXT[job.state] || job.state);
+			$('#commission_job_' + job.job_id + '_detail').text(job.detail);
+			const previous = matterJobStates[job.job_id];
+			if (previous === 'pending' && job.state !== 'pending') {
+				if (job.state === 'succeeded') {
+					showMatterToast('alert-success', MATTER_TEXT.commissionSucceeded + ': ' + job.detail);
+				} else {
+					showMatterToast('alert-danger', MATTER_TEXT.commissionFailed + ': ' + job.detail);
+				}
 			}
+			matterJobStates[job.job_id] = job.state;
 		});
 	}
 
-	function repointAlias(name) {
-		var nodeId = document.getElementById('alias_repoint_select_' + name).value;
-		if (!nodeId) {
-			alert("{{ _('Bitte ein Gerät auswählen') }}");
-			return;
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet !== null) return;
+		const data = JSON.parse(response);
+		for (const path in data.items) {
+			shngInsertText(path + '_value', data.items[path], 'maintable', 2);
 		}
-		shngPost('', {alias_repoint_name: name, alias_repoint_node_id: nodeId});
-	}
-
-	function removeAlias(name) {
-		if (confirm("{{ _('Alias wirklich entfernen?') }} (" + name + ")\n\n" +
-		            "{{ _('Items, die diesen Alias verwenden, behalten die zuletzt bekannte node_id, bis sie umgeleitet oder selbst entfernt werden.') }}")) {
-			shngPost('', {alias_remove_name: name});
+		for (const nodeId in data.devices) {
+			setDeviceAvailability(nodeId, data.devices[nodeId]);
 		}
+		for (const key in data.discovery) {
+			shngInsertText('discovery_' + key + '_value', data.discovery[key], 'discoverytable', 2);
+		}
+		updateCommissionJobs(data.commission_jobs || []);
 	}
 </script>
 {% endblock pluginscripts %}
@@ -203,6 +190,15 @@
 {% set tab1title = "<strong>" ~ _('Geräte') ~ "</strong> (" ~ devices|length ~ ")" %}
 {% block bodytab1 %}
 
+	{% if server is none %}
+		<div class="alert alert-info mt-2">{{ _('Die Server-Rolle ist deaktiviert (server_enabled).') }}</div>
+	{% elif nodes_error %}
+		<div class="alert alert-warning mt-2">{{ _('Geräteliste nicht verfügbar') }}: {{ nodes_error }}</div>
+	{% endif %}
+	{% if flash.request_error %}
+		<div class="alert alert-danger mt-2">{{ flash.request_error }}</div>
+	{% endif %}
+
 	<div class="mb-2">
 		<h5>{{ _('Gerät koppeln') }}</h5>
 		<form method="post" action="" id="pairing_form">
@@ -211,43 +207,62 @@
 					<input type="text" class="form-control" name="pairing_code" placeholder="{{ _('Pairing-Code (manueller Code oder QR-Inhalt)') }}" size="40">
 				</div>
 				<div class="col-auto">
-					<button type="submit" id="pairing_submit_btn" class="btn btn-shng btn-sm"><i class="fas fa-plug"></i>&nbsp;{{ _('Koppeln') }}</button>
+					<button type="submit" class="btn btn-shng btn-sm"><i class="fas fa-plug"></i>&nbsp;{{ _('Koppeln') }}</button>
 				</div>
 			</div>
 		</form>
-		{% if commission_error %}
-			<div class="alert alert-danger mt-2">{{ _('Kopplung fehlgeschlagen') }}: {{ commission_error }}</div>
+		{% if flash.commission_error %}
+			<div class="alert alert-danger mt-2">{{ _('Kopplung fehlgeschlagen') }}: {{ flash.commission_error }}</div>
 		{% endif %}
-		{% if commission_result %}
-			<div class="alert alert-success mt-2">{{ _('Gekoppelt') }}: node_id={{ commission_result.get('node_id') }}</div>
+		{% if commission_jobs %}
+			<table class="table table-sm mt-2">
+				<thead>
+				<tr>
+					<th>{{ _('Kopplung') }}</th>
+					<th>{{ _('Status') }}</th>
+					<th>{{ _('Ergebnis') }}</th>
+				</tr>
+				</thead>
+				{% for job in commission_jobs|reverse %}
+					<tr>
+						<td class="py-1">#{{ job.job_id }}</td>
+						<td class="py-1" id="commission_job_{{ job.job_id }}_state">
+							{%- if job.state == 'pending' %}{{ _('läuft') }} <span class="small">({{ _('kann bis zu ca. 3-5 Minuten dauern') }})</span>
+							{%- elif job.state == 'succeeded' %}{{ _('erfolgreich') }}
+							{%- else %}{{ _('fehlgeschlagen') }}{% endif -%}
+						</td>
+						<td class="py-1" id="commission_job_{{ job.job_id }}_detail">{{ job.detail }}</td>
+					</tr>
+				{% endfor %}
+			</table>
 		{% endif %}
-		{% if unlink_error %}
-			<div class="alert alert-danger mt-2">{{ _('Entkoppeln fehlgeschlagen') }}: {{ unlink_error }}</div>
+		{% if flash.unlink_error %}
+			<div class="alert alert-danger mt-2">{{ _('Entkoppeln fehlgeschlagen') }}: {{ flash.unlink_error }}</div>
 		{% endif %}
-		{% if share_error %}
-			<div class="alert alert-danger mt-2">{{ _('Öffnen des Kopplungsfensters fehlgeschlagen') }}: {{ share_error }}</div>
+		{% if flash.share_error %}
+			<div class="alert alert-danger mt-2">{{ _('Öffnen des Kopplungsfensters fehlgeschlagen') }}: {{ flash.share_error }}</div>
 		{% endif %}
-		{% if share_result %}
+		{% if flash.share_result %}
 			<div class="alert alert-success mt-2">
 				<div class="d-flex align-items-start">
 					<div class="mr-3" style="background:#fff; padding:8px; display:inline-block;">
-						{{ share_result.qr_svg | safe }}
+						{{ flash.share_result.qr_svg | safe }}
 					</div>
 					<div>
-						{{ _('Kopplungsfenster geöffnet für node_id') }}={{ share_result.node_id }} -
+						{{ _('Kopplungsfenster geöffnet für node_id') }}={{ flash.share_result.node_id }} -
 						{{ _('in Apple Home, Google Home o.ä. mit diesem Code koppeln (15 Minuten gültig)') }}:<br>
-						{{ _('Manueller Code') }}: <code>{{ share_result.setup_manual_code }}</code><br>
-						{{ _('QR-Inhalt') }}: <code>{{ share_result.setup_qr_code }}</code>
+						{{ _('Manueller Code') }}: <code>{{ flash.share_result.setup_manual_code }}</code><br>
+						{{ _('QR-Inhalt') }}: <code>{{ flash.share_result.setup_qr_code }}</code>
 					</div>
 				</div>
 			</div>
 		{% endif %}
 	</div>
 
-	{% if not thread_dataset_is_set %}
+	{% if server is not none and not thread_dataset_is_set %}
 	<div class="mb-2">
 		<h5>{{ _('Thread Netzwerk-Zugangsdaten') }}</h5>
-		{% if p.server_otbr_rest_url %}
+		{% if server.settings.otbr_rest_url %}
 		<form method="post" action="" class="d-inline mb-2">
 			<button type="submit" name="thread_dataset_fetch" value="1" class="btn btn-shng btn-sm"><i class="fas fa-download"></i>&nbsp;{{ _('Automatisch vom Border Router abrufen') }}</button>
 		</form>
@@ -265,26 +280,26 @@
 		</form>
 	</div>
 	{% endif %}
-	{% if thread_dataset_error %}
-		<div class="mb-2"><div class="alert alert-danger mt-2">{{ _('Thread Netzwerk-Zugangsdaten') }}: {{ thread_dataset_error }}</div></div>
+	{% if flash.thread_dataset_error %}
+		<div class="mb-2"><div class="alert alert-danger mt-2">{{ _('Thread Netzwerk-Zugangsdaten') }}: {{ flash.thread_dataset_error }}</div></div>
 	{% endif %}
 
 	<div class="mb-2">
-		{% if fabrics_error %}
-			<div class="alert alert-danger mt-2">{{ _('Fabrics konnten nicht gelesen werden') }}: {{ fabrics_error }}</div>
+		{% if flash.fabrics_error %}
+			<div class="alert alert-danger mt-2">{{ _('Fabrics konnten nicht gelesen oder entfernt werden') }}: {{ flash.fabrics_error }}</div>
 		{% endif %}
-		{% if interview_error %}
-			<div class="alert alert-danger mt-2">{{ _('Neu einlesen fehlgeschlagen') }}: {{ interview_error }}</div>
+		{% if flash.interview_error %}
+			<div class="alert alert-danger mt-2">{{ _('Neu einlesen fehlgeschlagen') }}: {{ flash.interview_error }}</div>
 		{% endif %}
-		{% if ip_addresses_error %}
-			<div class="alert alert-danger mt-2">{{ _('IP-Adressen konnten nicht gelesen werden') }}: {{ ip_addresses_error }}</div>
+		{% if flash.ip_addresses_error %}
+			<div class="alert alert-danger mt-2">{{ _('IP-Adressen konnten nicht gelesen werden') }}: {{ flash.ip_addresses_error }}</div>
 		{% endif %}
-		{% if ip_addresses_result %}
+		{% if flash.ip_addresses_result %}
 			<div class="mt-2">
-				<h6>{{ _('Adressen für node_id') }}={{ ip_addresses_result.node_id }}</h6>
-				{% if ip_addresses_result.addresses %}
+				<h6>{{ _('Adressen für node_id') }}={{ flash.ip_addresses_result.node_id }}</h6>
+				{% if flash.ip_addresses_result.addresses %}
 					<ul>
-						{% for address in ip_addresses_result.addresses %}
+						{% for address in flash.ip_addresses_result.addresses %}
 							<li><code>{{ address }}</code></li>
 						{% endfor %}
 					</ul>
@@ -293,9 +308,9 @@
 				{% endif %}
 			</div>
 		{% endif %}
-		{% if fabrics_result %}
+		{% if flash.fabrics_result %}
 			<div class="mt-2">
-				<h6>{{ _('Fabrics auf node_id') }}={{ fabrics_result.node_id }}</h6>
+				<h6>{{ _('Fabrics auf node_id') }}={{ flash.fabrics_result.node_id }}</h6>
 				<table class="table table-sm">
 					<thead>
 					<tr>
@@ -306,14 +321,16 @@
 						<th></th>
 					</tr>
 					</thead>
-					{% for fabric in fabrics_result.fabrics %}
+					{% for fabric in flash.fabrics_result.fabrics %}
 						<tr>
 							<td class="py-1">{{ fabric.fabric_index }}</td>
 							<td class="py-1">{{ fabric.vendor_name or fabric.vendor_id }}</td>
 							<td class="py-1">{{ fabric.fabric_label or ('<' ~ _('kein Label') ~ '>') }}</td>
 							<td class="py-1">{{ fabric.fabric_id }}</td>
 							<td class="py-1">
-								<button type="button" class="btn btn-shng btn-sm" onclick="removeFabric({{ fabrics_result.node_id }}, {{ fabric.fabric_index }}, '{{ fabric.vendor_name or fabric.vendor_id }}')">
+								<button type="button" class="btn btn-shng btn-sm" onclick="removeFabric(this)"
+										data-node-id="{{ flash.fabrics_result.node_id }}" data-fabric-index="{{ fabric.fabric_index }}"
+										data-label="{{ fabric.vendor_name or fabric.vendor_id }}">
 									<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
 								</button>
 							</td>
@@ -322,14 +339,14 @@
 				</table>
 			</div>
 		{% endif %}
-		{% if suggested_item_error %}
-			<div class="alert alert-danger mt-2">{{ _('Item-Definition fehlgeschlagen') }}: {{ suggested_item_error }}</div>
+		{% if flash.suggested_item_error %}
+			<div class="alert alert-danger mt-2">{{ _('Item-Definition fehlgeschlagen') }}: {{ flash.suggested_item_error }}</div>
 		{% endif %}
-		{% if suggested_item_result %}
+		{% if flash.suggested_item_result %}
 			<div class="mt-2">
-				<h6>{{ _('Item-Definition für node_id') }}={{ suggested_item_result.node_id }}</h6>
-				{% if suggested_item_result.yaml %}
-					<pre id="suggested_item_yaml" class="p-2 bg-light border">{{ suggested_item_result.yaml }}</pre>
+				<h6>{{ _('Item-Definition für node_id') }}={{ flash.suggested_item_result.node_id }}</h6>
+				{% if flash.suggested_item_result.yaml %}
+					<pre id="suggested_item_yaml" class="p-2 bg-light border">{{ flash.suggested_item_result.yaml }}</pre>
 					<button type="button" class="btn btn-shng btn-sm" onclick="copyToClipboard('suggested_item_yaml', this)">
 						<i class="fas fa-copy"></i>&nbsp;{{ _('Kopieren') }}
 					</button>
@@ -363,25 +380,25 @@
 				<td class="py-1">{{ device.device_type }}</td>
 				<td class="py-1" id="{{ device.node_id }}_available">{{ device.available }}</td>
 				<td class="py-1">
-					<button type="button" id="{{ device.node_id }}_share_btn" class="btn btn-shng btn-sm" onclick="shareDevice({{ device.node_id }})" title="{{ _('Für Apple Home, Google Home o.ä. freigeben') }}" {% if not device.available %}disabled{% endif %}>
+					<button type="button" id="{{ device.node_id }}_share_btn" class="btn btn-shng btn-sm" onclick="nodeAction('share_node_id', {{ device.node_id }})" title="{{ _('Für Apple Home, Google Home o.ä. freigeben') }}" {% if not device.available %}disabled{% endif %}>
 						<i class="fas fa-share-alt"></i>&nbsp;{{ _('Teilen') }}
 					</button>
-					<button type="button" id="{{ device.node_id }}_fabrics_btn" class="btn btn-shng btn-sm" onclick="showFabrics({{ device.node_id }})" title="{{ _('Gekoppelte Fabrics anzeigen') }}" {% if not device.available %}disabled{% endif %}>
+					<button type="button" id="{{ device.node_id }}_fabrics_btn" class="btn btn-shng btn-sm" onclick="nodeAction('fabrics_node_id', {{ device.node_id }})" title="{{ _('Gekoppelte Fabrics anzeigen') }}" {% if not device.available %}disabled{% endif %}>
 						<i class="fas fa-list"></i>&nbsp;{{ _('Fabrics') }}
 					</button>
-					<button type="button" id="{{ device.node_id }}_interview_btn" class="btn btn-shng btn-sm" onclick="interviewNode({{ device.node_id }})" title="{{ _('Alle Attribute frisch vom Gerät lesen, ersetzt den zwischengespeicherten Stand') }}" {% if not device.available %}disabled{% endif %}>
+					<button type="button" id="{{ device.node_id }}_interview_btn" class="btn btn-shng btn-sm" onclick="nodeAction('interview_node_id', {{ device.node_id }})" title="{{ _('Alle Attribute frisch vom Gerät lesen, ersetzt den zwischengespeicherten Stand') }}" {% if not device.available %}disabled{% endif %}>
 						<i class="fas fa-sync-alt"></i>&nbsp;{{ _('Neu einlesen') }}
 					</button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="showIpAddresses({{ device.node_id }})" title="{{ _('Aktuell verbundene Adresse(n)/Netzwerk-Interface anzeigen - auch bei nicht erreichbarem Gerät (letzter bekannter Stand)') }}">
+					<button type="button" class="btn btn-shng btn-sm" onclick="nodeAction('ip_addresses_node_id', {{ device.node_id }})" title="{{ _('Aktuell verbundene Adresse(n)/Netzwerk-Interface anzeigen - auch bei nicht erreichbarem Gerät (letzter bekannter Stand)') }}">
 						<i class="fas fa-network-wired"></i>&nbsp;{{ _('Adressen') }}
 					</button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="suggestItem({{ device.node_id }})" title="{{ _('Item-Definition für dieses Gerät anzeigen (Copy-Paste)') }}">
+					<button type="button" class="btn btn-shng btn-sm" onclick="nodeAction('suggest_item_node_id', {{ device.node_id }})" title="{{ _('Item-Definition für dieses Gerät anzeigen (Copy-Paste)') }}">
 						<i class="fas fa-code"></i>&nbsp;{{ _('Item-Definition') }}
 					</button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="createItem({{ device.node_id }})" title="{{ _('Item-Definition als echtes Item unter matter_devices anlegen') }}">
+					<button type="button" class="btn btn-shng btn-sm" onclick="nodeAction('create_item_node_id', {{ device.node_id }})" title="{{ _('Item-Definition als echtes Item anlegen') }}">
 						<i class="fas fa-plus"></i>&nbsp;{{ _('Item erstellen') }}
 					</button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice({{ device.node_id }}, '{{ device.label }}')" title="{{ _('Funktioniert auch bei nicht erreichbarem Gerät (lokales Vergessen als Fallback)') }}">
+					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice(this)" data-node-id="{{ device.node_id }}" data-label="{{ device.label }}" title="{{ _('Funktioniert auch bei nicht erreichbarem Gerät (lokales Vergessen als Fallback)') }}">
 						<i class="fas fa-unlink"></i>&nbsp;{{ _('Entkoppeln') }}
 					</button>
 				</td>
@@ -406,15 +423,15 @@
 		{% for item in items %}
 			<tr>
 				<td></td>
-				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item.property.path }}</td>
 				<td class="py-1">{{ item._type }}</td>
-				<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
-				<td class="py-1">{{ p.describe_mapping(item) }}</td>
+				<td id="{{ item.property.path }}_value" class="py-1">{{ item() }}</td>
+				<td class="py-1">{{ p.describe_item(item) }}</td>
 			</tr>
 		{% endfor %}
 	</table>
 	<div class="mt-2 small text-muted">
-		{{ _('* = geerbt von einem übergeordneten Item (find_attribute)') }}
+		{{ _('* = geerbt von einem übergeordneten Item') }}
 	</div>
 {% endblock bodytab2 %}
 
@@ -453,13 +470,14 @@
 
 {% set tab4title = "<strong>" ~ _('Aliase') ~ "</strong> (" ~ aliases|length ~ ")" %}
 {% block bodytab4 %}
+	{% if server is not none %}
 	<div class="mb-2">
 		{{ _('Namen statt node_id in Items verwenden (matter_alias) - übersteht ein Rekommissionieren, das die node_id ändert. Alias-Definitionen sind Kind-Items unter') }}
-		<code>{{ p.server_alias_base_item }}</code>{{ _(', muss bereits existieren.') }}
+		<code>{{ server.settings.alias_base_item }}</code>{{ _(', muss bereits existieren.') }}
 	</div>
 
-	{% if alias_error %}
-		<div class="alert alert-danger mt-2">{{ _('Alias-Aktion fehlgeschlagen') }}: {{ alias_error }}</div>
+	{% if flash.alias_error %}
+		<div class="alert alert-danger mt-2">{{ _('Alias-Aktion fehlgeschlagen') }}: {{ flash.alias_error }}</div>
 	{% endif %}
 
 	<div class="mb-3">
@@ -483,6 +501,7 @@
 			</div>
 		</form>
 	</div>
+	{% endif %}
 
 	<table id="aliasestable" class="dataTableAdditional">
 		<thead>
@@ -511,10 +530,10 @@
 							<option value="{{ device.node_id }}">{{ device.node_id }} - {{ device.vendor }} {{ device.product }}</option>
 						{% endfor %}
 					</select>
-					<button type="button" class="btn btn-shng btn-sm" onclick="repointAlias('{{ name }}')" title="{{ _('Alias auf anderes Gerät umleiten - kein Neustart nötig') }}">
+					<button type="button" class="btn btn-shng btn-sm" onclick="repointAlias(this)" data-alias="{{ name }}" title="{{ _('Alias auf anderes Gerät umleiten - kein Neustart nötig') }}">
 						<i class="fas fa-exchange-alt"></i>&nbsp;{{ _('Umleiten') }}
 					</button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="removeAlias('{{ name }}')">
+					<button type="button" class="btn btn-shng btn-sm" onclick="removeAlias(this)" data-alias="{{ name }}">
 						<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
 					</button>
 				</td>
@@ -529,7 +548,7 @@
 		{{ _('Endpoint/Cluster-Discovery-Browser + Item-Definition (Copy-Paste-YAML, Button "Item-Definition" je Gerät).') }}
 	</div>
 	<div class="mb-2">
-		{{ _('Eine Item-Definition existiert nur für Endpoints mit einem Cluster, für den eine Struktur hinterlegt ist (aktuell: OnOff, ElectricalPowerMeasurement, BooleanState, TemperatureMeasurement).') }}
+		{{ _('Eine Item-Definition existiert nur für Endpoints mit einem Cluster, für den eine Struktur hinterlegt ist (aktuell: OnOff, ElectricalPowerMeasurement, BooleanState, TemperatureMeasurement, RelativeHumidityMeasurement, PowerSource).') }}
 	</div>
 	<div class="mb-2">
 		{{ _('Hat ein Gerät mehrere solcher Endpoints (z.B. eine Bridge), erscheint pro Endpoint ein eigener Item-Block.') }}

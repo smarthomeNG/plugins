@@ -2,7 +2,15 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 """Unit tests for clusters.py's name/unit lookups - pure data, no network."""
 
-from plugins.matter.clusters import attribute_info, cluster_name, decode_value, device_type_name, switch_info
+from plugins.matter.clusters import (
+    SwitchSpec,
+    attribute_info,
+    cluster_name,
+    cluster_struct,
+    decode_value,
+    device_type_name,
+    switch_info,
+)
 
 
 def test_known_cluster_name():
@@ -87,8 +95,7 @@ def test_decode_value_passes_through_none():
 
 
 def test_switch_info_known_cluster():
-    # verified against real hardware: OnOff attribute 0, On/Off commands
-    assert switch_info(0x06) == (0x00, 'on', 'off')
+    assert switch_info(0x06) == SwitchSpec(0x00, 'on', 'off')
 
 
 def test_switch_info_unknown_cluster_returns_none():
@@ -108,3 +115,13 @@ def test_device_type_name_temperature_and_humidity_sensor():
 
 def test_device_type_name_unknown_falls_back_to_numeric():
     assert device_type_name(9999) == 'type_9999'
+
+
+def test_cluster_struct_known_and_unknown():
+    assert cluster_struct(0x06).name == 'switch'
+    assert cluster_struct(0x28) is None
+    assert cluster_struct(9999) is None
+
+
+def test_decode_value_passes_bools_through():
+    assert decode_value(0x402, 0, True) is True

@@ -6,16 +6,11 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Matter plugin. Thin SmartPlugin frame dispatching to two internal
-#  roles: server/ (commissions and controls real Matter devices, mirroring
-#  cluster attributes/commands onto shng items - see server/__init__.py)
-#  and bridge/ (exposes shng items to other Matter ecosystems as bridged
-#  accessories - see bridge/__init__.py). Both share plugin.yaml,
-#  mapping.py, and clusters.py; each owns its own sidecar/client pair -
-#  server's talks to the vendored matter-server, bridge's talks to this
-#  plugin's own @matter/node application (sidecar/bridge.js - lives next to
-#  matter-server, not under bridge/, so both share one Node.js dependency
-#  tree instead of installing separately).
+#  Matter plugin. A thin SmartPlugin frame around independent roles (see
+#  role.py): server/ commissions and controls real Matter devices, bridge/
+#  exposes shng items to other Matter ecosystems. Each enabled role gets
+#  every item callback and runs under its own supervision on the plugin's
+#  asyncio loop; one role failing leaves the other running.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -35,111 +30,97 @@
 from __future__ import annotations
 
 import asyncio
-import collections
 import os
+from typing import TYPE_CHECKING
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
 
-from . import bridge, server
-from .bridge.client import MatterBridgeClient
-from .bridge.sidecar import MatterBridgeSidecar
-from .mapping import BridgeMapping
-from .server.client import MatterServerClient
-from .server.sidecar import MatterServerSidecar
+from .bridge import BridgeRole, BridgeSidecarSettings, MatterBridgeSidecar, bridge_unique_id
+from .role import Backoff, Role, RoleConfigError, RoleState, RoleStatus, merge_registrations
+from .server import MatterServerSidecar, ServerRole, ServerSettings, ServerSidecarSettings
 from .webif import WebInterface
+
+if TYPE_CHECKING:
+    from lib.item.item import Item
+
+ROLE_TYPES: tuple[type[ServerRole] | type[BridgeRole], ...] = (ServerRole, BridgeRole)
 
 
 class Matter(SmartPlugin):
-    """
-    Matter plugin. See module docstring above.
-    """
+    """Matter plugin frame - see the module header."""
 
-    PLUGIN_VERSION = '0.2.0'  # must match the version in plugin.yaml
-    # Each instance needs its own ports/storage paths (and, for the bridge role,
-    # its own commissioning identity) - see plugin.yaml's per-parameter notes on
-    # which ones. Item attributes are already instance-scoped for free via
-    # shng's own attr@instance/attr@* convention (SmartPlugin.__get_iattr_conf) -
-    # nothing extra needed in this plugin's own parse_item() for that part.
+    PLUGIN_VERSION = '0.3.0'
     ALLOW_MULTIINSTANCE = True
     STOP_ON_ITEM_CHANGE = False
 
     def __init__(self, sh=None, **kwargs):
         super().__init__()
-
-        # -- global (shared by every role) --
-        self.node_binary = self.get_parameter_value('node_binary')
-        self.storage_path = os.path.abspath(self.get_parameter_value('storage_path'))
-        self.primary_interface = self.get_parameter_value('primary_interface') or None
-
-        # -- server role config --
-        self.server_enabled = self.get_parameter_value('server_enabled')
-        self.server_sidecar_entry = self.path_join(
-            self.get_plugin_dir(), self.get_parameter_value('server_sidecar_entry')
-        )
-        self.server_sidecar_port = self.get_parameter_value('server_sidecar_port')
-        self.server_enable_test_net_dcl = self.get_parameter_value('server_enable_test_net_dcl')
-        self.server_alias_base_item = self.get_parameter_value('server_alias_base_item')
-        self.server_generated_items_file = self.get_parameter_value('server_generated_items_file')
-        self.server_fabric_vendor_id = self.get_parameter_value('server_fabric_vendor_id')
-        self.server_fabric_label = self.get_parameter_value('server_fabric_label')
-        self.server_commission_timeout = self.get_parameter_value('server_commission_timeout')
-        self.server_bluetooth_adapter = self.get_parameter_value('server_bluetooth_adapter') or None
-        self.server_otbr_rest_url = self.get_parameter_value('server_otbr_rest_url')
-
         self.items = Items.get_instance()
+        self.primary_interface: str | None = self.get_parameter_value('primary_interface') or None
 
-        # -- server role state --
-        self.server_sidecar: MatterServerSidecar | None = None
-        self.server_client: MatterServerClient | None = None
-        # The sidecar's own crash-recovery loop, run as a free-standing task (not part of the
-        # {stop_task, server_task, bridge_task} set _plugin_coro() awaits) - stored so cleanup()
-        # can cancel it before calling sidecar.stop(). Without this, a sidecar dying at the wrong
-        # moment during shutdown could get restarted by supervise() before cleanup() sets
-        # sidecar._stopping.
-        self.server_sidecar_supervisor_task: asyncio.Task | None = None
-        # Alias bookkeeping, kept separate from SmartPlugin's own _plg_item_dict/_item_lookup_dict.
-        self._server_aliases: dict[str, int] = {}  # alias name -> current node_id
-        self._server_node_to_alias: dict[int, set[str]] = {}  # node_id -> alias names currently pointing at it
-        self._server_alias_lookup_dict: dict[str, list] = {}  # alias_mapping_key()/..._availability_...() -> items
-        self._server_item_alias: dict[str, str] = {}  # device item path -> alias name it depends on
-        # commission_with_code results that arrived after MatterServerClient's own timeout
-        # already gave up on them (see server/client.py's _timed_out) - drained once by the
-        # webif's periodic poll (get_late_commission_results()), not persisted beyond that.
-        # deque, not a list: bounded so a webif that's never polling can't grow this forever.
-        self._late_commission_results: collections.deque = collections.deque(maxlen=10)
-
-        # -- bridge role config --
-        self.bridge_enabled = self.get_parameter_value('bridge_enabled')
-        self.bridge_sidecar_entry = self.path_join(
-            self.get_plugin_dir(), self.get_parameter_value('bridge_sidecar_entry')
-        )
-        self.bridge_matter_port = self.get_parameter_value('bridge_matter_port')
-        self.bridge_control_port = self.get_parameter_value('bridge_control_port')
-        self.bridge_storage_path = os.path.abspath(self.get_parameter_value('bridge_storage_path'))
-        self.bridge_passcode = self.get_parameter_value('bridge_passcode')
-        self.bridge_discriminator = self.get_parameter_value('bridge_discriminator')
-        self.bridge_vendor_id = self.get_parameter_value('bridge_vendor_id')
-
-        # -- bridge role state --
-        self.bridge_sidecar: MatterBridgeSidecar | None = None
-        self.bridge_client: MatterBridgeClient | None = None
-        # Same reasoning as server_sidecar_supervisor_task above - same race, same fix,
-        # mirrored for the bridge role's own sidecar.
-        self.bridge_sidecar_supervisor_task: asyncio.Task | None = None
-        self._bridge_items: dict[str, BridgeMapping] = {}  # item path -> mapping (expose_type, name)
-        self._bridge_item_by_path: dict[str, object] = {}  # item path -> item, for re-adds on reconnect
-        self._bridge_endpoint_id: dict[str, int] = {}  # item path -> bridge-assigned endpoint_id
-        self._bridge_item_by_endpoint: dict[int, object] = {}  # endpoint_id -> item, for command_received routing
+        self.server: ServerRole | None = self._build_server() if self.get_parameter_value('server_enabled') else None
+        self.bridge: BridgeRole | None = self._build_bridge() if self.get_parameter_value('bridge_enabled') else None
+        self.roles: list[Role] = [role for role in (self.server, self.bridge) if role is not None]
+        # role name -> paths of items configured for that role while it is disabled
+        self._disabled_role_items: dict[str, list[str]] = {}
 
         self.init_webinterface(WebInterface)
+
+    def _plugin_path(self, parameter: str) -> str:
+        return self.path_join(self.get_plugin_dir(), self.get_parameter_value(parameter))
+
+    def _build_server(self) -> ServerRole:
+        port = self.get_parameter_value('server_sidecar_port')
+        sidecar = MatterServerSidecar(
+            self.get_parameter_value('node_binary'),
+            self._plugin_path('server_sidecar_entry'),
+            os.path.abspath(self.get_parameter_value('storage_path')),
+            ServerSidecarSettings(
+                port=port,
+                enable_test_net_dcl=self.get_parameter_value('server_enable_test_net_dcl'),
+                primary_interface=self.primary_interface,
+                fabric_vendor_id=self.get_parameter_value('server_fabric_vendor_id'),
+                fabric_label=self.get_parameter_value('server_fabric_label'),
+                bluetooth_adapter=self.get_parameter_value('server_bluetooth_adapter') or None,
+            ),
+            logger=self.logger,
+        )
+        settings = ServerSettings(
+            alias_base_item=self.get_parameter_value('server_alias_base_item'),
+            generated_items_file=self.get_parameter_value('server_generated_items_file'),
+            generated_items_base=self.get_parameter_value('server_generated_items_base'),
+            commission_timeout=self.get_parameter_value('server_commission_timeout'),
+            otbr_rest_url=self.get_parameter_value('server_otbr_rest_url') or '',
+        )
+        return ServerRole(self, sidecar, settings, url=f'ws://localhost:{port}/ws')
+
+    def _build_bridge(self) -> BridgeRole:
+        control_port = self.get_parameter_value('bridge_control_port')
+        sidecar = MatterBridgeSidecar(
+            self.get_parameter_value('node_binary'),
+            self._plugin_path('bridge_sidecar_entry'),
+            os.path.abspath(self.get_parameter_value('bridge_storage_path')),
+            BridgeSidecarSettings(
+                matter_port=self.get_parameter_value('bridge_matter_port'),
+                control_port=control_port,
+                passcode=self.get_parameter_value('bridge_passcode'),
+                discriminator=self.get_parameter_value('bridge_discriminator'),
+                vendor_id=self.get_parameter_value('bridge_vendor_id'),
+                unique_id=bridge_unique_id(self.get_instance_name()),
+                primary_interface=self.primary_interface,
+            ),
+            logger=self.logger,
+        )
+        return BridgeRole(self, sidecar, url=f'ws://127.0.0.1:{control_port}')
 
     # -- lifecycle --
 
     def run(self):
         self.alive = True
-        server.ensure_alias_base_item(self)
-        server.validate_alias_references(self)
+        for role in self.roles:
+            role.prepare()
+        self._warn_disabled_role_items()
         self.start_asyncio(self._plugin_coro())
 
     def stop(self):
@@ -147,140 +128,93 @@ class Matter(SmartPlugin):
         self.stop_asyncio()
 
     async def _plugin_coro(self):
-        stop_task = asyncio.create_task(self.wait_for_asyncio_termination(), name='matter-stop-watcher')
-        tasks = {stop_task}
-        if self.server_enabled:
-            tasks.add(asyncio.create_task(server.run_forever(self), name='matter-server-role-work'))
-        if self.bridge_enabled:
-            tasks.add(asyncio.create_task(bridge.run_forever(self), name='matter-bridge-work'))
+        tasks = [asyncio.create_task(self._supervise_role(role), name=f'matter-{role.name}') for role in self.roles]
         try:
-            await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            await self.wait_for_asyncio_termination()
         finally:
             for task in tasks:
-                if not task.done():
-                    task.cancel()
-            # Safe even for a role never enabled - cleanup() no-ops on still-None sidecar/client state.
-            await server.cleanup(self)
-            await bridge.cleanup(self)
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            for role in self.roles:
+                await self._cleanup_role(role)
 
-    # -- item handling: dispatches to server/bridge based on which attributes an item carries --
-
-    def parse_item(self, item):
+    async def _supervise_role(self, role: Role) -> None:
         """
-        Calls both roles unconditionally (not server.parse_item(item) or
-        bridge.parse_item(item)) - an item may carry both a server and a
-        bridge attribute at once (a passthrough item), and short-circuiting
-        on the first truthy result would silently skip the other role's
-        registration.
+        Run one role until the plugin stops. A RoleConfigError disables the
+        role; any other exception restarts it (after cleanup) with backoff.
+        The other role is unaffected either way.
         """
-        server_registered = server.parse_item(self, item)
-        bridge_registered = bridge.parse_item(self, item)
-        return self.update_item if (server_registered or bridge_registered) else None
+        backoff = Backoff()
+        while True:
+            backoff.started()
+            try:
+                await role.run()
+            except asyncio.CancelledError:
+                raise
+            except RoleConfigError as ex:
+                role.status = RoleStatus(RoleState.FAILED, str(ex))
+                self.logger.error(f'matter {role.name} role disabled: {ex}')
+                await self._cleanup_role(role)
+                return
+            except Exception as ex:
+                self.logger.exception(f'matter {role.name} role crashed: {ex!r}')
+            else:
+                self.logger.error(f'matter {role.name} role stopped unexpectedly')
+            await self._cleanup_role(role)
+            delay = backoff.next_delay()
+            role.status = RoleStatus(RoleState.RESTARTING, f'restarting in {delay}s')
+            await asyncio.sleep(delay)
 
-    def update_item(self, item, caller=None, source=None, dest=None):
-        """Dispatches to whichever role(s) actually registered this item, not just server."""
-        config = self.get_item_config(item)
-        if 'matter_attribute_mapping' in config or 'matter_command_mapping' in config:
-            server.update_item(self, item, caller, source, dest)
-        if 'matter_bridge_mapping' in config:
-            bridge.update_item(self, item, caller, source, dest)
+    async def _cleanup_role(self, role: Role) -> None:
+        try:
+            await role.cleanup()
+        except Exception as ex:
+            self.logger.exception(f'matter {role.name} role cleanup failed: {ex!r}')
 
-    def unparse_item(self, item) -> bool:
+    # -- item handling --
+
+    def parse_item(self, item: Item):
         """
-        No super() call: SmartPlugin.unparse_item()'s default is a genuine
-        no-op by design. Both roles are always tried (not server.unparse_item(item)
-        or bridge.unparse_item(item)) for the same reason as parse_item().
+        Every enabled role sees every item - one item may carry both server
+        and bridge attributes - and the item is registered once with all
+        roles' config data.
         """
-        server_handled = server.unparse_item(self, item)
-        bridge_handled = bridge.unparse_item(self, item)
-        return server_handled or bridge_handled
+        self._note_disabled_role_item(item)
+        registration = merge_registrations([role.parse_item(item) for role in self.roles])
+        if registration is None:
+            return None
+        self.add_item(item, config_data_dict=dict(registration.config), updating=registration.updating)
+        return self.update_item if registration.updating else None
 
-    # -- alias CRUD, called from the webif --
+    def update_item(self, item: Item, caller=None, source=None, dest=None):
+        for role in self.roles:
+            role.update_item(item, caller, source, dest)
 
-    def get_aliases(self) -> dict:
-        return server.get_aliases(self)
+    def unparse_item(self, item: Item) -> bool:
+        return any([role.unparse_item(item) for role in self.roles])
 
-    def create_alias(self, name: str, node_id: int, remark: str = '') -> None:
-        server.create_alias(self, name, node_id, remark)
+    def _note_disabled_role_item(self, item: Item) -> None:
+        enabled = {role.name for role in self.roles}
+        for role_type in ROLE_TYPES:
+            if role_type.name in enabled:
+                continue
+            if any(self.has_iattr(item.conf, attr) for attr in role_type.ITEM_ATTRIBUTES):
+                self._disabled_role_items.setdefault(role_type.name, []).append(item.property.path)
 
-    def repoint_alias(self, name: str, node_id: int) -> None:
-        server.repoint_alias(self, name, node_id)
+    def _warn_disabled_role_items(self) -> None:
+        for role_name, paths in self._disabled_role_items.items():
+            self.logger.warning(
+                f'{len(paths)} item(s) configured for the disabled {role_name} role are ignored '
+                f'(enable {role_name}_enabled to use them): {", ".join(paths[:10])}{" ..." if len(paths) > 10 else ""}'
+            )
 
-    def remove_alias(self, name: str) -> None:
-        server.remove_alias(self, name)
+    # -- webif helpers --
 
-    # -- called from the webif (its own cherrypy thread) --
+    def mapped_items(self) -> list[Item]:
+        """Items this plugin registered, sorted by path."""
+        return sorted(self.get_item_list(), key=lambda item: item.property.path.lower())
 
-    def commission(self, code: str) -> dict:
-        return server.commission(self, code)
-
-    def set_thread_dataset(self, dataset: str) -> None:
-        server.set_thread_dataset(self, dataset)
-
-    def clear_thread_dataset(self) -> None:
-        server.clear_thread_dataset(self)
-
-    def thread_dataset_is_set(self) -> bool:
-        return server.thread_dataset_is_set(self)
-
-    def fetch_thread_dataset_from_otbr(self) -> str:
-        return server.fetch_thread_dataset_from_otbr(self)
-
-    def describe_mapping(self, item) -> str:
-        return server.describe_mapping(self, item)
-
-    def list_nodes(self) -> list:
-        return server.list_nodes(self)
-
-    def create_suggested_items(self, node_id: int) -> list:
-        return server.create_suggested_items(self, node_id)
-
-    def get_discovery_rows(self) -> list:
-        return server.get_discovery_rows(self)
-
-    def get_suggested_item_yaml(self, node_id: int) -> str | None:
-        return server.get_suggested_item_yaml(self, node_id)
-
-    def get_node_summaries(self) -> list:
-        return server.get_node_summaries(self)
-
-    def get_matter_items(self) -> list:
-        return server.get_matter_items(self)
-
-    def remove_node(self, node_id: int) -> None:
-        server.remove_node(self, node_id)
-
-    def open_commissioning_window(self, node_id: int) -> dict:
-        return server.open_commissioning_window(self, node_id)
-
-    def get_matter_fabrics(self, node_id: int) -> list:
-        return server.get_matter_fabrics(self, node_id)
-
-    def remove_matter_fabric(self, node_id: int, fabric_index: int) -> None:
-        server.remove_matter_fabric(self, node_id, fabric_index)
-
-    def interview_node(self, node_id: int) -> None:
-        server.interview_node(self, node_id)
-
-    def get_node_ip_addresses(self, node_id: int) -> list:
-        return server.get_node_ip_addresses(self, node_id)
-
-    def get_late_commission_results(self) -> list:
-        return server.drain_late_commission_results(self)
-
-    # -- bridge view, called from the webif --
-
-    def get_bridge_status(self) -> dict:
-        return bridge.get_bridge_status(self)
-
-    def get_bridge_fabrics(self) -> list:
-        return bridge.get_bridge_fabrics(self)
-
-    def get_bridge_items(self) -> list:
-        return bridge.get_bridge_items(self)
-
-    def open_bridge_commissioning_window(self) -> None:
-        bridge.open_bridge_commissioning_window(self)
-
-    def remove_bridge_fabric(self, fabric_index: int) -> None:
-        bridge.remove_bridge_fabric(self, fabric_index)
+    def describe_item(self, item: Item) -> str:
+        """Every role's mapping description for an item, joined."""
+        descriptions = [role.describe_item(item) for role in self.roles]
+        return '; '.join(description for description in descriptions if description)

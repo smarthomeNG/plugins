@@ -6,15 +6,11 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Human-readable names for Matter cluster/attribute IDs, for the webif's
-#  discovery browser and item-generator. Deliberately small and grown
-#  incrementally as clusters are actually encountered/validated against
-#  real or example devices - not a transcription of the whole Application
-#  Cluster spec. Unknown IDs fall back to their raw number, which is a
-#  perfectly usable (if less friendly) matter_cluster/matter_attribute value.
-#
-#  Attribute IDs/units below are taken from the actual Matter spec tables,
-#  not guessed - see each cluster's own comment for its section reference.
+#  Registry of the Matter clusters this plugin knows by name: attribute
+#  names/types/units for the discovery browser, the matter_switch shorthand,
+#  and the plugin.yaml struct used for item suggestions. Grown as clusters
+#  are validated against real devices, not a transcription of the spec -
+#  unknown IDs fall back to their raw number.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -33,28 +29,62 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any, Mapping
 
 
 @dataclass(frozen=True)
 class AttributeInfo:
     name: str
-    item_type: str  # shng item type (bool/num/str) for the item-generator
+    item_type: str  # shng item type (bool/num/str)
     divisor: int | None = None  # raw value / divisor -> base physical unit
     unit: str | None = None
 
 
-# cluster_id -> (cluster name, {attribute_id: AttributeInfo})
-CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
-    # Core Spec, Basic Information cluster (0x0028) - only what's been seen so far, not exhaustive.
-    0x28: ('BasicInformation', {1: AttributeInfo('VendorName', 'str'), 3: AttributeInfo('ProductName', 'str')}),
-    # Descriptor (Core spec, encountered on every endpoint) - name only, not worth decoding attributes.
-    0x1D: ('Descriptor', {}),
-    # Application Cluster Spec 3.8, On/Off Cluster.
-    0x06: ('OnOff', {0: AttributeInfo('OnOff', 'bool')}),
-    # Application Cluster Spec 2.13, Electrical Power Measurement Cluster - IDs/units per that
-    # section's table, validated against a real device.
-    0x90: (
+@dataclass(frozen=True)
+class SwitchSpec:
+    """How the matter_switch shorthand maps a bool item onto a cluster."""
+
+    attribute_id: int
+    command_true: str
+    command_false: str
+
+
+@dataclass(frozen=True)
+class StructSpec:
+    """Generic plugin.yaml struct (without the 'matter.' prefix) suggested for a cluster, and its remark label."""
+
+    name: str
+    label: str
+
+
+@dataclass(frozen=True)
+class ClusterSpec:
+    id: int
+    name: str
+    attributes: Mapping[int, AttributeInfo] = field(default_factory=dict)
+    switch: SwitchSpec | None = None
+    struct: StructSpec | None = None
+
+
+_CLUSTER_SPECS = (
+    # Core Spec, Basic Information cluster.
+    ClusterSpec(
+        0x28, 'BasicInformation', {1: AttributeInfo('VendorName', 'str'), 3: AttributeInfo('ProductName', 'str')}
+    ),
+    # Core Spec, Descriptor cluster - present on every endpoint.
+    ClusterSpec(0x1D, 'Descriptor'),
+    # Application Cluster Spec 1.5, On/Off cluster - switch verified on real hardware.
+    ClusterSpec(
+        0x06,
+        'OnOff',
+        {0: AttributeInfo('OnOff', 'bool')},
+        switch=SwitchSpec(0x00, 'on', 'off'),
+        struct=StructSpec('switch', 'Schalter'),
+    ),
+    # Application Cluster Spec 2.13, Electrical Power Measurement - validated against a real device.
+    ClusterSpec(
+        0x90,
         'ElectricalPowerMeasurement',
         {
             0: AttributeInfo('PowerMode', 'num'),
@@ -65,14 +95,13 @@ CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
             14: AttributeInfo('Frequency', 'num', 1000, 'Hz'),
             17: AttributeInfo('PowerFactor', 'num', 100, None),
         },
+        struct=StructSpec('electrical_power_measurement', 'Energiemessung'),
     ),
-    # Application Cluster Spec 2.12, Electrical Energy Measurement Cluster - name only so
-    # far, attribute struct fields not yet decoded.
-    0x91: ('ElectricalEnergyMeasurement', {}),
-    # Core Spec, Bridged Device Basic Information cluster (0x0039) - present on every bridge-role
-    # endpoint (bridge.js's BridgedDeviceBasicInformationServer). NodeLabel/ProductName carry
-    # matter_expose_name - the only way to tell bridged endpoints apart on the Discovery tab.
-    0x39: (
+    # Application Cluster Spec 2.12, Electrical Energy Measurement - attribute structs not decoded.
+    ClusterSpec(0x91, 'ElectricalEnergyMeasurement'),
+    # Core Spec, Bridged Device Basic Information - on every bridge-role endpoint; NodeLabel carries matter_expose_name.
+    ClusterSpec(
+        0x39,
         'BridgedDeviceBasicInformation',
         {
             3: AttributeInfo('ProductName', 'str'),
@@ -81,102 +110,73 @@ CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
             17: AttributeInfo('Reachable', 'bool'),
         },
     ),
-    # Application Cluster Spec 2.4, Boolean State Cluster - the bridge role's own
-    # "contact" expose_type (bridge.js's ContactSensorDevice).
-    0x45: ('BooleanState', {0: AttributeInfo('StateValue', 'bool')}),
-    # Application Cluster Spec 2.3, Temperature Measurement Cluster - the bridge role's own
-    # "temperature_sensor" expose_type. MeasuredValue is int16 hundredths of a degree C (Core
-    # Spec 1.6 7.19.2.9) - divisor 100 converts to plain degrees C, same pattern as
-    # ElectricalPowerMeasurement above.
-    0x402: ('TemperatureMeasurement', {0: AttributeInfo('MeasuredValue', 'num', 100, '°C')}),
-    # Application Cluster Spec 2.6 - divisor validated against a real IKEA TIMMERFLOTTE.
-    0x405: ('RelativeHumidityMeasurement', {0: AttributeInfo('MeasuredValue', 'num', 100, '%')}),
-    # Core Spec Power Source Cluster (0x002F), root endpoint - verified against a real IKEA TIMMERFLOTTE.
-    0x2F: (
+    # Application Cluster Spec 2.4, Boolean State.
+    ClusterSpec(
+        0x45, 'BooleanState', {0: AttributeInfo('StateValue', 'bool')}, struct=StructSpec('contact', 'Kontakt')
+    ),
+    # Application Cluster Spec 2.3, Temperature Measurement - int16 hundredths of a degree C.
+    ClusterSpec(
+        0x402,
+        'TemperatureMeasurement',
+        {0: AttributeInfo('MeasuredValue', 'num', 100, '°C')},
+        struct=StructSpec('temperature_sensor', 'Temperatursensor'),
+    ),
+    # Application Cluster Spec 2.6, Relative Humidity Measurement - divisor validated on a real device.
+    ClusterSpec(
+        0x405,
+        'RelativeHumidityMeasurement',
+        {0: AttributeInfo('MeasuredValue', 'num', 100, '%')},
+        struct=StructSpec('humidity_sensor', 'Feuchtesensor'),
+    ),
+    # Core Spec, Power Source cluster (root endpoint) - validated on a real device.
+    ClusterSpec(
+        0x2F,
         'PowerSource',
         {11: AttributeInfo('BatVoltage', 'num', 1000, 'V'), 12: AttributeInfo('BatPercentRemaining', 'num', 2, '%')},
+        struct=StructSpec('battery', 'Batterie'),
     ),
-}
+)
+
+CLUSTERS: dict[int, ClusterSpec] = {spec.id: spec for spec in _CLUSTER_SPECS}
+
+# Device Library Spec device type IDs -> human name; unregistered types fall back to their raw number.
+DEVICE_TYPES: dict[int, str] = {0x010A: 'On/Off Plug-in Unit', 0x0302: 'Temperature Sensor', 0x0307: 'Humidity Sensor'}
 
 
 def cluster_name(cluster_id: int) -> str:
-    entry = CLUSTERS.get(cluster_id)
-    return entry[0] if entry else f'cluster_{cluster_id}'
+    spec = CLUSTERS.get(cluster_id)
+    return spec.name if spec else f'cluster_{cluster_id}'
 
 
 def attribute_info(cluster_id: int, attribute_id: int) -> AttributeInfo:
-    entry = CLUSTERS.get(cluster_id)
-    if entry:
-        info = entry[1].get(attribute_id)
-        if info is not None:
-            return info
-    return AttributeInfo(f'attr_{attribute_id}', 'num')
+    spec = CLUSTERS.get(cluster_id)
+    info = spec.attributes.get(attribute_id) if spec else None
+    return info if info is not None else AttributeInfo(f'attr_{attribute_id}', 'num')
 
 
-def decode_value(cluster_id: int, attribute_id: int, raw_value):
-    """Apply an attribute's known unit divisor to a raw value, if any. Passes non-numeric/None through unchanged."""
+def decode_value(cluster_id: int, attribute_id: int, raw_value: Any) -> Any:
+    """Apply an attribute's known unit divisor to a raw value; non-numeric values and None pass through."""
     info = attribute_info(cluster_id, attribute_id)
-    if info.divisor is None or raw_value is None or not isinstance(raw_value, (int, float)):
+    if (
+        info.divisor is None
+        or raw_value is None
+        or isinstance(raw_value, bool)
+        or not isinstance(raw_value, (int, float))
+    ):
         return raw_value
     return raw_value / info.divisor
 
 
-# cluster_id -> (state attribute_id, command-when-true, command-when-false) - the `matter_switch`
-# item attribute's whole point. Same incremental-registry philosophy as CLUSTERS above; an
-# unregistered cluster falls back to matter_attribute/matter_command/matter_command_false directly.
-SWITCH_CLUSTERS: dict[int, tuple[int, str, str]] = {
-    0x06: (0x00, 'on', 'off')  # OnOff: OnOff attribute, On/Off commands - verified on real hardware
-}
+def switch_info(cluster_id: int) -> SwitchSpec | None:
+    """matter_switch mapping for a cluster, or None if the cluster has none registered."""
+    spec = CLUSTERS.get(cluster_id)
+    return spec.switch if spec else None
 
 
-def switch_info(cluster_id: int) -> tuple[int, str, str] | None:
-    """(attribute_id, command_true, command_false) for a switch-shaped cluster, or None if unregistered."""
-    return SWITCH_CLUSTERS.get(cluster_id)
-
-
-# cluster_id -> name of a matching generic struct under plugin.yaml's item_structs (e.g.
-# 'matter.switch') - the webif's item-suggestion feature uses this instead of a raw per-attribute
-# dump, for clusters with a real, curated struct. Same registry philosophy as CLUSTERS/
-# SWITCH_CLUSTERS above; missing here just means no suggestion (Discovery tab still has raw data).
-CLUSTER_STRUCTS: dict[int, str] = {
-    0x06: 'switch',  # OnOff
-    0x90: 'electrical_power_measurement',  # ElectricalPowerMeasurement
-    0x45: 'contact',  # BooleanState
-    0x402: 'temperature_sensor',  # TemperatureMeasurement
-    0x405: 'humidity_sensor',  # RelativeHumidityMeasurement
-    0x2F: 'battery',  # PowerSource
-}
-
-
-def cluster_struct_name(cluster_id: int) -> str | None:
-    """Name of the generic plugin.yaml struct (without the 'matter.' plugin prefix) for this cluster, if any."""
-    return CLUSTER_STRUCTS.get(cluster_id)
-
-
-# struct_name -> human-readable function label for a generated item's remark. German, hardcoded -
-# matches every other generated/hand-written remark in this plugin; no i18n mechanism exists for
-# plugin-generated item config text anywhere in this codebase.
-CLUSTER_STRUCT_LABELS: dict[str, str] = {
-    'switch': 'Schalter',
-    'electrical_power_measurement': 'Energiemessung',
-    'contact': 'Kontakt',
-    'temperature_sensor': 'Temperatursensor',
-    'humidity_sensor': 'Feuchtesensor',
-    'battery': 'Batterie',
-}
-
-
-def cluster_struct_label(struct_name: str) -> str:
-    """Human-readable function label for a struct name - falls back to the bare name if unregistered."""
-    return CLUSTER_STRUCT_LABELS.get(struct_name, struct_name)
-
-
-# Device Library Spec device type IDs -> human name; unregistered types fall back to their raw number.
-DEVICE_TYPES: dict[int, str] = {
-    0x010A: 'On/Off Plug-in Unit',  # 266 - verified against real Shelly Plug M Gen3
-    0x0302: 'Temperature Sensor',  # 770 - verified against real IKEA TIMMERFLOTTE
-    0x0307: 'Humidity Sensor',  # 775 - verified against real IKEA TIMMERFLOTTE
-}
+def cluster_struct(cluster_id: int) -> StructSpec | None:
+    """Suggested generic struct for a cluster, or None if the cluster has none."""
+    spec = CLUSTERS.get(cluster_id)
+    return spec.struct if spec else None
 
 
 def device_type_name(device_type_id: int) -> str:

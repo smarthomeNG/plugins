@@ -1,136 +1,224 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 """
-Unit tests for MatterServerSidecar: _build_args() (pure list-building logic, no
-process spawned) and supervise()'s backoff escalation (fake process/clock, no
-real subprocess or real wall-clock waiting - mirrors
-tests/test_bridge_sidecar.py's TestSuperviseBackoff, see that class's own
-docstring for the full reasoning; both roles' supervise() share the same
-requirement).
+Tests for plugins/matter/sidecar.py (NodeSidecar) with real child
+processes - a small Python script stands in for the Node.js entry file -
+plus both concrete sidecars' command lines and the bridge identity.
 """
 
 import asyncio
+import os
+import subprocess
+import sys
+import tempfile
+import textwrap
 import unittest
-from unittest.mock import patch
 
-from plugins.matter.server import sidecar as server_sidecar_module
-from plugins.matter.server.sidecar import MatterServerSidecar
+import psutil
 
+from plugins.matter.bridge.sidecar import (
+    DEFAULT_BRIDGE_UNIQUE_ID,
+    MAX_BASIC_INFORMATION_STRING,
+    BridgeSidecarSettings,
+    MatterBridgeSidecar,
+    bridge_unique_id,
+)
+from plugins.matter.role import Backoff
+from plugins.matter.server.sidecar import MatterServerSidecar, ServerSidecarSettings
+from plugins.matter.sidecar import NodeSidecar, SidecarStartError
 
-def _sidecar(**overrides) -> MatterServerSidecar:
-    kwargs = dict(
-        node_binary='node',
-        entry_path='entry.js',
-        port=5580,
-        storage_path='/tmp/matter-storage',
-        enable_test_net_dcl=False,
-    )
-    kwargs.update(overrides)
-    return MatterServerSidecar(**kwargs)
-
-
-def test_default_fabric_vendor_id_is_matter_spec_test_range():
-    args = _sidecar()._build_args()
-    assert args[args.index('--vendorid') + 1] == '65521'
-
-
-def test_default_fabric_label_is_smarthomeng():
-    args = _sidecar()._build_args()
-    assert args[args.index('--default-fabric-label') + 1] == 'SmartHomeNG'
-
-
-def test_fabric_vendor_id_is_configurable():
-    args = _sidecar(fabric_vendor_id=42)._build_args()
-    assert args[args.index('--vendorid') + 1] == '42'
+SCRIPT = textwrap.dedent(
+    """
+    import sys, time
+    mode = sys.argv[1]
+    print('booting', flush=True)
+    print('READY now', flush=True)
+    if mode == 'crash':
+        sys.exit(3)
+    time.sleep(60)
+    """
+)
 
 
-def test_fabric_label_is_configurable():
-    args = _sidecar(fabric_label='My Home')._build_args()
-    assert args[args.index('--default-fabric-label') + 1] == 'My Home'
+class ScriptSidecar(NodeSidecar):
+    LABEL = 'test sidecar'
+    LOG_PREFIX = '[test]'
+    READY_MARKER = 'READY'
+    PIDFILE_NAME = 'test.pid'
+    MISSING_ENTRY_HINT = 'test hint.'
+
+    def __init__(self, entry_path, storage_path, mode='run', node_binary=sys.executable):
+        super().__init__(node_binary, entry_path, storage_path)
+        self.mode = mode
+
+    def _build_args(self):
+        return [self.entry_path, self.mode]
 
 
-def test_bluetooth_adapter_absent_by_default():
-    args = _sidecar()._build_args()
-    assert '--bluetooth-adapter' not in args
+class _SidecarTest(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.storage = os.path.join(tmp.name, 'storage')
+        self.entry = os.path.join(tmp.name, 'entry.py')
+        with open(self.entry, 'w') as f:
+            f.write(SCRIPT)
 
 
-def test_bluetooth_adapter_is_configurable():
-    args = _sidecar(bluetooth_adapter='0')._build_args()
-    assert args[args.index('--bluetooth-adapter') + 1] == '0'
+class TestStartStop(_SidecarTest):
+    async def test_start_waits_for_readiness_and_records_the_pid(self):
+        sidecar = ScriptSidecar(self.entry, self.storage)
+        await sidecar.start()
+        self.addAsyncCleanup(sidecar.stop)
+
+        self.assertTrue(sidecar.running)
+        with open(sidecar.pidfile_path) as f:
+            self.assertEqual(int(f.read()), sidecar._process.pid)
+
+    async def test_stop_terminates_and_removes_the_pidfile(self):
+        sidecar = ScriptSidecar(self.entry, self.storage)
+        await sidecar.start()
+        pid = sidecar._process.pid
+
+        await sidecar.stop()
+
+        self.assertFalse(sidecar.running)
+        self.assertFalse(os.path.exists(sidecar.pidfile_path))
+        self.assertFalse(psutil.pid_exists(pid) and psutil.Process(pid).status() != psutil.STATUS_ZOMBIE)
+
+    async def test_missing_entry_file_is_a_start_error(self):
+        sidecar = ScriptSidecar(self.entry + '.missing', self.storage)
+
+        with self.assertRaises(SidecarStartError) as caught:
+            await sidecar.start()
+
+        self.assertIn('test hint.', str(caught.exception))
+
+    async def test_missing_node_binary_is_a_start_error(self):
+        sidecar = ScriptSidecar(self.entry, self.storage, node_binary='/nonexistent/node')
+
+        with self.assertRaises(SidecarStartError):
+            await sidecar.start()
 
 
-class _FakeClock:
-    """Stands in for time.monotonic() - advanced explicitly by _FakeProcess.wait()
-    below to simulate "this much time passed while the process was running",
-    without actually consuming any real wall-clock time in the test."""
+class TestStaleProcess(_SidecarTest):
+    async def test_leftover_process_of_this_entry_is_terminated_before_start(self):
+        os.makedirs(self.storage)
+        leftover = subprocess.Popen([sys.executable, self.entry, 'run'], stdout=subprocess.DEVNULL)
+        self.addCleanup(leftover.kill)
+        sidecar = ScriptSidecar(self.entry, self.storage)
+        with open(sidecar.pidfile_path, 'w') as f:
+            f.write(str(leftover.pid))
 
-    def __init__(self):
-        self.now = 0.0
+        await sidecar.start()
+        self.addAsyncCleanup(sidecar.stop)
 
-    def monotonic(self):
-        return self.now
+        self.assertIsNotNone(await asyncio.to_thread(leftover.wait, 15))
+        self.assertNotEqual(sidecar._process.pid, leftover.pid)
 
-    def advance(self, seconds):
-        self.now += seconds
+    async def test_unrelated_process_in_pidfile_is_left_alone(self):
+        os.makedirs(self.storage)
+        sidecar = ScriptSidecar(self.entry, self.storage)
+        with open(sidecar.pidfile_path, 'w') as f:
+            f.write(str(os.getpid()))
 
+        await sidecar.start()
+        self.addAsyncCleanup(sidecar.stop)
 
-class _FakeProcess:
-    """Stands in for asyncio.subprocess.Process - supervise() only ever calls
-    .wait() on it. Resolves on the next event loop tick (no real sleep), after
-    advancing the fake clock by uptime_seconds."""
-
-    def __init__(self, clock: _FakeClock, uptime_seconds: float):
-        self._clock = clock
-        self._uptime_seconds = uptime_seconds
-
-    async def wait(self):
-        self._clock.advance(self._uptime_seconds)
-        return 1
+        self.assertTrue(psutil.pid_exists(os.getpid()))
 
 
-class TestSuperviseBackoff(unittest.TestCase):
-    """Regression tests for the same real bug test_bridge_sidecar.py's own
-    TestSuperviseBackoff documents in full - server/sidecar.py's supervise()
-    had the identical reset-attempt-too-early bug, same fix applied here."""
+class TestSupervise(_SidecarTest):
+    async def test_crashed_process_is_restarted(self):
+        sidecar = ScriptSidecar(self.entry, self.storage, mode='crash')
+        await sidecar.start()
+        first_pid = sidecar._process.pid
+        supervisor = asyncio.create_task(sidecar.supervise(Backoff(schedule=(0,))))
 
-    def _run_supervise_capturing_delays(self, uptimes, stop_after):
-        delays = []
-        clock = _FakeClock()
-        sidecar = _sidecar()
-        remaining_uptimes = iter(uptimes)
+        restarted = False
+        for _ in range(200):
+            if sidecar._process is not None and sidecar._process.pid != first_pid:
+                restarted = True
+                break
+            await asyncio.sleep(0.02)
+        supervisor.cancel()
+        await asyncio.gather(supervisor, return_exceptions=True)
+        await sidecar.stop()
 
-        async def fake_start():
-            sidecar._process = _FakeProcess(clock, next(remaining_uptimes))
+        self.assertTrue(restarted)
 
-        real_sleep = asyncio.sleep
+    async def test_failing_restart_keeps_supervising(self):
+        sidecar = ScriptSidecar(self.entry, self.storage, mode='crash')
+        await sidecar.start()
+        os.rename(self.entry, self.entry + '.away')
+        supervisor = asyncio.create_task(sidecar.supervise(Backoff(schedule=(0,))))
 
-        async def fake_sleep(delay):
-            delays.append(delay)
-            if len(delays) >= stop_after:
-                sidecar._stopping = True
-            await real_sleep(0)
+        await asyncio.sleep(0.5)
+        self.assertFalse(supervisor.done())
 
-        sidecar.start = fake_start
+        os.rename(self.entry + '.away', self.entry)
+        sidecar.mode = 'run'
+        for _ in range(200):
+            if sidecar.running:
+                break
+            await asyncio.sleep(0.02)
+        running = sidecar.running
+        supervisor.cancel()
+        await asyncio.gather(supervisor, return_exceptions=True)
+        await sidecar.stop()
 
-        async def run():
-            with (
-                patch.object(server_sidecar_module.time, 'monotonic', clock.monotonic),
-                patch.object(server_sidecar_module.asyncio, 'sleep', fake_sleep),
-            ):
-                await sidecar.supervise()
+        self.assertTrue(running)
 
-        asyncio.run(run())
-        return delays
 
-    def test_repeated_immediate_crashes_escalate_the_backoff(self):
-        delays = self._run_supervise_capturing_delays(uptimes=[0, 0, 0, 0], stop_after=4)
-        self.assertEqual(delays, [1, 2, 5, 10])
+class TestCommandLines(unittest.TestCase):
+    def test_server_args(self):
+        sidecar = MatterServerSidecar(
+            'node',
+            '/p/MatterServer.js',
+            '/s',
+            ServerSidecarSettings(port=5580, primary_interface='eth0', bluetooth_adapter='0', enable_test_net_dcl=True),
+        )
 
-    def test_a_stable_run_resets_the_backoff_for_the_next_crash(self):
-        stable_uptime = server_sidecar_module.STABLE_RUN_SECONDS + 1
-        delays = self._run_supervise_capturing_delays(uptimes=[0, 0, stable_uptime], stop_after=3)
-        self.assertEqual(delays, [1, 2, 1])
+        args = sidecar._build_args()
 
-    def test_backoff_caps_at_the_last_tier(self):
-        delays = self._run_supervise_capturing_delays(uptimes=[0] * 8, stop_after=8)
-        self.assertEqual(delays, [1, 2, 5, 10, 30, 60, 60, 60])
+        self.assertEqual(args[:5], ['/p/MatterServer.js', '--port', '5580', '--storage-path', '/s'])
+        self.assertIn('--enable-test-net-dcl', args)
+        self.assertEqual(args[args.index('--primary-interface') + 1], 'eth0')
+        self.assertEqual(args[args.index('--bluetooth-adapter') + 1], '0')
+
+    def test_bridge_args_carry_storage_as_key_value_and_the_unique_id(self):
+        sidecar = MatterBridgeSidecar(
+            'node',
+            '/p/bridge.js',
+            '/s',
+            BridgeSidecarSettings(
+                matter_port=5560, control_port=5561, passcode=1, discriminator=2, vendor_id=3, unique_id='shng-bridge-x'
+            ),
+        )
+
+        args = sidecar._build_args()
+
+        self.assertIn('--storage-path=/s', args)
+        self.assertEqual(args[args.index('--unique-id') + 1], 'shng-bridge-x')
+        self.assertNotIn('--primary-interface', args)
+
+
+class TestBridgeUniqueId(unittest.TestCase):
+    def test_default_instance_keeps_the_existing_identity(self):
+        self.assertEqual(bridge_unique_id(''), DEFAULT_BRIDGE_UNIQUE_ID)
+
+    def test_named_instance_is_readable(self):
+        self.assertEqual(bridge_unique_id('garage'), 'shng-bridge-garage')
+
+    def test_long_instance_names_fit_and_stay_distinct(self):
+        first = bridge_unique_id('a_really_long_instance_name_one')
+        second = bridge_unique_id('a_really_long_instance_name_two')
+
+        self.assertLessEqual(len(first), MAX_BASIC_INFORMATION_STRING)
+        self.assertLessEqual(len(second), MAX_BASIC_INFORMATION_STRING)
+        self.assertNotEqual(first, second)
+        self.assertTrue(first.startswith('shng-bridge-a_really'))
+
+
+if __name__ == '__main__':
+    unittest.main()

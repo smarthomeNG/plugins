@@ -8,7 +8,14 @@ matter
 Matter-Plugin für SmartHomeNG mit zwei unabhängigen Rollen: **server** (kommissioniert und steuert
 echte Matter-Geräte direkt - ohne separaten Hub/Bridge/App) und **bridge** (macht shng-Items als
 eigene "Geräte" für andere Matter-Ökosysteme sichtbar - Apple Home, Google Home, ...).
-Beide Rollen sind individuell über Item-Attribut wählbar; beide laufen in derselben Plugin-Instanz.
+Beide Rollen laufen in derselben Plugin-Instanz und werden über ``server_enabled``/``bridge_enabled``
+einzeln aktiviert. Sie laufen unabhängig voneinander: fällt eine Rolle aus (z.B. fehlende
+Sidecar-Datei), läuft die andere weiter; ein Absturz startet nur die betroffene Rolle neu. Items mit
+Attributen einer deaktivierten Rolle werden ignoriert, beim Start erscheint dazu eine Warnung.
+
+Wird shng hart beendet, können die Node.js-Prozesse weiterlaufen. Ihre PID liegt jeweils im
+Storage-Verzeichnis der Rolle; ein solcher übrig gebliebener Prozess wird beim nächsten Start
+beendet, bevor ein neuer gestartet wird.
 
 Voraussetzungen
 ===============
@@ -88,7 +95,16 @@ Die Zuordnung zu der jeweiligen ``matter_node`` erfolgt im Web-Interface und wir
 in Items unterhalb von ``server_alias_base_item`` gesichert. Jedes direkte Kind-Item davon gilt als
 eine Alias-Definition. Die ``node_id`` eines Items wird dann bei jedem Zugriff über diese Tabelle 
 aufgelöst, statt fest codiert zu sein. Das Basis-Item selbst muss bereits existieren, das Plugin 
-legt es nicht selbst an.
+legt es nicht selbst an. Das Umleiten eines Alias im Webinterface wirkt sofort, ohne Neustart.
+Schreibzugriffe auf Items, deren Alias nicht (mehr) existiert, werden mit einer Fehlermeldung
+verworfen.
+
+Kopplung
+--------
+
+Eine Kopplung über den Pairing-Code läuft im Hintergrund und kann einige Minuten dauern
+(``server_commission_timeout``). Das Webinterface zeigt ihren Status laufend an und meldet das
+Ergebnis, sobald es vorliegt.
 
 bridge-Rolle: shng-Items für andere Matter-Ökosysteme sichtbar machen
 =====================================================================
@@ -96,14 +112,15 @@ bridge-Rolle: shng-Items für andere Matter-Ökosysteme sichtbar machen
 Die bridge-Rolle stellt shng-Items als gebrückte Gerätefunktionen für andere Matter-Controller wie 
 Apple Home bereit.
 
-``matter_expose_type`` an einem Item definiert seine matter-Funktion:
+``matter_expose_type`` an einem Item definiert seine matter-Funktion. Der Item-Typ muss dazu passen,
+sonst wird das Item mit einer Fehlermeldung ignoriert:
 
-- ``switch`` - ein schreibbarer bool-Aktor (``OnOffPlugInUnit``). Vom anderen Controller aus
+- ``switch`` (Item-Typ ``bool``) - ein schreibbarer bool-Aktor (``OnOffPlugInUnit``). Vom anderen Controller aus
   beschreibbar; ein Schreiben dort löst über den üblichen Item-Update-Mechanismus zurück ins Item
   aus, und eine Item-Wertänderung wird genauso an den anderen Controller weitergegeben.
-- ``contact`` - ein reiner bool-Sensor (``ContactSensor``, z.B. ein Türkontakt), der Werte wird nur 
+- ``contact`` (Item-Typ ``bool``) - ein reiner bool-Sensor (``ContactSensor``, z.B. ein Türkontakt), der Werte wird nur 
   von SmartHomeNG aus weitergegeben, es ist keine Änderung über Matter möglich.
-- ``temperature_sensor`` - ein reiner Sensor (``TemperatureSensor``), analog zu ``contact``. 
+- ``temperature_sensor`` (Item-Typ ``num``) - ein reiner Sensor (``TemperatureSensor``), analog zu ``contact``. 
   Der Item-Wert wird als Grad Celsius interpretiert.
 
 ``matter_expose_name`` (optional) legt den Namen fest, der dem anderen Controller angezeigt wird.
@@ -120,9 +137,10 @@ matter an gekoppelte Controller verteilt.
 Item-Structs
 ============
 
-``item_structs`` in ``plugin.yaml`` ist als wachsende Sammlung fertiger Vorlagen für bekannte,
-getestete Geräte gedacht - nicht als generische Vorlagen pro Cluster. Für diese muss in der Regel
-nur ``matter_node`` zusätzlich gesetzt werden. Bisher vorhanden: 
+``item_structs`` in ``plugin.yaml`` enthält generische Vorlagen pro Cluster (``switch``,
+``electrical_power_measurement``, ``contact``, ``temperature_sensor``, ``humidity_sensor``,
+``battery``) und darauf aufbauende Vorlagen für getestete Geräte. Am anwendenden Item werden
+``matter_node`` und ggf. ``matter_endpoint`` gesetzt. Gerätevorlagen bisher:
 
 - ``matter.shelly_plug_m_3gen_simple`` (OnOff-Schalter/Toggle + Verfügbarkeit)
 - ``matter.shelly_plug_m_3gen`` (zusätzlich mit Messung von Leistung/Spannung/Strom)
@@ -130,6 +148,24 @@ nur ``matter_node`` zusätzlich gesetzt werden. Bisher vorhanden:
 Im Test stellte sich heraus, dass die Spannungswerte über Matter nicht immer live übertagen wurden,
 obwohl diese im Gerät vorliegen und z.B. über MQTT sehr wohl übertragen werden. Dies sollte im
 Zweifelsfall selbst geprüft werden.
+
+Mehrere Instanzen
+=================
+
+Jede Instanz ist eine eigene Matter-Fabric und eine eigene bridge. Ports, Storage-Verzeichnisse,
+``server_alias_base_item`` und ``server_generated_items_base`` müssen sich zwischen Instanzen
+unterscheiden (siehe plugin.yaml). Item-Attribute einer Instanz tragen deren Namen
+(``matter_node@<instanz>``); Structs werden mit ``@<instanz>`` referenziert, ihre Attribute erhalten
+den Instanz-Namen dann automatisch::
+
+    kueche_steckdose:
+        struct: matter.shelly_plug_m_3gen@zweite
+        matter_node@zweite: 3
+
+Die über "Item erstellen" erzeugten Items verwenden diese Form automatisch. Die bridge einer
+benannten Instanz meldet sich mit der Kennung ``shng-bridge-<instanz>`` (bei sehr langen
+Instanz-Namen gekürzt und um einen kurzen Hash ergänzt); die Standard-Instanz behält ihre bisherige
+Kennung.
 
 Ein Gerät mit Apple Home / Google Home usw. teilen
 ==================================================
@@ -158,7 +194,7 @@ Aktueller Umfang
   Item-Zuordnung
 - Endpoint-/Cluster-Discovery-Browser (Discovery-Tab)
 - Item-Vorschlag pro Gerät: Copy-Paste-YAML oder direktes Anlegen als echte Items
-  ("Item erstellen"-Button) unter einem gemeinsamen ``matter_devices``-Basis-Item
+  ("Item erstellen"-Button) unter ``server_generated_items_base``
 - ``item_structs`` mit generischen Cluster-Vorlagen (``switch``, ``electrical_power_measurement``,
   ``contact``, ``temperature_sensor``, ``humidity_sensor``, ``battery``) sowie fertigen
   Geräte-Vorlagen (``shelly_plug_m_3gen``/``_simple``)

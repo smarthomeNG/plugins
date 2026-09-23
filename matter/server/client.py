@@ -6,10 +6,9 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Asyncio WebSocket client for the matter-server sidecar. The wire protocol
-#  (message_id-correlated commands, unframed ServerInfoMessage on connect,
-#  unsolicited {"event": ...} pushes) was validated end-to-end against a
-#  real matter-server instance and a software Matter device.
+#  Client for the matter-server sidecar's WebSocket API: message_id-
+#  correlated commands, an unframed ServerInfoMessage on connect, and
+#  unsolicited {"event": ...} pushes.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -29,177 +28,51 @@
 from __future__ import annotations
 
 import asyncio
-import itertools
 import json
-import logging
-from typing import Any, Callable
+from typing import Any
 
-import websockets
+from ..rpc import JsonWsRpcClient, RpcCommandError
 
-# Bare `import websockets` alone does NOT expose `.exceptions` (this version's
-# top-level package lazy-loads submodules via its own __getattr__ -
-# `websockets.exceptions.ConnectionClosed` raises AttributeError without this
-# explicit import, despite `websockets.connect` below working fine either way).
-from websockets.exceptions import ConnectionClosed
+# matter-server budgets up to 255s for one commissioning attempt (ControllerCommissioner.js).
+DEFAULT_COMMISSION_TIMEOUT = 300.0
 
 
-class MatterCommandError(Exception):
-    """Raised when the sidecar answers a command with an error_code."""
+class MatterCommandError(RpcCommandError):
+    """matter-server answered a command with an error_code."""
 
-    def __init__(self, command: str, message: dict):
-        self.command = command
+    def __init__(self, command: str, message: dict[str, Any]):
         self.error_code = message.get('error_code')
         self.details = message.get('details')
-        super().__init__(f'{command} failed: error_code={self.error_code} details={self.details}')
+        super().__init__(command, f'error_code={self.error_code} details={self.details}')
 
 
-class MatterServerClient:
-    """
-    Persistent WebSocket connection to a matter-server sidecar.
+class MatterServerClient(JsonWsRpcClient):
+    """Connection to a matter-server sidecar."""
 
-    One background task reads every incoming message and either resolves a
-    pending command future (matched by message_id) or, for unsolicited
-    {"event": ...} pushes (subscription reports), calls `on_event`.
+    ID_FIELD = 'message_id'
+    LABEL = 'matter-server'
 
-    `on_event` runs on this client's own asyncio loop - callers on another
-    thread (e.g. the plugin's update_item, on shng's item-update thread)
-    must go through SmartPlugin.run_asyncio_coro, never touch this client
-    directly.
-    """
+    server_info: dict[str, Any] | None = None
 
-    def __init__(
-        self,
-        url: str,
-        on_event: Callable[[dict], None],
-        on_late_result: Callable[[str, dict], None] | None = None,
-        logger: logging.Logger | None = None,
-    ):
-        self.url = url
-        self._on_event = on_event
-        self._on_late_result = on_late_result
-        self.logger = logger or logging.getLogger(__name__)
-
-        self._ws = None
-        self._receive_task: asyncio.Task | None = None
-        self._pending: dict[str, tuple[asyncio.Future, str]] = {}
-        # message_id -> (command, timed_out_at) for a late answer with no pending future to resolve; pruned by age.
-        self._timed_out: dict[str, tuple[str, float]] = {}
-        self._msg_id_counter = itertools.count(1)
-        self.server_info: dict | None = None
-
-    @property
-    def connected(self) -> bool:
-        return self._ws is not None and not self._ws.close_code
-
-    async def connect(self, timeout: float = 10.0) -> None:
-        self._ws = await asyncio.wait_for(websockets.connect(self.url), timeout=timeout)
-        # matter-server pushes an unframed ServerInfoMessage right after connect,
-        # before any command has been sent.
+    async def _handshake(self, timeout: float) -> None:
         raw = await asyncio.wait_for(self._ws.recv(), timeout=timeout)
         self.server_info = json.loads(raw)
         self.logger.debug(f'matter-server connected, server_info={self.server_info}')
-        self._receive_task = asyncio.create_task(self._receive_loop(), name='matter-client-receive')
 
-    async def close(self) -> None:
-        if self._receive_task is not None:
-            self._receive_task.cancel()
-            self._receive_task = None
-        if self._ws is not None:
-            await self._ws.close()
-            self._ws = None
-        for future, _command in self._pending.values():
-            if not future.done():
-                future.cancel()
-        self._pending.clear()
-        self._timed_out.clear()
+    def _error_from(self, command: str, message: dict[str, Any]) -> RpcCommandError | None:
+        return MatterCommandError(command, message) if 'error_code' in message else None
 
-    def _remember_timeout(self, message_id: str, command: str) -> None:
-        now = asyncio.get_event_loop().time()
-        self._timed_out = {mid: v for mid, v in self._timed_out.items() if now - v[1] < 600}
-        self._timed_out[message_id] = (command, now)
+    # -- matter-server commands --
 
-    async def _receive_loop(self) -> None:
-        try:
-            async for raw in self._ws:
-                try:
-                    message = json.loads(raw)
-                except json.JSONDecodeError:
-                    self.logger.warning(f'matter-server sent non-JSON message: {raw!r}')
-                    continue
-
-                message_id = message.get('message_id')
-                pending = self._pending.pop(message_id, None) if message_id is not None else None
-                if pending is not None:
-                    future, _command = pending
-                    if not future.done():
-                        future.set_result(message)
-                    continue
-
-                late = self._timed_out.pop(message_id, None) if message_id is not None else None
-                if late is not None:
-                    command, _timed_out_at = late
-                    self.logger.warning(
-                        f"late response for '{command}' arrived after this client's own timeout: {message}"
-                    )
-                    if self._on_late_result is not None:
-                        try:
-                            self._on_late_result(command, message)
-                        except Exception:
-                            self.logger.exception('matter-server late-result handler raised')
-                elif 'event' in message:
-                    try:
-                        self._on_event(message)
-                    except Exception:
-                        self.logger.exception('matter-server event handler raised')
-                else:
-                    self.logger.debug(f'unsolicited/unmatched message from matter-server: {message}')
-        except asyncio.CancelledError:
-            raise
-        except ConnectionClosed as ex:
-            self.logger.warning(f'matter-server connection closed ({ex}) - reconnecting on the next retry cycle')
-        except Exception:
-            self.logger.exception('matter-server receive loop terminated unexpectedly')
-
-    async def send_command(self, command: str, args: dict[str, Any], timeout: float = 30.0) -> Any:
-        if self._ws is None:
-            raise ConnectionError('not connected to matter-server')
-
-        message_id = str(next(self._msg_id_counter))
-        future: asyncio.Future = asyncio.get_event_loop().create_future()
-        self._pending[message_id] = (future, command)
-
-        await self._ws.send(json.dumps({'message_id': message_id, 'command': command, 'args': args}))
-        try:
-            message = await asyncio.wait_for(future, timeout=timeout)
-        except asyncio.TimeoutError:
-            self._remember_timeout(message_id, command)
-            raise
-        finally:
-            self._pending.pop(message_id, None)
-
-        if 'error_code' in message:
-            raise MatterCommandError(command, message)
-        return message.get('result')
-
-    # -- convenience wrappers for matter-server's own commands --
-
-    async def commission_with_code(self, code: str, network_only: bool = False, timeout: float = 300.0) -> dict:
+    async def commission_with_code(
+        self, code: str, network_only: bool = False, timeout: float = DEFAULT_COMMISSION_TIMEOUT
+    ) -> dict:
         """
-        timeout defaults to 300s, well above send_command()'s own 30s: matter-server's
-        commissioner tries every discovered candidate address with a 30s timeout each
-        and budgets up to 255s overall before giving up (ControllerCommissioner.js);
-        a full commission attempt can take close to 3 minutes end to end. If this
-        timeout is hit anyway, the answer isn't lost - see _remember_timeout()/
-        on_late_result.
+        Commission a device from its manual pairing code or QR content.
 
-        network_only=False: on-network (UDP) discovery always runs regardless of this
-        flag - it only controls whether BLE is also tried in parallel
-        (WebSocketControllerHandler.js: `if (!network_only && bleEnabled)`). False is
-        required for a not-yet-networked Matter-over-Thread device, which has no other
-        way to receive its Thread credentials, and is harmless for an already-on-network
-        device (UDP still wins that race the same way). matter-server's own bleEnabled
-        (set from --bluetooth-adapter at startup) already gates this safely on an
-        instance with no adapter configured.
+        network_only=False lets matter-server try BLE in parallel to on-network
+        discovery (only if it was started with a Bluetooth adapter) - required
+        for a not-yet-networked Thread device, harmless otherwise.
         """
         return await self.send_command(
             'commission_with_code', {'code': code, 'network_only': network_only}, timeout=timeout
@@ -207,11 +80,10 @@ class MatterServerClient:
 
     async def set_thread_dataset(self, dataset: str, credential_id: str | None = None) -> dict:
         """
-        Registers a Thread operational dataset (hex TLV, e.g. from `ot-ctl dataset active -x`
-        on the border router) under credential_id (matter-server's own default credential slot
-        if omitted). Persists in matter-server's own storage - a one-time setup per Thread
-        network, not a per-commission-attempt call. commission_with_code() only hands a device
-        Thread credentials if a dataset is already registered here.
+        Register a Thread operational dataset (hex TLV, e.g. `ot-ctl dataset
+        active -x`) under credential_id (matter-server's default slot if
+        omitted). Persisted by matter-server; commission_with_code() hands it
+        to joining Thread devices.
         """
         args = {'dataset': dataset}
         if credential_id is not None:
@@ -222,7 +94,7 @@ class MatterServerClient:
         return result
 
     async def remove_thread_dataset(self, credential_id: str | None = None) -> dict:
-        """Removes a previously-registered Thread dataset (see set_thread_dataset())."""
+        """Remove a registered Thread dataset (see set_thread_dataset())."""
         args = {}
         if credential_id is not None:
             args['id'] = credential_id
@@ -232,9 +104,11 @@ class MatterServerClient:
         return result
 
     async def get_nodes(self, only_available: bool = False) -> list:
+        """matter-server's cached node list - no live device query."""
         return await self.send_command('get_nodes', {'only_available': only_available})
 
     async def start_listening(self) -> list:
+        """Subscribe to events; returns the same node snapshot as get_nodes()."""
         return await self.send_command('start_listening', {})
 
     async def read_attribute(self, node_id: int, path: str, fabric_filtered: bool = False) -> Any:
@@ -258,97 +132,43 @@ class MatterServerClient:
         )
 
     async def write_attribute(self, node_id: int, path: str, value: Any) -> Any:
-        """
-        Verified against real hardware (Shelly Plug M Gen3, BasicInformation.NodeLabel). Not yet
-        verified against an attribute a device actively rejects (e.g. one expecting a command
-        instead of a direct write).
-        """
         return await self.send_command('write_attribute', {'node_id': node_id, 'attribute_path': path, 'value': value})
 
     async def remove_node(self, node_id: int) -> Any:
         """
-        Decommissions a node from the fabric (node_id is the WS command's
-        only argument). Traced through the real implementation
-        (@project-chip/matter.js's CommissioningController.removeNode, via
-        @matter-server/ws-controller's decommissionNode), not assumed from
-        the WS command's existence alone:
-
-        - Reachable device: real decommission - the device removes its own
-          fabric credentials, clean mutual unpair, freshly re-commissionable.
-        - Unreachable device: falls back to a local-only forget (with a
-          warning) - the device is left not knowing it was dropped, same
-          "orphaned" state as manually deleting local storage.
-
-        NOT YET exercised against a live sidecar or real hardware -
-        destructive, unlike this plugin's other client methods, so not
-        casually tested. Verify carefully before relying on it.
+        Decommission a node. A reachable device removes its own fabric
+        credentials; for an unreachable one matter-server only forgets it
+        locally, leaving the device unaware it was dropped.
         """
         return await self.send_command('remove_node', {'node_id': node_id})
 
     async def open_commissioning_window(self, node_id: int, timeout: int = 900) -> dict:
         """
-        Generates a fresh pairing code for an already-commissioned node, so
-        a second controller (Apple Home, Google Home, ...) can commission
-        it onto its own separate fabric without disturbing this one - Matter
-        is designed for multiple simultaneous admins per device. 900s (15
-        min) default matches matter.js's own default
-        (PairedNode.openEnhancedCommissioningWindow), not invented.
-
-        Returns {'setup_pin_code': int, 'setup_manual_code': str,
-        'setup_qr_code': str} (WebSocketControllerHandler.ts's
-        #handleOpenCommissioningWindow). Only the manual code and QR content
-        string are surfaced in the webif - no QR image rendering, since
-        every major commissioning app (incl. Apple Home) accepts manual
-        entry as a first-class alternative to scanning.
+        Fresh pairing code for an already-commissioned node, so a second
+        controller (Apple Home, ...) can add it to its own fabric. 900s is
+        matter.js's own default window. Returns setup_pin_code,
+        setup_manual_code and setup_qr_code.
         """
         return await self.send_command('open_commissioning_window', {'node_id': node_id, 'timeout': timeout})
 
     async def get_matter_fabrics(self, node_id: int) -> list:
-        """
-        Every fabric currently on a node - node_id, vendor_id, fabric_index,
-        fabric_label, and a resolved vendor_name (matter-server maps
-        vendor_id through its own VendorIds table, so an Apple Home fabric
-        shows up with vendor_name='Apple' directly, not just a numeric id).
-        """
+        """Every fabric on a node, with vendor_name resolved by matter-server."""
         return await self.send_command('get_matter_fabrics', {'node_id': node_id})
 
     async def remove_matter_fabric(self, node_id: int, fabric_index: int) -> Any:
         """
-        Removes one specific fabric from a node (by fabric_index from
-        get_matter_fabrics). A real, spec-compliant device-side command
-        (ControllerCommandHandler.removeFabric ->
-        OperationalCredentialsClient.removeFabric({fabricIndex})), not a
-        local-only forget - the device itself is cleanly notified, same
-        class of operation as remove_node's decommission path. Removing
-        this plugin's own fabric this way still isn't recommended: it
-        skips matter-server's own node-removal bookkeeping that
-        remove_node performs, so its local record of the node goes stale
-        instead of being cleaned up. Use remove_node for this plugin's own
-        pairing; this method is for removing *other* controllers' fabrics.
+        Remove one fabric from a node - a device-side RemoveFabric. Meant for
+        other controllers' fabrics; this plugin's own fabric goes through
+        remove_node(), which also cleans up matter-server's node record.
         """
         return await self.send_command('remove_matter_fabric', {'node_id': node_id, 'fabric_index': fabric_index})
 
     async def interview_node(self, node_id: int) -> None:
-        """
-        Forces a fresh full read of every attribute on a node, replacing
-        matter-server's cached copy (#handleInterviewNode, awaited - by the
-        time this returns, the cache is already updated, no race with an
-        immediately following get_nodes()). Requested after the Discovery
-        tab's "cached, no live query" data went stale with no way to force
-        a refresh short of restarting the sidecar.
-        """
+        """Re-read every attribute of a node, replacing matter-server's cached copy (awaited until done)."""
         await self.send_command('interview_node', {'node_id': node_id})
 
     async def get_node_ip_addresses(self, node_id: int, prefer_cache: bool = True) -> list[str]:
-        """
-        The address(es) currently in use (or last known, if prefer_cache) for
-        this node's operational session, each still carrying its network
-        interface as an IPv6 zone suffix (e.g. "fe80::...%en0") - always
-        scoped=True on the WS call, since the interface name is the entire
-        point of exposing this (diagnosing which of several host interfaces
-        actually got used, not just the bare address WebSocketControllerHandler.ts's
-        own scoped=False default would strip). #handleGetNodeIpAddresses.
-        """
+        """Addresses of the node's operational session, with interface zone suffix (e.g. 'fe80::1%en0')."""
         return await self.send_command(
             'get_node_ip_addresses', {'node_id': node_id, 'prefer_cache': prefer_cache, 'scoped': True}
         )
