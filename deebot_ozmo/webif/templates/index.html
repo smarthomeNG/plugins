@@ -29,9 +29,9 @@
 
             // Bot availability
             if (mybot['available']) {
-                shngInsertText('header_available', "<i class='fas fa-power-off' style='color:green;'></i>&nbsp;{{ _('True') }}");
+                shngInsertText('header_available', "<i class='fas fa-power-off' style='color:green;'></i>&nbsp;{{ _('True') }}", null, 0, true);
             } else {
-                shngInsertText('header_available', "<i class='fas fa-power-off' style='color:red;'></i>&nbsp;{{ _('False') }}");
+                shngInsertText('header_available', "<i class='fas fa-power-off' style='color:red;'></i>&nbsp;{{ _('False') }}", null, 0, true);
             }
 
             // Battery level
@@ -43,9 +43,9 @@
                 else if (battery_level > 50) battery_icon = 'fa-battery-half';
                 else if (battery_level > 25) battery_icon = 'fa-battery-quarter';
                 else battery_icon = 'fa-battery-empty';
-                var battery_text = '<i class="fas ' + battery_icon + '"></i>' + '&nbsp;' + battery_level + '%';
-                shngInsertText('header_battery', battery_text);
-                shngInsertText('properties_battery', battery_text);
+                var battery_text = '<i class="fas ' + battery_icon + '"></i>' + '&nbsp;' + $('<div>').text(battery_level).html() + '%';
+                shngInsertText('header_battery', battery_text, null, 0, true);
+                shngInsertText('properties_battery', battery_text, null, 0, true);
             }
 
             // Fan speed
@@ -60,8 +60,8 @@
 
             // Live map
             if (mybot['live_map']) {
-                shngInsertText('live_map_2', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="width: 80%; display: block; margin: auto;">');
-                shngInsertText('live_map', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="height: 60vh; display: block; margin: auto;">');
+                shngInsertText('live_map_2', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="width: 80%; display: block; margin: auto;">', null, 0, true);
+                shngInsertText('live_map', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="height: 60vh; display: block; margin: auto;">', null, 0, true);
             }
             // Robot icon
             if (mybot['iconURL']) {

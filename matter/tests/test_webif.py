@@ -82,14 +82,20 @@ class TestEscaping(_WebifTest):
         self.assertIn('<strong>', html)
         self.assertNotIn('&lt;strong&gt;', html)
 
-    def test_poll_payload_escapes_strings(self):
+    def test_poll_payload_carries_raw_values(self):
         self.harness.item('dev.label')(HOSTILE, 'test')
 
         data = json.loads(self.webif.get_data_html())
 
-        self.assertNotIn('<script>', json.dumps(data))
-        self.assertEqual(data['items']['dev.label'], '&lt;script&gt;alert(1)&lt;/script&gt;&#x27;&quot;')
+        self.assertEqual(data['items']['dev.label'], HOSTILE)
         self.assertEqual(data['devices'], {'3': True})
+
+    def test_page_inserts_polled_values_as_text(self):
+        with open(os.path.join(self.webif.webif_dir, 'templates', 'index.html')) as f:
+            calls = [line for line in f if 'shngInsertText(' in line]
+
+        self.assertTrue(calls)
+        self.assertFalse([line for line in calls if 'true' in line.split('shngInsertText(', 1)[1]])
 
 
 class TestActions(_WebifTest):

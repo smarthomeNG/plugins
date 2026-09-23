@@ -28,7 +28,6 @@
 
 from __future__ import annotations
 
-import html
 import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping
@@ -66,11 +65,6 @@ def _attempt(logger, error_key: str, label: str, action: Callable[[], Flash | No
     except Exception as ex:
         logger.error(f'{label} failed: {ex}')
         return {error_key: str(ex) or type(ex).__name__}
-
-
-def _escaped(value: Any) -> Any:
-    """Strings HTML-escaped for the auto-update poll, which inserts values as HTML."""
-    return html.escape(value) if isinstance(value, str) else value
 
 
 class WebInterface(SmartPluginWebIf):
@@ -358,10 +352,10 @@ class WebInterface(SmartPluginWebIf):
         snapshot = self._nodes()
         server = self.plugin.server
         data = {
-            'items': {item.property.path: _escaped(item()) for item in self.plugin.mapped_items()},
+            'items': {item.property.path: item() for item in self.plugin.mapped_items()},
             'devices': {node['node_id']: node['available'] for node in snapshot.nodes},
             'discovery': {
-                f'{row["node_id"]}_{row["path"]}': _escaped(row['value'])
+                f'{row["node_id"]}_{row["path"]}': row['value']
                 for node in snapshot.nodes
                 for row in discovery_rows(node)
             },

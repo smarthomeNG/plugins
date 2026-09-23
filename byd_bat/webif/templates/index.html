@@ -72,12 +72,12 @@ Activate that function if needed, otherwise just remove the line to increase per
       shngInsertText('imppath',objResponse['imppath']);
       document.getElementById('connection').checked = objResponse['connection'];
 
-      shngInsertText('r1_table',objResponse['r1_table']);
-      shngInsertText('r2_table',objResponse['r2_table']);
-      shngInsertText('r3_table',objResponse['r3_table']);
-      shngInsertText('r4_table',objResponse['r4_table']);
-      shngInsertText('r5_table',objResponse['r5_table']);
-      shngInsertText('r6_table',objResponse['r6_table']);
+      shngInsertText('r1_table',objResponse['r1_table'], null, 0, true);
+      shngInsertText('r2_table',objResponse['r2_table'], null, 0, true);
+      shngInsertText('r3_table',objResponse['r3_table'], null, 0, true);
+      shngInsertText('r4_table',objResponse['r4_table'], null, 0, true);
+      shngInsertText('r5_table',objResponse['r5_table'], null, 0, true);
+      shngInsertText('r6_table',objResponse['r6_table'], null, 0, true);
             
       var source = 'static/img/bydvt1.png',
           timestamp = (new Date()).getTime(),

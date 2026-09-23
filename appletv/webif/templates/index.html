@@ -11,7 +11,7 @@
             var response = JSON.parse(response);
             state = response['state'];
 
-            shngInsertText('header_power', "<i class='fas fa-power-off' style='color:" + (state['power'] ? 'green' : 'red') + ";'></i>&nbsp;{{ p._atv.name }}");
+            shngInsertText('header_power', "<i class='fas fa-power-off' style='color:" + (state['power'] ? 'green' : 'red') + ";'></i>&nbsp;" + $('<div>').text({{ p._atv.name|tojson }}).html(), null, 0, true);
 
 			if (state['playing_state']) {
 				switch(state['playing_state']) {
@@ -31,7 +31,7 @@
 						content = '<i class="far fa-question-circle" style="color:red;""></i>'
 						break;
 				}
-				shngInsertText('tab1_device_state', content + '&nbsp;');
+				shngInsertText('tab1_device_state', content + '&nbsp;', null, 0, true);
 			}
 
 			shngInsertText('tab1_type_text', (state['playing_type_text'] ? state['playing_type_text'] : '---'));
@@ -44,7 +44,7 @@
 			shngInsertText('tab1_shuffle', (state['playing_shuffle_text'] ? state['playing_shuffle_text'] : '---'));
             // Artwork
             if (state['artwork_base64']) {
-                shngInsertText('tab1_artwork', '<img src="data:' + state['artwork_mimetype'] + ';base64,' + state['artwork_base64'] + '"style="width: 80%; display: block; margin: auto;">');
+                shngInsertText('tab1_artwork', '<img src="data:' + state['artwork_mimetype'] + ';base64,' + state['artwork_base64'] + '"style="width: 80%; display: block; margin: auto;">', null, 0, true);
             }
 
         }

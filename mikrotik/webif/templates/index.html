@@ -99,14 +99,14 @@ Activate that function if needed, otherwise just remove the line to increase per
 						interface.name + '_disabled',
 						'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + interface.name + '\', true);"></i>',
 						'interfacestable',
-						5
+						5, true
 					);
 				} else {
 					shngInsertText(
 						interface.name + '_disabled',
 						'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + interface.name + '\', false);"></i>',
 						'interfacestable',
-						5
+						5, true
 					);
 				}
 
@@ -116,14 +116,14 @@ Activate that function if needed, otherwise just remove the line to increase per
 						interface.name + '_poe',
 						'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + interface.name + '\', false);"></i>',
 						'interfacestable',
-						5
+						5, true
 					);
 				} else if (interface.poe == 'off') {
 					shngInsertText(
 						interface.name + '_poe',
 						'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + interface.name + '\', true);"></i>',
 						'interfacestable',
-						5
+						5, true
 					);
 				} else {
 					shngInsertText(interface.name + '_poe', interface.poe, 'interfacestable', 5);
@@ -131,9 +131,9 @@ Activate that function if needed, otherwise just remove the line to increase per
 
 				// Port currently active / inactive
 				if (interface.running == 'true') {
-					shngInsertText(interface.name + '_running','<i class="fas fa-play fa-rotate-270" style="color: green;"></i>','interfacestable', 5);
+					shngInsertText(interface.name + '_running','<i class="fas fa-play fa-rotate-270" style="color: green;"></i>','interfacestable', 5, true);
 				} else {
-					shngInsertText(interface.name + '_running','<i class="fas fa-play fa-rotate-90" style="color: red;"></i>','interfacestable', 5);
+					shngInsertText(interface.name + '_running','<i class="fas fa-play fa-rotate-90" style="color: red;"></i>','interfacestable', 5, true);
 				}
 
 			});
@@ -153,14 +153,14 @@ Activate that function if needed, otherwise just remove the line to increase per
 							port + '_disabled',
 							'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + port + '\', true);"></i>',
 							'interfacestable',
-							5
+							5, true
 						);
 					} else {
 						shngInsertText(
 							port + '_disabled',
 							'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + port + '\', false);"></i>',
 							'interfacestable',
-							5
+							5, true
 						);
 					}
 				}
@@ -184,14 +184,14 @@ Activate that function if needed, otherwise just remove the line to increase per
 							port + '_poe',
 							'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + port + '\', false);"></i>',
 							'interfacestable',
-							5
+							5, true
 						);
 					} else {
 						shngInsertText(
 							port + '_poe',
 							'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + port + '\', true);"></i>',
 							'interfacestable',
-							5
+							5, true
 						);
 					}
 				}

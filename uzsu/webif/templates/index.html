@@ -50,7 +50,7 @@
           intpl_color = 'red';
         }
         else {
-          depend_text = objResponse['items'][item]['depend']['item'] + '&nbsp;(' + objResponse['items'][item]['interpolation']['itemtype'] + ')';
+          depend_text = objResponse['items'][item]['depend']['item'] + '\u00A0(' + objResponse['items'][item]['interpolation']['itemtype'] + ')';
         }
 
         if (objResponse['items'][item]['interpolation'] === undefined) {
@@ -93,10 +93,10 @@
                 else {
                     perday = '';
                 }
-                interval = ' (' + objResponse['items'][item]['interpolation']['interval'] + perday + ')';
+                interval = ' (' + $('<div>').text(objResponse['items'][item]['interpolation']['interval'] + perday).html() + ')';
             }
           }
-          intpl_text = objResponse['items'][item]['interpolation']['type'] + interval;
+          intpl_text = $('<div>').text(objResponse['items'][item]['interpolation']['type']).html() + interval;
           if (objResponse['items'][item]['sun'] === undefined) {
             sunrise_text = '';
             sunset_text = '';
@@ -123,7 +123,7 @@
         }
         $('#' + $.escapeSelector(item)).css({'color': color});
         $('#' + $.escapeSelector(item + '_interpolation')).css({'color': intpl_color});
-        shngInsertText (item+'_interpolation', intpl_text, 'maintable', 10);
+        shngInsertText (item+'_interpolation', intpl_text, 'maintable', 10, true);
         shngInsertText (item+'_backintime', bit_text, 'maintable', 10);
         shngInsertText (item+'_dict', objResponse['items'][item]['dict'], 'maintable');
         shngInsertText (item+'_dependvalue', objResponse['items'][item]['depend']['value'], 'maintable', 10);
@@ -131,7 +131,7 @@
         if (objResponse['items'][item]['planned']['next'] === '-')
           shngInsertText (item+'_nexttime', '-', 'maintable', 10);
         else
-          shngInsertText (item+'_nexttime', '&#8234;'+objResponse['items'][item]['planned']['next']+'&#8236;', 'maintable', 10);
+          shngInsertText (item+'_nexttime', '\u202A'+objResponse['items'][item]['planned']['next']+'\u202C', 'maintable', 10);
         shngInsertText (item+'_dependitem', depend_text, 'maintable');
         shngInsertText (item+'_lastvalue', lastvalue, 'maintable', 10);
         shngInsertText ('sunrise', sunrise_text, null, 2);
