@@ -320,6 +320,9 @@ class Database(SmartPlugin):
         self._maxage_worklist = []  # work copy of self._items_with_maxage
         self._items_with_invalid_after = {}  # item -> configured database_invalid_after, in seconds
         self._item_by_id_cache = {}  # database id -> Item, for readLogCount()'s native-mode cagg routing
+        self._item_id_cache = {}  # item path -> database id, id() is a stable 1:1 mapping once assigned
+        self._item_type_cache = {}  # item path -> db_itemtype() result, only ever queried for orphans (frozen row)
+        self._item_lastchange_cache = {}  # item path -> db_lastchange() result, same orphan-only reasoning
         self._plugin_start_ts = None  # set in run() - startup grace gate for _check_invalid_items()
         self._item_logcount = {}  # dict to store the number of log records for an item
         self._items_total_entries = 0  # total number of log entries
@@ -1035,6 +1038,10 @@ class Database(SmartPlugin):
 
         This is a public function of the plugin
 
+        A resolved id is cached for the item's path and returned from cache on
+        every later call, without touching the database - see
+        self._item_id_cache.
+
         :param item: Item to get the ID for
         :param create: If True, the item is created within the database if it does not exist
         :param cur: A database cursor object if available (optional)
@@ -1046,6 +1053,10 @@ class Database(SmartPlugin):
             item_path = str(item.property.path)
         except AttributeError:
             item_path = item
+
+        cached_id = self._item_id_cache.get(item_path)
+        if cached_id is not None:
+            return cached_id
 
         def _find_or_create(c):
             try:
@@ -1104,13 +1115,41 @@ class Database(SmartPlugin):
 
         if (id is None) or (COL_ITEM_ID >= len(id)) or (id[COL_ITEM_ID] is None):
             return None
-        return int(id[COL_ITEM_ID])
+        resolved_id = int(id[COL_ITEM_ID])
+        # id is permanent once assigned - safe to cache forever; _evict_item_caches() clears it on deletion.
+        self._item_id_cache[item_path] = resolved_id
+        return resolved_id
+
+    def _evict_item_caches(self, item_path=None, id=None):
+        """
+        Drop an item's entries from _item_id_cache/_item_type_cache/_item_lastchange_cache
+
+        Called wherever an item's row in the {item} table is deleted, so a
+        later id()/db_itemtype()/db_lastchange() call for the same path
+        re-reads instead of returning data for a now-gone row. Exactly one
+        of item_path/id must be given; id triggers a reverse lookup since
+        the caches are keyed by path, not id.
+
+        :param item_path: path of the item to evict
+        :param id: database id of the item to evict (used when only the id is known)
+        """
+        if item_path is None:
+            item_path = next((path for path, cached_id in self._item_id_cache.items() if cached_id == id), None)
+            if item_path is None:
+                return
+        self._item_id_cache.pop(item_path, None)
+        self._item_type_cache.pop(item_path, None)
+        self._item_lastchange_cache.pop(item_path, None)
 
     def db_itemtype(self, item):
         """
         Returns the itemtype of the given item, determined from the item-table of the database
 
         This is a public function of the plugin
+
+        The result is cached per item path (see self._item_type_cache) - safe
+        since the only caller is the webif's orphan list, and an orphaned
+        item's row is never written to again.
 
         :param item: Item to get the ID for
 
@@ -1122,6 +1161,11 @@ class Database(SmartPlugin):
             item_path = str(item.property.path)
         except AttributeError:
             item_path = item
+
+        cached_type = self._item_type_cache.get(item_path)
+        if cached_type is not None:
+            return cached_type
+
         try:
             row = self.readItem(item_path)
         except Exception as e:
@@ -1131,6 +1175,7 @@ class Database(SmartPlugin):
             row = None
 
         if (row is None) or (COL_ITEM_ID >= len(row)):
+            # lookup failure, not a real classification - don't cache
             return None
 
         strval = row[COL_ITEM_VAL_STR]
@@ -1138,20 +1183,24 @@ class Database(SmartPlugin):
         boolval = row[COL_ITEM_VAL_BOOL]
 
         if (strval is not None) and (numval is None):
-            return 'str'
+            itemtype = 'str'
+        elif (strval is None) and (numval is not None):
+            itemtype = 'num' if float(numval) != int(boolval) else 'num, bool'
+        else:
+            itemtype = 'unbekannt'
 
-        if (strval is None) and (numval is not None):
-            if float(numval) != int(boolval):
-                return 'num'
-            return 'num, bool'
-
-        return 'unbekannt'
+        self._item_type_cache[item_path] = itemtype
+        return itemtype
 
     def db_lastchange(self, item):
         """
         Returns the itemtype of the given item, determined from the item-table of the database
 
         This is a public function of the plugin
+
+        The result is cached per item path (see self._item_lastchange_cache) -
+        safe since the only caller is the webif's orphan list, and an
+        orphaned item's row is never written to again.
 
         :param item: Item to get the ID for
 
@@ -1163,6 +1212,10 @@ class Database(SmartPlugin):
             item_path = str(item.property.path)
         except AttributeError:
             item_path = item
+
+        if item_path in self._item_lastchange_cache:
+            return self._item_lastchange_cache[item_path]
+
         try:
             row = self.readItem(item_path)
         except Exception as e:
@@ -1172,12 +1225,13 @@ class Database(SmartPlugin):
             row = None
 
         if (row is None) or (COL_ITEM_ID >= len(row)):
+            # lookup failure, not a real "no data" state - don't cache
             return None
 
         last_change = row[COL_ITEM_TIME]
-        if last_change is None:
-            return None
-        return self._datetime(last_change)
+        result = self._datetime(last_change) if last_change is not None else None
+        self._item_lastchange_cache[item_path] = result
+        return result
 
     def db(self):
         """
@@ -1404,6 +1458,7 @@ class Database(SmartPlugin):
         :param cur: A database cursor object if available (optional)
         """
         self._item_store.delete(id, cur=cur)
+        self._evict_item_caches(id=id)
 
     def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=NO_CURSOR, quality=QUALITY_VALID):
         """

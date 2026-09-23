@@ -135,6 +135,7 @@
 		<tbody>
 		{% for item in items %}
 			{% if p.has_iattr(item.conf, 'database') %}
+				{% set itemid = p.id(item, create=False) %}
 				{% if item.property.type == 'bool' %}
 					{% if item.property.value == 0 %}
 						{% set val = 'False' %}
@@ -154,9 +155,9 @@
 					<td>{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
 					<td id="{{ item }}_type">{{ item.property.type }}</td>
 					<td id="{{ item }}_value">{{ val }}</td>
-					<td id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
+					<td id="{{ item }}_id">{{ itemid }}</td>
 					{%  if p.count_logentries %}
-						<td id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
+						<td id="{{ item }}_logcount">{{ p._item_logcount[itemid] }}</td>
 					{% endif %}
 					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
 						<td id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
@@ -168,17 +169,17 @@
 						{% endif %}
 					{% endif %}
 					<td>
-						{% if p.id(item, create=False) == None %}
+						{% if itemid == None %}
 							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('CSV Export nicht möglich') }}">CSV</button>
 						{% else %}
-							<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
+							<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ itemid }}')">CSV</button>
 						{% endif %}
-						{% if p.id(item, create=False) == None %}
+						{% if itemid == None %}
 							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('Noch keine Datenbank-ID') }}"><i class="fas fa-search"></i></button>
 							<button type="button" disabled class="btn btn-danger btn-sm" title="{{ _('Noch keine Datenbank-ID') }}"><i class="fas fa-history"></i></button>
 						{% else %}
-							<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
-							<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
+							<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ itemid }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
+							<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ itemid }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
 						{% endif %}
 					</td>
 				</tr>
@@ -308,21 +309,22 @@
 		<tbody>
 		{% for item in p.orphanlist %}
 			{% set itemid = p.id(item, create=False) %}
+			{% set lastchange = p.db_lastchange(item) %}
 			<tr>
 				<td></td>
 				<td id="{{ item }}_orphan_path">{{ item }}</td>
 			    <td id="{{ item }}_orphan_time">
 				{% if language == 'en' %}
-					{% if p.db_lastchange(item) is none %}
+					{% if lastchange is none %}
 						{{ _('Wert invalide') }}
 					{% else %}
-						{{ p.db_lastchange(item).strftime('%m/%d/%Y %H:%M:%S') }}
+						{{ lastchange.strftime('%m/%d/%Y %H:%M:%S') }}
 					{% endif %}
 				{% else %}
-					{% if p.db_lastchange(item) is none %}
+					{% if lastchange is none %}
 						{{ _('Wert invalide') }}
 					{% else %}
-						{{ p.db_lastchange(item).strftime('%d.%m.%Y %H:%M:%S') }}
+						{{ lastchange.strftime('%d.%m.%Y %H:%M:%S') }}
 					{% endif %}
 				{% endif %}</td>
 				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
@@ -334,7 +336,7 @@
 					<button type="button" class="btn btn-danger btn-sm" onclick="deleteOrphanNow('{{ item }}')"><i class="fas fa-trash"></i></button>
 				</td>
 				{%  if p.count_logentries %}
-					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[p.id(item, create=False)] }}</td>
+					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[itemid] }}</td>
 				{% endif %}
 			</tr>
 		{% endfor %}

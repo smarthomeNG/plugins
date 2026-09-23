@@ -163,6 +163,7 @@ class MaintenanceManager:
                 plugin._execute(
                     plugin._prepare('DELETE FROM {item} WHERE id = :orphanid;'), {'orphanid': orphan_id}, cur=cur
                 )
+            plugin._evict_item_caches(id=orphan_id)
             log_info(f'reassigned orphaned id {orphan_id} to new id {to}')
             log_debug('rebuilding orphan list')
             plugin.build_orphanlist()
@@ -191,6 +192,7 @@ class MaintenanceManager:
             plugin.logger.info(f'_delete_orphan: Item {item_path} has no log entries')
             with plugin._db_maint.transaction() as cur:
                 plugin._execute(plugin._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
+            plugin._evict_item_caches(item_path=item_path)
             plugin.logger.info(f'_delete_orphan: Deleted item entry for {item_path}')
             return True
 
@@ -235,6 +237,7 @@ class MaintenanceManager:
         plugin.deleteLog(item_id)
         with plugin._db_maint.transaction() as cur:
             plugin._execute(plugin._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
+        plugin._evict_item_caches(item_path=item_path)
         plugin.logger.info(f'delete_orphan_now: Deleted orphan item {item_path} (id={item_id}) and its log data')
         plugin.build_orphanlist()
 
@@ -596,14 +599,11 @@ class MaintenanceManager:
         item = plugin._maxage_worklist.pop(0)
         itempath = item.property.path
 
-        item_id = None  # initialise before try so the except clause can reference it safely
-        try:
-            item_id = plugin.id(item, create=False)
-        except Exception:
-            if item_id is None:
-                plugin.logger.info(f'remove_older_: no id for item {itempath}')
-            else:
-                plugin.logger.critical(f'remove_older_: no id for item {itempath}')
+        # plugin.id() returns None on failure rather than raising, so a stuck DB must be checked for explicitly here.
+        item_id = plugin.id(item, create=False)
+        if item_id is None:
+            plugin.logger.info(f'remove_older_: no id for item {itempath}, retrying next cycle')
+            plugin._maxage_worklist.append(item)
             return
 
         time_end = plugin.get_maxage_ts(item)
@@ -802,6 +802,9 @@ class MaintenanceManager:
         plugin._items_total_entries = 0
         for item in plugin._handled_items:
             item_id = plugin.id(item, create=False)
+            if item_id is None:
+                plugin.logger.warning(f'_count_logentries: No valid id found for item {item.property.path} - skipping')
+                continue
             logcount = plugin.readLogCount(item_id)
             plugin._item_logcount[item_id] = logcount
             plugin._items_total_entries += logcount
