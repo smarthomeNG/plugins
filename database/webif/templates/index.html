@@ -87,7 +87,7 @@
 {% endif %}
 
 <div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-    <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
+    <strong>{{ _('Löschvorgang wurde erfolgreich gestartet!') }}</strong><br/>
     {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann je nach Datenbank Größe einige Zeit dauern und wird parallel zur aktuellen Funktion des Plugins erfolgen.') }}
     <button type="button" class="close" data-hide="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
@@ -210,53 +210,94 @@
 {% block bodytab3 %}
 
 <script type="text/javascript">
-	function reassignOrphan(selObj) {
-		// get modal box data from elements
-		var orphanID = document.getElementById('orphan-item-id').textContent;
-		var orphanItem = document.getElementById('orphan-item-name').textContent;
-		var newID = document.getElementById('orphanSelect').value;
-		var newItem = document.getElementById('orphanSelect').selectedOptions[0].text;
+	// Populates the reassign modal for one or several orphans (row button passes a 1-item list).
+	function openReassignModal(targets) {
+		if (targets.length === 0) return;
+		window.orphanReassignTargets = targets;
+		document.getElementById('orphan-item-name').textContent = targets.map(function(o) { return o.path; }).join(', ');
+		document.getElementById('orphan-item-id').textContent = targets.map(function(o) { return o.id; }).join(', ');
+		document.getElementById('orphanModal').style.display = 'block';
+	}
 
-		// reset elements (just to be sure...)
+	function selectedOrphans() {
+		return $('.orphan-select:checked').map(function() {
+			return {id: $(this).data('id'), path: $(this).data('path')};
+		}).get();
+	}
+
+	// Toggled by both the header "select all" and each row checkbox.
+	function updateOrphanBulkButtons() {
+		var total = $('.orphan-select').length;
+		var checked = $('.orphan-select:checked').length;
+		$('#orphanBulkReassignBtn, #orphanBulkDeleteBtn').prop('disabled', checked === 0);
+		$('#orphanSelectAll').prop('checked', total > 0 && checked === total);
+	}
+
+	function reassignOrphan() {
+		var targets = window.orphanReassignTargets || [];
+		var newID = document.getElementById('orphanSelect').value;
+
 		document.getElementById('orphan-item-id').textContent = "";
 		document.getElementById('orphan-item-name').textContent = "";
 		document.getElementById('orphanSelect').selectedIndex = 0;
+		document.getElementById('orphanModal').style.display = 'none';
 
-		var mydata = {"orphan_id": orphanID, "new_id": newID};
-		$.ajax({
-			type: "POST",
-			url: "reassign",
-			data: JSON.stringify(mydata),
-			contentType: 'application/json',
-			dataType: 'json',
-			error: function() {
-				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
-				document.getElementById('orphanModal').style.display = 'none';
-			},
-			success: function() {
-				document.getElementById('orphanModal').style.display = 'none';
+		// Sequential, not parallel - parallel requests would all serialize on the same DB lock anyway.
+		function reassignNext(index) {
+			if (index >= targets.length) {
 				window.location.reload();
+				return;
 			}
-		})
+			$.ajax({
+				type: "POST",
+				url: "reassign",
+				data: JSON.stringify({"orphan_id": targets[index].id, "new_id": newID}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function() {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				},
+				complete: function() {
+					reassignNext(index + 1);
+				}
+			});
+		}
+		reassignNext(0);
+	}
+
+	function deleteOrphansNow(targets) {
+		if (targets.length === 0) return;
+		var names = targets.map(function(o) { return o.path; }).join(', ');
+		var question = targets.length === 1
+			? '{{ _('Wollen Sie das verwaiste Item') }} ' + names + ' {{ _('und alle zugehörigen Daten endgültig löschen?') }}'
+			: '{{ _('Wollen Sie die folgenden verwaisten Items und alle zugehörigen Daten endgültig löschen?') }} ' + names;
+		if (!confirm(question)) {
+			return;
+		}
+		function deleteNext(index) {
+			if (index >= targets.length) {
+				window.location.reload();
+				return;
+			}
+			$.ajax({
+				type: "POST",
+				url: "delete_orphan_now",
+				data: JSON.stringify({"orphan_path": targets[index].path}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function() {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				},
+				complete: function() {
+					deleteNext(index + 1);
+				}
+			});
+		}
+		deleteNext(0);
 	}
 
 	function deleteOrphanNow(orphanItem) {
-		if (!confirm('{{ _('Wollen Sie das verwaiste Item') }} ' + orphanItem + ' {{ _('und alle zugehörigen Daten endgültig löschen?') }}')) {
-			return;
-		}
-		$.ajax({
-			type: "POST",
-			url: "delete_orphan_now",
-			data: JSON.stringify({"orphan_path": orphanItem}),
-			contentType: 'application/json',
-			dataType: 'json',
-			error: function() {
-				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
-			},
-			success: function() {
-				window.location.reload();
-			}
-		})
+		deleteOrphansNow([{path: orphanItem}]);
 	}
 </script>
 
@@ -285,16 +326,19 @@
 
 <div class="container-fluid m-2 table-resize">
 	<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;" class="mb-2">
+		<button type="button" id="orphanBulkReassignBtn" disabled class="btn btn-shng btn-sm" onclick="openReassignModal(selectedOrphans());">{{ _('Ausgewählte neu zuweisen') }}</button>
+		<button type="button" id="orphanBulkDeleteBtn" disabled class="btn btn-danger btn-sm" onclick="deleteOrphansNow(selectedOrphans());">{{ _('Ausgewählte löschen') }}</button>
 		{% if p.remove_orphan or len(p.orphanlist) == 0 %}
-			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
+			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Alle löschen') }}</button>
 		{% else %}
-			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup').done(function() { window.location.reload(); }); $('#cleanup').show(); }">{{ _('Datenbank-Cleanup starten') }}</button>
+			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup').done(function() { window.location.reload(); }); $('#cleanup').show(); }">{{ _('Alle löschen') }}</button>
 		{% endif %}
 	</div>
 
 	<table id="orphantable">
 		<thead>
 		<tr><th></th>
+			<th><input type="checkbox" id="orphanSelectAll" onclick="$('.orphan-select').prop('checked', this.checked); updateOrphanBulkButtons();"></th>
 			<th>{{ _('Verwaistes Item') }}</th>
 			<th>{{ _('Letzte Änderung') }}</th>
 			<th>{{ _('Typ') }}</th>
@@ -312,6 +356,7 @@
 			{% set lastchange = p.db_lastchange(item) %}
 			<tr>
 				<td></td>
+				<td><input type="checkbox" class="orphan-select" data-id="{{ itemid }}" data-path="{{ item }}" onclick="updateOrphanBulkButtons();"></td>
 				<td id="{{ item }}_orphan_path">{{ item }}</td>
 			    <td id="{{ item }}_orphan_time">
 				{% if language == 'en' %}
@@ -330,7 +375,7 @@
 				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
 				<td id="{{ item }}_orphan_id">{{ itemid }}</td>
 				<td id="{{ item }}_orphan_reassign">
-					<button type="button" id="orphanBtn" class="btn btn-danger btn-sm" value="{{ itemid }}-{{ item }}" onclick="document.getElementById('orphan-item-name').textContent = '{{ item }}'; document.getElementById('orphan-item-id').textContent = '{{ itemid }}'; document.getElementById('orphanModal').style.display = 'block';"><i class="fas fa-share"></i></button>
+					<button type="button" id="orphanBtn" class="btn btn-danger btn-sm" value="{{ itemid }}-{{ item }}" onclick="openReassignModal([{id: {{ itemid }}, path: '{{ item }}'}]);"><i class="fas fa-share"></i></button>
 				</td>
 				<td id="{{ item }}_orphan_delete">
 					<button type="button" class="btn btn-danger btn-sm" onclick="deleteOrphanNow('{{ item }}')"><i class="fas fa-trash"></i></button>
@@ -423,12 +468,4 @@
 {%  endif %}
 
 <button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.csvdump')">{{ _('CSV Dump') }}</button>
-
-<!--
-{% if p.remove_orphan or len(p.orphanlist) == 0 %}
-	<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Cleanup aktivieren') }}</button>
-{%  else %}
-	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Cleanup aktivieren') }}</button>
-{%  endif %}
--->
 {% endblock buttons %}
