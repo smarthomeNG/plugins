@@ -487,8 +487,11 @@ class TestLifecycle(unittest.TestCase):
         self.assertIs(harness.item('dev.sw')(), True)
         pid = server.sidecar._process.pid
 
+        # Widens the RECONNECTING window past the 10ms poll below - a local loopback reconnect can otherwise be faster.
+        peer.delay = 0.1
         peer.drop_connections()
         self.assertTrue(wait_for(lambda: server.status.state is RoleState.RECONNECTING, timeout=2))
+        peer.delay = 0.0
         self.assertTrue(wait_for(lambda: server.status.state is RoleState.CONNECTED, timeout=5))
 
         run.cancel()
