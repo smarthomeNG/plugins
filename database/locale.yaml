@@ -23,6 +23,11 @@ plugin_translations:
     'Typ':                {'de': '=', 'en': 'Type'}
     'Tabelle':            {'de': '=', 'en': 'Table'}
     'Verwaistes Item':    {'de': '=', 'en': 'Orphan item'}
+    'Min':                {'de': '=', 'en': '='}
+    'Max':                {'de': '=', 'en': '='}
+    'Durchschnitt':       {'de': '=', 'en': 'Average'}
+    'Wahr':               {'de': '=', 'en': 'True'}
+    'Falsch':             {'de': '=', 'en': 'False'}
 
     'Plugin-API':         {'de': '=', 'en': 'Plugin API'}
     'Database Items':     {'de': '=', 'en': '='}

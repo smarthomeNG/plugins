@@ -96,6 +96,120 @@ checkDate();
 		UTC
 	</label>
 </div>
+{% if item.property.type in ('num', 'bool') %}
+<div class="mb-2">
+	<div style="height: 220px;">
+		<canvas id="item_details_chart"></canvas>
+	</div>
+	<div class="text-muted small mt-1" id="item_details_chart_stats"></div>
+</div>
+<script type="text/javascript" language="javascript">
+const CHART_VALUE_INDEX = {{ 4 if item.property.type == 'num' else 5 }};
+const CHART_QUALITY_INVALID = {{ quality_invalid }};
+let itemChart = null;
+
+function chartPointsFromInitial(rows) {
+	return rows
+		.filter(function (r) { return r[3] !== CHART_QUALITY_INVALID; })
+		.map(function (r) { return { x: r[0], y: r[1], duration: r[2] }; });
+}
+
+function chartPointsFromAjax(rows) {
+	return rows
+		.filter(function (r) { return r[7] !== CHART_QUALITY_INVALID; })
+		.map(function (r) { return { x: r['0_orig'], y: r[CHART_VALUE_INDEX], duration: r[2] }; });
+}
+
+function formatChartValue(v) {
+	{% if item.property.type == 'bool' %}
+	return v >= 0.5 ? '{{ _("Wahr") }}' : '{{ _("Falsch") }}';
+	{% else %}
+	return (Math.round(v * 100) / 100).toString();
+	{% endif %}
+}
+
+function computeChartStats(points) {
+	if (!points.length) return null;
+	let min = Infinity, max = -Infinity, plainSum = 0, weightedSum = 0, weightTotal = 0;
+	points.forEach(function (p) {
+		if (p.y < min) min = p.y;
+		if (p.y > max) max = p.y;
+		plainSum += p.y;
+		if (p.duration) {
+			weightedSum += p.y * p.duration;
+			weightTotal += p.duration;
+		}
+	});
+	// time-weighted where duration is known, since a log entry holds its value until the next change
+	const avg = weightTotal > 0 ? weightedSum / weightTotal : plainSum / points.length;
+	return { min: min, max: max, avg: avg };
+}
+
+function renderChartStats(points) {
+	const el = document.getElementById('item_details_chart_stats');
+	if (!el) return;
+	const stats = computeChartStats(points);
+	el.textContent = stats
+		? '{{ _("Min") }}: ' + formatChartValue(stats.min)
+			+ '   {{ _("Max") }}: ' + formatChartValue(stats.max)
+			+ '   {{ _("Durchschnitt") }}: ' + formatChartValue(stats.avg)
+		: '';
+}
+
+function renderItemChart(points) {
+	points.sort(function (a, b) { return a.x - b.x; });
+	renderChartStats(points);
+	const canvas = document.getElementById('item_details_chart');
+	if (!canvas) return;
+	if (itemChart) {
+		itemChart.data.datasets[0].data = points;
+		itemChart.update();
+		return;
+	}
+	itemChart = new Chart(canvas.getContext('2d'), {
+		type: 'line',
+		data: {
+			datasets: [{
+				label: "{{ item_path }}",
+				data: points,
+				steppedLine: {{ 'true' if item.property.type == 'bool' else 'false' }},
+				fill: false,
+				borderWidth: 1.5,
+				pointRadius: 2,
+				borderColor: '#3b7dd8',
+				backgroundColor: '#3b7dd8'
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			scales: {
+				xAxes: [{ type: 'time', time: { tooltipFormat: 'DD.MM.YYYY HH:mm:ss' } }],
+				yAxes: [{
+					{% if item.property.type == 'bool' %}
+					ticks: {
+						min: -0.1, max: 1.1, stepSize: 1,
+						callback: function (v) {
+							if (v === 0) return '{{ _("Falsch") }}';
+							if (v === 1) return '{{ _("Wahr") }}';
+							return '';
+						}
+					}
+					{% endif %}
+				}]
+			},
+			tooltips: {
+				callbacks: {
+					label: function (tooltipItem) { return formatChartValue(tooltipItem.yLabel); }
+				}
+			}
+		}
+	});
+}
+
+renderItemChart(chartPointsFromInitial({{ chart_data }}));
+</script>
+{% endif %}
 <div style="float:right; width:20%;" id="datepicker">
 </div>
 <div style="float:left; width:80%;" class="table-resize">
@@ -271,6 +385,9 @@ checkDate();
 					console.log("Added new row: " + entry_id+"_"+orig_duration);
 				}
 				item_details_table.draw(false);
+				if (typeof renderItemChart === 'function') {
+					renderItemChart(chartPointsFromAjax(objResponse));
+				}
 			}
 		}
 	}

@@ -188,6 +188,16 @@ class WebInterface(SmartPluginWebIf):
 
                         log_array.append(value_dict)
                     reversed_arr = log_array[::-1]
+
+                chart_data = None
+                if item.property.type in ('num', 'bool'):
+                    # only num/bool populate val_num in the log, see utils.encode_value()
+                    val_col = COL_LOG_VAL_NUM if item.property.type == 'num' else COL_LOG_VAL_BOOL
+                    chart_data = [
+                        [row['%s_orig' % COL_LOG_TIME], row[val_col], row[COL_LOG_DURATION], row[COL_LOG_VAL_QUALITY]]
+                        for row in log_array
+                    ]
+
                 return tmpl.render(
                     p=self.plugin,
                     webif_pagelength=pagelength,
@@ -209,6 +219,7 @@ class WebInterface(SmartPluginWebIf):
                     invalidate_triggered=invalidate_triggered,
                     restore_triggered=restore_triggered,
                     quality_invalid=QUALITY_INVALID,
+                    chart_data=json.dumps(chart_data),
                 )
 
         tmpl = self.tplenv.get_template('index.html')
