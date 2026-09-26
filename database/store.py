@@ -22,11 +22,32 @@ dict (``{'log': '...', 'item': '...', ...}``) as constructor arguments and
 are otherwise fully independent of the plugin lifecycle.
 """
 
+import contextlib
 import logging
 
 from lib.db import NO_CURSOR
 from .constants import BufferEntry, QUALITY_VALID
 from .utils import encode_value, apply_table_names, build_where_clause
+
+
+@contextlib.contextmanager
+def _self_healing_transaction(db):
+    """``db.transaction()``, but verifies/reconnects first.
+
+    Every write method below only reaches this when its own ``cur`` was
+    omitted - i.e. no caller upstream already holds a verified connection
+    for it (see each method's docstring: "otherwise the store acquires its
+    own lock"). ``transaction()`` itself never self-heals - by design, per
+    its own docstring, since calling verify() from inside it would
+    re-acquire the same non-reentrant lock it already holds - so whoever
+    opens one standalone, as every branch here does, is responsible for
+    calling verify() first. Without this, a connection that dropped after
+    the store was constructed raises ConnectionError straight out of this
+    branch on every call, forever, instead of reconnecting once and moving on.
+    """
+    db.verify(2)
+    with db.transaction() as cur:
+        yield cur
 
 
 class ItemStore:
@@ -94,7 +115,7 @@ class ItemStore:
             if cur is not NO_CURSOR:
                 row = self._fetchone('INSERT INTO {item}(name) VALUES(:name) RETURNING id;', {'name': name}, cur=cur)
             else:
-                with self._db.transaction() as tcur:
+                with _self_healing_transaction(self._db) as tcur:
                     row = self._fetchone(
                         'INSERT INTO {item}(name) VALUES(:name) RETURNING id;', {'name': name}, cur=tcur
                     )
@@ -108,7 +129,7 @@ class ItemStore:
         # transaction() - the class docstring above promises exactly this
         # ("otherwise the store acquires its own lock"), so this path
         # must actually do it, not just read from the table.
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=tcur)
             return int(tcur.lastrowid)
 
@@ -148,7 +169,7 @@ class ItemStore:
 
         if cur is not NO_CURSOR:
             return _do(cur)
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             return _do(tcur)
 
     def update(self, item_id: int, time: int, val, item_type: str, changed: int, cur=NO_CURSOR) -> None:
@@ -170,7 +191,7 @@ class ItemStore:
         if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             self._execute(stmt, params, cur=tcur)
 
     def delete(self, item_id: int, cur=NO_CURSOR) -> None:
@@ -188,7 +209,7 @@ class ItemStore:
             log_store.delete_range(item_id, cur=cur)
             self._execute('DELETE FROM {item} WHERE id=:id;', {'id': item_id}, cur=cur)
             return
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             log_store.delete_range(item_id, cur=tcur)
             self._execute('DELETE FROM {item} WHERE id=:id;', {'id': item_id}, cur=tcur)
 
@@ -293,7 +314,7 @@ class LogStore:
         if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             self._execute(stmt, params, cur=tcur)
 
     def update(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=NO_CURSOR) -> None:
@@ -322,7 +343,7 @@ class LogStore:
         if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             self._execute(stmt, params, cur=tcur)
 
     def upsert(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=NO_CURSOR) -> None:
@@ -346,7 +367,7 @@ class LogStore:
             return
         # check-then-act: find and the write must share one transaction,
         # not run as two independently-committing calls.
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             existing = self.find(item_id, entry.time, cur=tcur)
             if existing:
                 self.update(item_id, entry, item_type, changed, cur=tcur)
@@ -398,7 +419,7 @@ class LogStore:
         if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             self._execute(stmt, params, cur=tcur)
 
     def set_quality(
@@ -609,7 +630,7 @@ class LogStore:
         if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
-        with self._db.transaction() as tcur:
+        with _self_healing_transaction(self._db) as tcur:
             self._execute(stmt, params, cur=tcur)
 
     def edge_value(self, item_id: int, order: str, *, time_start=None, time_end=None, cur=NO_CURSOR):

@@ -67,6 +67,9 @@ class MaintenanceManager:
         # failed" for "confirmed empty" on this attempt's now-empty list.
         plugin._orphanlist_built = False
 
+        if not plugin._ensure_db_maint():
+            return False
+
         items = [item.property.path for item in plugin._buffer_mgr.items()]
         # transaction() serializes this against self._db_maint's other
         # users - the scheduler-driven maxage/orphan cleanup also runs on
@@ -127,6 +130,8 @@ class MaintenanceManager:
         plugin = self._plugin
         log_info = plugin.logger.info  # warning  # info
         log_debug = plugin.logger.debug  # error  # debug
+        if not plugin._ensure_db_maint():
+            return ConnectionError('Database maintenance connection not available, aborting reassign')
         # transaction() serializes this against self._db_maint's other
         # users. One transaction per UPDATE chunk, not one around the whole
         # loop - the LIMIT batching exists to keep individual transactions
@@ -186,6 +191,8 @@ class MaintenanceManager:
         # which logs it and requeues the item for the next cycle. Both
         # branches below use transaction() to serialize against
         # self._db_maint's other users while preserving that.
+        if not plugin._ensure_db_maint():
+            raise ConnectionError('Database maintenance connection not available')
         item_id = plugin.id(item_path, create=False)
         logcount = plugin.readLogCount(item_id)
         if logcount == 0:
@@ -233,6 +240,8 @@ class MaintenanceManager:
         :param item_path: path_name of the (orphan) item to delete
         """
         plugin = self._plugin
+        if not plugin._ensure_db_maint():
+            raise ConnectionError('Database maintenance connection not available')
         item_id = plugin.id(item_path, create=False)
         plugin.deleteLog(item_id)
         with plugin._db_maint.transaction() as cur:
@@ -255,6 +264,8 @@ class MaintenanceManager:
         plugin = self._plugin
         if plugin._item_store.id_is_autoincrement():
             return None
+        if not plugin._ensure_db_maint():
+            raise ConnectionError('Database maintenance connection not available')
 
         backup_name = f'item_backup_{int(plugin.shtime.now().timestamp())}'
         with plugin._db_maint.transaction() as cur:
@@ -310,9 +321,7 @@ class MaintenanceManager:
         try:
             deleted = plugin._delete_orphan(item)
         except Exception as e:
-            # e.g. the maintenance connection (_db_maint) went stale independently
-            # of the main connection (see smarthomeNG/plugins#1004) - keep the item
-            # queued and retry on the next cycle instead of crashing the scheduler task.
+            # _db_maint can still drop independently of the main connection - keep the item queued, retry next cycle.
             plugin._log_db_exception(
                 e,
                 f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}',
@@ -397,16 +406,10 @@ class MaintenanceManager:
         connection_failed = False
         while intervals_done < plugin.max_aggregate_intervals:
             try:
-                # exclude_duration=interval_ms: skip rows this method already produced itself -
-                # without it, oldest_time() can't tell a just-compacted row from raw data (both are
-                # plain (time, duration, value) rows), so it re-selects the same already-compacted
-                # interval forever and never reaches newer raw data (found live 2026-09-04).
+                # exclude_duration=interval_ms: without it, oldest_time() can't tell this row apart from raw data and loops forever.
                 oldest = plugin._log_store.oldest_time(item_id, exclude_duration=interval_ms)
             except Exception as e:
-                # Same self-healing case as the transaction() except-block
-                # below - a connection error reading oldest_time() itself
-                # means nothing this cycle can proceed; requeue below rather
-                # than trusting a follow-up oldest_time() call to succeed.
+                # same self-healing case as the transaction() except below - requeue rather than retry inline.
                 plugin._log_db_exception(
                     e,
                     f'remove_older_: {itempath} could not read oldest log time, giving up this cycle: {e}',

@@ -91,6 +91,11 @@ class _MockDB:
     def connected(self):
         return True
 
+    def verify(self, retry=2):
+        """Mock is always connected - mirrors lib.db.Database.verify()'s
+        return contract (nonzero = healthy) without any real reconnect logic."""
+        return -1
+
     def cursor(self):
         return self._conn.cursor()
 

@@ -63,11 +63,10 @@ on, min, max) and appear as gaps in raw/visualisation queries."""
 
 QUALITY_INVALID = 2
 """Value was known but has been manually flagged bad (e.g. via the webif's
-reversible "invalidate" action, replacing what used to be a hard delete).
-Unlike QUALITY_NO_DATA, val_* columns are preserved so the flag can be
-undone. Excluded from time-weighted aggregations exactly like
-QUALITY_NO_DATA - the exclusion filter treats any non-zero val_quality
-the same way."""
+reversible "invalidate" action). Unlike QUALITY_NO_DATA, val_* columns are
+preserved so the flag can be undone. Excluded from time-weighted
+aggregations exactly like QUALITY_NO_DATA - the exclusion filter treats
+any non-zero val_quality the same way."""
 
 
 # ──────────────────────────────────────────────────────────────────────────────

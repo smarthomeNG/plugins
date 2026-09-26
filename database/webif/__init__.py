@@ -251,15 +251,16 @@ class WebInterface(SmartPluginWebIf):
             return
         orphan_id = data.get('orphan_id')
         new_id = data.get('new_id')
-        result = {'operation': 'request', 'result': 'success'}
         if orphan_id is not None and new_id is not None and orphan_id != new_id:
             self.logger.info(f'reassigning orphaned id {orphan_id} to new id {new_id}')
             err = self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
             if err:
-                return
-            return json.dumps(result)
+                self._log_webif_error(f'database webif reassign (orphan_id={orphan_id}, new_id={new_id})', err)
+                return json.dumps({'operation': 'request', 'result': 'error', 'message': str(err)})
+            return json.dumps({'operation': 'request', 'result': 'success'})
         else:
             self.logger.warning(f'reassigning orphaned id {orphan_id} to new id {new_id} failed')
+            return json.dumps({'operation': 'request', 'result': 'error', 'message': 'invalid orphan_id/new_id'})
 
     @cherrypy.expose
     def delete_orphan_now(self):

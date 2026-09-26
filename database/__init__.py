@@ -517,6 +517,13 @@ class Database(SmartPlugin):
                 # connection (including shutdown) until process restart.
                 # timeout=5 (not the 60s default) is deliberate - a per-item
                 # read must not stall startup registration.
+                # verify() first, like _dump()/id()/_query() - the except below only catches TimeoutError.
+                if self._db.verify(2) == 0:
+                    self.logger.info(
+                        f'Database: connection not available, skipping cache init for item {item.property.path} '
+                        f'({self._db.last_verify_reason()})'
+                    )
+                    return
                 try:
                     with self._db.transaction(timeout=5) as cur:
                         cache = self.readItem(str(item.property.path), cur=cur)
@@ -573,6 +580,10 @@ class Database(SmartPlugin):
                             item.property.path, self._db.lock_holder_description()
                         )
                     )
+                    return
+                except ConnectionError as e:
+                    # defense in depth - verify() above can still race a concurrent disconnect.
+                    self.logger.info(f'Database: connection lost while reading cache for {item.property.path}: {e}')
                     return
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 self.logger.warning(
@@ -1645,11 +1656,10 @@ class Database(SmartPlugin):
         This is a public function of the plugin
 
         With no cur given, this acquires its own lock and commits via
-        LogStore.delete_range() (see its docstring) - there is no longer
-        a separate with_commit toggle, since a call with cur omitted that
-        doesn't commit has nothing else guaranteed to flush it, and a
-        passed-in cur being committed unilaterally would end the caller's
-        own transaction early.
+        LogStore.delete_range() (see its docstring) - a call with cur
+        omitted that doesn't commit has nothing else guaranteed to flush
+        it, and a passed-in cur being committed unilaterally would end
+        the caller's own transaction early.
 
         :param id: Database ID of item to delete the records for
         :param time: Restrict deletion of records to given time (optional)
@@ -2260,6 +2270,31 @@ class Database(SmartPlugin):
             else:
                 return False
 
+        return True
+
+    def _ensure_db_maint(self):
+        """Self-heal the maintenance connection (``self._db_maint``) before a
+        direct, unguarded use of it.
+
+        ``self._db_maint`` has no reconnect path of its own once
+        ``self._db_initialized`` is True: ``id()``/``_query()``'s fast path
+        only re-invokes ``_initialize_db()`` (which connects/initializes
+        both connections) while the *main* connection's own flag is still
+        False, so nothing on the item-write path ever revisits
+        ``self._db_maint`` again - only ``_dump()``'s own unconditional,
+        scheduled ``_initialize_db()`` call does. Every ``maintenance.py``
+        entry point that opens ``self._db_maint.transaction()`` directly
+        must call this first instead of relying on that scheduled retry
+        happening to land in time.
+
+        :return: True if ``self._db_maint`` is connected and ready to use.
+        :rtype: bool
+        """
+        if self._db_maint.connected() and self._db_maint_initialized:
+            return True
+        if not self._initialize_db() or not self._db_maint.connected():
+            self.logger.info('Database maintenance connection not available - reconnect attempt failed')
+            return False
         return True
 
     def _prepare(self, query):
