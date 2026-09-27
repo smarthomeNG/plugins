@@ -12,7 +12,7 @@ import os
 import unittest
 
 import lib.module
-from plugins.matter.tests.support import PluginHarness, connect_client
+from plugins.matter.tests.support import PluginHarness, connect_client, wait_for
 from plugins.matter.tests.test_server_role import NODE_3, MatterServerPeer
 from plugins.matter.webif import WebInterface
 
@@ -128,9 +128,18 @@ class TestActions(_WebifTest):
         flash = self.webif.run_actions('server', {'pairing_code': 'MT:ABC'})
 
         jobs = json.loads(self.webif.get_data_html())['commission_jobs']
-        self.assertEqual(flash, {})
+        # See WebInterface._commission() - the code is kept in the flash, not cleared, since the outcome is still pending.
+        self.assertEqual(flash, {'pairing_code': 'MT:ABC'})
         self.assertEqual(len(jobs), 1)
         self.assertIn(jobs[0]['state'], ('pending', 'succeeded'))
+
+    def test_clear_commission_jobs_action_drops_a_finished_job(self):
+        self.webif.run_actions('server', {'pairing_code': 'MT:ABC'})
+        self.assertTrue(wait_for(lambda: self.plugin.server.commission_jobs()[-1]['state'] == 'succeeded'))
+
+        self.webif.run_actions('server', {'clear_commission_jobs': '1'})
+
+        self.assertEqual(self.plugin.server.commission_jobs(), [])
 
     def test_bridge_view_renders_with_the_bridge_disconnected(self):
         html = self.webif._render_bridge({})

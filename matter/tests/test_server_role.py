@@ -314,6 +314,29 @@ class TestCommissioning(_ServerRoleTest):
         with self.assertRaises(ConnectionError):
             self.server.start_commission('MT:ABC')
 
+    def test_clear_finished_commission_jobs_drops_succeeded_and_failed(self):
+        self.connect()
+        succeeded = self.server.start_commission('MT:ABC')
+        self.assertTrue(wait_for(lambda: succeeded.state is CommissionState.SUCCEEDED))
+        self.peer.silent_for.add('commission_with_code')
+        self.server.settings = type(self.server.settings)(commission_timeout=0.1)
+        failed = self.server.start_commission('MT:DEF')
+        self.assertTrue(wait_for(lambda: failed.state is CommissionState.FAILED))
+
+        self.server.clear_finished_commission_jobs()
+
+        self.assertEqual(self.server.commission_jobs(), [])
+
+    def test_clear_finished_commission_jobs_keeps_a_still_pending_job(self):
+        self.connect()
+        self.peer.silent_for.add('commission_with_code')
+        pending = self.server.start_commission('MT:ABC')
+
+        self.server.clear_finished_commission_jobs()
+
+        self.assertEqual(pending.state, CommissionState.PENDING)
+        self.assertEqual(len(self.server.commission_jobs()), 1)
+
 
 class TestWebifQueries(_ServerRoleTest):
     def test_nodes_snapshot_degrades_to_an_error_when_not_connected(self):

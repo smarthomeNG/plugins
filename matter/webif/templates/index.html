@@ -204,10 +204,13 @@
 		<form method="post" action="" id="pairing_form">
 			<div class="form-row align-items-center">
 				<div class="col-auto">
-					<input type="text" class="form-control" name="pairing_code" placeholder="{{ _('Pairing-Code (manueller Code oder QR-Inhalt)') }}" size="40">
+					<input type="text" class="form-control" name="pairing_code" id="pairing_code_input" value="{{ flash.pairing_code|default('') }}" placeholder="{{ _('Pairing-Code (manueller Code oder QR-Inhalt)') }}" size="40">
 				</div>
 				<div class="col-auto">
 					<button type="submit" class="btn btn-shng btn-sm"><i class="fas fa-plug"></i>&nbsp;{{ _('Koppeln') }}</button>
+				</div>
+				<div class="col-auto">
+					<button type="button" class="btn btn-outline-secondary btn-sm" onclick="$('#pairing_code_input').val('')"><i class="fas fa-times"></i>&nbsp;{{ _('Leeren') }}</button>
 				</div>
 			</div>
 		</form>
@@ -215,6 +218,9 @@
 			<div class="alert alert-danger mt-2">{{ _('Kopplung fehlgeschlagen') }}: {{ flash.commission_error }}</div>
 		{% endif %}
 		{% if commission_jobs %}
+			<form method="post" action="" class="d-inline mt-2">
+				<button type="submit" name="clear_commission_jobs" value="1" class="btn btn-outline-secondary btn-sm"><i class="fas fa-broom"></i>&nbsp;{{ _('Beendete Kopplungen löschen') }}</button>
+			</form>
 			<table class="table table-sm mt-2">
 				<thead>
 				<tr>

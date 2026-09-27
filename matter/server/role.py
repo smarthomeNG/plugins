@@ -553,6 +553,13 @@ class ServerRole(SidecarRole[MatterServerClient]):
         with self._jobs_lock:
             return [job.as_dict() for job in self._jobs]
 
+    def clear_finished_commission_jobs(self) -> None:
+        """Drops SUCCEEDED/FAILED jobs from the webif's job log; a still-PENDING job is kept."""
+        with self._jobs_lock:
+            self._jobs = collections.deque(
+                (job for job in self._jobs if job.state == CommissionState.PENDING), maxlen=COMMISSION_JOBS_KEPT
+            )
+
     # -- Thread network credentials (webif) --
 
     def set_thread_dataset(self, dataset: str) -> None:

@@ -104,7 +104,8 @@ class WebInterface(SmartPluginWebIf):
         def commission() -> None:
             self._server().start_commission(code)
 
-        return _attempt(self.logger, 'commission_error', 'commissioning', commission)
+        # start_commission() finishes async - keep the code regardless, the outcome isn't known yet.
+        return {**_attempt(self.logger, 'commission_error', 'commissioning', commission), 'pairing_code': code}
 
     def _thread_dataset(self, params: Mapping[str, str]) -> Flash:
         dataset = params['thread_dataset'].strip()
@@ -133,6 +134,14 @@ class WebInterface(SmartPluginWebIf):
             'thread_dataset_error',
             'clearing thread dataset',
             lambda: self._server().clear_thread_dataset(),
+        )
+
+    def _clear_commission_jobs(self, params: Mapping[str, str]) -> Flash:
+        return _attempt(
+            self.logger,
+            'commission_error',
+            'clearing finished commissioning jobs',
+            lambda: self._server().clear_finished_commission_jobs(),
         )
 
     def _unlink(self, params: Mapping[str, str]) -> Flash:
@@ -260,6 +269,7 @@ class WebInterface(SmartPluginWebIf):
 
     ACTIONS: tuple[WebifAction, ...] = (
         WebifAction('pairing_code', 'server', _commission),
+        WebifAction('clear_commission_jobs', 'server', _clear_commission_jobs),
         WebifAction('thread_dataset_clear', 'server', _thread_dataset_clear),
         WebifAction('thread_dataset', 'server', _thread_dataset),
         WebifAction('thread_dataset_fetch', 'server', _thread_dataset_fetch),
