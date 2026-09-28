@@ -506,10 +506,11 @@ class Database(SmartPlugin):
             )  # Zur Nutzung ueber Funktionen in Logiken
             item.dbplugin = self  # genutzt zum Zugriff auf die Plugin Instanz z.B. durch Logiken
 
-            # Inject db_mark_invalid / db_mark_valid so data-source plugins can
+            # Inject db_mark_invalid / db_mark_valid / db_is_invalid so data-source plugins can
             # signal connectivity loss without changing the item's Python value.
             item.db_mark_invalid = functools.partial(self._mark_item_invalid, item)
             item.db_mark_valid = functools.partial(self._mark_item_valid, item)
+            item.db_is_invalid = functools.partial(self._is_item_invalid, item)
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 # transaction() ensures the lock releases even if readItem()
                 # below raises - a bare lock()/cursor() pair without
@@ -905,14 +906,29 @@ class Database(SmartPlugin):
         :param caller: Optional caller identifier (for logging).
         :param source: Optional source identifier (for logging).
         """
-        last = self._buffer_mgr.last_entry(item)
-        if last is None or last.duration is not None or last.quality != QUALITY_NO_DATA:
+        if not self._buffer_mgr.has_open_gap(item):
             return  # no open gap — nothing to close
         end_ts = self._timestamp(self.shtime.now())
         self.logger.info(
             f"db_mark_valid: closing no-data gap for '{item.property.path}'" + (f' (caller={caller})' if caller else '')
         )
         self._buffer_mgr.close_open(item, end_ts)
+
+    def _is_item_invalid(self, item) -> bool:
+        """Whether *item* currently has an open no-data gap in the database log.
+
+        Read-only counterpart to :meth:`_mark_item_invalid`/:meth:`_mark_item_valid`, for a
+        caller that needs to check current state before deciding whether to act - e.g. a
+        periodic scan must not call ``db_mark_invalid()`` repeatedly on an item that's already
+        marked, since that would fragment one real gap into several (see push_invalid()).
+
+        This method is injected onto every registered item as ``item.db_is_invalid()`` by
+        :meth:`parse_item`.
+
+        :param item: SmartHomeNG item object.
+        :rtype:      bool
+        """
+        return self._buffer_mgr.has_open_gap(item)
 
     def _check_invalid_items(self):
         """Scheduled check for database_invalid_after items still silent right now.

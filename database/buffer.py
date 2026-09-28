@@ -172,6 +172,17 @@ class BufferManager:
             buf = self._buffer.get(item, [])
             return bool(buf) and buf[-1].duration is None
 
+    def has_open_gap(self, item) -> bool:
+        """Return ``True`` if *item* currently has an open no-data gap (``push_invalid()`` was
+        called and nothing has closed it since - neither ``close_open()`` nor a new value).
+
+        :param item: SmartHomeNG item.
+        :rtype:      bool
+        """
+        with self._lock:
+            buf = self._buffer.get(item, [])
+            return bool(buf) and buf[-1].duration is None and buf[-1].quality == QUALITY_NO_DATA
+
     def last_entry(self, item) -> 'BufferEntry | None':
         """Return the last buffered entry for *item*, or ``None``.
 
