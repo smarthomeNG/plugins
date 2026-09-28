@@ -79,6 +79,35 @@ class TestItemIndex(unittest.TestCase):
         self.assertEqual(index.items_for('k2'), ())
         self.assertFalse(index.remove('a.b'))
 
+    def test_items_for_target_returns_every_report_except_excluded(self):
+        index = ItemIndex()
+        power, sw, available = _Item('dev.power'), _Item('dev.sw'), _Item('dev.available')
+        target = DirectNode(3)
+        index.add(dispatch_key(target, '1/144/8'), power)
+        index.add(dispatch_key(target, '1/6/0'), sw)
+        index.add(dispatch_key(target, AVAILABILITY), available)
+
+        result = index.items_for_target(target, exclude_report=AVAILABILITY)
+
+        self.assertEqual(set(result), {power, sw})
+
+    def test_items_for_target_does_not_collide_with_a_longer_node_id(self):
+        index = ItemIndex()
+        item3, item30 = _Item('dev3.sw'), _Item('dev30.sw')
+        index.add(dispatch_key(DirectNode(3), '1/6/0'), item3)
+        index.add(dispatch_key(DirectNode(30), '1/6/0'), item30)
+
+        self.assertEqual(index.items_for_target(DirectNode(3)), (item3,))
+        self.assertEqual(index.items_for_target(DirectNode(30)), (item30,))
+
+    def test_items_for_target_resolves_alias_targets_independently_of_direct_targets(self):
+        index = ItemIndex()
+        direct, aliased = _Item('dev.sw'), _Item('aliased.sw')
+        index.add(dispatch_key(DirectNode(3), '1/6/0'), direct)
+        index.add(dispatch_key(AliasNode('kitchen'), '1/6/0'), aliased)
+
+        self.assertEqual(index.items_for_target(AliasNode('kitchen')), (aliased,))
+
 
 if __name__ == '__main__':
     unittest.main()

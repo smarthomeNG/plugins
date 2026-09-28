@@ -152,6 +152,23 @@ class ItemIndex:
         with self._lock:
             return tuple(self._items_by_key.get(key, ()))
 
+    def items_for_target(self, target: NodeTarget, *, exclude_report: str | None = None) -> tuple[Item, ...]:
+        """
+        Every item registered for *target* under any report, e.g. to react
+        to a node-level event that isn't itself an attribute report.
+        dispatch_key() always places a ':' right after the node_id/alias
+        name, so this prefix can't collide with a longer id/name sharing
+        the same leading digits/characters.
+        """
+        prefix = dispatch_key(target, '')
+        excluded_key = dispatch_key(target, exclude_report) if exclude_report is not None else None
+        with self._lock:
+            result: list[Item] = []
+            for key, items in self._items_by_key.items():
+                if key != excluded_key and key.startswith(prefix):
+                    result.extend(items)
+            return tuple(result)
+
     def remove(self, item_path: str) -> bool:
         """Drop the item from every key it was added under; False if it was never added."""
         with self._lock:
