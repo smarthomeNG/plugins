@@ -595,23 +595,30 @@ class ServerRole(SidecarRole[MatterServerClient]):
 
     # -- commissioning (webif) --
 
-    def start_commission(self, code: str) -> CommissionJob:
+    def start_commission(self, code: str, network_only: bool = False) -> CommissionJob:
         """
         Start commissioning in the background and return its job right away -
         the attempt can take minutes. The job's state is polled by the webif.
+
+        network_only=True skips BLE discovery entirely and commissions purely
+        over the network the device is already joined to - the only option
+        for adding an already-commissioned device to this fabric too, since
+        its original BLE setup code isn't reusable for that.
         """
         client = self._require_client()
         job = CommissionJob(next(self._job_ids), time.time())
         with self._jobs_lock:
             self._jobs.append(job)
-        future = self.host.submit_asyncio_coro(self._commission(client, job, code))
+        future = self.host.submit_asyncio_coro(self._commission(client, job, code, network_only))
         if future is None:
             job.finish(CommissionState.FAILED, 'plugin event loop is not running')
         return job
 
-    async def _commission(self, client: MatterServerClient, job: CommissionJob, code: str) -> None:
+    async def _commission(self, client: MatterServerClient, job: CommissionJob, code: str, network_only: bool) -> None:
         try:
-            result = await client.commission_with_code(code, timeout=self.settings.commission_timeout)
+            result = await client.commission_with_code(
+                code, network_only=network_only, timeout=self.settings.commission_timeout
+            )
         except TRANSIENT_ERRORS as ex:
             self.host.logger.error(f'commissioning failed: {describe_error(ex)}')
             job.finish(CommissionState.FAILED, describe_error(ex))

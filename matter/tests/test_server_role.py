@@ -390,6 +390,22 @@ class TestCommissioning(_ServerRoleTest):
         self.assertEqual(job.detail, 'node_id=9')
         self.assertEqual(self.server.commission_jobs()[-1]['state'], 'succeeded')
 
+    def test_commission_defaults_to_allowing_ble_alongside_on_network_discovery(self):
+        self.connect()
+
+        self.server.start_commission('MT:ABC')
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('commission_with_code')))
+        self.assertEqual(self.peer.commands('commission_with_code')[0]['args']['network_only'], False)
+
+    def test_commission_network_only_is_passed_through_for_an_already_networked_device(self):
+        self.connect()
+
+        self.server.start_commission('MT:ABC', network_only=True)
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('commission_with_code')))
+        self.assertEqual(self.peer.commands('commission_with_code')[0]['args']['network_only'], True)
+
     def test_commission_waits_for_the_configured_timeout_not_a_fixed_one(self):
         self.connect()
         self.peer.silent_for.add('commission_with_code')
