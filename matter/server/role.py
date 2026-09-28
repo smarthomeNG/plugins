@@ -28,7 +28,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import collections
+import contextlib
 import functools
 import itertools
 import threading
@@ -148,6 +150,17 @@ class ServerRole(SidecarRole[MatterServerClient]):
         self._jobs_lock = threading.Lock()
         self._jobs: collections.deque[CommissionJob] = collections.deque(maxlen=COMMISSION_JOBS_KEPT)
         self._job_ids = itertools.count(1)
+        # Per-node resync task; asyncio-thread-confined, so a flapping node cancels-and-replaces instead of piling up.
+        self._resync_tasks: dict[int, asyncio.Task] = {}
+
+    async def cleanup(self) -> None:
+        for task in list(self._resync_tasks.values()):
+            task.cancel()
+        for task in list(self._resync_tasks.values()):
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        self._resync_tasks.clear()
+        await super().cleanup()
 
     def own_caller(self) -> str:
         """
@@ -201,11 +214,70 @@ class ServerRole(SidecarRole[MatterServerClient]):
                 self.host.logger.warning(f'malformed node_updated event: {message}')
                 return
             self._apply(node_id, AVAILABILITY, available)
+            if available:
+                self._start_resync(node_id)
+            else:
+                self._cancel_resync(node_id)  # a stale interview reply for a node that's down again is pointless
+                self._mark_node_invalid(node_id)
 
     def _apply(self, node_id: int, report: str, value: Any) -> None:
         for target in self.aliases.targets_for(node_id):
             for item in self._index.items_for(dispatch_key(target, report)):
                 item(value, self.own_caller())
+
+    def _mark_node_invalid(self, node_id: int) -> None:
+        """
+        Mark every item mirroring node_id's device state (not the
+        matter_available item itself, which is reporting this same
+        transition, not going stale because of it) invalid in the database
+        plugin's log, for every direct and alias target the node is
+        addressed through. The matching db_mark_valid() is never called
+        directly - see _resync_node(), which closes the gap only once a
+        fresh read has actually landed.
+        """
+        caller = self.own_caller()
+        seen: set[str] = set()
+        for target in self.aliases.targets_for(node_id):
+            for item in self._index.items_for_target(target, exclude_report=AVAILABILITY):
+                if item.property.path in seen:
+                    continue
+                seen.add(item.property.path)
+                mark = getattr(item, 'db_mark_invalid', None)
+                if mark is not None:
+                    mark(caller=caller)
+
+    def _start_resync(self, node_id: int) -> None:
+        self._cancel_resync(node_id)  # cancel-and-replace: a newer recovery supersedes an older in-flight one
+        task = asyncio.create_task(self._resync_node(node_id), name=f'matter-resync-{node_id}')
+        self._resync_tasks[node_id] = task
+        task.add_done_callback(
+            lambda t, nid=node_id: self._resync_tasks.pop(nid, None) if self._resync_tasks.get(nid) is t else None
+        )
+
+    def _cancel_resync(self, node_id: int) -> None:
+        task = self._resync_tasks.get(node_id)
+        if task is not None and not task.done():
+            task.cancel()
+
+    async def _resync_node(self, node_id: int) -> None:
+        """
+        Re-read a recovered node's attributes and push them through the
+        normal item-update path, so any open no-data gap in the database
+        plugin's log closes on a verified current value, not an assumption
+        that nothing changed while the node was unreachable.
+        """
+        try:
+            await self.client.interview_node(node_id)
+            raw = await self.client.get_nodes()
+        except TRANSIENT_ERRORS as ex:
+            self.host.logger.warning(f'resync after reconnect failed for node {node_id}: {describe_error(ex)}')
+            return
+        node = next((n for n in parse_nodes(raw, self.host.logger) if n['node_id'] == node_id), None)
+        if node is None:
+            # Not spurious - a decommissioned device is manual intervention, so no further updates are coming either.
+            self.host.logger.info(f'resync: node {node_id} no longer known (removed/decommissioned)')
+            return
+        self._seed_node(node)
 
     # -- item handling --
 

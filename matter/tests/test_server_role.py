@@ -15,6 +15,7 @@ import textwrap
 import threading
 import time
 import unittest
+from unittest.mock import MagicMock
 
 import psutil
 
@@ -173,6 +174,95 @@ class TestReports(_ServerRoleTest):
         self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
 
         self.assertTrue(wait_for(lambda: self.item('dev.available')() is False))
+
+    def test_node_unavailable_marks_mirrored_items_invalid_but_not_the_availability_item(self):
+        self.connect()
+        power, sw, available = self.item('dev.power'), self.item('dev.sw'), self.item('dev.available')
+        power.db_mark_invalid = MagicMock()
+        sw.db_mark_invalid = MagicMock()
+        available.db_mark_invalid = MagicMock()
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: power.db_mark_invalid.called))
+        self.assertTrue(sw.db_mark_invalid.called)
+        self.assertFalse(available.db_mark_invalid.called)
+
+    def test_node_unavailable_marks_items_reached_only_through_an_alias(self):
+        self.connect()
+        aliased_sw = self.item('aliased.sw')
+        aliased_sw.db_mark_invalid = MagicMock()
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: aliased_sw.db_mark_invalid.called))
+
+    def test_node_available_again_triggers_interview_and_reseeds_its_items(self):
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+        self.item('dev.power')(0, self.server.own_caller())
+        self.item('dev.sw')(False, self.server.own_caller())
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+
+        self.assertTrue(wait_for(lambda: len(self.peer.commands('interview_node')) == 1))
+        self.assertEqual(self.peer.commands('interview_node')[0]['args'], {'node_id': 3})
+        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 1500))
+        self.assertTrue(wait_for(lambda: self.item('dev.sw')() is True))
+
+    def test_failed_interview_is_logged_and_does_not_reseed(self):
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+        self.item('dev.power')(0, self.server.own_caller())
+        self.peer.error_for.add('interview_node')
+
+        with self.assertLogs(self.harness.plugin.logger, 'WARNING') as logs:
+            self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+            self.assertTrue(wait_for(lambda: any('resync' in line for line in logs.output)))
+
+        time.sleep(0.2)
+        self.assertEqual(self.item('dev.power')(), 0)
+
+    def test_decommissioned_node_resync_is_logged_at_info_and_does_not_crash(self):
+        self.connect()
+        self.peer.nodes = []
+
+        with self.assertLogs(self.harness.plugin.logger, 'INFO') as logs:
+            self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+            self.assertTrue(wait_for(lambda: any('no longer known' in line for line in logs.output)))
+
+    def test_rapid_recovery_events_do_not_leak_resync_tasks(self):
+        self.connect()
+        self.peer.delay = 0.2
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+
+        self.assertTrue(wait_for(lambda: not self.server._resync_tasks, timeout=2))
+
+    def test_node_going_unavailable_again_cancels_an_in_flight_resync(self):
+        self.connect()
+        self.peer.delay = 0.3
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+        self.assertTrue(wait_for(lambda: 3 in self.server._resync_tasks))
+        task = self.server._resync_tasks[3]
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: task.cancelled() or task.done()))
+
+    def test_cleanup_cancels_in_flight_resync_tasks(self):
+        self.connect()
+        self.peer.delay = 1.0
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+        self.assertTrue(wait_for(lambda: 3 in self.server._resync_tasks))
+        task = self.server._resync_tasks[3]
+
+        self.harness.run(self.server.cleanup())
+
+        self.assertTrue(task.cancelled())
+        self.assertEqual(self.server._resync_tasks, {})
 
 
 class TestWrites(_ServerRoleTest):
