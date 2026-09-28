@@ -265,6 +265,20 @@ class TestQualityEndToEnd(TestDatabaseBase):
         self.assertEqual(QUALITY_VALID, last.quality)
         self.assertIsNone(last.duration)  # still open, untouched
 
+    def test_db_is_invalid_reflects_open_gap_state(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        self.create_item(plugin, 'main.num')
+
+        plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
+        self.assertFalse(item.db_is_invalid())
+
+        item.db_mark_invalid()
+        self.assertTrue(item.db_is_invalid())
+
+        item.db_mark_valid()
+        self.assertFalse(item.db_is_invalid())
+
     def test_implicit_revalidation_uses_gap_start_not_prev_change(self):
         """A new value arriving while a gap is open must close the gap using
         the gap's own start time, not item.prev_change() - which points
