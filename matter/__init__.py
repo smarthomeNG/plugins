@@ -50,7 +50,7 @@ ROLE_TYPES: tuple[type[ServerRole] | type[BridgeRole], ...] = (ServerRole, Bridg
 class Matter(SmartPlugin):
     """Matter plugin frame - see the module header."""
 
-    PLUGIN_VERSION = '0.3.0'
+    PLUGIN_VERSION = '0.4.0'
     ALLOW_MULTIINSTANCE = True
     STOP_ON_ITEM_CHANGE = False
 
@@ -92,6 +92,7 @@ class Matter(SmartPlugin):
             generated_items_base=self.get_parameter_value('server_generated_items_base'),
             commission_timeout=self.get_parameter_value('server_commission_timeout'),
             otbr_rest_url=self.get_parameter_value('server_otbr_rest_url') or '',
+            icd_check_cycle=self.get_parameter_value('server_icd_check_cycle'),
         )
         return ServerRole(self, sidecar, settings, url=f'ws://localhost:{port}/ws')
 

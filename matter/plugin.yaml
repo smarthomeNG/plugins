@@ -11,7 +11,7 @@ plugin:
     keywords: iot matter chip smarthome
     documentation: ''   # TODO
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/2102287-neues-plugin-matter'
-    version: 0.3.0
+    version: 0.4.0
     sh_minversion: '1.12'
     multi_instance: true            # each instance is its own Matter fabric and bridge identity
     restartable: true
@@ -122,6 +122,13 @@ parameters:
         description:
             de: 'Wartezeit (Sekunden) auf die Antwort von matter-server auf einen Kopplungsversuch (commission_with_code). matter-server versucht jede bekannte Netzwerkadresse des Geräts mit bis zu 30s Timeout und plant bis zu 255s für einen Versuch ein. Die Kopplung läuft im Hintergrund, ihr Status wird im Webif laufend aktualisiert.'
             en: 'How long (seconds) to wait for matter-servers answer to a pairing attempt (commission_with_code). matter-server tries every known network address of the device with up to 30s each and budgets up to 255s for one attempt. Pairing runs in the background, its status is updated live in the webif.'
+
+    server_icd_check_cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Intervall (Sekunden) zwischen Prüfungen auf abgelaufene ICD-Geräte (Batterie-/Sleepy-Thread-Geräte, z.B. Tür-/Fensterkontakte). Ein ICD-Gerät meldet sich nur alle IdleModeDuration Sekunden - die Prüfung markiert ein Item als ungültig, sobald es länger als matter_icd_invalid_factor * IdleModeDuration ohne Update ist.'
+            en: 'Interval (seconds) between checks for stale ICD devices (battery/sleepy Thread devices, e.g. door/window contacts). An ICD device only checks in every IdleModeDuration seconds - the check marks an item invalid once it has gone longer than matter_icd_invalid_factor * IdleModeDuration without an update.'
 
     bridge_enabled:
         type: bool
@@ -240,6 +247,12 @@ item_attributes:
             de: 'Nur-Lese-Item, das die von matter-server erkannte Erreichbarkeit des Node spiegelt (dieselbe Information wie die "verfuegbar"-Spalte im Webif, hier als echtes Item fuer eigene Logik/Struct/Visu). Braucht nur matter_node, kein Endpoint/Cluster.'
             en: 'Read-only item mirroring matter-server''s own node-level reachability tracking (the same information as the webif''s "available" column, exposed here as a real item for your own logic/struct/visu). Only needs matter_node, no endpoint/cluster.'
 
+    matter_icd_invalid_factor:
+        type: num
+        description:
+            de: 'Nur fuer ICD-Geraete (Batterie-/Sleepy-Thread, z.B. Tuer-/Fensterkontakte): ueberschreibt den Standard-Multiplikator (2.5) fuer die Ungueltig-Markierung dieses Items in der Datenbank. Schwelle = Faktor * IdleModeDuration (die vom Geraet selbst gemeldete Melde-Intervall). Vererbt sich wie matter_node an Kind-Items.'
+            en: 'ICD devices only (battery/sleepy Thread, e.g. door/window contacts): overrides the default multiplier (2.5) for marking this item invalid in the database. Threshold = factor * IdleModeDuration (the devices own declared check-in interval). Inherited like matter_node by child items.'
+
     matter_expose_type:
         type: str
         valid_list:
@@ -280,28 +293,19 @@ item_structs:
     electrical_power_measurement:
         # Mixin, not a root - no top-level type of its own. Meant to combine with a root struct
         # (e.g. switch) via struct: [x, electrical_power_measurement], same shape shelly_plug_m_3gen
-        # already uses below.
+        # already uses below. Values arrive already scaled to the physical unit - the plugin applies
+        # the cluster's known divisor itself (clusters.py decode_value()), no on_update needed.
         power:
             remark: aktuelle Leistung in W
             type: num
-
-            power_mw:
-                remark: aktuelle Leistung in mW
-                type: num
-                matter_cluster@instance: 144
-                matter_attribute@instance: 8
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 144
+            matter_attribute@instance: 8
 
         voltage:
             remark: aktuelle Spannung in V
             type: num
-
-            voltage_mv:
-                remark: aktuelle Spannung in mV
-                type: num
-                matter_cluster@instance: 144
-                matter_attribute@instance: 11
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 144
+            matter_attribute@instance: 11
 
             hinweis:
                 remark: In eigenen Tests wurde die Spannung nur einmalig beim Verbinden aktualisiert. Obwohl das Gerät die Spannung laufend misst, wird sie über Matter nicht mehr übertragen - z.B. über MQTT sehr wohl.
@@ -309,13 +313,8 @@ item_structs:
         current:
             remark: aktueller Strom in A
             type: num
-
-            current_ma:
-                remark: aktueller Strom in mA
-                type: num
-                matter_cluster@instance: 144
-                matter_attribute@instance: 12
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 144
+            matter_attribute@instance: 12
 
     contact:
         # BooleanState.StateValue - no unit conversion needed (already bool), unlike the two below.
@@ -326,50 +325,32 @@ item_structs:
         matter_attribute@instance: 0
 
     temperature_sensor:
+        # Value arrives already scaled to °C - the plugin applies the cluster's known divisor itself
+        # (clusters.py decode_value()), no on_update needed.
         remark: aktuelle Temperatur in °C
         type: num
-
-        temperature_raw:
-            remark: aktuelle Temperatur in 1/100 °C (Roh-Wert)
-            type: num
-            matter_cluster@instance: 1026
-            matter_attribute@instance: 0
-            on_update: .. = value / 100.0
+        matter_cluster@instance: 1026
+        matter_attribute@instance: 0
 
     humidity_sensor:
         remark: aktuelle relative Luftfeuchtigkeit in %
         type: num
-
-        humidity_raw:
-            remark: aktuelle relative Luftfeuchtigkeit in 1/100 % (Roh-Wert)
-            type: num
-            matter_cluster@instance: 1029
-            matter_attribute@instance: 0
-            on_update: .. = value / 100.0
+        matter_cluster@instance: 1029
+        matter_attribute@instance: 0
 
     battery:
         # Mixin, not a root - lives on the device's root endpoint (0), not an application endpoint.
         percent:
             remark: Batteriestand in %
             type: num
-
-            percent_raw:
-                remark: Batteriestand in halben Prozent (Roh-Wert)
-                type: num
-                matter_cluster@instance: 47
-                matter_attribute@instance: 12
-                on_update: .. = value / 2.0
+            matter_cluster@instance: 47
+            matter_attribute@instance: 12
 
         voltage:
             remark: Batteriespannung in V
             type: num
-
-            voltage_mv:
-                remark: Batteriespannung in mV (Roh-Wert)
-                type: num
-                matter_cluster@instance: 47
-                matter_attribute@instance: 11
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 47
+            matter_attribute@instance: 11
 
     #
     # Ready-made structs for known and tested devices, built on the generic structs above (same

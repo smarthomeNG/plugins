@@ -15,7 +15,7 @@ import textwrap
 import threading
 import time
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import psutil
 
@@ -71,6 +71,19 @@ broken:
         type: bool
         matter_cluster: 6
         matter_switch: true
+
+icd_dev:
+    matter_node: 8
+    matter_endpoint: 1
+    temp:
+        type: num
+        matter_cluster: 1026
+        matter_attribute: 0
+    temp_custom_factor:
+        type: num
+        matter_cluster: 1026
+        matter_attribute: 0
+        matter_icd_invalid_factor: 1.0
 """
 
 NODE_3 = {
@@ -84,6 +97,13 @@ NODE_3 = {
         '1/6/0': True,
         '1/144/8': 1500,
     },
+}
+
+# Real values from a commissioned IKEA Timmerflotte: IdleModeDuration (0/70/0) = 300s (5 min).
+NODE_8 = {
+    'node_id': 8,
+    'available': True,
+    'attributes': {'0/40/3': 'TIMMERFLOTTE temp/hmd sensor', '0/70/0': 300, '1/1026/0': 2150},
 }
 
 
@@ -149,6 +169,22 @@ class TestParsing(_ServerRoleTest):
 
         self.assertTrue(any("matter_alias 'ghost'" in line for line in logs.output))
 
+    def test_prepare_warns_when_matter_icd_invalid_factor_has_no_database_logging(self):
+        with self.assertLogs(self.harness.plugin.logger, 'WARNING') as logs:
+            self.server.prepare()
+
+        self.assertTrue(
+            any('icd_dev.temp_custom_factor' in line and 'matter_icd_invalid_factor' in line for line in logs.output)
+        )
+
+    def test_prepare_does_not_warn_once_the_item_is_database_logged(self):
+        self.item('icd_dev.temp_custom_factor').db_mark_invalid = MagicMock()
+
+        with self.assertLogs(self.harness.plugin.logger, 'WARNING') as logs:
+            self.server.prepare()  # ghost's alias error still fires - only asserting our own warning stays quiet
+
+        self.assertFalse(any('matter_icd_invalid_factor' in line for line in logs.output))
+
 
 class TestReports(_ServerRoleTest):
     def test_connect_seeds_cached_values_into_direct_and_alias_items(self):
@@ -157,7 +193,7 @@ class TestReports(_ServerRoleTest):
 
         self.assertIs(self.item('dev.sw')(), True)
         self.assertIs(self.item('aliased.sw')(), True)
-        self.assertEqual(self.item('dev.power')(), 1500)
+        self.assertEqual(self.item('dev.power')(), 1.5)  # raw 1500 mW / divisor 1000 (ElectricalPowerMeasurement)
         self.assertIs(self.item('dev.available')(), True)
 
     def test_pushed_attribute_update_reaches_items(self):
@@ -165,7 +201,15 @@ class TestReports(_ServerRoleTest):
 
         self.peer.push({'event': 'attribute_updated', 'data': [3, '1/144/8', 42]})
 
-        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 42))
+        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 0.042))
+
+    def test_pushed_attribute_update_is_decoded_by_the_clusters_divisor(self):
+        self.peer.nodes = [NODE_3, NODE_8]
+        self.connect()
+
+        self.peer.push({'event': 'attribute_updated', 'data': [8, '1/1026/0', 2150]})
+
+        self.assertTrue(wait_for(lambda: self.item('icd_dev.temp')() == 21.5))
 
     def test_pushed_availability_reaches_items(self):
         self.connect()
@@ -207,7 +251,7 @@ class TestReports(_ServerRoleTest):
 
         self.assertTrue(wait_for(lambda: len(self.peer.commands('interview_node')) == 1))
         self.assertEqual(self.peer.commands('interview_node')[0]['args'], {'node_id': 3})
-        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 1500))
+        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 1.5))
         self.assertTrue(wait_for(lambda: self.item('dev.sw')() is True))
 
     def test_failed_interview_is_logged_and_does_not_reseed(self):
@@ -265,6 +309,96 @@ class TestReports(_ServerRoleTest):
         self.assertEqual(self.server._resync_tasks, {})
 
 
+class TestIcdStaleness(_ServerRoleTest):
+    def connect_with_icd_node(self):
+        self.peer.nodes = [NODE_3, NODE_8]
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+
+    def test_icd_node_unavailable_does_not_mark_invalid_or_resync(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 8, 'available': False}})
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 8, 'available': True}})
+        time.sleep(0.2)
+
+        self.assertFalse(temp.db_mark_invalid.called)
+        self.assertEqual(self.peer.commands('interview_node'), [])
+
+    def test_stale_icd_item_gets_marked_invalid(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+        temp.db_is_invalid = MagicMock(return_value=False)
+
+        with patch.object(temp, 'update_age', return_value=300 * 2.5 + 1):
+            self.server._check_icd_items()
+
+        temp.db_mark_invalid.assert_called_once()
+
+    def test_icd_item_not_yet_stale_is_left_alone(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+        temp.db_is_invalid = MagicMock(return_value=False)
+
+        with patch.object(temp, 'update_age', return_value=300 * 2.5 - 1):
+            self.server._check_icd_items()
+
+        self.assertFalse(temp.db_mark_invalid.called)
+
+    def test_already_invalid_icd_item_is_not_marked_again(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+        temp.db_is_invalid = MagicMock(return_value=True)
+
+        with patch.object(temp, 'update_age', return_value=300 * 2.5 + 1):
+            self.server._check_icd_items()
+
+        self.assertFalse(temp.db_mark_invalid.called)
+
+    def test_matter_icd_invalid_factor_overrides_the_default(self):
+        self.connect_with_icd_node()
+        default_factor_item = self.item('icd_dev.temp')
+        custom_factor_item = self.item('icd_dev.temp_custom_factor')
+        for item in (default_factor_item, custom_factor_item):
+            item.db_mark_invalid = MagicMock()
+            item.db_is_invalid = MagicMock(return_value=False)
+
+        # Same age for both - between the custom factor's threshold (300) and the default's (750).
+        with (
+            patch.object(default_factor_item, 'update_age', return_value=500),
+            patch.object(custom_factor_item, 'update_age', return_value=500),
+        ):
+            self.server._check_icd_items()
+
+        self.assertFalse(default_factor_item.db_mark_invalid.called)
+        custom_factor_item.db_mark_invalid.assert_called_once()
+
+    def test_icd_item_without_database_logging_does_not_raise(self):
+        self.connect_with_icd_node()
+
+        with patch.object(self.item('icd_dev.temp'), 'update_age', return_value=999999):
+            self.server._check_icd_items()  # must not raise - db_mark_invalid was never injected
+
+    def test_icd_watchdog_ticks_periodically_and_stops_on_cancel(self):
+        self.harness.start_loop()
+        self.server.settings = type(self.server.settings)(icd_check_cycle=0.05)
+
+        with patch.object(self.server, '_check_icd_items') as check:
+            future = asyncio.run_coroutine_threadsafe(self.server._icd_watchdog(), self.harness.plugin._asyncio_loop)
+            self.assertTrue(wait_for(lambda: check.call_count >= 2, timeout=1))
+
+            future.cancel()
+            time.sleep(0.1)
+            count_after_cancel = check.call_count
+            time.sleep(0.15)
+            self.assertEqual(check.call_count, count_after_cancel)
+
+
 class TestWrites(_ServerRoleTest):
     def test_switch_write_sends_on_and_off(self):
         self.connect()
@@ -281,12 +415,20 @@ class TestWrites(_ServerRoleTest):
     def test_attribute_write_sends_write_attribute(self):
         self.connect()
 
-        self.item('dev.power')(7, 'test')
+        self.item('dev.power')(7, 'test')  # 7 W - encoded back to raw mW (cluster 144 attr 8, divisor 1000)
 
         self.assertTrue(wait_for(lambda: self.peer.commands('write_attribute')))
         self.assertEqual(
-            self.peer.commands('write_attribute')[0]['args'], {'node_id': 3, 'attribute_path': '1/144/8', 'value': 7}
+            self.peer.commands('write_attribute')[0]['args'], {'node_id': 3, 'attribute_path': '1/144/8', 'value': 7000}
         )
+
+    def test_attribute_write_rounds_to_the_nearest_raw_unit(self):
+        self.connect()
+
+        self.item('dev.power')(7.0034, 'test')  # 7.0034 * 1000 = 7003.4 - not a whole raw unit
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('write_attribute')))
+        self.assertEqual(self.peer.commands('write_attribute')[0]['args']['value'], 7003)
 
     def test_falsy_write_to_value_independent_command_does_not_fire(self):
         self.connect()
@@ -477,7 +619,7 @@ class TestWebifQueries(_ServerRoleTest):
         self.server.create_suggested_items(3)
 
         self.assertIs(self.item('matter_devices.matter_node_3')(), True)
-        self.assertEqual(self.item('matter_devices.matter_node_3.power.power_mw')(), 1500)
+        self.assertEqual(self.item('matter_devices.matter_node_3.power')(), 1.5)
 
 
 class _OtbrHandler(http.server.BaseHTTPRequestHandler):

@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import lib.shyaml as shyaml
 
 from ..aliases import AliasRegistry
-from ..clusters import switch_info
+from ..clusters import decode_value, encode_value, switch_info
 from ..mapping import (
     AVAILABILITY,
     AliasNode,
@@ -66,6 +66,7 @@ from .discovery import (
     generate_suggested_item,
     node_summary,
     parse_nodes,
+    split_path,
 )
 from .sidecar import MatterServerSidecar
 
@@ -81,6 +82,8 @@ AVAILABILITY_TARGET_KEY = 'matter_availability_target'
 DEFAULT_ALIAS_BASE_REMARK = 'matter alias base item, child items are alias definitions, do not change'
 OTBR_REQUEST_TIMEOUT = 5
 COMMISSION_JOBS_KEPT = 10
+# Multiplier on an ICD node's own IdleModeDuration for its staleness threshold, overridable via matter_icd_invalid_factor.
+DEFAULT_ICD_INVALID_FACTOR = 2.5
 
 
 @dataclass(frozen=True)
@@ -92,6 +95,7 @@ class ServerSettings:
     generated_items_base: str = 'matter_devices'
     commission_timeout: float = 300.0
     otbr_rest_url: str = ''
+    icd_check_cycle: float = 60.0
 
 
 class CommissionState(Enum):
@@ -152,6 +156,8 @@ class ServerRole(SidecarRole[MatterServerClient]):
         self._job_ids = itertools.count(1)
         # Per-node resync task; asyncio-thread-confined, so a flapping node cancels-and-replaces instead of piling up.
         self._resync_tasks: dict[int, asyncio.Task] = {}
+        # node_id -> IdleModeDuration (seconds) for every currently known ICD node; presence is the is_icd signal.
+        self._icd_idle_seconds: dict[int, float] = {}
 
     async def cleanup(self) -> None:
         for task in list(self._resync_tasks.values()):
@@ -173,6 +179,23 @@ class ServerRole(SidecarRole[MatterServerClient]):
 
     # -- lifecycle --
 
+    async def run(self) -> None:
+        watchdog = asyncio.create_task(self._icd_watchdog(), name=f'matter-{self.name}-icd-watchdog')
+        try:
+            await super().run()
+        finally:
+            watchdog.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await watchdog
+
+    async def _icd_watchdog(self) -> None:
+        """Runs for the role's whole lifetime, independent of connection state - an ICD node's
+        staleness is judged from its items' own update_age(), not from anything requiring a live
+        connection."""
+        while True:
+            await asyncio.sleep(self.settings.icd_check_cycle)
+            self._check_icd_items()
+
     def _make_client(self) -> MatterServerClient:
         return MatterServerClient(self.url, on_event=self._on_event, logger=self.host.logger)
 
@@ -183,9 +206,17 @@ class ServerRole(SidecarRole[MatterServerClient]):
 
     def _seed_node(self, node: MatterNode) -> None:
         """Push a node's cached attribute values and availability into its items."""
+        self._update_icd_state(node)
         for path, value in node['attributes'].items():
             self._apply(node['node_id'], path, value)
         self._apply(node['node_id'], AVAILABILITY, node['available'])
+
+    def _update_icd_state(self, node: MatterNode) -> None:
+        node_id = node['node_id']
+        if node['is_icd'] and node['idle_mode_duration'] is not None:
+            self._icd_idle_seconds[node_id] = node['idle_mode_duration']
+        else:
+            self._icd_idle_seconds.pop(node_id, None)
 
     def prepare(self) -> None:
         self._ensure_alias_base_item()
@@ -194,6 +225,12 @@ class ServerRole(SidecarRole[MatterServerClient]):
                 f"{path}: matter_alias '{alias}' is not a known alias - check it exists "
                 f'as an item under {self.settings.alias_base_item}'
             )
+        for item in self._index.all_items():
+            if self.host.has_iattr(item.conf, 'matter_icd_invalid_factor') and not hasattr(item, 'db_mark_invalid'):
+                self.host.logger.warning(
+                    f'{item.property.path}: matter_icd_invalid_factor is set but this item has no database '
+                    "attribute (or the 'database' plugin is not loaded) - ICD staleness will never be marked"
+                )
 
     # -- incoming events --
 
@@ -214,6 +251,8 @@ class ServerRole(SidecarRole[MatterServerClient]):
                 self.host.logger.warning(f'malformed node_updated event: {message}')
                 return
             self._apply(node_id, AVAILABILITY, available)
+            if node_id in self._icd_idle_seconds:
+                return  # ICD nodes: staleness is handled by the scan loop (_check_icd_items), not connection state
             if available:
                 self._start_resync(node_id)
             else:
@@ -221,9 +260,19 @@ class ServerRole(SidecarRole[MatterServerClient]):
                 self._mark_node_invalid(node_id)
 
     def _apply(self, node_id: int, report: str, value: Any) -> None:
+        decoded = self._decode_report_value(report, value)
         for target in self.aliases.targets_for(node_id):
             for item in self._index.items_for(dispatch_key(target, report)):
-                item(value, self.own_caller())
+                item(decoded, self.own_caller())
+
+    def _decode_report_value(self, report: str, value: Any) -> Any:
+        """Apply the reporting cluster/attribute's known unit divisor - report is AVAILABILITY (not an
+        attribute path) for a node-level reachability report, which passes through unchanged."""
+        split = split_path(report)
+        if split is None:
+            return value
+        _endpoint_id, cluster_id, attribute_id = split
+        return decode_value(cluster_id, attribute_id, value)
 
     def _mark_node_invalid(self, node_id: int) -> None:
         """
@@ -278,6 +327,50 @@ class ServerRole(SidecarRole[MatterServerClient]):
             self.host.logger.info(f'resync: node {node_id} no longer known (removed/decommissioned)')
             return
         self._seed_node(node)
+
+    # -- ICD staleness watchdog --
+
+    def _check_icd_items(self) -> None:
+        """
+        Scheduled scan for ICD nodes gone silent past their own declared
+        check-in interval. Complements the connection-level path above,
+        which is deliberately skipped for ICD nodes: they may report
+        'available' from mDNS/reachability alone without actually being
+        interviewable (see _on_event), so staleness here is judged purely
+        from each item's own update_age(), the same primitive the database
+        plugin's own reactive check uses.
+        """
+        for node_id, idle_seconds in list(self._icd_idle_seconds.items()):
+            seen: set[str] = set()
+            for target in self.aliases.targets_for(node_id):
+                for item in self._index.items_for_target(target, exclude_report=AVAILABILITY):
+                    if item.property.path in seen:
+                        continue
+                    seen.add(item.property.path)
+                    self._check_icd_item(item, idle_seconds)
+
+    def _check_icd_item(self, item: Item, idle_seconds: float) -> None:
+        is_invalid = getattr(item, 'db_is_invalid', None)
+        mark_invalid = getattr(item, 'db_mark_invalid', None)
+        if is_invalid is None or mark_invalid is None:
+            return  # not database-logged
+        if is_invalid():
+            return  # already marked - db_mark_invalid() isn't idempotent, calling it again would fragment the gap
+        if item.update_age() > self._icd_factor_for(item) * idle_seconds:
+            mark_invalid(caller=self.own_caller())
+
+    def _icd_factor_for(self, item: Item) -> float:
+        raw = item.find_attribute_with_instance('matter_icd_invalid_factor', default=None, plugin=self.host)
+        if raw is None:
+            return DEFAULT_ICD_INVALID_FACTOR
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            self.host.logger.warning(
+                f"{item.property.path}: matter_icd_invalid_factor '{raw}' is not a number, "
+                f'using default {DEFAULT_ICD_INVALID_FACTOR}'
+            )
+            return DEFAULT_ICD_INVALID_FACTOR
 
     # -- item handling --
 
@@ -445,7 +538,8 @@ class ServerRole(SidecarRole[MatterServerClient]):
                 command_mapping.resolve_params(value),
             )
         else:
-            coro = client.write_attribute(node_id, attribute_mapping.path, value)
+            raw_value = encode_value(attribute_mapping.cluster_id, attribute_mapping.attribute_id, value)
+            coro = client.write_attribute(node_id, attribute_mapping.path, raw_value)
         self.host.submit_asyncio_coro(coro, on_error=functools.partial(self._log_write_error, path))
 
     def _log_write_error(self, path: str, ex: BaseException) -> None:
