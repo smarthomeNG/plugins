@@ -160,6 +160,8 @@
 			if (previous === 'pending' && job.state !== 'pending') {
 				if (job.state === 'succeeded') {
 					showMatterToast('alert-success', MATTER_TEXT.commissionSucceeded + ': ' + job.detail);
+					// Reload to show the new device row - the poll only patches rows already on the page.
+					setTimeout(function () { location.reload(); }, 2000);
 				} else {
 					showMatterToast('alert-danger', MATTER_TEXT.commissionFailed + ': ' + job.detail);
 				}

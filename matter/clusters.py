@@ -140,7 +140,12 @@ _CLUSTER_SPECS = (
 CLUSTERS: dict[int, ClusterSpec] = {spec.id: spec for spec in _CLUSTER_SPECS}
 
 # Device Library Spec device type IDs -> human name; unregistered types fall back to their raw number.
-DEVICE_TYPES: dict[int, str] = {0x010A: 'On/Off Plug-in Unit', 0x0302: 'Temperature Sensor', 0x0307: 'Humidity Sensor'}
+DEVICE_TYPES: dict[int, str] = {
+    0x0015: 'Contact Sensor',
+    0x010A: 'On/Off Plug-in Unit',
+    0x0302: 'Temperature Sensor',
+    0x0307: 'Humidity Sensor',
+}
 
 
 def cluster_name(cluster_id: int) -> str:
@@ -165,6 +170,15 @@ def decode_value(cluster_id: int, attribute_id: int, raw_value: Any) -> Any:
     ):
         return raw_value
     return raw_value / info.divisor
+
+
+def encode_value(cluster_id: int, attribute_id: int, value: Any) -> Any:
+    """Inverse of decode_value() - scale a written item value back to the raw device unit before WriteAttribute,
+    rounded to the nearest raw integer unit since the device side is always an integer type."""
+    info = attribute_info(cluster_id, attribute_id)
+    if info.divisor is None or value is None or isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    return round(value * info.divisor)
 
 
 def switch_info(cluster_id: int) -> SwitchSpec | None:

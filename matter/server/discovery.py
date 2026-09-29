@@ -48,6 +48,10 @@ NODE_LABEL_ATTR = 0x05
 DESCRIPTOR_CLUSTER = 0x1D
 DEVICE_TYPE_LIST_ATTR = 0x00
 
+# ICD Management cluster (Core Spec 9.17) - mandatory on ICD devices, absent otherwise; presence alone is the is_icd signal.
+ICD_MANAGEMENT_CLUSTER = 70
+IDLE_MODE_DURATION_ATTR = 0x00
+
 
 class MatterNode(TypedDict):
     """One node of matter-server's get_nodes()/start_listening() answer, as far as this plugin reads it."""
@@ -55,6 +59,8 @@ class MatterNode(TypedDict):
     node_id: int
     available: bool
     attributes: dict[str, Any]
+    is_icd: bool
+    idle_mode_duration: float | None
 
 
 class NodeSummary(TypedDict):
@@ -84,11 +90,23 @@ def parse_nodes(raw: Any, logger: logging.Logger | None = None) -> list[MatterNo
             if logger is not None:
                 logger.warning(f'skipping malformed node from matter-server: {entry!r}')
             continue
-        nodes.append(MatterNode(node_id=node_id, available=bool(entry.get('available')), attributes=attributes))
+        icd_prefix = f'0/{ICD_MANAGEMENT_CLUSTER}/'  # ICD Management is mandatory on endpoint 0, nowhere else
+        is_icd = any(key.startswith(icd_prefix) for key in attributes)
+        idle_mode_duration = attributes.get(f'{icd_prefix}{IDLE_MODE_DURATION_ATTR}') if is_icd else None
+        nodes.append(
+            MatterNode(
+                node_id=node_id,
+                available=bool(entry.get('available')),
+                attributes=attributes,
+                is_icd=is_icd,
+                idle_mode_duration=idle_mode_duration,
+            )
+        )
     return nodes
 
 
-def _split_path(path: str) -> tuple[int, int, int] | None:
+def split_path(path: str) -> tuple[int, int, int] | None:
+    """Parse a 'endpoint/cluster/attribute' report path back into its parts, or None if not that shape."""
     parts = path.split('/')
     if len(parts) != 3 or not all(part.isdigit() for part in parts):
         return None
@@ -101,7 +119,7 @@ def discovery_rows(node: MatterNode) -> list[dict[str, Any]]:
     node_id = node['node_id']
     rows = []
     for path, value in node['attributes'].items():
-        split = _split_path(path)
+        split = split_path(path)
         if split is None:
             continue
         endpoint_id, cluster_id, attribute_id = split
@@ -126,7 +144,7 @@ def discovery_rows(node: MatterNode) -> list[dict[str, Any]]:
 def _clusters_by_endpoint(node: MatterNode) -> dict[int, set[int]]:
     clusters: dict[int, set[int]] = defaultdict(set)
     for path in node['attributes']:
-        split = _split_path(path)
+        split = split_path(path)
         if split is not None:
             clusters[split[0]].add(split[1])
     return clusters
@@ -202,7 +220,7 @@ def generate_suggested_item(node: MatterNode, device_label: str | None = None, i
 
 def _first_device_type(attrs: dict[str, Any]) -> str:
     endpoints = sorted(
-        {split[0] for split in (_split_path(path) for path in attrs) if split and split[1] == DESCRIPTOR_CLUSTER}
+        {split[0] for split in (split_path(path) for path in attrs) if split and split[1] == DESCRIPTOR_CLUSTER}
     )
     for endpoint_id in endpoints:
         if endpoint_id == 0:

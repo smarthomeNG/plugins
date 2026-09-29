@@ -108,6 +108,16 @@ class TestItemIndex(unittest.TestCase):
 
         self.assertEqual(index.items_for_target(AliasNode('kitchen')), (aliased,))
 
+    def test_all_items_deduplicates_across_keys(self):
+        index = ItemIndex()
+        power, sw = _Item('dev.power'), _Item('dev.sw')
+        target = DirectNode(3)
+        index.add(dispatch_key(target, '1/144/8'), power)
+        index.add(dispatch_key(target, '1/6/0'), sw)
+        index.add(dispatch_key(AliasNode('kitchen'), '1/6/0'), sw)  # same item, second key
+
+        self.assertEqual(set(index.all_items()), {power, sw})
+
 
 if __name__ == '__main__':
     unittest.main()

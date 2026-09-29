@@ -253,6 +253,23 @@ def test_parse_nodes_non_list_is_empty():
     assert parse_nodes({'error': 'nope'}) == []
 
 
+def test_parse_nodes_detects_icd_from_idle_mode_duration():
+    # Real values from a commissioned IKEA Timmerflotte (5-minute check-in).
+    node = {**SAMPLE_NODE, 'attributes': {**SAMPLE_NODE['attributes'], '0/70/0': 300}}
+
+    parsed = parse_nodes([node])
+
+    assert parsed[0]['is_icd'] is True
+    assert parsed[0]['idle_mode_duration'] == 300
+
+
+def test_parse_nodes_non_icd_node_has_no_idle_mode_duration():
+    parsed = parse_nodes([SAMPLE_NODE])
+
+    assert parsed[0]['is_icd'] is False
+    assert parsed[0]['idle_mode_duration'] is None
+
+
 def test_node_summary_tolerates_unexpected_device_type_shape():
     node = {**SAMPLE_NODE, 'attributes': {**SAMPLE_NODE['attributes'], '1/29/0': 'garbage'}}
 

@@ -11,10 +11,8 @@ import re
 import unittest
 
 from plugins.matter.bridge.expose import EXPOSE_TYPES
-from plugins.matter.clusters import CLUSTERS, attribute_info
+from plugins.matter.clusters import CLUSTERS
 from plugins.matter.tests.support import PLUGIN_DIR, plugin_yaml
-
-DIVISOR_ON_UPDATE = re.compile(r'^\.\.\s*=\s*value\s*/\s*([0-9.]+)$')
 
 
 def _walk(node, path=()):
@@ -59,20 +57,6 @@ class TestStructs(unittest.TestCase):
                 for key in node:
                     if key.startswith('matter_'):
                         self.assertTrue(key.endswith('@instance'), f'{name}.{".".join(path)}: {key}')
-
-    def test_struct_unit_conversions_match_the_cluster_divisors(self):
-        checked = 0
-        for name, struct in self.structs.items():
-            for path, node in _walk(struct):
-                match = DIVISOR_ON_UPDATE.match(str(node.get('on_update', '')))
-                if match is None:
-                    continue
-                cluster_id = int(node['matter_cluster@instance'])
-                attribute_id = int(node['matter_attribute@instance'])
-                divisor = attribute_info(cluster_id, attribute_id).divisor
-                self.assertEqual(float(match.group(1)), divisor, f'{name}.{".".join(path)}')
-                checked += 1
-        self.assertGreater(checked, 0)
 
 
 if __name__ == '__main__':

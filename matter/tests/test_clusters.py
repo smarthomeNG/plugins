@@ -9,6 +9,7 @@ from plugins.matter.clusters import (
     cluster_struct,
     decode_value,
     device_type_name,
+    encode_value,
     switch_info,
 )
 
@@ -94,6 +95,23 @@ def test_decode_value_passes_through_none():
     assert decode_value(0x90, 17, None) is None
 
 
+def test_encode_value_is_the_inverse_of_decode_value():
+    assert encode_value(0x402, 0, 21.5) == 2150
+
+
+def test_encode_value_rounds_to_the_nearest_raw_unit():
+    # 100.3 * 2 = 200.6 - not a whole raw unit, must round rather than truncate/error.
+    assert encode_value(0x2F, 12, 100.3) == 201
+
+
+def test_encode_value_passes_through_when_no_divisor():
+    assert encode_value(0x06, 0, True) is True
+
+
+def test_encode_value_passes_through_none():
+    assert encode_value(0x90, 17, None) is None
+
+
 def test_switch_info_known_cluster():
     assert switch_info(0x06) == SwitchSpec(0x00, 'on', 'off')
 
@@ -111,6 +129,11 @@ def test_device_type_name_temperature_and_humidity_sensor():
     # verified against real hardware: IKEA TIMMERFLOTTE reports 770/775 on its two endpoints
     assert device_type_name(0x0302) == 'Temperature Sensor'
     assert device_type_name(0x0307) == 'Humidity Sensor'
+
+
+def test_device_type_name_contact_sensor():
+    # verified against real hardware: Aqara door/window contact reports device type 21
+    assert device_type_name(0x0015) == 'Contact Sensor'
 
 
 def test_device_type_name_unknown_falls_back_to_numeric():

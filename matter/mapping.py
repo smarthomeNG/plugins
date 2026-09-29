@@ -169,6 +169,15 @@ class ItemIndex:
                     result.extend(items)
             return tuple(result)
 
+    def all_items(self) -> tuple[Item, ...]:
+        """Every item registered under any key at all, deduplicated by path."""
+        with self._lock:
+            seen: dict[str, Item] = {}
+            for items in self._items_by_key.values():
+                for item in items:
+                    seen[item.property.path] = item
+            return tuple(seen.values())
+
     def remove(self, item_path: str) -> bool:
         """Drop the item from every key it was added under; False if it was never added."""
         with self._lock:
