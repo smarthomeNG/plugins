@@ -67,7 +67,7 @@ from .webif import WebInterface
 
 
 class KNX(SmartPlugin):
-    PLUGIN_VERSION = '1.8.5'
+    PLUGIN_VERSION = '1.9.0'
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -383,6 +383,39 @@ class KNX(SmartPlugin):
     def decode(self, data, dpt):
         return dpts.decode[str(dpt)](data)
 
+    def _dpt2_to_bus(self, value, dpt, item):
+        """
+        Convert an item's DPT2 value into the [control, value] list DPT2 (en2) expects.
+
+        Item type 'num' unpacks a priority number (0-3); item type 'dict' unpacks a
+        {'control': bool, 'value': bool} mapping; any other item type (typically 'list')
+        is passed through unchanged.
+        """
+        if str(dpt) != '2':
+            return value
+        if item.type() == 'num' and not isinstance(value, (list, tuple)):
+            num = int(value) & 0x03
+            value = [(num >> 1) & 0x01, num & 0x01]
+        elif item.type() == 'dict' and isinstance(value, dict):
+            value = [int(bool(value.get('control'))), int(bool(value.get('value')))]
+        return value
+
+    def _dpt2_from_bus(self, value, dpt, item):
+        """
+        Convert a decoded DPT2 [control, value] list into the item's representation.
+
+        Item type 'num' packs it into a priority number (0-3); item type 'dict' packs it
+        into a {'control': bool, 'value': bool} mapping; any other item type (typically
+        'list') is passed through unchanged.
+        """
+        if str(dpt) != '2' or not isinstance(value, (list, tuple)):
+            return value
+        if item.type() == 'num':
+            value = (value[0] << 1) | value[1]
+        elif item.type() == 'dict':
+            value = {'control': bool(value[0]), 'value': bool(value[1])}
+        return value
+
     def parse_knxd_message(self, client, data):
         """
         inspects a message from knxd (eibd)
@@ -546,13 +579,14 @@ class KNX(SmartPlugin):
                     src_wrk += ':'
                 src_wrk += src + ':ga=' + dst
                 for item in self.gal[dst][ITEMS]:
+                    item_val = self._dpt2_from_bus(val, dpt, item)
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(
                             "Set Item '{}' to value '{}' caller='{}', source='{}', dest='{}'".format(
-                                item, val, self.get_shortname(), src, dst
+                                item, item_val, self.get_shortname(), src, dst
                             )
                         )
-                    item(val, self.get_shortname(), src_wrk, dst)
+                    item(item_val, self.get_shortname(), src_wrk, dst)
                 for logic in self.gal[dst][LOGICS]:
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(
@@ -580,16 +614,15 @@ class KNX(SmartPlugin):
             if dst in self.gar:  # read item
                 if self.gar[dst][ITEM] is not None:
                     item = self.gar[dst][ITEM]
-                    val = item()
+                    dpt = self.get_iattr_value(item.conf, KNX_DPT)
+                    val = self._dpt2_to_bus(item(), dpt, item)
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(
-                            "groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(
-                                dst, val, self.get_iattr_value(item.conf, KNX_DPT)
-                            )
+                            "groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, val, dpt)
                         )
                     if self._log_own_packets is True:
                         self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
-                    self.groupwrite(dst, val, self.get_iattr_value(item.conf, KNX_DPT), 'response')
+                    self.groupwrite(dst, val, dpt, 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
                     if src_wrk != '':
@@ -838,22 +871,23 @@ class KNX(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive:
+            dpt = self.get_iattr_value(item.conf, KNX_DPT)
             if self.has_iattr(item.conf, KNX_SEND):
                 if caller != self.get_shortname():
                     for ga in self.get_iattr_value(item.conf, KNX_SEND):
-                        _value = item()
+                        _value = self._dpt2_to_bus(item(), dpt, item)
                         if self._log_own_packets is True:
                             self._busmonitor(self._bm_format_send.format(self.get_instance_name(), 'SEND', ga, _value))
-                        self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
+                        self.groupwrite(ga, _value, dpt)
             if self.has_iattr(item.conf, KNX_STATUS):
                 for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
                     if ga != dest:
-                        _value = item()
+                        _value = self._dpt2_to_bus(item(), dpt, item)
                         if self._log_own_packets is True:
                             self._busmonitor(
                                 self._bm_format_send.format(self.get_instance_name(), 'STATUS', ga, _value)
                             )
-                        self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
+                        self.groupwrite(ga, _value, dpt)
 
     # ------------------------------------------
     #    Statistics functions for KNX

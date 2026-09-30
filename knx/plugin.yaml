@@ -13,7 +13,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
     sh_minversion: '1.9.0'          # minimum shNG version to use this plugin
-    version: 1.8.5                 # Plugin version
+    version: 1.9.0                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true
@@ -205,7 +205,7 @@ item_attributes:
         valid_list_description:
             de:
              - 'Schalten (1 Bit) -> bool'
-             - 'Zwangssteuerung (2 Bit) -> list'
+             - 'Zwangssteuerung (2 Bit) -> list, num oder dict (je nach Item-Typ)'
              - 'Dimmen (4 Bit) -> list'
              - 'Zeichen [8859_1] (8 Bit) -> str'
              - 'Zeichen [8859_1] (8 Bit) -> str'
@@ -243,7 +243,7 @@ item_attributes:
              - 'Empfangen von Roh-/Hex-Daten (um Key IDs des alten Winkhaus Schließsystems auszulesen'
             en:
              - 'Switch (1 Bit) -> bool'
-             - 'forced control (2 Bit) -> list'
+             - 'forced control (2 Bit) -> list, num or dict (depending on item type)'
              - 'Dim (4 Bit) -> list'
              - 'Char [8859_1] (8 Bit) -> str'
              - 'Char [8859_1] (8 Bit) -> str'
