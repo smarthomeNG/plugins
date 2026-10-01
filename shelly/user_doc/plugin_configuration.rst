@@ -71,6 +71,7 @@ unterstützt. Getestet wurden bisher folgenden Gen1 Devices:
 - Shelly Plug S
 - Shelly Button1
 - Shelly Door/Window2
+- Shelly TRV (nur lesender Zugriff, siehe Item struct ``shellytrv``)
 
 
 Unterschiede zwischen Plugin Modi
@@ -221,6 +222,7 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Shelly Devices It
 - shellyht
 - shellyflood
 - shellyplusplug_s
+- shellytrv
 
 Unter Verwendung der entsprechenden Vorlage kann die Einrichtung einfach durch Angabe der shally_id des
 entsprechenden Devices erfolgen:

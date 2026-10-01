@@ -1185,6 +1185,9 @@ class Shelly(MqttPlugin):
                 'fs_free',
                 'uptime',
                 'timestamp',
+                'fw_info',
+                'ps_mode',
+                'dbg_flags',
             ]:
                 # Following sub types for 'info' of shellysw2 are handled through sensor group:
                 #  - 'accel' ('tilt', 'vibration')
@@ -1220,6 +1223,10 @@ class Shelly(MqttPlugin):
                 if len(sub_property) > 0:
                     self.handle_gen1_info_lights(shelly_id, sub_property, topic, payload)
 
+            elif property == 'thermostats':  # for TRV
+                for index, thermostat in enumerate(sub_property):
+                    self.update_items_from_gen1_thermostat(shelly_id, index, thermostat)
+
             elif property == 'sensor':
                 self.update_items_from_status(shelly_id, 'sensor', 'state', sub_property['state'], 'info')
 
@@ -1244,6 +1251,43 @@ class Shelly(MqttPlugin):
                 )
 
         return
+
+    # Gen1 TRV thermostat keys -> item attribute, for plain values and for {'value': ...} sub-dicts
+    TRV_PLAIN_ATTRS = {
+        'pos': 'valve_pos',
+        'schedule': 'schedule',
+        'schedule_profile': 'schedule_profile',
+        'boost_minutes': 'boost_minutes',
+        'window_open': 'window_open',
+        'temperature_offset': 'temperature_offset',
+    }
+    TRV_VALUE_ATTRS = {'tmp': 'temp', 'target_t': 'target_t'}
+
+    def update_items_from_gen1_thermostat(self, shelly_id: str, index: int, thermostat: dict):
+        """
+        Update items of group ``thermostat:<index>`` from the thermostat data of a Gen1 TRV (SHTRV-01)
+
+        :param shelly_id: Id of the shelly device
+        :param index: number of the thermostat
+        :param thermostat: thermostat data, from the TRV's 'status' message or an entry of 'thermostats' in 'info'
+        """
+        group = f'thermostat:{index}'
+        for key, attr in self.TRV_PLAIN_ATTRS.items():
+            if key in thermostat:
+                self.update_items_from_status(shelly_id, group, attr, thermostat[key])
+        for key, attr in self.TRV_VALUE_ATTRS.items():
+            if key in thermostat:
+                self.update_items_from_status(shelly_id, group, attr, thermostat[key]['value'])
+
+    def handle_gen1_trv_status(self, shelly_id: str, status: dict):
+        """
+        Update items from the 'status' message of a Gen1 TRV (SHTRV-01)
+
+        :param shelly_id: Id of the shelly device
+        :param status: payload of topic ``shellies/<shelly_id>/status``
+        """
+        self.update_items_from_gen1_thermostat(shelly_id, 0, status)
+        self.update_items_from_status(shelly_id, 'sensor', 'battery', status['bat'])
 
     def handle_gen1_status(self, shelly_id: str, property, topic, payload, group=None):
         """
@@ -1272,6 +1316,8 @@ class Shelly(MqttPlugin):
                 self.update_items_from_status(shelly_id, '', property, payload)
             elif property == 'info':
                 self.handle_gen1_info(shelly_id, topic, payload)
+            elif property == 'status' and isinstance(payload, dict) and 'target_t' in payload:  # TRV
+                self.handle_gen1_trv_status(shelly_id, payload)
             else:
                 self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, position='*1.1')
 

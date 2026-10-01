@@ -319,6 +319,71 @@ item_structs:
             shelly_type: ..:.
             shelly_attr: battery
 
+    shellytrv:
+        name: WLAN Heizkörperthermostat (Shelly TRV), nur lesend
+        type: num
+        description: Measured temperature in °C
+        shelly_group: "thermostat:0"
+        shelly_attr: temp
+
+        target_t:
+            type: num
+            description: Target temperature in °C
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: target_t
+        temperature_offset:
+            type: num
+            description: Temperature offset in °C
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: temperature_offset
+        valve_pos:
+            type: num
+            description: Valve position in percent
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: valve_pos
+        window_open:
+            type: bool
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: window_open
+        boost_minutes:
+            type: num
+            description: Remaining boost time in minutes
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: boost_minutes
+        schedule:
+            type: bool
+            description: Schedule active
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: schedule
+        schedule_profile:
+            type: num
+            description: Number of the active schedule profile
+            shelly_id: ..:.
+            shelly_group: "thermostat:0"
+            shelly_attr: schedule_profile
+        battery:
+            type: num
+            description: Battery charge in percent
+            shelly_id: ..:.
+            shelly_group: sensor
+            shelly_attr: battery
+        voltage:
+            type: num
+            description: Battery voltage in Volt
+            shelly_id: ..:.
+            shelly_group: sensor
+            shelly_attr: voltage
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_attr: online
+
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
