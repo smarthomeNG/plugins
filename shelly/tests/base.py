@@ -66,10 +66,6 @@ class ShellyTestBase(unittest.TestCase):
         plugin._init_complete = True
         plugin.__init__(self.sh)
         plugin.alive = True
-        # class-level dedupe lists would carry state from one test into the next
-        plugin.logged_attrs = []
-        plugin.devices_with_unhandled_status = []
-        plugin.unhandled_status_logged = []
         for item in self.sh.return_items():
             plugin.parse_item(item)
         return plugin

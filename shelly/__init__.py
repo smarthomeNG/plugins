@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.8.3'
+    PLUGIN_VERSION = '1.9.0'
 
     def __init__(self, sh):
         """
@@ -69,6 +69,11 @@ class Shelly(MqttPlugin):
 
         # Initialization code goes here
         self.shelly_devices = {}  # dict to store information about discovered shelly devices
+
+        # log dedupe state
+        self.logged_attrs = []
+        self.devices_with_unhandled_status = []
+        self.unhandled_status_logged = []
 
         # add subscription to get Gen 1 device announces (gets Gen2 announces, if device is configured correctly)
         self.add_subscription('shellies/announce', 'dict', callback=self.on_mqtt_announce)
@@ -444,10 +449,6 @@ class Shelly(MqttPlugin):
                     source = self.shelly_devices[shelly_id]['app']
                 item(value, caller=self.get_shortname(), source=source)
         return
-
-    logged_attrs = []
-    devices_with_unhandled_status = []
-    unhandled_status_logged = []
 
     def list_attribute(self, shelly_id, group, attr, typ):
 

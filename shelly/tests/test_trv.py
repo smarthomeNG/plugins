@@ -127,5 +127,16 @@ class TestTrvPayloadsAreRecognized(ShellyTestBase):
             self.plugin.on_mqtt_gen1_message(f'shellies/{TRV_ID}/info', TRV_INFO)
 
 
+class TestUnhandledStatusLoggedPerInstance(ShellyTestBase):
+    def test_second_plugin_instance_logs_unhandled_status_again(self):
+        unknown_status = {'unknown_key': 1, 'target_t': {'value': 20.0}}
+        for _ in range(2):
+            plugin = self.plugin()
+            plugin.on_mqtt_announce(f'shellies/{TRV_ID}/announce', TRV_ANNOUNCE)
+
+            with self.assertLogs('plugins.shelly', level='INFO'):
+                plugin.on_mqtt_gen1_message(f'shellies/{TRV_ID}/info', unknown_status)
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
