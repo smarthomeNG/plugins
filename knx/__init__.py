@@ -387,11 +387,14 @@ class KNX(SmartPlugin):
         """
         Convert an item's DPT2 value into the [control, value] list DPT2 (en2) expects.
 
+        Applies to '2' and all of its 2.xxx control subtypes (2.001 DPT_Switch_Control
+        through 2.012 DPT_Invert_Control - see dpts.py's encode table), which all share
+        en2's wire encoding and only differ in the semantic meaning of the two bits.
         Item type 'num' unpacks a priority number (0-3); item type 'dict' unpacks a
         {'control': bool, 'value': bool} mapping; any other item type (typically 'list')
         is passed through unchanged.
         """
-        if str(dpt) != '2':
+        if dpts.encode.get(str(dpt)) is not dpts.en2:
             return value
         if item.type() == 'num' and not isinstance(value, (list, tuple)):
             num = int(value) & 0x03
@@ -404,11 +407,12 @@ class KNX(SmartPlugin):
         """
         Convert a decoded DPT2 [control, value] list into the item's representation.
 
-        Item type 'num' packs it into a priority number (0-3); item type 'dict' packs it
-        into a {'control': bool, 'value': bool} mapping; any other item type (typically
+        Applies to '2' and all of its 2.xxx control subtypes (see _dpt2_to_bus). Item
+        type 'num' packs it into a priority number (0-3); item type 'dict' packs it into
+        a {'control': bool, 'value': bool} mapping; any other item type (typically
         'list') is passed through unchanged.
         """
-        if str(dpt) != '2' or not isinstance(value, (list, tuple)):
+        if dpts.decode.get(str(dpt)) is not dpts.de2 or not isinstance(value, (list, tuple)):
             return value
         if item.type() == 'num':
             value = (value[0] << 1) | value[1]
