@@ -1,9 +1,9 @@
 # not updated since 2022 but still in use:
-rrdtool>=0.1.16
-
-# Spiritual successor to python-rrdtool as above:
-#rrdtool-bindings
-
+# rrdtool>=0.1.16
+# Only supported up to Python 3.10
+#
+# Spiritual successor to python-rrdtool is package rrdtool-bindings
 # see https://pypi.org/project/rrdtool-bindings/ for additional installation requirements
-# needs Python >= 3.10 
-
+# apt-get install -y gcc librrd-dev python3-dev
+# Supports Python >= 3.10 
+rrdtool-bindings

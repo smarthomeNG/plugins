@@ -1,0 +1,513 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+<!-- for data-heavy plugins it might be useful to set the update interval based on the amount of data -->
+{% set update_interval = (200 * (log_array | length)) %}
+
+<!-- set dataSet if you need specific data to be updated automatically. Also see init.py in plugin webif!-->
+{% set dataSet = 'devices_info' %}
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+{% set update_params = item_id %}
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = false %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = false %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = false %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = false %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = true %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+
+  #bodytab_2.active {
+    display: grid;
+    place-content: center;
+  }
+
+  table th.value {
+    width: 100px;
+  }
+  /*
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+
+  /* Remote.css */
+	:root {
+		--bg-color: #121212;
+		--remote-bg: #222222;
+		--btn-dark: #333333;
+		--btn-light: #4a4a4a;
+		--btn-text: #ffffff;
+		--power-red: #b71c1c;
+		--light-orange: #e65100;
+	}
+
+	/* body {
+		font-family: Arial, sans-serif;
+		background-color: var(--bg-color);
+		color: #fff;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 100vh;
+		margin: 0;
+		padding: 20px;
+	} */
+
+	.remote-container {
+		background-color: var(--remote-bg);
+		width: 300px;
+		border-radius: 50px;
+		padding: 35px 20px;
+		box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.05);
+		border: 3px solid #111;
+	}
+
+	/* Standard Grid-Systeme */
+	.remote-grid-3 {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 10px;
+		margin-bottom: 12px;
+	}
+
+	.remote-grid-4 {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+
+	/* Basis-Tastendesign */
+	button {
+		background-color: var(--btn-dark);
+		color: var(--btn-text);
+		border: none;
+		border-radius: 6px;
+		padding: 10px 2px;
+		font-size: 0.7rem;
+		font-weight: bold;
+		cursor: pointer;
+		box-shadow: 0 3px 0 #111;
+		transition: all 0.05s ease;
+		text-transform: uppercase;
+		outline: none;
+		user-select: none;
+	}
+
+	button:active {
+		transform: translateY(3px);
+		box-shadow: 0 0 0 #000;
+	}
+
+	/* Spezialanpassungen */
+	.remote-btn-power { background-color: var(--power-red); font-size: 0.8rem; }
+	.remote-btn-light-opt { background-color: var(--light-orange); }
+
+	/* Runde Nummerntasten */
+	.remote-btn-num { 
+		background-color: var(--btn-light); 
+		border-radius: 50%; 
+		width: 48px; 
+		height: 48px; 
+		font-size: 1.1rem; 
+		margin: 0 auto;
+		display: block;
+	}
+
+	/* Lautstärke- & Kanalwippen */
+	.remote-rocker-container {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 10px;
+		margin-bottom: 12px;
+	}
+	.remote-btn-large { height: 60px; font-size: 1rem; }
+	.remote-btn-center-sm { height: 35px; align-self: center; }
+
+	/* Navigationskreuz */
+	.remote-nav-container {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		grid-template-rows: repeat(3, 1fr);
+		gap: 8px;
+		width: 220px;
+		margin: 15px auto;
+	}
+	.remote-nav-container button { height: 45px; border-radius: 50%; font-size: 1.1rem; }
+	.remote-nav-blank { visibility: hidden; }
+	.remote-btn-enter { background-color: #555; border-radius: 8px !important; font-size: 0.8rem; }
+
+	/* Farbtasten */
+	.remote-btn-red { background-color: #c62828; }
+	.remote-btn-green { background-color: #2e7d32; }
+	.remote-btn-yellow { background-color: #fbc02d; color: #000; }
+	.remote-btn-blue { background-color: #1565c0; }
+
+	.remote-brand {
+		text-align: center;
+		font-weight: bold;
+		letter-spacing: 4px;
+		color: #444;
+		margin-top: 20px;
+		font-size: 1rem;
+	}
+
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+				/*
+        Parameters for shngInsertText:
+          0: mandatory, ID of the HTML element, e.g. the table cell
+          1: mandatory, Value to be written - taken from the objResponse dict
+          2: optional, If element of parameter 0 is in a (data)table, the ID of the table has to be put here
+          3: optional, If you want a visual highlight effect when a value changes, provide the duration in seconds.
+				shngInsertText (item+'_value', objResponse[item]['value'], 'maintable', 5);
+				*/
+			}
+      // Redraw datatable after cell updates
+      // $('#maintable').DataTable().draw(false);
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			*/
+			maintable = $('#maintable').DataTable( {
+			  /* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+			  */
+			  columnDefs: [{ "targets": [2], "className": "value"}].concat($.fn.dataTable.defaults.columnDefs),
+			  });
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+    /*
+    This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+    */
+    const tooltipList = ['Nach Devices suchen'];
+    createTooltips(tooltipList);
+    /*
+    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    */
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    const button = document.getElementById(order);
+    button.click();
+	});
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<!-- add a style="min-width:..px;" if you want to define a minimum width for responsive behaviour -->
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{_('Host')}}</strong></td>
+			<td class="py-1">{{ p._host }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{_('Port')}}</strong></td>
+			<td class="py-1">{{ p._port }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong> {{_('Fernseher Version')}}</strong></td>
+			<td class="py-1">{{ p._tv_version }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{_('Verzögerung')}}</strong></td>
+			<td class="py-1">{{ p._delay }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question button-tooltip"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+    <button onclick="setCookie('sort_order', 'time-desc', 365, window.pluginname);" type="button" class="button-tooltip" id="time-desc">Button</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 6)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ len(p._plg_item_dict) ~ ")" %}
+{% block bodytab1 %}
+  <!-- remove this div if not needed -->
+  <div class="m-2">
+    {{ _('Hier kommen bei Bedarf Informationen des Webinterfaces oberhalb der Tabelle hin.') }} (optional)
+  </div>
+
+	<!-- set id accordingly -->
+	<table id="maintable" class="dataTableAdditional m-2">
+		<thead>
+			<tr>
+        <!-- You HAVE to add an empty th here for correct implementation of the responsive plugin -->
+        <th></th>
+			  <th>{{ _('Item') }}</th>
+			  <th class="value">{{ _('Wert') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for item in self._plg_item_dict %}
+			  {% if p.has_iattr(item.conf, 'smarttv') %}
+				 <tr>
+				   <!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
+				   <td></td>
+				   <td class="py-1" id="{{ item._path }}">{{ item._path }}</td>
+				   <td class="py-1" id="{{ item._path }}_value">{{ item() }}</td>
+				 </tr>
+			  {% endif %}
+			{% endfor %}
+		</tbody>
+	</table>
+  <!-- remove this div if not needed 
+  <div class="m-2">
+    Etwaige Informationen unterhalb der Tabelle (optional)
+  </div>
+  -->
+  
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ _('Fernbedienung') ~ "</strong>" %}
+{% block bodytab2 %}
+
+
+    <div class="remote-container">
+        
+        <!-- BLOCK 1: Power, Source, Licht & Belegungen -->
+        <div class="remote-grid-3">
+            <button class="remote-btn-power" onclick="sendKey('KEY_POWER')">Power</button>
+            <button onclick="sendKey('KEY_SOURCE')">Source</button>
+            <button class="remote-btn-light-opt" onclick="sendKey('KEY_LIGHT')">Light</button>
+        </div>
+
+        <!-- BLOCK 2: Nummernblock 1-9 -->
+        <div class="remote-grid-3">
+            <button class="remote-btn-num" onclick="sendKey('KEY_1')">1</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_2')">2</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_3')">3</button>
+        </div>
+        <div class="remote-grid-3">
+            <button class="remote-btn-num" onclick="sendKey('KEY_4')">4</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_5')">5</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_6')">6</button>
+        </div>
+        <div class="remote-grid-3">
+            <button class="remote-btn-num" onclick="sendKey('KEY_7')">7</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_8')">8</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_9')">9</button>
+        </div>
+
+        <!-- BLOCK 3: Zeile unter Ziffern block -->
+        <div class="remote-grid-3">
+            <button onclick="sendKey('KEY_TTX_MIX')">TTX/Mix</button>
+            <button class="remote-btn-num" onclick="sendKey('KEY_0')">0</button>
+            <button onclick="sendKey('KEY_PRECH')">Pre-Ch</button>
+        </div>
+
+        <!-- BLOCK 4: Vol / Mute / CH Steuerung -->
+        <div class="remote-rocker-container">
+            <button class="remote-btn-large" onclick="sendKey('KEY_VOLUP')">Vol +</button>
+            <button class="remote-btn-center-sm" onclick="sendKey('KEY_MUTE')">Mute</button>
+            <button class="remote-btn-large" onclick="sendKey('KEY_CHUP')">Ch +</button>
+        </div>
+        <div class="remote-rocker-container">
+            <button class="remote-btn-large" onclick="sendKey('KEY_VOLDOWN')">Vol -</button>
+            <button class="remote-btn-center-sm" onclick="sendKey('KEY_CH_LIST')">List</button>
+            <button class="remote-btn-large" onclick="sendKey('KEY_CHDOWN')">Ch -</button>
+        </div>
+
+        <!-- BLOCK 5: Smart Hub & Hauptmenüs -->
+        <div class="remote-grid-3">
+            <button onclick="sendKey('KEY_CONTENT')">Content</button>
+            <button onclick="sendKey('KEY_SMART_HUB')">Smart Hub</button>
+            <button onclick="sendKey('KEY_GUIDE')">Guide</button>
+        </div>
+
+        <!-- BLOCK 6: Systemmenüs -->
+        <div class="remote-grid-3">
+            <button onclick="sendKey('KEY_MENU')">Menu</button>
+            <button onclick="sendKey('KEY_TOOLS')">Tools</button>
+            <button onclick="sendKey('KEY_INFO')">Info</button>
+        </div>
+
+        <!-- BLOCK 7: Steuerkreuz (D-Pad) -->
+        <div class="remote-nav-container">
+            <div class="remote-nav-blank"></div>
+            <button onclick="sendKey('KEY_UP')">▲</button>
+            <div class="remote-nav-blank"></div>
+            
+            <button onclick="sendKey('KEY_LEFT')">◀</button>
+            <button class="remote-btn-enter" onclick="sendKey('KEY_ENTER')">Enter</button>
+            <button onclick="sendKey('KEY_RIGHT')">▶</button>
+            
+            <div class="remote-nav-blank"></div>
+            <button onclick="sendKey('KEY_DOWN')">▼</button>
+            <div class="remote-nav-blank"></div>
+        </div>
+
+        <!-- BLOCK 8: Navigation Verlassen -->
+        <div class="remote-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <button onclick="sendKey('KEY_RETURN')">Return</button>
+            <button onclick="sendKey('KEY_EXIT')">Exit</button>
+        </div>
+
+        <!-- BLOCK 9: Farbwahltasten (A, B, C, D) -->
+        <div class="remote-grid-4">
+            <button class="remote-btn-red" onclick="sendKey('KEY_RED')">A</button>
+            <button class="remote-btn-green" onclick="sendKey('KEY_GREEN')">B</button>
+            <button class="remote-btn-yellow" onclick="sendKey('KEY_YELLOW')">C</button>
+            <button class="remote-btn-blue" onclick="sendKey('KEY_BLUE')">D</button>
+        </div>
+
+        <!-- BLOCK 10: Erweiterte Funktionen (3D, Formate, Videotext) -->
+        <div class="remote-grid-3">
+            <button onclick="sendKey('KEY_MEDIA_P')">Media P.</button>
+            <button onclick="sendKey('KEY_INTERNET')">e-Manual</button>
+            <button onclick="sendKey('KEY_3D')">3D</button>
+        </div>
+        <div class="remote-grid-3">
+            <button onclick="sendKey('KEY_AD')">AD/SUBT.</button>
+            <button onclick="sendKey('KEY_P_SIZE')">P.Size</button>
+            <button onclick="sendKey('KEY_SUBTITLE')">Subtitle</button>
+        </div>
+
+        <!-- BLOCK 11: Transport- / Playersteuerung -->
+        <div class="remote-grid-4">
+            <button onclick="sendKey('KEY_REWIND')">◀◀</button>
+            <button onclick="sendKey('KEY_PAUSE')">⏸</button>
+            <button onclick="sendKey('KEY_PLAY')">▶</button>
+            <button onclick="sendKey('KEY_FF')">▶▶</button>
+        </div>
+        <div class="remote-grid-3">
+            <button onclick="sendKey('KEY_STOP')">■ Stop</button>
+            <button onclick="sendKey('KEY_REC')">● Rec</button>
+            <button onclick="sendKey('KEY_W_LINK')">Social</button>
+        </div>
+
+        <div class="remote-brand">SAMSUNG</div>
+    </div>
+
+    <script>
+        // Passe diese URL an deinen Brücken-Server an
+        function sendKey(keyCode) {
+            $.post('send_key', { 'key': keyCode });
+            //const targetUrl = `${SERVER_URL}?key=${keyCode}`;
+                    }
+    </script>
+
+{% endblock bodytab2 %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+
+
+{% block bodytab3 %}
+{% endblock bodytab3 %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock bodytab4 %}

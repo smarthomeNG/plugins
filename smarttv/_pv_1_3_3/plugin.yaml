@@ -1,19 +1,20 @@
-# Metadata for the Smarttv Plugin
+# Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Dieses Plugin erlaubt es SmartTV Geräte wie z.B. Samsung zu steuern. Es hat zwei Implementierungen (für das alte und das neue API der TVs). Für das neue API muss auf dem TV der Zugriff akzeptiert werden, indem ein Button auf dem TV gedrückt wird, wenn der erste Request eingeht.'
         en: 'The plugin allows to control SmartTVs such as Samsung. It has two implementations for old and new versions of the API on the TV. For the new version you will have to accept the access to your TV by pressing a button on your TV on the first request that comes in.'
-    maintainer: bmxp
+    maintainer: '? (2ndsky)'
     tester: psilo909
     state: ready
-    keywords: smart tv samsung
-    #documentation: 
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25545-neues-plugin-smarttv-samsung-etc
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.4.0                 # Plugin version
-    sh_minversion: '1.12'          # minimum shNG version to use this plugin
+    version: 1.3.3                 # Plugin version
+    sh_minversion: '1.6'             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true
     classname: SmartTV             # class containing the plugin
@@ -43,30 +44,6 @@ parameters:
             de: '(optional) Erlaubte Werte sind "classic" (Port 55000) oder "samsung_m_series" (Standardport: 8001). Default: "classic".'
             en: '(optional) Allowed values are "classic" or "samsung_m_series", depending on the traditional (classic) use of the plugin via port 55000 or the version for the Samsung M series, which use port 8001 and a websocket connection. Default: "classic".'
 
-    remote_control_name:
-        type: str
-        mandatory: false
-        default: SmartHomeNG
-        description:
-            de: 'Name der Fernbedienung wie sie im Fernseher in der Freigabeliste erscheint'
-            en: 'Name of remote control as how it appears in allowed remote controls'
-
-    remote_control_app_name:
-        type: str
-        mandatory: false
-        default: Python
-        description:
-            de: 'Name der Anwendungssoftware bzw. App wie sie an den Fernseher übergeben wird'
-            en: 'App name as how it will be sent to tv device'
-
-    tv_name:
-        type: str
-        mandatory: false
-        default: UE32ES6300
-        description:
-            de: 'Name des Fernseher Modells'
-            en: 'Name of SmartTV Model'
-
     delay:
         type: int
         mandatory: false
@@ -82,19 +59,19 @@ item_attributes:
         type: str
         mandatory: true
         description:
-            de: >
-                'Es gibt zwei Wege das Attribut zu nutzen.
-                * Auf einem Item des Typs `str` mit dem Wert "true": Jeder String der in das Item geschrieben wird, wird an den SmartTV gesendet.
-                * Auf einem Item des Typs `bool` mit dem Wert der zu betätigenden Tasten: Immer wenn das Item auf True gesetzt wird, werden die Tasten an den SmartTV gesendet. Je nach Anwendung sollte über das Setzen von `enforce_updates` nachgedacht werden.'
-            en: >
-                'There are two possibilities to use this attribute.
-                * Define it on a string item and set it to `true`: With this configuration, every string you set to this item will be send to the SmartTV device.
-                * Define it on a boolean item and set it to a key value: With this configuration, the specified key value is sent whenever you set the item to `true` (if the item is only for sending a specific command to the tv then you should consider using the `enforce_updates` attribute, too). It is even possible to define several keys separeted with a comma.'
+            de: 'Es gibt zwei Wege das Attribut zu nutzen.
+  * Auf einem Item des Typs `str` mit dem Wert "true": Jeder String der in das Item geschrieben wird, wird an den SmartTV gesendet.
+  * Auf einem Item des Typs `bool` mit dem Wert der zu betätigenden Tasten: Immer wenn das Item auf True gesetzt wird, werden die Tasten an den SmartTV gesendet. Je nach Anwendung sollte über das Setzen von `enforce_updates` nachgedacht werden.'
+            en: 'There are two possibilities to use this attribute.
+  * Define it on a string item and set it to `true`: With this configuration, every string you set to this item will be send to the SmartTV device.
+  * Define it on a boolean item and set it to a key value: With this configuration, the specified key value is sent whenever you set the item to `true` (if the item is only for sending a specific command to the tv then you should consider using the `enforce_updates` attribute, too). It is even possible to define several keys separeted with a comma.'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions: NONE
     # Definition of function interface of the plugin
 
-logic_parameters: NONE
