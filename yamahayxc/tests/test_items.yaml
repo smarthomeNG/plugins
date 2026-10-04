@@ -2,6 +2,7 @@ yamaha:
 
     dev:
         yamahayxc_host: 127.0.0.1
+        yamahayxc_zone: main
 
         reachable:
             type: bool

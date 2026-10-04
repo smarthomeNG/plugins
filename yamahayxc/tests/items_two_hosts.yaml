@@ -1,0 +1,25 @@
+yamaha:
+
+    one:
+        yamahayxc_host: 127.0.0.1
+        yamahayxc_zone: main
+
+        available_devices:
+            type: list
+            yamahayxc_cmd: link_hosts
+
+        volume:
+            type: num
+            yamahayxc_cmd: volume
+
+    two:
+        yamahayxc_host: 127.0.0.2
+        yamahayxc_zone: main
+
+        available_devices:
+            type: list
+            yamahayxc_cmd: link_hosts
+
+        volume:
+            type: num
+            yamahayxc_cmd: volume

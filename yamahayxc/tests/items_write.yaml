@@ -1,0 +1,23 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+
+        main:
+            yamahayxc_zone: main
+
+            power:
+                type: bool
+                yamahayxc_cmd: power
+
+            volume_mixed_case:
+                type: num
+                yamahayxc_cmd: Volume
+
+            power_num:
+                type: num
+                yamahayxc_cmd: power
+
+            mute_num:
+                type: num
+                yamahayxc_cmd: mute

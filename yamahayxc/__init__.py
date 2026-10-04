@@ -26,7 +26,9 @@ import secrets
 import socket
 import json
 import inspect
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, NamedTuple
 from lib.model.smartplugin import SmartPlugin
 from lib.network import Udp_server
@@ -102,11 +104,7 @@ class YamahaYXC(SmartPlugin):
 
     PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = False
-    # this single instance manages many independent physical devices (hosts);
-    # SmartPlugin's default remove_item() would stop() the whole plugin (all
-    # hosts) whenever a single item on any one host is deleted/edited live via
-    # the admin UI. See the overridden remove_item() below, which instead only
-    # removes that one item's bookkeeping.
+    # one instance manages many hosts: an item change must not stop them all
     STOP_ON_ITEM_CHANGE = False
 
     #
@@ -152,7 +150,6 @@ class YamahaYXC(SmartPlugin):
             'sleep',
             'total_time',
             'play_time',
-            'pos',
             'albumart',
             'alarm_on',
             'alarm_time',
@@ -527,7 +524,7 @@ class YamahaYXC(SmartPlugin):
         )
         # tuner is a single global resource per device, like netusb, but has its
         # own response shape (nested am/fm/rds, not a flat cmd: value dict), so
-        # it gets its own storage/update path instead of _yamaha_dev_global
+        # it gets its own storage/update path (scope 'tuner') instead of scope 'global'
         self._yamaha_tuner_cmds = {
             'tuner_band',
             'tuner_freq',
@@ -565,7 +562,7 @@ class YamahaYXC(SmartPlugin):
             'link_devices',
             'link_hosts',
         }
-        # alarm/clock cmds are stored in _yamaha_dev_global like netusb (both
+        # alarm/clock cmds are stored under scope 'global' like netusb (both
         # are host-global, not zone-scoped), but read back through a
         # separate function (_update_alarm_state() vs _update_global_state())
         # - split out as its own set so update_item() can route the
@@ -740,23 +737,10 @@ class YamahaYXC(SmartPlugin):
                     f'{required_params}-{len(params)} arg(s), _dispatch_cmd_build() passes {expected_params}'
                 )
 
-        # store zone-scoped items in 3D-array: _yamaha_dev_zone[host][zone][cmd] = [item, ...]
-        # (a list, not a single item - see parse_item()/remove_item(), lets
-        # a legacy flat item and its new nested-struct replacement both stay
-        # registered for the same cmd during a struct migration)
-        # also see parse_item()...
-        self._yamaha_dev_zone = {}
-        # store host-global items (netusb/clock/passthru): _yamaha_dev_global[host][cmd] = [item, ...]
-        self._yamaha_dev_global = {}
-        # store tuner items (host-global, own response shape): _yamaha_dev_tuner[host][cmd] = [item, ...]
-        self._yamaha_dev_tuner = {}
-        # store dist/Link items (host-global, own response shape): _yamaha_dev_link[host][cmd] = [item, ...]
-        self._yamaha_dev_link = {}
-        # store host addresses of devices
-        self._yamaha_hosts = {}
+        # items are tracked by SmartPlugin under mappings (scope, host, zone, cmd), see parse_item()
         # resolved IP -> originally configured yamahayxc_host string, so log
         # messages can show a hostname the user actually typed instead of
-        # just the resolved IP they may not recognize. See _lookup_host()/
+        # just the resolved IP they may not recognize. See _register_host_label()/
         # _host_label().
         self._yamaha_host_labels = {}
         # store last known tuner band per host ('am'/'fm'), needed to build setFreq/
@@ -803,6 +787,25 @@ class YamahaYXC(SmartPlugin):
         # periodic reachability poll interval (seconds) - see poll_device()/run()
         self._cycle = self.get_parameter_value('cycle')
 
+        # one single-thread executor per host processes its push notifications, see _data_received()
+        self._notification_workers = {}
+        self._notification_lock = threading.Lock()
+        # last total_time per host, the reference for play_time percent
+        self._yamaha_total_time = {}
+        # dropped together once a host's last item is gone, see _forget_unused_hosts()
+        self._per_host_state = (
+            self._yamaha_host_labels,
+            self._yamaha_tuner_band,
+            self._yamaha_playlist_bank,
+            self._yamaha_link_master,
+            self._yamaha_features,
+            self._yamaha_tuner_features,
+            self._yamaha_reachable,
+            self._yamaha_last_seen,
+            self._yamaha_fail_count,
+            self._yamaha_total_time,
+        )
+
         self.srv_port = 41100
         # HTTP request timeout for _submit_payload(). Without one, requests
         # blocks indefinitely on an unreachable host (no RST, e.g. powered
@@ -821,7 +824,6 @@ class YamahaYXC(SmartPlugin):
         # would (a cloud-service playlist add can genuinely be slow).
         self._yamaha_manage_http_timeout = 60
         self.sock = None
-        self.last_total = 0
 
     def run(self):
         """
@@ -853,27 +855,60 @@ class YamahaYXC(SmartPlugin):
         """
         Default stop function
 
-        Stops listener and shuts down plugin
+        Stops the poll schedule, the listener and the notification workers and shuts down plugin
         """
         self.alive = False
+        self.scheduler_remove_all()
+        self._stop_notification_workers()
         if self.sock:
             self.sock.close()
+            self.sock = None
 
     def _data_received(self, addr, data):
         """
-        callback for lib.network.Udp_server - handle one push notification
+        callback for lib.network.Udp_server - queue one push notification
 
-        Thin guarded wrapper around _process_notification() - this is the
-        boundary where control hands back from the UDP listener's own
-        thread into plugin code, and lib.network.Udp_server does not
-        exception-guard this callback itself, so nothing may escape
-        uncaught here (this plugin has no supervisor that would restart a
-        thread that dies from an unhandled exception - see remove_item()'s
-        docstring: it can mutate the same nested dicts _process_notification()
-        iterates, from a different thread, e.g. a live admin-UI item
-        deletion racing an in-flight push - a rare, deliberate admin action,
-        not worth locking against, but worth not letting kill the listener).
+        Runs on the UDP listener's thread, which delivers the notifications
+        of all devices, while processing one may need HTTP refreshes of up to
+        the request timeout. So the work is handed to the single-thread
+        worker of the sending host: notifications of one host are processed
+        in order, a slow or dead device only stalls its own queue.
         """
+        host = addr[0]
+        if not self.alive:
+            return
+        if host not in self._hosts():
+            self.logger.debug(f'Received notify from unknown host {self._host_label(host)}')
+            return
+        try:
+            self._notification_worker(host).submit(self._handle_notification, addr, data)
+        except RuntimeError:
+            self.logger.debug(f'plugin stopping, dropped notify from {self._host_label(host)}')
+
+    def _notification_worker(self, host):
+        """return the notification worker of host, creating it on first use"""
+        with self._notification_lock:
+            worker = self._notification_workers.get(host)
+            if worker is None:
+                worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix=f'yamahayxc-{host}')
+                self._notification_workers[host] = worker
+            return worker
+
+    def _stop_notification_workers(self, keep_hosts=()):
+        """shut down the notification workers of all hosts not in keep_hosts, dropping their queued notifications"""
+        with self._notification_lock:
+            stopped = [
+                self._notification_workers.pop(host)
+                for host in list(self._notification_workers)
+                if host not in keep_hosts
+            ]
+        for worker in stopped:
+            worker.shutdown(wait=False, cancel_futures=True)
+
+    def _handle_notification(self, addr, data):
+        """worker entry point: process one notification, logging instead of raising"""
+        if not self.alive:
+            return
         try:
             self._process_notification(addr, data)
         except Exception as e:
@@ -888,14 +923,6 @@ class YamahaYXC(SmartPlugin):
         targeted state refreshes based on notification content.
         """
         host = addr[0]
-        if (
-            host not in self._yamaha_dev_zone
-            and host not in self._yamaha_dev_global
-            and host not in self._yamaha_dev_tuner
-            and host not in self._yamaha_dev_link
-        ):
-            self.logger.debug(f'Received notify from unknown host {self._host_label(host)}')
-            return
 
         # connected device sends updates every second for
         # about 10 minutes without further interaction
@@ -907,10 +934,11 @@ class YamahaYXC(SmartPlugin):
         # ('main' / 'zone2' / 'zone3' / 'zone4'), each shaped the same
         # way - handle each zone independently so multiple zones on
         # the same host don't clobber each other
-        for zone, zone_items in self._yamaha_dev_zone.get(host, {}).items():
+        for zone in self._zones(host):
             zone_data = data.get(zone)
             if not zone_data:
                 continue
+            zone_items = self._cmd_items('zone', host, zone)
             for cmd in self._yamaha_zone_cmds:
                 if cmd in zone_data:
                     try:
@@ -926,9 +954,9 @@ class YamahaYXC(SmartPlugin):
 
         # netusb data is shared across all zones of a device
         netusb_data = data.get('netusb')
-        global_items = self._yamaha_dev_global.get(host)
+        global_items = self._cmd_items('global', host)
         if netusb_data and global_items:
-            for cmd in self._yamaha_global_cmds:
+            for cmd in self._total_time_first(self._yamaha_global_cmds):
                 if cmd in netusb_data:
                     try:
                         notify_val = self._convert_value_yxc_to_plugin(netusb_data[cmd], cmd, host)
@@ -951,14 +979,14 @@ class YamahaYXC(SmartPlugin):
         # tuner push data only carries "something changed" flags, not
         # values directly (per spec) - re-poll getPlayInfo on change
         tuner_data = data.get('tuner')
-        if tuner_data and host in self._yamaha_dev_tuner:
+        if tuner_data and self._cmd_items('tuner', host):
             if tuner_data.get('play_info_updated') or tuner_data.get('preset_info_updated'):
                 self._update_tuner_state(host)
 
         # dist push data only carries a "something changed" flag - re-poll
         # getDistributionInfo on change (e.g. after group creation completes)
         dist_data = data.get('dist')
-        if dist_data and host in self._yamaha_dev_link:
+        if dist_data and self._cmd_items('link', host):
             if dist_data.get('dist_info_updated'):
                 self._update_link_state(host)
 
@@ -967,153 +995,121 @@ class YamahaYXC(SmartPlugin):
         parse all items at startup
 
         This function is called by the SmartPlugin manager in sh.py for every
-        item. If item config "yamahayxc_cmd" is present, item ist stored together
-        with associated host and zone.
+        item. If item config "yamahayxc_cmd" is present, the item is registered
+        with SmartPlugin's item tracking (add_item()) together with its resolved
+        host and zone: the mapping (scope, host, zone, cmd) is the lookup key for
+        pushing values to it (see _cmd_items()/_items_for()), the config data
+        {cmd, host, zone, scope} is what update_item() reads back on a write.
         Returns update function for the item (update_item())
         """
-        if self.has_iattr(item.conf, 'yamahayxc_cmd'):
-            yamaha_host = self._lookup_host(item)
-            self._add_host_info(yamaha_host)
-            yamaha_cmd = self.get_iattr_value(item.conf, 'yamahayxc_cmd').lower()
-            if yamaha_cmd not in self._yamaha_cmds:
-                self.logger.warn('{} not in valid commands: {}'.format(yamaha_cmd, self._yamaha_cmds))
-                return None
+        if item.property.path == self._pause_item_path:
+            return super().parse_item(item)
 
-            if yamaha_cmd in self._yamaha_zone_cmds:
-                yamaha_zone = self._lookup_zone(item)
-                # a list, not a single item: lets a legacy (pre-restructure,
-                # flat) item and its new nested-struct replacement both stay
-                # registered for the same cmd at once during a migration -
-                # both receive live push updates, see _push_volume_percent() etc.
-                self._yamaha_dev_zone.setdefault(yamaha_host, {}).setdefault(yamaha_zone, {}).setdefault(
-                    yamaha_cmd, []
-                ).append(item)
-                mapping = ('zone', yamaha_host, yamaha_zone, yamaha_cmd)
-            elif yamaha_cmd in self._yamaha_tuner_cmds:
-                self._yamaha_dev_tuner.setdefault(yamaha_host, {}).setdefault(yamaha_cmd, []).append(item)
-                mapping = ('tuner', yamaha_host, None, yamaha_cmd)
-            elif yamaha_cmd in self._yamaha_link_cmds:
-                self._yamaha_dev_link.setdefault(yamaha_host, {}).setdefault(yamaha_cmd, []).append(item)
-                mapping = ('link', yamaha_host, None, yamaha_cmd)
-            else:
-                self._yamaha_dev_global.setdefault(yamaha_host, {}).setdefault(yamaha_cmd, []).append(item)
-                mapping = ('global', yamaha_host, None, yamaha_cmd)
+        if not self.has_iattr(item.conf, 'yamahayxc_cmd'):
+            return None
 
-            # register with SmartPlugin's own item bookkeeping too, so this
-            # item participates in the core's introspection (get_item_list(),
-            # get_item_mapping_list()) and so remove_item() below can find its
-            # way back to the right _yamaha_dev_* dict via get_item_mapping()
-            # without scanning all four. The nested dicts above remain the
-            # actual lookup path for the hot paths (push notifications arrive
-            # roughly every second; state polling iterates per host/zone) -
-            # get_items_for_mapping() only supports exact-key lookup, not the
-            # "all cmds for this host/zone" enumeration those paths need.
-            self.add_item(item, config_data_dict=item.conf, mapping=mapping)
+        yamaha_cmd = self.get_iattr_value(item.conf, 'yamahayxc_cmd').lower()
+        if yamaha_cmd not in self._yamaha_cmds:
+            self.logger.warn('{} not in valid commands: {}'.format(yamaha_cmd, self._yamaha_cmds))
+            return None
 
-            return self.update_item
+        configured_name = self._configured_host(item)
+        yamaha_host = socket.gethostbyname(configured_name)
+        scope = self._cmd_scope(yamaha_cmd)
+        yamaha_zone = self._lookup_zone(item, required=scope == 'zone')
+        config = {'cmd': yamaha_cmd, 'host': yamaha_host, 'zone': yamaha_zone, 'scope': scope}
+        if not self.add_item(
+            item, config_data_dict=config, mapping=self._mapping_for(yamaha_host, yamaha_zone, yamaha_cmd)
+        ):
+            return None
+        self._register_host_label(yamaha_host, configured_name)
 
-    def remove_item(self, item) -> bool:
+        return self.update_item
+
+    def unparse_item(self, item):
         """
-        remove item from plugin bookkeeping, including this plugin's own
-        zone/global/tuner/link lookup dicts
+        drop per-host bookkeeping for hosts that no longer have any item
 
-        Called by SmartHomeNG core on live item deletion/edit (admin UI),
-        not just on plugin shutdown - the default remove_item() only cleans
-        up what add_item()/_item_lookup_dict track, not this plugin's own
-        dicts. Without this override, a live-removed item would be left
-        behind in _yamaha_dev_zone/_global/_tuner/_link and keep receiving
-        stale notify-updates indefinitely (until a full plugin restart).
+        Called by SmartPlugin.remove_item() (live item deletion/edit via the admin
+        UI and plugin unload) after the item has already been removed from the
+        core's item tracking, so a host is gone exactly when no mapping with items
+        is left for it - an item tree is removed deepest-first, so that is the case
+        once the item carrying yamahayxc_host and all its children are gone.
         """
-        # get_item_mapping() raises KeyError for an item the base class never
-        # tracked (e.g. remove_item() called twice, or for an item this
-        # plugin was never registered for) - only look it up if add_item()
-        # actually registered it, matching what super().remove_item() itself
-        # checks internally
-        mapping = self.get_item_mapping(item) if item.property.path in self._plg_item_dict else None
-        if not super().remove_item(item):
-            return False
+        self._forget_unused_hosts()
 
-        if mapping:
-            scope, host, zone, cmd = mapping
-            if scope == 'zone':
-                zone_cmds = self._yamaha_dev_zone.get(host, {}).get(zone, {})
-                self._remove_item_from_cmd_list(zone_cmds, cmd, item)
-                if not zone_cmds:
-                    self._yamaha_dev_zone.get(host, {}).pop(zone, None)
-            elif scope == 'tuner':
-                self._remove_item_from_cmd_list(self._yamaha_dev_tuner.get(host, {}), cmd, item)
-            elif scope == 'link':
-                self._remove_item_from_cmd_list(self._yamaha_dev_link.get(host, {}), cmd, item)
-            else:
-                self._remove_item_from_cmd_list(self._yamaha_dev_global.get(host, {}), cmd, item)
-
-            # this was the item that carried yamahayxc_host - all its
-            # sibling cmd items are children of it and are therefore
-            # already gone too (SmartHomeNG removes an item tree
-            # deepest-first), so once no cmd is left registered for host
-            # anywhere, it really is gone, not just this one item
-            if not self._host_has_items(host):
-                self._forget_host(host)
-
-        return True
-
-    def _host_has_items(self, host):
+    def _forget_unused_hosts(self):
         """
-        whether any item is still registered for host, across all four
-        storage dicts
-
-        _yamaha_dev_zone nests one level deeper (by zone name) than the
-        other three, so its truthiness has to be checked per-zone rather
-        than at the host level - an empty {zone: {}} shell is otherwise
-        indistinguishable from "still has items" by plain dict truthiness.
+        drop all per-host bookkeeping (self._per_host_state) of hosts without
+        registered items, then push the refreshed link_hosts list live to every
+        host that still has one - a removed host's own link_hosts item is gone
+        along with the rest of its item tree
         """
-        return (
-            any(self._yamaha_dev_zone.get(host, {}).values())
-            or bool(self._yamaha_dev_global.get(host))
-            or bool(self._yamaha_dev_tuner.get(host))
-            or bool(self._yamaha_dev_link.get(host))
+        known_hosts = self._hosts()
+        forgotten = False
+        for state in self._per_host_state:
+            for host in [host for host in state if host not in known_hosts]:
+                del state[host]
+                forgotten = True
+        self._stop_notification_workers(keep_hosts=known_hosts)
+        if forgotten:
+            self._update_all_link_hosts_items()
+
+    # item registry
+
+    def _cmd_scope(self, cmd):
+        """return the storage scope of cmd: 'zone', 'tuner', 'link' or 'global' (netusb/clock/passthru/reachability)"""
+        if cmd in self._yamaha_zone_cmds:
+            return 'zone'
+        if cmd in self._yamaha_tuner_cmds:
+            return 'tuner'
+        if cmd in self._yamaha_link_cmds:
+            return 'link'
+        return 'global'
+
+    def _mapping_for(self, host, zone, cmd):
+        """return the item-tracking mapping (scope, host, zone, cmd) for cmd on host - zone only counts for zone-scoped cmds"""
+        scope = self._cmd_scope(cmd)
+        return (scope, host, zone if scope == 'zone' else None, cmd)
+
+    def _items_for(self, host, zone, cmd):
+        """return a snapshot list of the items registered for cmd on host/zone"""
+        return list(self.get_items_for_mapping(self._mapping_for(host, zone, cmd)))
+
+    def _registered_mappings(self):
+        """
+        yield (mapping, items) for every mapping that still has items
+
+        SmartPlugin leaves a mapping's key behind with an empty list when its
+        last item is removed, so emptiness has to be checked here. items is a
+        snapshot, safe to iterate while items are added or removed concurrently.
+        """
+        for mapping in self.get_mappings():
+            items = self.get_items_for_mapping(mapping)
+            if items:
+                yield mapping, list(items)
+
+    def _cmd_items(self, scope, host, zone=None):
+        """return {cmd: [item, ...]} for all items registered under scope on host (and zone, for scope 'zone')"""
+        return {
+            cmd: items
+            for (m_scope, m_host, m_zone, cmd), items in self._registered_mappings()
+            if m_scope == scope and m_host == host and m_zone == zone
+        }
+
+    def _zones(self, host):
+        """return the sorted names of all zones with registered items on host"""
+        return sorted(
+            {
+                m_zone
+                for (m_scope, m_host, m_zone, _), _items in self._registered_mappings()
+                if m_scope == 'zone' and m_host == host
+            }
         )
 
-    def _forget_host(self, host):
-        """
-        drop all bookkeeping for a host once its last configured item has
-        been removed (see remove_item()/_host_has_items())
-
-        Prunes the now-empty per-scope shells, the local-interface-IP
-        cache and the host label, then pushes the refreshed
-        available_devices list live to every *other* host that still has
-        one registered - this host's own available_devices item, if any,
-        is already gone along with the rest of its item tree, so it needs
-        no push of its own.
-        """
-        self._yamaha_dev_zone.pop(host, None)
-        self._yamaha_dev_global.pop(host, None)
-        self._yamaha_dev_tuner.pop(host, None)
-        self._yamaha_dev_link.pop(host, None)
-        self._yamaha_hosts.pop(host, None)
-        self._yamaha_host_labels.pop(host, None)
-        for other_host in self._yamaha_dev_link:
-            self._update_link_hosts_item(other_host)
-
-    def _remove_item_from_cmd_list(self, cmd_dict, cmd, item):
-        """
-        remove item from cmd_dict[cmd] (a list), pruning the cmd key once
-        the list is empty
-
-        Shared by remove_item()'s zone/tuner/link/global branches - all
-        four _yamaha_dev_* dicts share this {cmd: [item, ...]} shape one
-        level below host (and, for zone, below zone too). Only drops this
-        one item, not the whole cmd entry - other items registered for the
-        same cmd (e.g. a legacy item kept alive during a struct migration)
-        must keep working.
-        """
-        items = cmd_dict.get(cmd)
-        if items is None:
-            return
-        if item in items:
-            items.remove(item)
-        if not items:
-            cmd_dict.pop(cmd, None)
+    def _hosts(self):
+        """return the set of all hosts with registered items"""
+        return {m_host for (_scope, m_host, _zone, _cmd), _items in self._registered_mappings()}
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -1125,86 +1121,75 @@ class YamahaYXC(SmartPlugin):
         scoped to whatever category yamaha_cmd belongs to (see the
         cmd-routed dispatch at the end of this method)
         """
-        if caller != self.get_fullname() and self.alive:
-            yamaha_cmd = self.get_iattr_value(item.conf, 'yamahayxc_cmd')
-            yamaha_host = self._lookup_host(item)
-            yamaha_zone = self._lookup_zone(item)
-
-            # trace-level checkpoints for the item change -> command -> device
-            # round trip, at graduated dbg* levels (dbghigh coarsest/always-on
-            # down to plain debug for raw response bodies, see _submit_payload)
-            # so the chain can be followed without going to full "all in" debug.
-            self.logger.dbghigh(
-                'item changed: {} = {} -> cmd {} on {}/{}'.format(
-                    item.property.path, item(), yamaha_cmd, self._host_label(yamaha_host), yamaha_zone
-                )
-            )
-
-            if yamaha_cmd in self._yamaha_trigger_cmds and item() is not True:
-                return None
-
-            yamaha_payload = self._dispatch_cmd_build(yamaha_cmd, item, yamaha_host, yamaha_zone)
-            if yamaha_payload:
-                self.logger.dbgmed('command sent: {} -> {}'.format(yamaha_cmd, yamaha_payload))
-                self._submit_payload(yamaha_host, yamaha_payload)
-
-            # refresh only what could plausibly have changed, instead of a
-            # full host-wide refresh after every single write. Explicit
-            # refresh-trigger cmds are routed first since their whole
-            # purpose is a manual poll at a specific scope, independent of
-            # their nominal cmd-category membership ('state'/'update_dsp'
-            # are technically zone cmds for storage/lookup purposes, but
-            # 'state' means "refresh everything", not "refresh this zone").
-            if yamaha_cmd == 'state':
-                self._update_state(yamaha_host)
-            elif yamaha_cmd == 'update_dsp':
-                self._update_zone_state(yamaha_host, yamaha_zone)
-            elif yamaha_cmd == 'update_netusb':
-                self._update_global_state(yamaha_host)
-                # playlist names have no polling/auto-refresh of their own
-                # (see _update_playlist_names()) - piggyback on the general
-                # netusb refresh trigger instead of adding a dedicated one
-                self._update_playlist_names(yamaha_host)
-            elif yamaha_cmd == 'update_tuner':
-                self._update_tuner_state(yamaha_host)
-            elif yamaha_cmd == 'update_link':
-                self._update_link_state(yamaha_host)
-            elif yamaha_cmd == 'debug_refresh':
-                self._update_debug_items(yamaha_host)
-            elif yamaha_cmd in ('browse_select', 'browse_play', 'browse_return'):
-                # re-fetch from the top of whatever layer the cursor just
-                # moved to/from - see _update_browse_state()'s docstring for
-                # why index=0 rather than trying to preserve a prior page
-                self._update_browse_state(yamaha_host, index=0)
-            elif yamaha_cmd == 'browse_page':
-                # _handle_browse_page() already fetched and pushed the
-                # requested page itself (needs getListInfo's own longer
-                # timeout, which the generic global-cmds refresh below
-                # doesn't know about) - nothing left to do here
-                pass
-            elif yamaha_cmd in ('queue_play', 'queue_delete', 'queue_clear', 'queue_update'):
-                # re-fetch the queue after anything that could have changed
-                # it (or on the bare manual-refresh trigger) - queue_play
-                # doesn't change queue *contents*, but does change
-                # playing_index, so it's included too
-                self._update_queue_state(yamaha_host)
-            elif yamaha_cmd == 'queue_save_playlist':
-                # copies the queue elsewhere, doesn't change it - nothing to refresh
-                pass
-            elif yamaha_cmd in self._yamaha_zone_cmds:
-                self._update_zone_state(yamaha_host, yamaha_zone)
-            elif yamaha_cmd in self._yamaha_alarm_cmds:
-                self._update_alarm_state(yamaha_host)
-            elif yamaha_cmd in self._yamaha_global_cmds:
-                self._update_global_state(yamaha_host)
-            elif yamaha_cmd in self._yamaha_tuner_cmds:
-                self._update_tuner_state(yamaha_host)
-            elif yamaha_cmd in self._yamaha_link_cmds:
-                self._update_link_state(yamaha_host)
-
-            if yamaha_cmd in self._yamaha_trigger_cmds:
-                item(False, self.get_fullname())
+        if self._handle_pause_item(item, caller):
             return None
+        if caller == self.get_fullname():
+            return None
+        if not self.alive:
+            self.logger.warning(
+                f'Received item update for item {item.property.path}, but plugin is not running. Ignoring...'
+            )
+            return None
+
+        config = self.get_item_config(item)
+        yamaha_cmd, yamaha_host, yamaha_zone = config['cmd'], config['host'], config['zone']
+
+        # graduated dbg* levels trace the item -> command -> device round trip, dbghigh coarsest
+        self.logger.dbghigh(
+            'item changed: {} = {} -> cmd {} on {}/{}'.format(
+                item.property.path, item(), yamaha_cmd, self._host_label(yamaha_host), yamaha_zone
+            )
+        )
+
+        if yamaha_cmd in self._yamaha_trigger_cmds and item() is not True:
+            return None
+
+        yamaha_payload = self._dispatch_cmd_build(yamaha_cmd, item, yamaha_host, yamaha_zone)
+        if yamaha_payload:
+            self.logger.dbgmed('command sent: {} -> {}'.format(yamaha_cmd, yamaha_payload))
+            self._submit_payload(yamaha_host, yamaha_payload)
+
+        # refresh only the scope the cmd belongs to; explicit refresh triggers are routed first
+        if yamaha_cmd == 'state':
+            self._update_state(yamaha_host)
+        elif yamaha_cmd == 'update_dsp':
+            self._update_zone_state(yamaha_host, yamaha_zone)
+        elif yamaha_cmd == 'update_netusb':
+            self._update_global_state(yamaha_host)
+            # playlist names have no polling of their own, they refresh with update_netusb
+            self._update_playlist_names(yamaha_host)
+        elif yamaha_cmd == 'update_tuner':
+            self._update_tuner_state(yamaha_host)
+        elif yamaha_cmd == 'update_link':
+            self._update_link_state(yamaha_host)
+        elif yamaha_cmd == 'debug_refresh':
+            self._update_debug_items(yamaha_host)
+        elif yamaha_cmd in ('browse_select', 'browse_play', 'browse_return'):
+            # re-fetch from the top of the layer the cursor moved to/from, see _update_browse_state()
+            self._update_browse_state(yamaha_host, index=0)
+        elif yamaha_cmd == 'browse_page':
+            # _handle_browse_page() already fetched the page with getListInfo's longer timeout
+            pass
+        elif yamaha_cmd in ('queue_play', 'queue_delete', 'queue_clear', 'queue_update'):
+            # queue_play changes playing_index, the others the queue contents
+            self._update_queue_state(yamaha_host)
+        elif yamaha_cmd == 'queue_save_playlist':
+            # copies the queue elsewhere, doesn't change it - nothing to refresh
+            pass
+        elif yamaha_cmd in self._yamaha_zone_cmds:
+            self._update_zone_state(yamaha_host, yamaha_zone)
+        elif yamaha_cmd in self._yamaha_alarm_cmds:
+            self._update_alarm_state(yamaha_host)
+        elif yamaha_cmd in self._yamaha_global_cmds:
+            self._update_global_state(yamaha_host)
+        elif yamaha_cmd in self._yamaha_tuner_cmds:
+            self._update_tuner_state(yamaha_host)
+        elif yamaha_cmd in self._yamaha_link_cmds:
+            self._update_link_state(yamaha_host)
+
+        if yamaha_cmd in self._yamaha_trigger_cmds:
+            item(False, self.get_fullname())
+        return None
 
     def _dispatch_cmd_build(self, yamaha_cmd, item, yamaha_host, yamaha_zone):
         """
@@ -1454,7 +1439,7 @@ class YamahaYXC(SmartPlugin):
         """
         Default initialization function
 
-        Calls _update_features and _update_state for all registered hosts in _yamaha_hosts[]
+        Calls _update_features and _update_state for all hosts with registered items
         """
         self.logger.info('YamahaYXC now initializing current state')
         # available_devices is pure plugin bookkeeping (configured hosts),
@@ -1466,13 +1451,26 @@ class YamahaYXC(SmartPlugin):
         # ever reaching its own _update_link_hosts_item() call, so a
         # host's available_devices would otherwise stay empty until that
         # host comes back and something else triggers a refresh.
-        for yamaha_host in self._yamaha_dev_link:
-            self._update_link_hosts_item(yamaha_host)
-        for yamaha_host in list(self._yamaha_hosts):
+        self._update_all_link_hosts_items()
+        for yamaha_host in sorted(self._hosts()):
             self.logger.info('Initializing items for host: {}'.format(self._host_label(yamaha_host)))
-            self._update_features(yamaha_host)
-            self._update_state(yamaha_host)
-            self._update_debug_items(yamaha_host)
+            self._resync_host(yamaha_host)
+
+    def _resync_host(self, host):
+        """
+        re-read capabilities and state of host and refresh its items
+
+        Capabilities come first, same order as at startup: _update_state()
+        doesn't touch capability lists (input_sources etc.) at all. Failures
+        are logged instead of raised, so one misbehaving device can't keep
+        the remaining hosts from being initialized.
+        """
+        try:
+            self._update_features(host)
+            self._update_state(host)
+            self._update_debug_items(host)
+        except Exception:
+            self.logger.exception('refreshing host {} failed'.format(self._host_label(host)))
 
     def poll_device(self):
         """
@@ -1492,10 +1490,12 @@ class YamahaYXC(SmartPlugin):
         items (power, volume, ...) refire every cycle even when nothing on
         the device changed.
         """
-        for yamaha_host, global_cmds in list(self._yamaha_dev_global.items()):
-            if 'reachable' not in global_cmds:
+        if not self.alive:
+            return
+        for yamaha_host in sorted(self._hosts()):
+            if not self._items_for(yamaha_host, None, 'reachable'):
                 continue
-            zones = self._yamaha_dev_zone.get(yamaha_host, {})
+            zones = self._zones(yamaha_host)
             zone = 'main' if 'main' in zones else next(iter(zones), None)
             if zone is None:
                 self.logger.debug(
@@ -1504,9 +1504,9 @@ class YamahaYXC(SmartPlugin):
                 continue
             self._submit_payload(yamaha_host, self._build_cmd_get_state(zone))
 
-    def _lookup_host(self, item):
+    def _configured_host(self, item):
         """
-        get host IP configured for submitted item
+        get the host name/IP configured for submitted item
 
         Item.find_attribute() (SmartHomeNG core, lib/item/_internal/
         _pathresolution.py) walks up the item tree to the nearest item
@@ -1515,53 +1515,37 @@ class YamahaYXC(SmartPlugin):
         yamahayxc_host/yamahayxc_zone; capability sub-items (e.g.
         volume_min/volume_max/volume_percent nested under volume) sit one
         level further down. Its silent ''-on-not-found default is turned
-        back into a loud failure here - this plugin's own convention never
-        puts yamahayxc_host on a cmd item itself, so a miss almost always
-        means a genuinely broken config, and socket.gethostbyname('') can
-        silently resolve to the local machine on some resolvers rather
-        than erroring, which would be a far more confusing failure than a
-        clear KeyError pointing at the offending item.
-        Remembers the originally configured name against the resolved IP
-        (see _host_label()) so log messages can show it even though the
-        rest of the plugin only ever deals in resolved IPs from here on.
+        back into a loud failure here - socket.gethostbyname('') can silently
+        resolve to the local machine on some resolvers rather than erroring,
+        which would be a far more confusing failure than a clear KeyError
+        pointing at the offending item.
         """
         configured_name = item.find_attribute('yamahayxc_host')
         if not configured_name:
             raise KeyError('yamahayxc_host not found in any ancestor of {}'.format(item.property.path))
-        resolved_ip = socket.gethostbyname(configured_name)
-        self._register_host_label(resolved_ip, configured_name)
-        return resolved_ip
+        return configured_name
 
     def _register_host_label(self, resolved_ip, configured_name):
         """
         remember a host's originally configured name against its resolved
-        IP (see _host_label()/_yamaha_host_labels) - the counterpart to
-        _forget_host()
+        IP (see _host_label()/_yamaha_host_labels), and push the changed
+        link_hosts list - the counterpart to _forget_unused_hosts()
 
-        Runs on every _lookup_host() call, i.e. on every read/write for
-        every item under this host, so it only actually writes (and only
-        pushes a refresh) when the mapping is new or changed - otherwise
-        this hot path would re-push available_devices to every host on
-        every single item access.
-
-        The live push itself is further gated on self.alive: during the
-        initial item tree load (parse_item() for the whole config, before
-        run()/_initialize()), self.alive is still False, so this stays
-        silent and _initialize()'s own seed pass (see there) does one
-        clean push once loading is done - it would otherwise fire once
-        per newly-discovered host while still mid-load, pushing a
-        different partial host list to already-parsed items each time.
-        Once alive, a host added or renamed via a live item edit/create
-        (see lib/item/items.py's edit_item()/create_item()) pushes the
-        update immediately instead of waiting for the next network
-        round trip.
+        The live push is gated on self.alive: during the initial item tree
+        load (parse_item() for the whole config, before run()/_initialize()),
+        self.alive is still False, so this stays silent and _initialize()'s
+        own seed pass does one clean push once loading is done - it would
+        otherwise fire once per newly-discovered host while still mid-load,
+        pushing a different partial host list to already-parsed items each
+        time. Once alive, a host added or renamed via a live item edit/create
+        (see lib/item/items.py's edit_item()/create_item()) pushes the update
+        immediately instead of waiting for the next network round trip.
         """
         if self._yamaha_host_labels.get(resolved_ip) == configured_name:
             return
         self._yamaha_host_labels[resolved_ip] = configured_name
         if self.alive:
-            for other_host in self._yamaha_dev_link:
-                self._update_link_hosts_item(other_host)
+            self._update_all_link_hosts_items()
 
     def _host_label(self, host):
         """
@@ -1579,33 +1563,21 @@ class YamahaYXC(SmartPlugin):
             return '{} ({})'.format(name, host)
         return host
 
-    def _lookup_zone(self, item):
+    def _lookup_zone(self, item, required=True):
         """
         get zone config for item
 
-        see _lookup_host() for why Item.find_attribute() is used and why
-        its silent not-found default is turned back into a loud failure
+        see _configured_host() for why Item.find_attribute() is used. Only
+        zone-scoped cmds need a zone; for every other cmd a missing zone falls
+        back to plugin.yaml's default for yamahayxc_zone ('main') instead of
+        failing, so such items work outside of a zone node.
         """
         yamaha_zone = item.find_attribute('yamahayxc_zone')
         if not yamaha_zone:
-            raise KeyError('yamahayxc_zone not found in any ancestor of {}'.format(item.property.path))
+            if required:
+                raise KeyError('yamahayxc_zone not found in any ancestor of {}'.format(item.property.path))
+            return 'main'
         return yamaha_zone
-
-    def _add_host_info(self, host):
-        """
-        store local interface IP for connection to a given host
-
-        just exists in case the server is multihomed. in most cases not necessary
-        """
-        try:
-            local_ip = self._yamaha_hosts[host]
-            return
-        except Exception:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect((host, 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            self._yamaha_hosts[host] = local_ip
 
     def _update_features(self, host):
         """
@@ -1688,7 +1660,8 @@ class YamahaYXC(SmartPlugin):
         for that host/zone (fails open, same convention as the rest of the
         getFeatures handling) instead of pushing a placeholder value.
         """
-        for zone_id, zone_items in self._yamaha_dev_zone.get(host, {}).items():
+        for zone_id in self._zones(host):
+            zone_items = self._cmd_items('zone', host, zone_id)
             features = zones.get(zone_id)
             for yamaha_cmd, items in zone_items.items():
                 if yamaha_cmd not in self._yamaha_range_cmds:
@@ -1709,7 +1682,8 @@ class YamahaYXC(SmartPlugin):
         _update_features() run, skips items whose feature list is unknown
         for that host/zone rather than pushing an empty placeholder.
         """
-        for zone_id, zone_items in self._yamaha_dev_zone.get(host, {}).items():
+        for zone_id in self._zones(host):
+            zone_items = self._cmd_items('zone', host, zone_id)
             features = zones.get(zone_id)
             for yamaha_cmd, items in zone_items.items():
                 if yamaha_cmd not in self._yamaha_list_cmds:
@@ -1738,7 +1712,7 @@ class YamahaYXC(SmartPlugin):
         if features is None:
             return
         bands = sorted(features['func_list'] & {'am', 'fm', 'dab'})
-        for item in self._yamaha_dev_tuner.get(host, {}).get('tuner_band_values', []):
+        for item in self._items_for(host, None, 'tuner_band_values'):
             item(bands, self.get_fullname())
 
     def _update_zone_flags(self, host, zones):
@@ -1765,7 +1739,8 @@ class YamahaYXC(SmartPlugin):
         _zone_list_allowed()/_yamaha_cmd_specs['sound_program']), not a
         func_list entry, so both are checked.
         """
-        for zone_id, zone_items in self._yamaha_dev_zone.get(host, {}).items():
+        for zone_id in self._zones(host):
+            zone_items = self._cmd_items('zone', host, zone_id)
             features = zones.get(zone_id)
             present = features is not None
             dsp_available = bool(
@@ -1806,7 +1781,8 @@ class YamahaYXC(SmartPlugin):
         which are Item objects) are converted to their item path string, so
         the pushed value stays JSON/dict-friendly.
         """
-        for zone, zone_items in self._yamaha_dev_zone.get(host, {}).items():
+        for zone in self._zones(host):
+            zone_items = self._cmd_items('zone', host, zone)
             features_items = zone_items.get('debug_features')
             if features_items:
                 value = self._jsonify(self._yamaha_features.get(host, {}).get(zone, {}))
@@ -1819,7 +1795,7 @@ class YamahaYXC(SmartPlugin):
                 for item in dev_zone_items:
                     item(value, self.get_fullname())
 
-        global_items = self._yamaha_dev_global.get(host, {})
+        global_items = self._cmd_items('global', host)
 
         tuner_features_items = global_items.get('debug_tuner_features')
         if tuner_features_items:
@@ -1835,14 +1811,14 @@ class YamahaYXC(SmartPlugin):
 
         dev_tuner_items = global_items.get('debug_dev_tuner')
         if dev_tuner_items:
-            tuner_items = self._yamaha_dev_tuner.get(host, {})
+            tuner_items = self._cmd_items('tuner', host)
             value = {cmd: [it.property.path for it in items] for cmd, items in tuner_items.items()}
             for item in dev_tuner_items:
                 item(value, self.get_fullname())
 
         dev_link_items = global_items.get('debug_dev_link')
         if dev_link_items:
-            link_items = self._yamaha_dev_link.get(host, {})
+            link_items = self._cmd_items('link', host)
             value = {cmd: [it.property.path for it in items] for cmd, items in link_items.items()}
             for item in dev_link_items:
                 item(value, self.get_fullname())
@@ -1899,7 +1875,7 @@ class YamahaYXC(SmartPlugin):
         shared cursor - see _yamaha_cmds' browse_* comment), so main zone's
         current input is read this way instead.
         """
-        items = self._yamaha_dev_zone.get(host, {}).get(zone, {}).get(cmd)
+        items = self._items_for(host, zone, cmd)
         return items[0]() if items else None
 
     def _clamp_zone_range(self, host, zone, range_key, value):
@@ -2033,7 +2009,7 @@ class YamahaYXC(SmartPlugin):
         band_range = features.get('{}_range'.format(band)) if features else None
         if not band_range:
             return
-        tuner_items = self._yamaha_dev_tuner.get(host, {})
+        tuner_items = self._cmd_items('tuner', host)
         for yamaha_cmd, idx in (('tuner_freq_min', 0), ('tuner_freq_max', 1), ('tuner_freq_step', 2)):
             if band_range[idx] is None:
                 continue
@@ -2054,16 +2030,16 @@ class YamahaYXC(SmartPlugin):
         same host (e.g. main + zone2 on one receiver) don't clobber each
         other.
         """
-        for zone in list(self._yamaha_dev_zone.get(yamaha_host, {}).keys()):
+        for zone in self._zones(yamaha_host):
             self._update_zone_state(yamaha_host, zone, update_items)
 
-        if yamaha_host in self._yamaha_dev_global:
+        if self._cmd_items('global', yamaha_host):
             self._update_global_state(yamaha_host, update_items)
 
-        if yamaha_host in self._yamaha_dev_tuner:
+        if self._cmd_items('tuner', yamaha_host):
             self._update_tuner_state(yamaha_host, update_items)
 
-        if yamaha_host in self._yamaha_dev_link:
+        if self._cmd_items('link', yamaha_host):
             self._update_link_state(yamaha_host, update_items)
 
         self._update_alarm_state(yamaha_host, update_items)
@@ -2080,7 +2056,7 @@ class YamahaYXC(SmartPlugin):
             return None
 
         if update_items:
-            zone_items = self._yamaha_dev_zone.get(yamaha_host, {}).get(zone, {})
+            zone_items = self._cmd_items('zone', yamaha_host, zone)
             for yamaha_cmd, items in zone_items.items():
                 if yamaha_cmd not in self._yamaha_ignore_cmds_upd:
                     value = self._get_value_from_response(state, yamaha_cmd, yamaha_host)
@@ -2105,15 +2081,20 @@ class YamahaYXC(SmartPlugin):
             return None
 
         if update_items:
-            global_items = self._yamaha_dev_global.get(yamaha_host, {})
-            for yamaha_cmd, items in global_items.items():
+            global_items = self._cmd_items('global', yamaha_host)
+            for yamaha_cmd in self._total_time_first(global_items):
                 if yamaha_cmd not in self._yamaha_ignore_cmds_upd:
                     value = self._get_value_from_response(state, yamaha_cmd, yamaha_host)
                     if value is not None:
-                        for item in items:
+                        for item in global_items[yamaha_cmd]:
                             item(value, self.get_fullname())
 
         return state
+
+    @staticmethod
+    def _total_time_first(cmds):
+        """return cmds as a list with total_time first - play_time is converted relative to it"""
+        return sorted(cmds, key=lambda cmd: cmd != 'total_time')
 
     def _update_browse_state(self, yamaha_host, index=0, update_items=True):
         """
@@ -2143,7 +2124,7 @@ class YamahaYXC(SmartPlugin):
         Return None prematurely if no network response was received, or if
         main zone's current input is unknown (nothing to browse yet).
         """
-        global_items = self._yamaha_dev_global.get(yamaha_host, {})
+        global_items = self._cmd_items('global', yamaha_host)
         busy_items = global_items.get('browse_busy', [])
         for item in busy_items:
             item(True, self.get_fullname())
@@ -2205,7 +2186,7 @@ class YamahaYXC(SmartPlugin):
 
         Return None prematurely if no network response was received.
         """
-        global_items = self._yamaha_dev_global.get(yamaha_host, {})
+        global_items = self._cmd_items('global', yamaha_host)
         state = self._submit_payload(yamaha_host, self._build_cmd_get_queue())
         if state is None:
             return None
@@ -2239,7 +2220,7 @@ class YamahaYXC(SmartPlugin):
 
         Return None prematurely if no network response was received.
         """
-        global_items = self._yamaha_dev_global.get(yamaha_host, {})
+        global_items = self._cmd_items('global', yamaha_host)
         state = self._submit_payload(yamaha_host, 'v1/netusb/getMcPlaylistName')
         if state is None:
             return None
@@ -2274,7 +2255,7 @@ class YamahaYXC(SmartPlugin):
             self._push_tuner_freq_range(yamaha_host, band)
 
         if update_items:
-            tuner_items = self._yamaha_dev_tuner.get(yamaha_host, {})
+            tuner_items = self._cmd_items('tuner', yamaha_host)
             for yamaha_cmd, items in tuner_items.items():
                 value = self._extract_tuner_value(state, yamaha_cmd)
                 if value is not None:
@@ -2328,7 +2309,7 @@ class YamahaYXC(SmartPlugin):
             return None
 
         if update_items:
-            link_items = self._yamaha_dev_link.get(yamaha_host, {})
+            link_items = self._cmd_items('link', yamaha_host)
             for yamaha_cmd, items in link_items.items():
                 if yamaha_cmd not in self._yamaha_ignore_cmds_upd:
                     value = self._get_value_from_response(state, yamaha_cmd, yamaha_host)
@@ -2355,7 +2336,7 @@ class YamahaYXC(SmartPlugin):
                 for item in devices_items:
                     item(devices_value, self.get_fullname())
 
-            self._update_link_hosts_item(yamaha_host, link_items)
+            self._update_link_hosts_item(yamaha_host)
 
         return state
 
@@ -2390,7 +2371,7 @@ class YamahaYXC(SmartPlugin):
         client_list = state.get('client_list') or []
         return sorted({entry.get('ip_address') for entry in client_list if entry.get('ip_address')})
 
-    def _update_link_hosts_item(self, host, link_items=None):
+    def _update_link_hosts_item(self, host):
         """
         push the list of all hosts this plugin instance currently knows
         about (i.e. has at least one configured item for) to the
@@ -2403,14 +2384,17 @@ class YamahaYXC(SmartPlugin):
         configured name/IP (see _yamaha_host_labels), not internal
         resolved-IP-only bookkeeping.
         """
-        if link_items is None:
-            link_items = self._yamaha_dev_link.get(host, {})
-        items = link_items.get('link_hosts')
+        items = self._items_for(host, None, 'link_hosts')
         if not items:
             return
         value = sorted(set(self._yamaha_host_labels.values()))
         for item in items:
             item(value, self.get_fullname())
+
+    def _update_all_link_hosts_items(self):
+        """push the current link_hosts list to every host that has a link_hosts item"""
+        for host in self._hosts():
+            self._update_link_hosts_item(host)
 
     #
     # dist/Link (multi-room grouping) orchestration
@@ -2471,7 +2455,7 @@ class YamahaYXC(SmartPlugin):
         self._submit_payload(master_host, self._build_cmd_dist_start_distribution(self._yamaha_link_distribution_num))
 
         self._yamaha_link_master[yamaha_host] = master_host
-        if master_host in self._yamaha_dev_link:
+        if self._cmd_items('link', master_host):
             self._update_link_state(master_host)
 
     def _link_leave(self, yamaha_host, yamaha_zone):
@@ -2508,7 +2492,7 @@ class YamahaYXC(SmartPlugin):
             self._submit_payload(
                 master_host, self._build_cmd_dist_start_distribution(self._yamaha_link_distribution_num)
             )
-            if master_host in self._yamaha_dev_link:
+            if self._cmd_items('link', master_host):
                 self._update_link_state(master_host)
 
     def _link_add_client(self, item, yamaha_host, yamaha_zone):
@@ -2544,7 +2528,7 @@ class YamahaYXC(SmartPlugin):
         self._submit_payload(yamaha_host, self._build_cmd_dist_start_distribution(self._yamaha_link_distribution_num))
 
         self._yamaha_link_master[client_host] = yamaha_host
-        if client_host in self._yamaha_dev_link:
+        if self._cmd_items('link', client_host):
             self._update_link_state(client_host)
 
     def _link_remove_client(self, item, yamaha_host, yamaha_zone):
@@ -2573,7 +2557,7 @@ class YamahaYXC(SmartPlugin):
             )
 
         self._yamaha_link_master.pop(client_host, None)
-        if client_host in self._yamaha_dev_link:
+        if self._cmd_items('link', client_host):
             self._update_link_state(client_host)
 
     def _link_disband(self, yamaha_host, yamaha_zone):
@@ -2588,32 +2572,39 @@ class YamahaYXC(SmartPlugin):
         this is excluded from the loop in _update_state()
         As alarm handling might be expanded later, this is a separate function.
         At the moment it will only be called from _update_state()
+
+        Only queries the device if host has at least one alarm item, and
+        pushes just the values the response actually carries (alarm layout
+        differs between devices).
         """
+        alarm_items = {
+            cmd: items
+            for cmd, items in self._cmd_items('global', yamaha_host).items()
+            if cmd in self._yamaha_alarm_cmds
+        }
+        if not alarm_items:
+            return None
+
         state = self._submit_payload(yamaha_host, self._build_cmd_get_alarm_state())
-        if state:
-            try:
-                alarm = state['alarm']
-            except KeyError:
-                return
+        alarm = state.get('alarm') if state else None
+        if not isinstance(alarm, dict):
+            return None
 
-            alarm_on = alarm['alarm_on']
-            alarm_time = alarm['oneday']['time']
-            alarm_beep = alarm['oneday']['beep']
+        if update_items:
+            oneday = alarm.get('oneday') or {}
+            values = {
+                'alarm_on': alarm.get('alarm_on'),
+                'alarm_time': oneday.get('time'),
+                'alarm_beep': oneday.get('beep'),
+            }
+            for yamaha_cmd, items in alarm_items.items():
+                if values[yamaha_cmd] is None:
+                    continue
+                value = self._convert_value_yxc_to_plugin(values[yamaha_cmd], yamaha_cmd, yamaha_host)
+                for item in items:
+                    item(value, self.get_fullname())
 
-            if update_items:
-                for yamaha_cmd, items in self._yamaha_dev_global.get(yamaha_host, {}).items():
-                    if yamaha_cmd == 'alarm_on':
-                        value = alarm_on
-                    elif yamaha_cmd == 'alarm_time':
-                        value = alarm_time
-                    elif yamaha_cmd == 'alarm_beep':
-                        value = alarm_beep
-                    else:
-                        continue
-                    for item in items:
-                        item(value, self.get_fullname())
-
-        return
+        return state
 
     #
     # handle and format data values
@@ -2682,12 +2673,10 @@ class YamahaYXC(SmartPlugin):
         elif cmd == 'artist':
             return value
         elif cmd == 'play_time':
-            if self.last_total == 0:
-                return -1
-            else:
-                return int(100 * value / self.last_total)
+            total = self._yamaha_total_time.get(host, 0)
+            return int(100 * value / total) if total else -1
         elif cmd == 'total_time':
-            self.last_total = int(value)
+            self._yamaha_total_time[host] = int(value)
             return int(value)
         elif cmd == 'albumart_url':
             value = 'http://{}{}'.format(host, value)
@@ -2744,13 +2733,9 @@ class YamahaYXC(SmartPlugin):
         pushed/fired on a genuine down->up transition, not on every routine
         successful call while already known reachable - and only a
         transition from a *confirmed* down state triggers the full
-        _update_features()/_update_state() resync, not the very first
-        contact ever (that's discovery, not recovery). _update_features()
-        runs first, same order as _initialize(), since _update_state()
-        doesn't touch capability lists (input_sources etc.) at all - without
-        this, a device that changed its available inputs while offline (or
-        was offline at plugin startup, when _update_features() is otherwise
-        only ever called) would keep showing a stale or empty list forever.
+        _resync_host() refresh, not the very first contact ever (that's
+        discovery, not recovery) - a device that changed its available
+        inputs while offline would otherwise keep a stale capability list.
         """
         was_reachable = self._yamaha_reachable.get(host)
         self._yamaha_fail_count[host] = 0
@@ -2761,8 +2746,7 @@ class YamahaYXC(SmartPlugin):
             self._push_reachable(host)
             if was_reachable is False:
                 self.logger.info(f'{self._host_label(host)} is reachable again')
-                self._update_features(host)
-                self._update_state(host)
+                self._resync_host(host)
 
     def _note_unreachable(self, host):
         """
@@ -2789,12 +2773,12 @@ class YamahaYXC(SmartPlugin):
 
     def _push_reachable(self, host):
         """push current reachability state to every registered 'reachable' item for host"""
-        for item in self._yamaha_dev_global.get(host, {}).get('reachable', []):
+        for item in self._items_for(host, None, 'reachable'):
             item(self._yamaha_reachable.get(host, False), self.get_fullname())
 
     def _push_last_seen(self, host):
         """push current last_seen timestamp to every registered 'last_seen' item for host"""
-        for item in self._yamaha_dev_global.get(host, {}).get('last_seen', []):
+        for item in self._items_for(host, None, 'last_seen'):
             item(self._yamaha_last_seen.get(host, 0), self.get_fullname())
 
     def _submit_payload(self, host, payload, timeout=None):
@@ -2824,72 +2808,74 @@ class YamahaYXC(SmartPlugin):
 
         return data is None or a dict with json response data
         """
-        if timeout is None:
-            timeout = self._yamaha_http_timeout
-        if payload:
-            if type(payload) is str:
-                url = 'http://{}/YamahaExtendedControl/{}'.format(host, payload)
-                headers = {
-                    'X-AppName': 'MusicCast/{}'.format(self.PLUGIN_VERSION),
-                    'X-AppPort': '{}'.format(self.srv_port),
-                }
-                try:
-                    res = requests.get(url, headers=headers, timeout=timeout)
-                    response = res.text
-                    del res
-                    self._note_reachable(host)
-                except Exception:
-                    if self._yamaha_reachable.get(host) is not False:
-                        self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
-                    self._note_unreachable(host)
-                    response = None
-            elif type(payload) is list:
-                if len(payload) < 2:
-                    self.logger.debug('Payload in list format, but insufficient arguments')
-                    response = None
-                else:
-                    url = 'http://{}/YamahaExtendedControl/{}'.format(host, payload[0])
-                    headers = {
-                        'X-AppName': 'MusicCast/{}'.format(self.PLUGIN_VERSION),
-                        'X-AppPort': '{}'.format(self.srv_port),
-                    }
-                    try:
-                        res = requests.post(url, data=payload[1], headers=headers, timeout=timeout)
-                        response = res.text
-                        del res
-                        self._note_reachable(host)
-                    except Exception:
-                        if self._yamaha_reachable.get(host) is not False:
-                            self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
-                        self._note_unreachable(host)
-                        response = None
-            # raw HTTP body - the finest-grained checkpoint, "all in" only
-            self.logger.debug('raw response from {}: {}'.format(self._host_label(host), response))
-
-            try:
-                jdata = json.loads(response)
-            except Exception:
-                self.logger.debug('Invalid data received (not JSON). Data discarded.')
-                jdata = None
-
-            if isinstance(jdata, dict):
-                code = jdata.get('response_code')
-                self.logger.dbglow('response parsed from {}: {}'.format(self._host_label(host), jdata))
-                if code:
-                    self.logger.warn(
-                        '{} rejected request: response_code {} ({}) for {}'.format(
-                            self._host_label(host), code, _YXC_RESPONSE_CODES.get(code, 'unknown code'), payload
-                        )
-                    )
-
-            return jdata
-        else:
+        if not payload:
             self.logger.warn("No payload received. Used 'passthru' without argument?")
             return None
+        request = self._payload_to_request(payload)
+        if request is None:
+            self.logger.warn('Unsupported payload {!r}, ignoring'.format(payload))
+            return None
+        method, path, data = request
+
+        url = 'http://{}/YamahaExtendedControl/{}'.format(host, path)
+        headers = {'X-AppName': 'MusicCast/{}'.format(self.PLUGIN_VERSION), 'X-AppPort': '{}'.format(self.srv_port)}
+        try:
+            res = requests.request(
+                method,
+                url,
+                data=data,
+                headers=headers,
+                timeout=self._yamaha_http_timeout if timeout is None else timeout,
+            )
+            response = res.text
+        except Exception:
+            if self._yamaha_reachable.get(host) is not False:
+                self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
+            self._note_unreachable(host)
+            response = None
+        else:
+            self._note_reachable(host)
+        # raw HTTP body - the finest-grained checkpoint, "all in" only
+        self.logger.debug('raw response from {}: {}'.format(self._host_label(host), response))
+
+        try:
+            jdata = json.loads(response)
+        except Exception:
+            self.logger.debug('Invalid data received (not JSON). Data discarded.')
+            jdata = None
+
+        if isinstance(jdata, dict):
+            code = jdata.get('response_code')
+            self.logger.dbglow('response parsed from {}: {}'.format(self._host_label(host), jdata))
+            if code:
+                self.logger.warn(
+                    '{} rejected request: response_code {} ({}) for {}'.format(
+                        self._host_label(host), code, _YXC_RESPONSE_CODES.get(code, 'unknown code'), payload
+                    )
+                )
+
+        return jdata
+
+    @staticmethod
+    def _payload_to_request(payload):
+        """
+        split a cmd payload into (http_method, url_path, post_data), or None
+        if payload has no supported shape (see _submit_payload() for the
+        accepted forms)
+        """
+        if isinstance(payload, str):
+            return 'GET', payload, None
+        if isinstance(payload, (list, tuple)) and len(payload) >= 2:
+            return 'POST', payload[0], payload[1]
+        return None
 
     #
     # functions to create network commands
     #
+
+    def _build_cmd_enable(self, endpoint, zone, value):
+        """return cmd string for a zone endpoint taking an enable=true/false parameter, e.g. setMute"""
+        return 'v1/{}/{}?enable={}'.format(zone, endpoint, 'true' if value else 'false')
 
     def _build_cmd_power(self, value, zone, cmd='PUT'):
         """
@@ -2899,12 +2885,7 @@ class YamahaYXC(SmartPlugin):
             True means "power on"
             False means "standby"
         """
-        if value is True:
-            cmdarg = 'on'
-        elif value is False:
-            cmdarg = 'standby'
-        cmd = 'v1/{}/setPower?power={}'.format(zone, cmdarg)
-        return cmd
+        return 'v1/{}/setPower?power={}'.format(zone, 'on' if value else 'standby')
 
     def _build_cmd_input(self, value, zone, cmd='PUT'):
         """
@@ -2933,12 +2914,7 @@ class YamahaYXC(SmartPlugin):
         """
         return cmd string for "set mute"
         """
-        if value is True:
-            cmdarg = 'true'
-        elif value is False:
-            cmdarg = 'false'
-        cmd = 'v1/{}/setMute?enable={}'.format(zone, cmdarg)
-        return cmd
+        return self._build_cmd_enable('setMute', zone, value)
 
     def _build_cmd_playback(self, value, cmd='PUT'):
         """
@@ -3147,45 +3123,25 @@ class YamahaYXC(SmartPlugin):
         """
         return cmd string for "set 3D surround"
         """
-        if value is True:
-            cmdarg = 'true'
-        elif value is False:
-            cmdarg = 'false'
-        cmd = 'v1/{}/set3dSurround?enable={}'.format(zone, cmdarg)
-        return cmd
+        return self._build_cmd_enable('set3dSurround', zone, value)
 
     def _build_cmd_direct(self, value, zone):
         """
         return cmd string for "set direct"
         """
-        if value is True:
-            cmdarg = 'true'
-        elif value is False:
-            cmdarg = 'false'
-        cmd = 'v1/{}/setDirect?enable={}'.format(zone, cmdarg)
-        return cmd
+        return self._build_cmd_enable('setDirect', zone, value)
 
     def _build_cmd_pure_direct(self, value, zone):
         """
         return cmd string for "set pure direct"
         """
-        if value is True:
-            cmdarg = 'true'
-        elif value is False:
-            cmdarg = 'false'
-        cmd = 'v1/{}/setPureDirect?enable={}'.format(zone, cmdarg)
-        return cmd
+        return self._build_cmd_enable('setPureDirect', zone, value)
 
     def _build_cmd_enhancer(self, value, zone):
         """
         return cmd string for "set enhancer"
         """
-        if value is True:
-            cmdarg = 'true'
-        elif value is False:
-            cmdarg = 'false'
-        cmd = 'v1/{}/setEnhancer?enable={}'.format(zone, cmdarg)
-        return cmd
+        return self._build_cmd_enable('setEnhancer', zone, value)
 
     def _build_cmd_tone_control_mode(self, value, zone):
         """

@@ -1,0 +1,35 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+
+        main:
+            yamahayxc_zone: main
+
+            reachable:
+                type: bool
+                yamahayxc_cmd: reachable
+
+            power:
+                type: bool
+                yamahayxc_cmd: power
+
+            volume:
+                type: num
+                yamahayxc_cmd: volume
+
+            track:
+                type: str
+                yamahayxc_cmd: track
+
+            tuner_band:
+                type: str
+                yamahayxc_cmd: tuner_band
+
+            link_group_id:
+                type: str
+                yamahayxc_cmd: link_group_id
+
+            available:
+                type: bool
+                yamahayxc_cmd: zone_present

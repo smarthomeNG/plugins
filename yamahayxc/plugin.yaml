@@ -1022,6 +1022,7 @@ item_structs:
             available:
                 remark: Bool-Indikator, ob DSP-Funktionen für diese Zone verfügbar sind. Nur-Lese-Zugriff.
                 type: bool
+                yamahayxc_cmd: dsp_available
                 visu_acl: ro
 
     tuner:
@@ -1045,6 +1046,7 @@ item_structs:
         available:
             remark: Bool-Indikator, ob Zone 2 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
             type: bool
+            yamahayxc_cmd: zone_present
             visu_acl: ro
 
     zone3:
@@ -1053,6 +1055,7 @@ item_structs:
         available:
             remark: Bool-Indikator, ob Zone 3 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
             type: bool
+            yamahayxc_cmd: zone_present
             visu_acl: ro
 
     zone4:
@@ -1061,6 +1064,7 @@ item_structs:
         available:
             remark: Bool-Indikator, ob Zone 4 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
             type: bool
+            yamahayxc_cmd: zone_present
             visu_acl: ro
 
 
