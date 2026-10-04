@@ -605,6 +605,30 @@ def dega(string):
 decode = {
     '1': de1,
     '2': de2,
+    '2001': de2,  # DPT_Switch_Control
+    '2.001': de2,  # DPT_Switch_Control
+    '2002': de2,  # DPT_Bool_Control
+    '2.002': de2,  # DPT_Bool_Control
+    '2003': de2,  # DPT_Enable_Control
+    '2.003': de2,  # DPT_Enable_Control
+    '2004': de2,  # DPT_Ramp_Control
+    '2.004': de2,  # DPT_Ramp_Control
+    '2005': de2,  # DPT_Alarm_Control
+    '2.005': de2,  # DPT_Alarm_Control
+    '2006': de2,  # DPT_BinaryValue_Control
+    '2.006': de2,  # DPT_BinaryValue_Control
+    '2007': de2,  # DPT_Step_Control
+    '2.007': de2,  # DPT_Step_Control
+    '2008': de2,  # DPT_Direction1_Control
+    '2.008': de2,  # DPT_Direction1_Control
+    '2009': de2,  # DPT_Direction2_Control
+    '2.009': de2,  # DPT_Direction2_Control
+    '2010': de2,  # DPT_Start_Control
+    '2.010': de2,  # DPT_Start_Control
+    '2011': de2,  # DPT_State_Control
+    '2.011': de2,  # DPT_State_Control
+    '2012': de2,  # DPT_Invert_Control
+    '2.012': de2,  # DPT_Invert_Control
     '3': de3,
     '4002': de4002,
     '4.002': de4002,
@@ -653,6 +677,30 @@ decode = {
 encode = {
     '1': en1,  # One Bit
     '2': en2,  # Two Bits
+    '2001': en2,  # DPT_Switch_Control
+    '2.001': en2,  # DPT_Switch_Control
+    '2002': en2,  # DPT_Bool_Control
+    '2.002': en2,  # DPT_Bool_Control
+    '2003': en2,  # DPT_Enable_Control
+    '2.003': en2,  # DPT_Enable_Control
+    '2004': en2,  # DPT_Ramp_Control
+    '2.004': en2,  # DPT_Ramp_Control
+    '2005': en2,  # DPT_Alarm_Control
+    '2.005': en2,  # DPT_Alarm_Control
+    '2006': en2,  # DPT_BinaryValue_Control
+    '2.006': en2,  # DPT_BinaryValue_Control
+    '2007': en2,  # DPT_Step_Control
+    '2.007': en2,  # DPT_Step_Control
+    '2008': en2,  # DPT_Direction1_Control
+    '2.008': en2,  # DPT_Direction1_Control
+    '2009': en2,  # DPT_Direction2_Control
+    '2.009': en2,  # DPT_Direction2_Control
+    '2010': en2,  # DPT_Start_Control
+    '2.010': en2,  # DPT_Start_Control
+    '2011': en2,  # DPT_State_Control
+    '2.011': en2,  # DPT_State_Control
+    '2012': en2,  # DPT_Invert_Control
+    '2.012': en2,  # DPT_Invert_Control
     '3': en3,  # One Byte: relative Dimming or Blinds
     '4002': en4002,  # ASCII or 8859-1 encoded character
     '4.002': en4002,
