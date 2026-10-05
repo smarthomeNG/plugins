@@ -22,12 +22,15 @@
 #
 #########################################################################
 
+import os
 
+from lib import shyaml
 from lib.model.mqttplugin import MqttPlugin
 from lib.item import Items
 
 from lib.utils import Utils
 
+from .json_tree import build_item_tree, item_file_name, nest_under_path, parse_json_value
 from .webif import WebInterface
 
 
@@ -251,6 +254,31 @@ class Mqtt2(MqttPlugin):
                 self.logger.info("Publishing topic '{}' (when needed) for item '{}'".format(topic, item.property.path))
 
             return self.update_item
+
+    def create_json_item_file(self, item):
+        """
+        Write an item file mirroring the JSON value of ``item`` as child items
+
+        The file is named after the item and defines the children below it. Each child selects its part of the
+        payload with ``mqtt_select_in`` and receives the topic of ``item``. The file is read at the next start of
+        SmartHomeNG.
+
+        :param item: item with ``mqtt_topic_in`` whose value is a JSON object or array (dict, list or JSON str)
+        :return:     path of the written file
+        :raises ValueError: if the item has no topic or no JSON value, or if the file already exists
+        """
+        path = item.property.path
+        if not self.has_iattr(item.conf, 'mqtt_topic_in'):
+            raise ValueError(f"item '{path}' has no mqtt_topic_in")
+        tree = build_item_tree(parse_json_value(item()), is_reserved=lambda name: hasattr(item, name))
+        target = os.path.join(self.get_sh()._items_dir, item_file_name(path))
+        if os.path.exists(target):
+            raise ValueError(f"file '{target}' already exists")
+        shyaml.yaml_save_roundtrip(target, nest_under_path(path, tree))
+        if not os.path.exists(target):
+            raise ValueError(f"could not write '{target}'")
+        self.logger.info(f"Wrote item file '{target}' for item '{path}'")
+        return target
 
     def parse_logic(self, logic):
         """

@@ -36,7 +36,7 @@
     }
 		try {
       table1 = $('#maintable').DataTable( {
-        columnDefs: [{ "targets": [2], "className": "type"}, { "targets": [3], "className": "value"}, { "targets": [5,6], "className": "change_update"}].concat($.fn.dataTable.defaults.columnDefs),
+        columnDefs: [{ "targets": [2], "className": "type"}, { "targets": [3], "className": "value"}, { "targets": [5,6], "className": "change_update"}, { "targets": [7], "orderable": false, "searchable": false}].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength,
         pageResize: resize});
       table2 = $('#brokermonitor').DataTable( {
@@ -45,6 +45,17 @@
 		catch (e) {
 			console.warn("Datatable JS not loaded, showing standard table without reorder option " +e);
     }
+
+    $('#maintable').on('click', '.create-item-file', function () {
+      var itemPath = $(this).data('item-path');
+      if (!confirm("{{ _('Item-Datei mit der JSON-Struktur von') }} " + itemPath + " {{ _('erstellen?') }}")) { return; }
+      jQuery.post('create_item_file', {item_path: itemPath}, function (response) {
+        var result = JSON.parse(response);
+        alert((result.ok ? "{{ _('Item-Datei geschrieben (wird beim nächsten Start von SmartHomeNG geladen):') }} " : "{{ _('Fehler:') }} ") + result.message);
+      }).fail(function () {
+        alert("{{ _('Fehler:') }} create_item_file");
+      });
+    });
 
   });
 </script>
@@ -145,6 +156,7 @@
 			<th>Topic In / Out</th>
 			<th>Letztes Update</th>
 			<th>Letzter Change</th>
+			<th>{{ _('Item-Datei') }}</th>
 		</tr>
 		</thead>
 		{% for item in items %}
@@ -157,6 +169,7 @@
 						{% if p.has_iattr(item.conf, 'mqtt_topic_out') %}<strong>out: </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_out') }}{% endif %}</td>
 					<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') and item._type in ('dict', 'list', 'str') %}<button type="button" class="btn btn-shng btn-sm create-item-file" data-item-path="{{ item._path }}">{{ _('JSON → Items') }}</button>{% endif %}</td>
 				</tr>
 			{% endif %}
 		{% endfor %}
