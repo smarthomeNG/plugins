@@ -1,0 +1,59 @@
+Buderus:
+    Boiler_Data:
+        type: dict
+        mqtt_topic_in: ems-esp/boiler_data
+        Power:
+            type: num
+            mqtt_select_in: hppower
+            eval: value * 1000
+        Heatingpump:
+            type: str
+            mqtt_select_in: heatingpump
+        Heatingpump_Modulation:
+            type: num
+            mqtt_select_in: heatingpumpmod
+        Heating_Active:
+            type: str
+            mqtt_select_in: heatingactive
+        Tapwater_Active:
+            type: str
+            mqtt_select_in: tapwateractive
+        Compressor_Speed:
+            type: num
+            mqtt_select_in: hpcompspd
+        Aussentemperatur:
+            type: num
+            mqtt_select_in: outdoortemp
+        Aktuelle_Vorlauftemperatur:
+            type: num
+            mqtt_select_in: curflowtemp
+        Ruecklauftemperatur:
+            type: num
+            mqtt_select_in: rettemp
+        Energieverbrauch_gesamt:
+            type: num
+            mqtt_select_in: nrgconstotal
+        Energieverbrauch_Verdichter_gesamt:
+            type: num
+            mqtt_select_in: nrgconscomptotal
+        Energieverbrauch_Zuheizer:
+            type: num
+            mqtt_select_in: auxelecheatnrgconstotal
+        Energieerzeugung_gesamt:
+            type: num
+            mqtt_select_in: nrgtotal
+        Zuheizer_Status:
+            type: str
+            mqtt_select_in: auxheaterstatus
+        Energieverbrauch_Zuheizer_Heizung:
+            type: num
+            mqtt_select_in: auxelecheatnrgconsheating
+        Zuheizer_Stufe_1:
+            type: str
+            mqtt_select_in: elheatstep1
+        Zuheizer_Stufe_2:
+            type: str
+            mqtt_select_in: elheatstep2
+        Zuheizer_Stufe_3:
+            type: str
+            mqtt_select_in: elheatstep3

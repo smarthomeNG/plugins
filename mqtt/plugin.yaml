@@ -11,8 +11,8 @@ plugin:
     keywords: iot
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 2.0.6                 # Plugin version
-    sh_minversion: '1.7'             # minimum shNG version to use this plugin
+    version: 2.1.0                 # Plugin version
+    sh_minversion: '1.12.2.1'        # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # since the plugin connects to the mqtt module, multi instance makes no sense
     restartable: unknown
@@ -93,6 +93,27 @@ item_attributes:
                 '
             en: 'mqtt_topic_init is equivalent to mqtt_topic_out, except it initializes the
                  topic when SmartHomeNG ist started.
+                '
+
+    mqtt_select_in:
+        type: str
+        description:
+            de: 'JMESPath-Ausdruck, der aus einer JSON-Payload (Dict) den Wert für das Item auswählt'
+            en: 'JMESPath expression selecting the item value from a JSON (dict) payload'
+        description_long:
+            de: 'Das Item erhält nur den vom Ausdruck ausgewählten Teil der empfangenen Payload, z.B.
+                 "temp" oder "state.on" oder "sensors[0].value". Die Payload wird unabhängig vom
+                 Item-Typ als JSON ausgewertet. Passt der Ausdruck auf nichts (z.B. fehlender Schlüssel),
+                 bleibt das Item unverändert. Ein ungültiger Ausdruck wird geloggt und das Item
+                 abonniert das Topic nicht. Hat das Item kein eigenes mqtt_topic_in, wird das mqtt_topic_in des
+                 nächsten übergeordneten Items verwendet.
+                '
+            en: 'The item receives only the part of the received payload that the expression selects,
+                 e.g. "temp", "state.on" or "sensors[0].value". The payload is parsed as JSON regardless
+                 of the item type. If the expression matches nothing (e.g. a missing key), the item is
+                 left unchanged. An invalid expression is logged and the item does not subscribe to the
+                 topic. If the item has no mqtt_topic_in of its own, the mqtt_topic_in of the nearest ancestor
+                 item is used.
                 '
 
     mqtt_qos:

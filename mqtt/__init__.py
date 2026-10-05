@@ -37,7 +37,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.6'
+    PLUGIN_VERSION = '2.1.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -68,6 +68,7 @@ class Mqtt2(MqttPlugin):
             self.at_instance_name = '@' + self.at_instance_name
 
         self.inittopics = {}
+        self._prefixed_topic_in = set()  # paths of items whose conf mqtt_topic_in already carries its prefix
 
         # if plugin should start even without web interface
         if self._init_complete:
@@ -102,6 +103,48 @@ class Mqtt2(MqttPlugin):
 
         return
 
+    def _topic_prefixes(self, conf):
+        """
+        Return the incoming and outgoing topic prefix configured in an item's conf, each ending in '/' if not empty
+
+        :param conf: item conf
+        :return:     (prefix for mqtt_topic_in, prefix for mqtt_topic_out)
+        :rtype:      tuple
+        """
+        topic_prefix_in = ''
+        topic_prefix_out = ''
+        if self.has_iattr(conf, 'mqtt_topic_prefix'):
+            topic_prefix_in = self.get_iattr_value(conf, 'mqtt_topic_prefix')
+            topic_prefix_out = self.get_iattr_value(conf, 'mqtt_topic_prefix')
+        if self.has_iattr(conf, 'mqtt_topic_prefix_in'):
+            topic_prefix_in = self.get_iattr_value(conf, 'mqtt_topic_prefix_in')
+        if self.has_iattr(conf, 'mqtt_topic_prefix_out'):
+            topic_prefix_out = self.get_iattr_value(conf, 'mqtt_topic_prefix_out')
+        if topic_prefix_in != '' and topic_prefix_in[-1] != '/':
+            topic_prefix_in += '/'
+        if topic_prefix_out != '' and topic_prefix_out[-1] != '/':
+            topic_prefix_out += '/'
+        return topic_prefix_in, topic_prefix_out
+
+    def _inherited_topic_in(self, item):
+        """
+        Return the subscribed topic of the nearest ancestor that has one, prefix applied
+
+        Items are parsed children first, so an ancestor's conf may or may not carry its prefix yet.
+
+        :param item: item without its own mqtt_topic_in
+        :return:     topic, None if no ancestor has one
+        """
+        ancestor = item
+        while not ancestor._is_top_of_item_tree():
+            ancestor = ancestor.return_parent()
+            if ancestor.property.path in self._prefixed_topic_in:
+                return self.get_iattr_value(ancestor.conf, 'mqtt_topic_in')
+            for attr in ('mqtt_topic', 'mqtt_topic_in'):
+                if self.has_iattr(ancestor.conf, attr):
+                    return self._topic_prefixes(ancestor.conf)[0] + self.get_iattr_value(ancestor.conf, attr)
+        return None
+
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -115,20 +158,7 @@ class Mqtt2(MqttPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        # check for topic prefixes
-        topic_prefix_in = ''
-        topic_prefix_out = ''
-        if self.has_iattr(item.conf, 'mqtt_topic_prefix'):
-            topic_prefix_in = self.get_iattr_value(item.conf, 'mqtt_topic_prefix')
-            topic_prefix_out = self.get_iattr_value(item.conf, 'mqtt_topic_prefix')
-        if self.has_iattr(item.conf, 'mqtt_topic_prefix_in'):
-            topic_prefix_in = self.get_iattr_value(item.conf, 'mqtt_topic_prefix_in')
-        if self.has_iattr(item.conf, 'mqtt_topic_prefix_out'):
-            topic_prefix_out = self.get_iattr_value(item.conf, 'mqtt_topic_prefix_out')
-        if topic_prefix_in != '' and topic_prefix_in[-1] != '/':
-            topic_prefix_in += '/'
-        if topic_prefix_out != '' and topic_prefix_out[-1] != '/':
-            topic_prefix_out += '/'
+        topic_prefix_in, topic_prefix_out = self._topic_prefixes(item.conf)
 
         # first checking for mqtt-topic attributes 'mqtt_topic', 'mqtt_topic_in' and 'mqtt_topic_out'
         if self.has_iattr(item.conf, 'mqtt_topic'):
@@ -139,6 +169,12 @@ class Mqtt2(MqttPlugin):
             item.conf['mqtt_topic_in' + self.at_instance_name] = topic_prefix_in + self.get_iattr_value(
                 item.conf, 'mqtt_topic_in'
             )
+            self._prefixed_topic_in.add(item.property.path)
+        elif self.has_iattr(item.conf, 'mqtt_select_in'):
+            inherited_topic = self._inherited_topic_in(item)
+            if inherited_topic is not None:
+                item.conf['mqtt_topic_in' + self.at_instance_name] = inherited_topic
+                self._prefixed_topic_in.add(item.property.path)
         if self.has_iattr(item.conf, 'mqtt_topic_out'):
             item.conf['mqtt_topic_out' + self.at_instance_name] = topic_prefix_out + self.get_iattr_value(
                 item.conf, 'mqtt_topic_out'
@@ -147,6 +183,11 @@ class Mqtt2(MqttPlugin):
         if self.has_iattr(item.conf, 'mqtt_topic_init'):
             item.conf['mqtt_topic_out' + self.at_instance_name] = topic_prefix_out + self.get_iattr_value(
                 item.conf, 'mqtt_topic_init'
+            )
+
+        if self.has_iattr(item.conf, 'mqtt_select_in') and not self.has_iattr(item.conf, 'mqtt_topic_in'):
+            self.logger.warning(
+                f'item {item.property.path} has mqtt_select_in but neither it nor an ancestor has mqtt_topic_in, mqtt_select_in has no effect'
             )
 
         # check other mqtt attributes, if a topic attribute has been specified
@@ -198,7 +239,8 @@ class Mqtt2(MqttPlugin):
             topic = self.get_iattr_value(item.conf, 'mqtt_topic_in')
             payload_type = item.property.type
             bool_values = self.get_iattr_value(item.conf, 'mqtt_bool_values')
-            self.add_subscription(topic, payload_type, bool_values, item)
+            select = self.get_iattr_value(item.conf, 'mqtt_select_in')
+            self.add_subscription(topic, payload_type, bool_values, item, select=select)
 
         if self.has_iattr(item.conf, 'mqtt_topic_out'):
             # initialize topics if configured
