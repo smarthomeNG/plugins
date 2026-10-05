@@ -81,24 +81,25 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     @cherrypy.tools.allow(methods=['POST'])
-    def create_item_file(self, item_path=None):
+    def create_items(self, item_path=None):
         """
-        Write an item file mirroring the JSON value of an item as child items
+        Create child items mirroring the JSON value of an item
 
         :param item_path: path of the item holding the JSON value
-        :return: json dict with 'ok' (bool) and 'message' (written file or error)
+        :return: json dict with 'ok' (bool), and 'count' (number of created items) and 'file' (file they are
+                 persisted to) or 'message' (error)
         """
         try:
             item = self.items.return_item(item_path) if item_path else None
             if item is None:
                 raise ValueError(f"item '{item_path}' not found")
-            message = self.plugin.create_json_item_file(item)
-            ok = True
+            paths = self.plugin.create_json_items(item)
         except ValueError as e:
-            self.logger.warning(f'create_item_file: {e}')
-            message = str(e)
-            ok = False
-        return json.dumps({'ok': ok, 'message': message})
+            self.logger.warning(f'create_items: {e}')
+            return json.dumps({'ok': False, 'message': str(e)})
+        return json.dumps(
+            {'ok': True, 'count': len(paths), 'file': self.plugin.get_parameter_value('generated_items_file')}
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):

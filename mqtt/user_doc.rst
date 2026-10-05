@@ -55,10 +55,11 @@ Im ersten Tab werden die Items angezeigt, die das mqtt Plugin nutzen.
    :class: screenshot
 
 Für Items mit ``mqtt_topic_in`` und dem Typ ``dict``, ``list`` oder ``str`` zeigt die letzte Spalte den Button
-**JSON → Items**. Enthält das Item JSON, schreibt der Button eine Item-Datei ``<Item-Pfad>.yaml`` ins
-Item-Verzeichnis. Darin ist das JSON als einfacher Item-Baum unterhalb des Items abgebildet: jeder Wert wird ein
-Item mit passendem Typ und ``mqtt_select_in``, das Topic erben die Items vom ursprünglichen Item. Eine bereits
-vorhandene Datei wird nicht überschrieben. Die Datei wird beim nächsten Start von SmartHomeNG geladen.
+**JSON → Items**. Enthält das Item JSON, legt der Button zur Laufzeit einen einfachen Item-Baum unterhalb des
+Items an: jeder Wert des JSON wird ein Item mit passendem Typ und ``mqtt_select_in``, das Topic erben die Items
+vom ursprünglichen Item. Die Items sind sofort aktiv und werden in der Datei gespeichert, die der Parameter
+**generated_items_file** festlegt (Standard ``mqtt_generated_items.yaml`` im Item-Verzeichnis), damit sie
+nach einem Neustart von SmartHomeNG wieder geladen werden. Existiert eines der Items bereits, wird nichts angelegt.
 
 Im zweiten Tab werden Informationen zum Broker angezeigt. Laufzeit und Durchsatz werden nur angezeigt,
 wenn der Parameter **broker_monitoring** in etc/plugin.yaml auf **True** gesetzt ist.

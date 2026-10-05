@@ -15,7 +15,7 @@ JsonContainer = dict | list
 """Parsed JSON object or array"""
 
 ItemTree = dict[str, Any]
-"""Item definitions as in an item yaml file: child name -> attributes and nested child items"""
+"""Item definitions as Items.create_item() takes them: child name -> attributes and nested child items"""
 
 _INVALID_NAME_CHARS = re.compile(r'[^A-Za-z0-9_]')
 _JMESPATH_IDENTIFIER = re.compile(r'[A-Za-z_][A-Za-z0-9_]*$')
@@ -47,16 +47,13 @@ def sanitize_item_name(key: str) -> str:
     return name
 
 
-def item_file_name(item_path: str) -> str:
-    """File name of the item file generated for the item at ``item_path``"""
-    return f'{item_path}.yaml'
-
-
-def nest_under_path(item_path: str, tree: ItemTree) -> ItemTree:
-    """Wrap ``tree`` as the children of the item at ``item_path``, as an item file defines them"""
-    for name in reversed(item_path.split('.')):
-        tree = {name: tree}
-    return tree
+def leaf_paths(base_path: str, tree: ItemTree) -> list[str]:
+    """Paths of the leaf items of ``tree`` once it is placed below the item at ``base_path``"""
+    paths = []
+    for name, config in tree.items():
+        path = f'{base_path}.{name}'
+        paths.extend([path] if 'mqtt_select_in' in config else leaf_paths(path, config))
+    return paths
 
 
 def build_item_tree(payload: JsonContainer, is_reserved: Callable[[str], bool] = lambda name: False) -> ItemTree:

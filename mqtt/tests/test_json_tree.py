@@ -8,13 +8,7 @@ import unittest
 
 import jmespath
 
-from plugins.mqtt.json_tree import (
-    build_item_tree,
-    item_file_name,
-    nest_under_path,
-    parse_json_value,
-    sanitize_item_name,
-)
+from plugins.mqtt.json_tree import build_item_tree, leaf_paths, parse_json_value, sanitize_item_name
 
 
 def _leaves(tree, prefix=''):
@@ -112,13 +106,11 @@ class TestParseJsonValue(unittest.TestCase):
                     parse_json_value(value)
 
 
-class TestFileHelpers(unittest.TestCase):
-    def test_item_file_name_is_item_path(self):
-        self.assertEqual(item_file_name('a.b.c'), 'a.b.c.yaml')
+class TestHelpers(unittest.TestCase):
+    def test_leaf_paths_lists_the_leaves_below_the_base_path(self):
+        tree = build_item_tree({'t': 1, 'o': {'on': True}, 'l': [1], 'e': {}})
 
-    def test_nest_under_path(self):
-        self.assertEqual(nest_under_path('a.b.c', {'x': 1}), {'a': {'b': {'c': {'x': 1}}}})
-        self.assertEqual(nest_under_path('a', {'x': 1}), {'a': {'x': 1}})
+        self.assertEqual(sorted(leaf_paths('a.b', tree)), ['a.b.e', 'a.b.l.item_0', 'a.b.o.on', 'a.b.t'])
 
     def test_sanitize_plain_name_unchanged(self):
         self.assertEqual(sanitize_item_name('temp_1'), 'temp_1')
