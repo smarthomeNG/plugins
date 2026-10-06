@@ -86,6 +86,7 @@ class SeCurrent:
         self.__weekday = now.tm_wday
         self.__time = datetime.datetime.time(datetime.datetime.now())
         self.__month = now.tm_mon
-        azimut, altitude = self.__sh.sun.pos()
-        self.__sun_azimut = math.degrees(float(azimut))
-        self.__sun_altitude = math.degrees(float(altitude))
+        if self.__sh.sun:
+            azimut, altitude = self.__sh.sun.pos()
+            self.__sun_azimut = math.degrees(float(azimut))
+            self.__sun_altitude = math.degrees(float(altitude))

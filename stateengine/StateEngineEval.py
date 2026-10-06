@@ -61,6 +61,9 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_increase_indent()
 
         altitude = StateEngineCurrent.values.get_sun_altitude()
+        if altitude is None:
+            altitude = StateEngineDefaults.sun_altitude_fallback
+            self._log_warning('Sun altitude not available, assuming {0}°', altitude)
         self._log_debug('Current sun altitude is {0:.2f}°', altitude)
         _lamella_open_value = StateEngineDefaults.lamella_open_value
         _lamella_text = ' (based on lamella open value of {0})'.format(_lamella_open_value)

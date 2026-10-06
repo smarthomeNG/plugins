@@ -52,6 +52,13 @@ class StateEngine(SmartPlugin):
     # noinspection PyUnusedLocal,PyMissingConstructor
     def __init__(self, sh):
         super().__init__()
+        self.sun_available = bool(sh.sun)
+        if not self.sun_available:
+            self.logger.warning(
+                'sh.sun is not available (latitude/longitude not configured, or no ephemeris backend installed). '
+                'sun_azimut/sun_altitude conditions will not match and sun_tracking() uses a sun altitude of '
+                '{0}°.'.format(StateEngineDefaults.sun_altitude_fallback)
+            )
         StateEngineDefaults.logger = self.logger
         self._items = self.abitems = {}
         self.itemsApi = Items.get_instance()

@@ -28,6 +28,9 @@ suspend_time = 3600
 
 suntracking_offset = 0
 
+# sun altitude in degrees assumed by sun_tracking() if sh.sun is not available
+sun_altitude_fallback = 45
+
 lamella_open_value = 0
 
 plugin_identification = 'StateEngine Plugin'
