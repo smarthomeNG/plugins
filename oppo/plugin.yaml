@@ -228,6 +228,14 @@ parameters:
             de: Bei resume vom Plugin erstmaliges Lesen erneut durchführen
             en: Repeat initial read on resume
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+
+        description:
+            de: Items bei Verbindungsverlust im Datenbank-Log als ungültig markieren (Datenlücke)
+            en: mark items invalid in the database log when the connection is lost (data gap)
+
 item_attributes:
 
     oppo_command:

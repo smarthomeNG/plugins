@@ -246,6 +246,14 @@ parameters:
             de: Item-Pfad für das Standby-Item
             en: item path for standby switch item
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+
+        description:
+            de: Items bei Verbindungsverlust im Datenbank-Log als ungültig markieren (Datenlücke)
+            en: mark items invalid in the database log when the connection is lost (data gap)
+
 item_attributes:
 
     denon_command:
