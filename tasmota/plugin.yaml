@@ -38,6 +38,28 @@ parameters:
             de: 'Zeitabstand in Sekunden in dem die Tasmota Devices Telemetrie Daten senden sollen'
             en: 'Timeperiod in seconds in which Tasmota devices shall send telemetry data'
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+        description:
+            de: 'Items eines Devices im Datenbank-Log als ungültig markieren, wenn das Device per LWT "Offline" meldet (Datenlücke)'
+            en: 'Mark the items of a device invalid in the database log when the device reports LWT "Offline" (data gap)'
+
+    invalidate_on_timeout:
+        type: bool
+        default: false
+        description:
+            de: 'Items eines Devices im Datenbank-Log als ungültig markieren, wenn es länger als invalidate_timeout_factor Telemetrie-Perioden keine Nachricht gesendet hat. Pro Item mit tasmota_invalidate_on_timeout überschreibbar'
+            en: 'Mark the items of a device invalid in the database log when it sent no message for more than invalidate_timeout_factor telemetry periods. Overridable per item with tasmota_invalidate_on_timeout'
+
+    invalidate_timeout_factor:
+        type: num
+        default: 2.0
+        valid_min: 1.0
+        description:
+            de: 'Faktor auf telemetry_period: so lange darf ein Device schweigen, bevor die Timeout-Invalidierung greift'
+            en: 'Factor on telemetry_period: how long a device may stay silent before timeout invalidation applies'
+
 item_attributes:
     tasmota_topic:
         type: str
@@ -121,6 +143,12 @@ item_attributes:
             en: ""
         valid_list:
             - delete_retained_messages
+
+    tasmota_invalidate_on_timeout:
+        type: bool
+        description:
+            de: 'Überschreibt den Plugin-Parameter invalidate_on_timeout für dieses Item. Nicht gesetzt: Plugin-Parameter gilt'
+            en: 'Overrides the plugin parameter invalidate_on_timeout for this item. Not set: the plugin parameter applies'
 
 item_structs: NONE
 

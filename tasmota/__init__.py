@@ -22,10 +22,11 @@
 #########################################################################
 
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from lib.model.mqttplugin import MqttPlugin
 from lib.item.item import Item
+from lib.utils import Utils
 from .webif import WebInterface
 
 
@@ -84,6 +85,9 @@ class Tasmota(MqttPlugin):
         'Today': 'power_today',
     }
 
+    # tasmota_attr values that are events or the online flag, not mirrored device state
+    STATELESS_ATTRS = ('online', 'button', 'rf_key')
+
     ENV_SENSOR_KEYS = {
         'Temperature': 'temp',
         'Humidity': 'hum',
@@ -114,6 +118,9 @@ class Tasmota(MqttPlugin):
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.telemetry_period = self.get_parameter_value('telemetry_period')
         self.full_topic = self.get_parameter_value('full_topic').lower()
+        self.invalidate_on_disconnect = bool(self.get_parameter_value('invalidate_on_disconnect'))
+        self.invalidate_on_timeout = bool(self.get_parameter_value('invalidate_on_timeout'))
+        self.invalidate_timeout_factor = float(self.get_parameter_value('invalidate_timeout_factor') or 2.0)
 
         # crate full_topic
         if self.full_topic.find('%prefix%') == -1 or self.full_topic.find('%topic%') == -1:
@@ -293,6 +300,11 @@ class Tasmota(MqttPlugin):
             self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
 
             # add item to plugin item dict
+            item_config_data_dict['topic'] = tasmota_topic
+            if self.has_iattr(item.conf, 'tasmota_invalidate_on_timeout'):
+                item_config_data_dict['invalidate_on_timeout'] = Utils.to_bool(
+                    self.get_iattr_value(item.conf, 'tasmota_invalidate_on_timeout')
+                )
             self.add_item(item, mapping=item_mapping, config_data_dict=item_config_data_dict)
 
             return self.update_item
@@ -676,13 +688,15 @@ class Tasmota(MqttPlugin):
                 if tasmota_topic not in self.tasmota_devices:
                     self.logger.debug('New online device based on LWT Message discovered.')
                     self._handle_new_discovered_device(tasmota_topic)
-                self.tasmota_devices[tasmota_topic]['online_timeout'] = self.shtime.add_seconds(
-                    self.shtime.now(), self.telemetry_period + 5
-                ).replace(tzinfo=None)
+                self._mark_device_seen(tasmota_topic)
 
             if tasmota_topic in self.tasmota_devices:
                 self.tasmota_devices[tasmota_topic]['online'] = payload
                 self._set_item_value(tasmota_topic, 'online', payload, info_topic)
+                # a retained Offline is a replay, not a drop; without a prior message nothing was received yet
+                if not payload and not retain and self.invalidate_on_disconnect:
+                    if 'last_seen' in self.tasmota_devices[tasmota_topic]:
+                        self._invalidate_device_items(tasmota_topic, 'lwt_offline')
 
         except Exception as e:
             self.logger.exception(f'Exception {e.__class__.__name__}: {e}')
@@ -1014,9 +1028,7 @@ class Tasmota(MqttPlugin):
                 self.logger.warning(f"Received Message '{payload}' not handled within plugin.")
 
             # setting new online-timeout
-            self.tasmota_devices[tasmota_topic]['online_timeout'] = self.shtime.add_seconds(
-                self.shtime.now(), self.telemetry_period + 5
-            ).replace(tzinfo=None)
+            self._mark_device_seen(tasmota_topic)
 
             # setting online_item to True
             self._set_item_value(tasmota_topic, 'online', True, info_topic)
@@ -1571,6 +1583,16 @@ class Tasmota(MqttPlugin):
                     self._set_device_offline(tasmota_topic)
                 else:
                     self.logger.debug(f'check_online_status: Checking online status of {tasmota_topic} successful')
+        self._invalidate_stale_devices()
+
+    def _invalidate_stale_devices(self) -> None:
+        """Mark the items of devices silent for ``invalidate_timeout_factor`` telemetry periods invalid."""
+        now = self.shtime.now().replace(tzinfo=None)
+        max_silence = timedelta(seconds=self.invalidate_timeout_factor * self.telemetry_period)
+        for tasmota_topic, device in self.tasmota_devices.items():
+            last_seen = device.get('last_seen')
+            if last_seen is not None and now - last_seen > max_silence:
+                self._invalidate_device_items(tasmota_topic, 'timeout', on_timeout=True)
 
     def add_tasmota_subscription(
         self,
@@ -1743,6 +1765,43 @@ class Tasmota(MqttPlugin):
     def _add_new_device_to_tasmota_devices(self, tasmota_topic: str):
         self.tasmota_devices[tasmota_topic] = self._get_device_dict_1_template()
         self.tasmota_devices[tasmota_topic].update(self._get_device_dict_2_template())
+
+    def _mark_device_seen(self, tasmota_topic: str) -> None:
+        """Record that ``tasmota_topic`` just sent a message and renew its online-timeout."""
+        now = self.shtime.now().replace(tzinfo=None)
+        self.tasmota_devices[tasmota_topic]['last_seen'] = now
+        self.tasmota_devices[tasmota_topic]['online_timeout'] = self.shtime.add_seconds(
+            self.shtime.now(), self.telemetry_period + 5
+        ).replace(tzinfo=None)
+
+    def _invalidate_device_items(self, tasmota_topic: str, source: str, on_timeout: bool = False) -> None:
+        """
+        Mark the items of ``tasmota_topic`` invalid in the database log.
+
+        Items the database plugin does not log have no ``db_mark_invalid`` and are skipped. With
+        ``on_timeout``, items whose timeout invalidation is disabled are skipped as well.
+        """
+        for item in self.get_item_list(filter_key='topic', filter_value=tasmota_topic):
+            mark_invalid = getattr(item, 'db_mark_invalid', None)
+            if mark_invalid is None or self._is_stateless_item(item):
+                continue
+            if on_timeout and not self._invalidates_on_timeout(item):
+                continue
+            # db_mark_invalid() is not idempotent: repeating it would split one gap into several
+            is_invalid = getattr(item, 'db_is_invalid', None)
+            if is_invalid is not None and is_invalid():
+                continue
+            mark_invalid(caller=self.get_fullname(), source=source)
+
+    def _invalidates_on_timeout(self, item) -> bool:
+        """Whether silence of the device invalidates ``item``: its tasmota_invalidate_on_timeout, else the plugin parameter."""
+        configured = self.get_item_config(item).get('invalidate_on_timeout')
+        return self.invalidate_on_timeout if configured is None else bool(configured)
+
+    def _is_stateless_item(self, item) -> bool:
+        """Whether ``item`` carries no device state: the online flag itself or an event such as a button press."""
+        config = self.get_item_config(item)
+        return config.get('function') == 'standard' and config.get('attr') in self.STATELESS_ATTRS
 
     def _set_device_offline(self, tasmota_topic: str):
 

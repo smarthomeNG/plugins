@@ -1,0 +1,34 @@
+dev1:
+    power:
+        type: bool
+        tasmota_topic: dev1
+        tasmota_attr: relay
+    temp:
+        type: num
+        tasmota_topic: dev1
+        tasmota_attr: temp
+    online:
+        type: bool
+        tasmota_topic: dev1
+        tasmota_attr: online
+    button:
+        type: bool
+        tasmota_topic: dev1
+        tasmota_attr: button
+dev2:
+    power:
+        type: bool
+        tasmota_topic: dev2
+        tasmota_attr: relay
+dev3:
+    power:
+        type: bool
+        tasmota_topic: dev3
+        tasmota_attr: relay
+        tasmota_invalidate_on_timeout: false
+dev4:
+    power:
+        type: bool
+        tasmota_topic: dev4
+        tasmota_attr: relay
+        tasmota_invalidate_on_timeout: true
