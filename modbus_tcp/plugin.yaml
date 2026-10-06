@@ -11,7 +11,7 @@ plugin:
     keywords: modbus_tcp modbus tcp smartmeter inverter heatpump
     #documentation: http://smarthomeng.de/user/plugins/modbus_tcp/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
-    version: 1.1.0                   # Plugin version
+    version: 1.1.0                 # Plugin version
     sh_minversion: '1.10'          # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: '3.8'
@@ -40,10 +40,10 @@ parameters:
     cycle:
         type: int
         default: 300
-        valid_min: 0
+        valid_min: -1
         description:
-            de: 'Update Zyklus in Sekunden. Wenn der Wert 0 ist, wird keine Abfrage über cycle ausgeführt'
-            en: 'Update cycle in seconds. If value is 0 then no query will be made by means of cycle'
+            de: 'Update Zyklus in Sekunden. Wenn der Wert 0 ist, wird keine Abfrage über cycle ausgeführt, wenn er negativ ist, wird sofort wieder ausgeführt'
+            en: 'Update cycle in seconds. If value is 0 then no query will be made by means of cycle, if negative, it will be executed immediately'
 
     crontab:
         type: str
