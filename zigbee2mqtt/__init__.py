@@ -68,6 +68,8 @@ class Zigbee2Mqtt(MqttPlugin):
         self.read_at_init = self.get_parameter_value('read_at_init')
         self._z2m_gui = self.get_parameter_value('z2m_gui')
         self._pause_item_path = self.get_parameter_value('pause_item')
+        self.invalidate_on_disconnect = bool(self.get_parameter_value('invalidate_on_disconnect'))
+        self._bridge_seen_online = False
 
         # bool_values is only good if used internally, because MQTT data is
         # usually sent in JSON. So just make this easy...
@@ -211,6 +213,23 @@ class Zigbee2Mqtt(MqttPlugin):
             self.add_item(item, {}, device + MSEP + attr, write)
             if write:
                 return self.update_item
+
+    def _invalidate_device_items(self, source: str) -> None:
+        """
+        Mark the items that mirror device data invalid in the database log.
+
+        Items the database plugin does not log have no ``db_mark_invalid`` and are skipped, as are
+        the items of the bridge itself.
+        """
+        for item in list(self._items_read):
+            mark_invalid = getattr(item, 'db_mark_invalid', None)
+            if mark_invalid is None or self._get_z2m_topic_from_item(item) == 'bridge':
+                continue
+            # db_mark_invalid() is not idempotent: repeating it would split one gap into several
+            is_invalid = getattr(item, 'db_is_invalid', None)
+            if is_invalid is not None and is_invalid():
+                continue
+            mark_invalid(caller=self.get_fullname(), source=source)
 
     def remove_item(self, item):
         if item not in self._plg_item_dict:
@@ -597,7 +616,12 @@ class Zigbee2Mqtt(MqttPlugin):
                     data = json.loads(payload)
                 except json.JSONDecodeError:
                     data = {'state': payload}
-                return {'online': bool(['offline', 'online'].index(data.get(topic_3)))}
+                online = bool(['offline', 'online'].index(data.get(topic_3)))
+                if online:
+                    self._bridge_seen_online = True
+                elif self.invalidate_on_disconnect and self._bridge_seen_online and not retain:
+                    self._invalidate_device_items('bridge_offline')
+                return {'online': online}
 
             elif topic_3 in ('config', 'info'):
                 assert isinstance(payload, dict), 'dict'

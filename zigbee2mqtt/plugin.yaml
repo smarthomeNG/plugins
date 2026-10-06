@@ -59,6 +59,13 @@ parameters:
             de: Web-Adresse des zigbee2mqtt-Web-GUI (Standard localhost:8080)
             en: Web address of the zigbee2mqtt-web-GUI (default localhost:8080)
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+        description:
+            de: 'Items im Datenbank-Log als ungültig markieren, wenn das Gateway per bridge/state "offline" meldet (Datenlücke)'
+            en: 'Mark items invalid in the database log when the gateway reports "offline" via bridge/state (data gap)'
+
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     z2m_topic:

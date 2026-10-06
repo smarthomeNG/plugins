@@ -1,0 +1,19 @@
+dev1:
+    z2m_topic: dev1
+    temp:
+        type: num
+        z2m_attr: temperature
+    setpoint:
+        type: num
+        z2m_attr: setpoint
+        z2m_writeonly: true
+dev2:
+    z2m_topic: dev2
+    temp:
+        type: num
+        z2m_attr: temperature
+bridge:
+    z2m_topic: bridge
+    online:
+        type: bool
+        z2m_attr: online
