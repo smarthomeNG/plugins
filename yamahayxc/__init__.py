@@ -1010,7 +1010,7 @@ class YamahaYXC(SmartPlugin):
 
         yamaha_cmd = self.get_iattr_value(item.conf, 'yamahayxc_cmd').lower()
         if yamaha_cmd not in self._yamaha_cmds:
-            self.logger.warn('{} not in valid commands: {}'.format(yamaha_cmd, self._yamaha_cmds))
+            self.logger.warning('{} not in valid commands: {}'.format(yamaha_cmd, self._yamaha_cmds))
             return None
 
         configured_name = self._configured_host(item)
@@ -1223,10 +1223,12 @@ class YamahaYXC(SmartPlugin):
         value = item()
         label = spec.label or yamaha_cmd
         if spec.func_check and not self._zone_func_allowed(yamaha_host, yamaha_zone, spec.func_check):
-            self.logger.warn(f'{label} not supported on {self._host_label(yamaha_host)} zone {yamaha_zone}, ignoring')
+            self.logger.warning(
+                f'{label} not supported on {self._host_label(yamaha_host)} zone {yamaha_zone}, ignoring'
+            )
             return None
         if spec.list_check and not self._zone_list_allowed(yamaha_host, yamaha_zone, spec.list_check, value):
-            self.logger.warn(
+            self.logger.warning(
                 f'{label} {value} not valid on {self._host_label(yamaha_host)} zone {yamaha_zone}, ignoring'
             )
             return None
@@ -1254,7 +1256,7 @@ class YamahaYXC(SmartPlugin):
         range isn't known yet) instead of a plain check+clamp+build
         """
         if not self._zone_func_allowed(host, zone, 'volume'):
-            self.logger.warn(f'volume not supported on {self._host_label(host)} zone {zone}, ignoring')
+            self.logger.warning(f'volume not supported on {self._host_label(host)} zone {zone}, ignoring')
             return None
         native = self._percent_to_native_volume(host, zone, item())
         if native is None:
@@ -1328,7 +1330,7 @@ class YamahaYXC(SmartPlugin):
         """dispatch target for 'browse_playlist_add' - manageList type=add_to_mc_playlist, adds list entry <item()> to the playlist selected via browse_playlist_bank"""
         bank = self._yamaha_playlist_bank.get(host)
         if bank is None:
-            self.logger.warn(
+            self.logger.warning(
                 f'browse: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot add to playlist'
             )
             return None
@@ -1348,7 +1350,7 @@ class YamahaYXC(SmartPlugin):
         """
         bank = self._yamaha_playlist_bank.get(host)
         if bank is None:
-            self.logger.warn(
+            self.logger.warning(
                 f'browse: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot rename playlist'
             )
             return None
@@ -1360,7 +1362,7 @@ class YamahaYXC(SmartPlugin):
         """dispatch target for 'browse_playlist_clear' - clearMcPlaylist, empties the playlist selected via browse_playlist_bank (name unaffected). value unused (bare trigger)."""
         bank = self._yamaha_playlist_bank.get(host)
         if bank is None:
-            self.logger.warn(
+            self.logger.warning(
                 f'browse: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot clear playlist'
             )
             return None
@@ -1379,7 +1381,7 @@ class YamahaYXC(SmartPlugin):
         """
         bank = self._yamaha_playlist_bank.get(host)
         if bank is None:
-            self.logger.warn(
+            self.logger.warning(
                 f'queue: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot save queue'
             )
             return None
@@ -1395,7 +1397,7 @@ class YamahaYXC(SmartPlugin):
         don't carry it themselves
         """
         if not self._tuner_func_allowed(host, item()):
-            self.logger.warn(f'tuner band {item()} not supported on {self._host_label(host)}, ignoring')
+            self.logger.warning(f'tuner band {item()} not supported on {self._host_label(host)}, ignoring')
             return None
         self._yamaha_tuner_band[host] = item()
         return self._build_cmd_tuner_set_band(item())
@@ -2131,7 +2133,7 @@ class YamahaYXC(SmartPlugin):
 
         input_value = self._zone_cmd_value(yamaha_host, 'main', 'input')
         if not input_value:
-            self.logger.warn(f'browse: no known input for {self._host_label(yamaha_host)} main zone, cannot browse')
+            self.logger.warning(f'browse: no known input for {self._host_label(yamaha_host)} main zone, cannot browse')
             for item in busy_items:
                 item(False, self.get_fullname())
             return None
@@ -2427,17 +2429,17 @@ class YamahaYXC(SmartPlugin):
         """
         master_value = item()
         if not master_value:
-            self.logger.warn('link_join needs a target host value, got {!r}'.format(master_value))
+            self.logger.warning('link_join needs a target host value, got {!r}'.format(master_value))
             return
         try:
             master_host = socket.gethostbyname(master_value)
         except Exception:
-            self.logger.warn('link_join: could not resolve host {!r}'.format(master_value))
+            self.logger.warning('link_join: could not resolve host {!r}'.format(master_value))
             return
 
         master_info = self._submit_payload(master_host, self._build_cmd_get_link_state())
         if master_info is None:
-            self.logger.warn('link_join: master {} not reachable'.format(self._host_label(master_host)))
+            self.logger.warning('link_join: master {} not reachable'.format(self._host_label(master_host)))
             return
 
         if master_info.get('role') == 'server':
@@ -2506,12 +2508,12 @@ class YamahaYXC(SmartPlugin):
         """
         client_value = item()
         if not client_value:
-            self.logger.warn('link_add_client needs a target host value, got {!r}'.format(client_value))
+            self.logger.warning('link_add_client needs a target host value, got {!r}'.format(client_value))
             return
         try:
             client_host = socket.gethostbyname(client_value)
         except Exception:
-            self.logger.warn('link_add_client: could not resolve host {!r}'.format(client_value))
+            self.logger.warning('link_add_client: could not resolve host {!r}'.format(client_value))
             return
 
         self_info = self._submit_payload(yamaha_host, self._build_cmd_get_link_state())
@@ -2535,12 +2537,12 @@ class YamahaYXC(SmartPlugin):
         """orchestrate removing a client from the group this host/zone leads"""
         client_value = item()
         if not client_value:
-            self.logger.warn('link_remove_client needs a target host value, got {!r}'.format(client_value))
+            self.logger.warning('link_remove_client needs a target host value, got {!r}'.format(client_value))
             return
         try:
             client_host = socket.gethostbyname(client_value)
         except Exception:
-            self.logger.warn('link_remove_client: could not resolve host {!r}'.format(client_value))
+            self.logger.warning('link_remove_client: could not resolve host {!r}'.format(client_value))
             return
 
         self._submit_payload(client_host, self._build_cmd_dist_set_client_info('', ['main']))
@@ -2809,11 +2811,11 @@ class YamahaYXC(SmartPlugin):
         return data is None or a dict with json response data
         """
         if not payload:
-            self.logger.warn("No payload received. Used 'passthru' without argument?")
+            self.logger.warning("No payload received. Used 'passthru' without argument?")
             return None
         request = self._payload_to_request(payload)
         if request is None:
-            self.logger.warn('Unsupported payload {!r}, ignoring'.format(payload))
+            self.logger.warning('Unsupported payload {!r}, ignoring'.format(payload))
             return None
         method, path, data = request
 
@@ -2848,7 +2850,7 @@ class YamahaYXC(SmartPlugin):
             code = jdata.get('response_code')
             self.logger.dbglow('response parsed from {}: {}'.format(self._host_label(host), jdata))
             if code:
-                self.logger.warn(
+                self.logger.warning(
                     '{} rejected request: response_code {} ({}) for {}'.format(
                         self._host_label(host), code, _YXC_RESPONSE_CODES.get(code, 'unknown code'), payload
                     )
