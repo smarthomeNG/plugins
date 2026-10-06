@@ -113,6 +113,14 @@ class UZSU(SmartPlugin):
         # call init code of parent class (SmartPlugin)
         super().__init__()
 
+        self._sun_available = bool(smarthome.sun)
+        if not self._sun_available:
+            self.logger.warning(
+                'sh.sun is not available (latitude/longitude not configured, or no ephemeris backend installed). '
+                'Entries and series using sunrise/sunset will be ignored.'
+            )
+        self._sun_warned = set()
+
         self.itemsApi = Items.get_instance()
         self._timezone = Shtime.get_instance().tzinfo()
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
@@ -237,6 +245,8 @@ class UZSU(SmartPlugin):
         """
         if caller != '_update_item':
             self._items[item] = item()
+        if not self._sun_available:
+            return 'sh.sun not available'
         try:
             _sunrise = self._sh.sun.rise()
             _sunset = self._sh.sun.set()
@@ -1093,6 +1103,8 @@ class UZSU(SmartPlugin):
             next_day = False
             if not active:
                 return None, None, None
+            if 'sun' in time and self._sun_unavailable_for(item, time):
+                return None, None, None
             if 'rrule' in entry and 'series' not in time:
                 if entry['rrule'] == '':
                     entry['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
@@ -1280,6 +1292,9 @@ class UZSU(SmartPlugin):
                         issue = 'Could not calculate series because timeSeriesCount is NONE and TimeSeriesMax is NONE'
                         self.logger.warning(issue)
                         return issue
+
+                    if self._series_needs_sun(item, seriesstart, seriesend):
+                        continue
 
                     interval = int(seriesinterval.split(':')[0]) * 60 + int(seriesinterval.split(':')[1])
 
@@ -1479,8 +1494,10 @@ class UZSU(SmartPlugin):
         :type item:     item
         :param caller:  Method calling this method
         :type caller:   string
-        :return:        True at the end of the method
+        :return:        True at the end of the method, False if sh.sun is not available
         """
+        if not self._sun_available:
+            return False
         dayrule = rrulestr(
             'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU' + ';COUNT=7',
             dtstart=datetime.now(self._timezone).replace(hour=0, minute=0, second=0),
@@ -1524,6 +1541,8 @@ class UZSU(SmartPlugin):
 
         returnvalue = None
         seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
+        if self._series_needs_sun(None, seriesbegin, seriesend):
+            return returnvalue
         interval = mydict['series'].get('timeSeriesIntervall', None)
         seriesstart = seriesbegin
 
@@ -1622,6 +1641,37 @@ class UZSU(SmartPlugin):
             returnvalue = returnvalue.replace(tzinfo=self._timezone)
 
         return returnvalue
+
+    def _series_needs_sun(self, item, seriesstart, seriesend):
+        """
+        Check whether a series can not be evaluated because its start or end uses sunrise/sunset and sh.sun is missing.
+
+        :param item:        uzsu item the series belongs to
+        :param seriesstart: start time string of the series
+        :param seriesend:   end time string of the series, may be None
+        :return:            True if the series has to be skipped
+        """
+        for tstr in (seriesstart, seriesend):
+            if tstr and 'sun' in tstr and self._sun_unavailable_for(item, tstr):
+                return True
+        return False
+
+    def _sun_unavailable_for(self, item, tstr):
+        """
+        Check whether a sun-related time string can not be evaluated because sh.sun is missing.
+        Logs a warning once per item and time string.
+
+        :param item:    uzsu item the time string belongs to
+        :param tstr:    time string containing sunrise/sunset
+        :return:        True if sh.sun is not available
+        """
+        if self._sun_available:
+            return False
+        key = (str(item), tstr)
+        if key not in self._sun_warned:
+            self._sun_warned.add(key)
+            self.logger.warning(f"{item}: ignoring '{tstr}' because sh.sun is not available")
+        return True
 
     def _sun(self, dt, tstr, timescan):
         """

@@ -148,6 +148,12 @@
 {% set tabcount = 1 %}
 
 {% block headtable %}
+{% if not p._sun_available %}
+<div class="mb-2 alert alert-warning" role="alert">
+  <strong>{{ _('Sonnenstand nicht verfügbar') }}</strong><br/>
+  {{ _('Breitengrad/Längengrad sind nicht konfiguriert oder es ist keine Ephemeriden-Bibliothek installiert. Einträge und Serien mit Sonnenaufgang/Sonnenuntergang werden ignoriert.') }}
+</div>
+{% endif %}
 {% set sun = namespace() %}
 {% set sun.sunrise_text = '' %}
 {% set sun.sunset_text = '' %}
