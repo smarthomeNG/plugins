@@ -27,6 +27,7 @@ import json
 from lib.module import Modules
 from lib.model.mqttplugin import MqttPlugin
 from lib.item import Items
+from lib.utils import Utils
 
 from .webif import WebInterface
 
@@ -63,6 +64,7 @@ class Shelly(MqttPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.gen1debug = self.get_parameter_value('gen1debug')
+        self.invalidate_on_disconnect = bool(self.get_parameter_value('invalidate_on_disconnect'))
         self.debuggen1devices = self.get_parameter_value('debuggen1devices')
         for i in range(len(self.debuggen1devices)):
             self.debuggen1devices[i] = self.debuggen1devices[i].lower()
@@ -154,6 +156,10 @@ class Shelly(MqttPlugin):
             return
 
         config_data = {}
+        if self.has_iattr(item.conf, 'shelly_invalidate_on_disconnect'):
+            config_data['invalidate_on_disconnect'] = Utils.to_bool(
+                self.get_iattr_value(item.conf, 'shelly_invalidate_on_disconnect')
+            )
 
         if self.has_iattr(item.conf, 'shelly_type') and self.get_iattr_value(item.conf, 'shelly_type') != '':
             result = self.parse_item_old(item)
@@ -427,6 +433,25 @@ class Shelly(MqttPlugin):
                 typ = f"'{typ}'"
         return typ
 
+    def _invalidate_device_items(self, shelly_id: str, source: str) -> None:
+        """
+        Mark the items of ``shelly_id`` invalid in the database log.
+
+        Items the database plugin does not log have no ``db_mark_invalid`` and are skipped.
+        """
+        for item in self.get_item_list(filter_key='shelly_id', filter_value=shelly_id):
+            mark_invalid = getattr(item, 'db_mark_invalid', None)
+            config = self.get_item_config(item)
+            if mark_invalid is None or config.get('shelly_attr') == 'online':
+                continue
+            if not config.get('invalidate_on_disconnect', self.invalidate_on_disconnect):
+                continue
+            # db_mark_invalid() is not idempotent: repeating it would split one gap into several
+            is_invalid = getattr(item, 'db_is_invalid', None)
+            if is_invalid is not None and is_invalid():
+                continue
+            mark_invalid(caller=self.get_fullname(), source=source)
+
     def update_items_with_mapping(self, shelly_id: str, source: str, value, item_mapping: str):
         """
         Update all items that have the given mapping with a new value
@@ -639,7 +664,7 @@ class Shelly(MqttPlugin):
                 self.shelly_devices[shelly_id]['conf_id'] = config_data['shelly_conf_id']
                 if config_data['shelly_list_attrs']:
                     self.shelly_devices[shelly_id]['list_attrs'] = config_data['shelly_list_attrs']
-            self.update_items_from_status(shelly_id, '', 'online', self.shelly_devices.get('online', True))
+            self.update_items_from_status(shelly_id, '', 'online', self.shelly_devices[shelly_id].get('online', True))
 
         except Exception as e:
             self.logger.exception(
@@ -678,7 +703,10 @@ class Shelly(MqttPlugin):
 
             self.logger.dbghigh(f'on_mqtt_online: topic {topic} = {payload}, qos={qos} -> shelly_id={shelly_id}')
             self.shelly_devices[shelly_id]['online'] = payload
-            if self.shelly_devices[shelly_id].get('mac)', None) is not None:
+            # a retained 'false' is a replay, not a drop
+            if not payload and not retain:
+                self._invalidate_device_items(shelly_id, 'lwt_offline')
+            if self.shelly_devices[shelly_id].get('mac', None) is not None:
                 self.update_items_from_status(shelly_id, '', 'online', payload)
 
         except Exception as e:

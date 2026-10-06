@@ -31,6 +31,12 @@ parameters:
         description:
             de: 'Shelly_IDs der zu debuggenden Devices. Falls leer, werden Debug Ausgaben für alle Gen1 Devices erzeugt'
             en: 'Shelly ID of the Gen1 devices to debug. If empty, debug output for all Gen1 devices are created'
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+        description:
+            de: 'Items eines Devices im Datenbank-Log als ungültig markieren, wenn der Broker das Device als offline meldet (Datenlücke). Pro Item mit shelly_invalidate_on_disconnect überschreibbar'
+            en: 'Mark the items of a device invalid in the database log when the broker reports the device offline (data gap). Overridable per item with shelly_invalidate_on_disconnect'
 
 
 item_attributes:
@@ -109,6 +115,12 @@ item_attributes:
         description:
             de: 'True=Attribute, die vom Shelly Device gesendet werden, im Details Log auflisten.'
             en: 'True=List attributes sent by the shelly device in the details log.'
+
+    shelly_invalidate_on_disconnect:
+        type: bool
+        description:
+            de: 'Überschreibt den Plugin-Parameter invalidate_on_disconnect für dieses Item. Nicht gesetzt: Plugin-Parameter gilt'
+            en: 'Overrides the plugin parameter invalidate_on_disconnect for this item. Not set: the plugin parameter applies'
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

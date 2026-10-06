@@ -2,7 +2,8 @@
 Test harness for the shelly plugin.
 
 The plugin is driven exclusively through its MQTT callbacks (announce, gen1 message); results
-are observed on real items. Only the MQTT broker connection is replaced, by `FakeMqttModule`.
+are observed on real items. Only the MQTT broker connection is replaced, by `FakeMqttModule`, and the
+database plugin's per-item functions by `GapRecorder`.
 """
 
 import logging
@@ -14,6 +15,7 @@ import lib.item
 import lib.item.item
 
 from tests import common
+from tests.gap_recorder import GapRecorder
 from tests.mock.core import MockSmartHome
 
 from plugins.shelly import Shelly
@@ -45,6 +47,7 @@ class FakeModules:
 
 class ShellyTestBase(unittest.TestCase):
     ITEMS_FILE = common.BASE + '/plugins/shelly/tests/test_items.yaml'
+    PARAMETERS: dict = {}
 
     def plugin(self) -> Shelly:
         """Create a Shelly plugin instance with all items of `ITEMS_FILE` parsed."""
@@ -62,10 +65,11 @@ class ShellyTestBase(unittest.TestCase):
         plugin._set_classname('Shelly')
         plugin._set_sh(self.sh)
         plugin._set_plugin_dir(os.path.join(common.BASE, 'plugins', 'shelly'))
-        plugin._parameters = {'gen1debug': False, 'debuggen1devices': []}
+        plugin._parameters = {'gen1debug': False, 'debuggen1devices': [], **self.PARAMETERS}
         plugin._init_complete = True
         plugin.__init__(self.sh)
         plugin.alive = True
+        self.gaps = {item.property.path: GapRecorder(item) for item in self.sh.return_items()}
         for item in self.sh.return_items():
             plugin.parse_item(item)
         return plugin

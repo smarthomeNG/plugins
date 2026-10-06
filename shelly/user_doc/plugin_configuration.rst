@@ -240,6 +240,21 @@ Damit werden außer dem Schalter selbst, Unteritems für Leistung, Energieverbra
 des Devices (in °C und °F) angelegt.
 
 
+Datenlücken bei Ausfall eines Devices
+-------------------------------------
+
+Items, die das ``database``-Plugin loggt, können im Datenbank-Log als ungültig markiert werden, wenn der Broker ein Device
+als offline meldet (Datenlücke, der Item-Wert bleibt unverändert). Die Lücke endet mit dem nächsten vom Device gelieferten
+Wert. Das ist standardmäßig aus und wird mit dem Plugin-Parameter ``invalidate_on_disconnect: true`` aktiviert.
+
+- Ein beim Start wiederholtes (retained) "offline" löst nichts aus; ebenso nichts bei Devices, deren Announce noch nicht
+  empfangen wurde.
+- Das ``online``-Item selbst wird nicht markiert.
+- Das Gen2-Ereignis ``sleep`` (Device schläft) löst keine Markierung aus.
+- Für einzelne Items lässt sich der Plugin-Parameter mit ``shelly_invalidate_on_disconnect: false`` (oder ``true``)
+  überschreiben, z.B. für batteriebetriebene Devices, die ihre Verbindung regulär beenden.
+
+
 weitere Informationen
 ---------------------
 
