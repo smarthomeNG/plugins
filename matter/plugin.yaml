@@ -7,7 +7,7 @@ plugin:
         en: 'Matter controller plugin: connect Matter devices.'
     maintainer: Morg42
     tester: Morg42
-    state: develop
+    state: ready
     keywords: iot matter chip smarthome
     documentation: ''   # TODO
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/2102287-neues-plugin-matter'
