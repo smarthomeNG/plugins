@@ -52,23 +52,21 @@ TimescaleDB Erweiterung installieren
 
 .. important::
 
-   Die TimescaleDB Paketquelle veröffentlicht (Stand: Erstellung dieser Anleitung) Pakete nur bis
-   einschließlich Debian bookworm (12), noch nicht für trixie (13).
+   Die TimescaleDB Paketquelle enthält Pakete für Debian bookworm (12) und trixie (13), jeweils für
+   amd64 und arm64 (geprüft am 06.10.2026 anhand des Paketindex der Paketquelle; für
+   ``timescaledb-2-postgresql-17`` unter trixie z.B. Version 2.30.2).
 
-   Bis eine offizielle trixie-Unterstützung existiert, kann die bookworm-Paketquelle genutzt
-   werden - die Pakete sind gegen die jeweilige PostgreSQL-Hauptversion gebaut, nicht fest an eine
-   Debian-Version gebunden. Dies ist ein inoffizieller Workaround, keine von TimescaleDB offiziell
-   unterstützte Konfiguration. Vor der praktischen Nutzung sollte auf
-   `der offiziellen Installationsseite <https://www.tigerdata.com/docs/get-started/choose-your-path/install-timescaledb>`__
-   geprüft werden, ob sich daran etwas geändert hat.
+   Als Distributions-Name muss die Debian-Bezeichnung eingetragen werden. Auf Derivaten wie Devuan
+   (excalibur entspricht Debian trixie) kennt die Paketquelle den von ``lsb_release`` gelieferten
+   Namen nicht - dort also ``trixie`` verwenden, nicht den Namen der eigenen Distribution.
 
-Einrichtung der Paketquelle (mit explizit gesetztem ``bookworm`` statt der über ``lsb_release``
-ermittelten Debian-Kennung, siehe Hinweis oben):
+Einrichtung der Paketquelle (hier für Debian trixie bzw. Devuan excalibur; für Debian bookworm
+``trixie`` durch ``bookworm`` ersetzen):
 
 .. code-block:: bash
 
    sudo apt-get install gnupg postgresql-common apt-transport-https lsb-release wget
-   echo "deb https://packagecloud.io/timescale/timescaledb/debian/ bookworm main" | sudo tee /etc/apt/sources.list.d/timescaledb.list
+   echo "deb https://packagecloud.io/timescale/timescaledb/debian/ trixie main" | sudo tee /etc/apt/sources.list.d/timescaledb.list
    wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/timescaledb.gpg
    sudo apt-get update
 
@@ -81,25 +79,22 @@ Version anpassen):
 
 .. hint::
 
-   Weil die TimescaleDB-Pakete gegen bookworm gebaut sind, das System aber ggf. bereits neuere
-   Debian-Versionen von ``postgresql-17``/``libpq5`` installiert hat (oder installieren würde),
-   kann ``apt`` beim einfachen Befehl oben in seltenen Fällen mit nicht auflösbaren Abhängigkeiten
-   scheitern, weil der Resolver Pakete unterschiedlicher Debian-Versionen mischen will. In diesem
-   Fall hilft es, alle betroffenen Pakete in einem Kommando und mit ``-t`` explizit auf die eigene
+   Scheitert ``apt`` beim einfachen Befehl oben in seltenen Fällen mit nicht auflösbaren
+   Abhängigkeiten, weil der Resolver Pakete unterschiedlicher Debian-Versionen mischen will, hilft
+   es, alle betroffenen Pakete in einem Kommando und mit ``-t`` explizit auf die eigene
    Paketquelle (z.B. ``trixie``) festgelegt zu installieren:
 
    .. code-block:: bash
 
       sudo apt-get install -t trixie postgresql-17 postgresql-client-17 libpq5 timescaledb-2-postgresql-17
 
-   Ein solcher Konflikt wurde auf Devuan excalibur (dem trixie-Gegenstück von Devuan) beobachtet
-   und dort mit ``-t excalibur-security`` statt ``-t trixie`` behoben. Auf einem frisch
-   aufgesetzten, echten Debian trixie (getestet in einem Container, arm64) trat der Konflikt
-   dagegen **nicht** auf - der einfache Befehl oben installierte dort ohne Probleme. Ob der
-   Konflikt auftritt, scheint also vom bereits vorhandenen Systemzustand abzuhängen (z.B. weitere
-   aktive Paketquellen, bereits vorgenommene Teil-Upgrades). Zuerst den einfachen Befehl
-   versuchen, bei einer Fehlermeldung zu nicht auflösbaren Abhängigkeiten auf den ``-t trixie``
-   Befehl ausweichen; sollte das nicht ausreichen, probeweise ``-t trixie-security`` verwenden.
+   Ein solcher Konflikt wurde mit der früher hier beschriebenen bookworm-Paketquelle auf Devuan
+   excalibur beobachtet und dort mit ``-t excalibur-security`` statt ``-t trixie`` behoben; auf
+   einem frisch aufgesetzten Debian trixie (Container, arm64) trat er nicht auf. Ob er auftritt,
+   hängt offenbar vom vorhandenen Systemzustand ab (weitere aktive Paketquellen, bereits
+   vorgenommene Teil-Upgrades). Zuerst den einfachen Befehl versuchen, bei einer Fehlermeldung zu
+   nicht auflösbaren Abhängigkeiten auf den ``-t``-Befehl ausweichen; sollte das nicht ausreichen,
+   probeweise ``-t trixie-security`` verwenden.
 
 Anschließend passt ``timescaledb-tune`` die PostgreSQL-Konfiguration automatisch an die vorhandene
 Hardware an (Arbeitsspeicher etc.) und der Server wird neu gestartet:

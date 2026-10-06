@@ -360,7 +360,9 @@ Ist die Extension nicht installiert, wird eine Warnung ausgegeben und das Plugin
 unverändert mit einer normalen PostgreSQL-Tabelle weiter.
 
 Die Größe der einzelnen Zeitpartitionen wird über ``timescale_chunk_interval`` festgelegt
-(Standard ``168h``, entspricht 7 Tagen).
+(Standard ``168h``, entspricht 7 Tagen). Die Angabe erfolgt in Sekunden, Minuten (``m``) oder
+Stunden (``h``), auch kombiniert (z.B. ``2h30m``); Tage müssen in Stunden angegeben werden. Ein
+geänderter Wert gilt nur für neu angelegte Partitionen, bestehende bleiben unverändert.
 
 Kompression
 -----------
@@ -368,7 +370,15 @@ Kompression
 .. index:: database; timescale_compress
 
 Mit ``timescale_compress: true`` aktiviert das Plugin native spaltenbasierte Kompression der
-``log``-Tabelle. Alle Zeitpartitionen außer der aktuellsten werden komprimiert.
+``log``-Tabelle. Alle Zeitpartitionen außer der aktuellsten werden komprimiert (Kompression
+greift für Partitionen, die älter als ein ``timescale_chunk_interval`` sind). Die aktuellste
+Partition bleibt unkomprimiert, weil nur dort noch offene, in Veränderung befindliche Einträge
+liegen.
+
+Greifen die Kompaktierung (``database_maxage_action``) oder eine manuelle Änderung/Löschung im
+Webinterface später auf Daten einer bereits komprimierten Partition zu, wird diese Partition dafür
+einmalig dekomprimiert. Da die Kompaktierung ein Intervall nur ein einziges Mal bearbeitet, ist das
+ein einmaliger Aufwand je Partition.
 
 TimescaleDBs eigene Dokumentation nennt typische Kompressionsraten von 10-20x (90-95%
 Speicherplatzersparnis) für Zeitreihendaten; im eigenen Test dieses Plugins gegen einen echten
@@ -395,16 +405,42 @@ Mit ``timescale_native_aggregation: true`` übernimmt stattdessen TimescaleDB di
 über sogenannte *Continuous Aggregates* - dieselben Item-Attribute (``database_maxage``,
 ``database_maxage_action``, ``database_maxage_interval``) steuern weiterhin, was aggregiert
 wird, nur die Ausführung verlagert sich auf den Datenbank-Server. Die Plugin-seitige
-Kompaktierung läuft in diesem Modus nicht mehr.
+Kompaktierung läuft in diesem Modus nicht mehr, und damit auch nicht das Löschen alter Werte
+durch das Plugin: die Parameter ``removeold_cycle`` und ``max_aggregate_intervals`` haben dann
+keine Wirkung, und auch Items mit ``database_maxage_action: delete`` werden nicht mehr einzeln
+bereinigt.
+
+Das Plugin legt je verwendeter ``database_maxage_interval``-Breite genau ein Continuous Aggregate
+an (``log_cagg_<Sekunden>s``, dazu eine Hilfs-View mit dem Zusatz ``_final``) - nicht je Item oder
+Aktion. Items mit ``database_maxage_action: delete`` erhalten kein Aggregat. Die Aggregate werden
+stündlich vom Datenbank-Server aktualisiert; das jeweils aktuellste Intervall ist darin noch nicht
+enthalten.
+
+Lesende Abfragen (z.B. ``item.db()``-Funktionen und Verlaufsdaten für Plots) nutzen weiterhin die
+Rohdaten, solange diese vorhanden sind. Nur der Teil eines Zeitraums, der vor dem ältesten noch
+vorhandenen Rohwert des Items liegt, wird aus den Aggregaten geliefert. Bei Einzelwert-Abfragen
+geschieht das nur, wenn der gesamte Zeitraum vor dem ältesten Rohwert liegt; Zeiträume, die
+Roh- und Aggregatdaten umfassen, werden aus den Rohdaten berechnet.
 
 .. important::
 
    Ein Wechsel von ``timescale_native_aggregation: true`` zurück zu ``false`` ist nicht
-   vorgesehen und kann nicht verlustfrei erfolgen.
+   vorgesehen und kann nicht verlustfrei erfolgen: Sind Rohdaten bereits durch die native
+   Aufbewahrung entfernt worden (siehe unten), existieren für diesen Zeitraum nur noch die
+   Aggregate - eine Rückkehr zur Rohdaten-Auflösung ist dann nicht mehr möglich. Das Plugin
+   entfernt bestehende Continuous Aggregates und die Kompression nie selbst.
 
 Zusätzlich kann ``timescale_native_retention: true`` (nur bei aktivem
 ``timescale_native_aggregation``) alte Rohdaten-Zeitpartitionen automatisch auf dem
-Datenbank-Server entfernen, statt sie vom Plugin einzeln löschen zu lassen.
+Datenbank-Server entfernen, statt sie vom Plugin einzeln löschen zu lassen. Der Schwellwert ist
+ein einziger für die gesamte ``log``-Tabelle: das größte ``database_maxage`` aller am Plugin
+registrierten Items (bzw. ``default_maxage``, falls größer) zuzüglich eines
+``timescale_chunk_interval`` als Sicherheitsabstand. Ist weder ``default_maxage`` noch ein
+``database_maxage`` gesetzt, wird die Aufbewahrung nicht aktiviert (Warnung im Log).
+
+Ohne ``timescale_native_retention`` werden im nativen Modus Rohdaten dauerhaft aufbewahrt - das
+gilt bewusst auch für Items mit ``database_maxage_action: delete``, weil die Kompression den
+zusätzlichen Platzbedarf weitgehend auffängt.
 
 .. warning::
 
@@ -417,6 +453,59 @@ Datenbank-Server entfernen, statt sie vom Plugin einzeln löschen zu lassen.
    entfernt werden.
 
    Einmal entfernte Rohdaten sind unwiderruflich verloren.
+
+Abgleich mit dem Zustand der Datenbank beim Start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Die Aufbewahrungsregel ist ein Hintergrund-Job des Datenbank-Servers: er läuft unabhängig davon,
+ob SmartHomeNG läuft, und wird durch das Beenden von SmartHomeNG **nicht** gestoppt. Weil die
+Einstellungen in der ``plugin.yaml`` vom tatsächlichen Zustand der Datenbank abweichen können
+(z.B. bei Änderungen, während SmartHomeNG gestoppt war), vergleicht das Plugin bei jedem Start
+den tatsächlichen Zustand mit der Konfiguration und greift in folgenden Fällen ein (jeweils mit
+einer Meldung auf CRITICAL-Ebene im Log):
+
+- Aufbewahrung ist aktiv und konfiguriert, ``timescale_native_aggregation`` ist aber ``false``:
+  das Plugin arbeitet in diesem Lauf trotzdem im nativen Modus (nur im Speicher, die
+  ``plugin.yaml`` wird nicht verändert), weil die Kompaktierung des Plugins mit dem Entfernen der
+  Partitionen kollidieren würde.
+- Aufbewahrung ist aktiv, aber ``timescale_native_retention`` ist ``false``: das Plugin entfernt
+  die Aufbewahrungsregel. Bereits gelöschte Rohdaten kommen dadurch nicht zurück. Lässt sich die
+  Regel nicht entfernen, gilt wie im ersten Fall der native Modus für diesen Lauf.
+- Aufbewahrung ist nicht aktiv, ``timescale_native_retention`` ist ``true``, aber
+  ``timescale_native_aggregation`` ist ``false``: die Aufbewahrung wird in diesem Lauf nicht
+  aktiviert.
+
+Um die Meldung dauerhaft zu beseitigen, sollte die Konfiguration in der ``plugin.yaml`` an den
+tatsächlichen Zustand angepasst werden.
+
+Daten zwischen Datenbanken migrieren
+------------------------------------
+
+.. index:: database; Migration
+.. index:: database; db_migrate
+
+Mit dem Werkzeug ``tools/db_migrate.py`` (im SmartHomeNG-Basisverzeichnis) lassen sich Items und
+Log-Daten zwischen zwei beliebigen der unterstützten Datenbanken (SQLite3, MySQL/MariaDB,
+PostgreSQL+TimescaleDB) in beide Richtungen übertragen. SmartHomeNG muss dafür gestoppt sein.
+
+Quelle und Ziel werden entweder über den Namen einer Plugin-Instanz aus der ``etc/plugin.yaml``
+(``--source-instance`` / ``--dest-instance``) oder direkt über Treiber und Verbindungsdaten
+angegeben (``--source-driver``/``--source-connect`` bzw. ``--dest-...``); mit ``--interactive``
+wird nach fehlenden Angaben gefragt. Passwörter werden bei Bedarf abgefragt. ``--dry-run`` zeigt
+nur, was passieren würde. Eine unterbrochene Migration kann beliebig oft erneut gestartet werden:
+sie setzt je Item an der zuletzt übertragenen Zeile fort, ``--force <Item...>`` löscht und
+überträgt einzelne Items vollständig neu.
+Nach der Übertragung werden die Zeilenzahlen je Item verglichen. Quelle und Ziel dürfen nicht
+dieselbe Datenbank samt Tabellenpräfix sein.
+
+.. warning::
+
+   Übertragen werden nur die Rohdaten der ``log``-Tabelle. Hat die Quelle Continuous Aggregates
+   (``timescale_native_aggregation``), bricht das Werkzeug ab, weil dort möglicherweise bereits
+   Rohdaten entfernt wurden und die Migration unvollständig wäre; mit ``--force <Item...>``
+   kann das bewusst übergangen werden.
+
+Alle Optionen zeigt ``python3 tools/db_migrate.py --help``.
 
 
 Web Interface
