@@ -2,11 +2,12 @@
 
 import pathlib
 
-import yaml
+from ruamel.yaml import YAML
 
 from plugins.yamahayxc.tests.harness import FakeNetwork, make_plugin
 
 PLUGIN_YAML = pathlib.Path(__file__).parent.parent / 'plugin.yaml'
+YAML_LOADER = YAML(typ='safe')
 
 
 def struct_items(node, path=''):
@@ -19,7 +20,7 @@ def struct_items(node, path=''):
 
 
 def load_struct_items():
-    meta = yaml.safe_load(PLUGIN_YAML.read_text())
+    meta = YAML_LOADER.load(PLUGIN_YAML.read_text())
     return list(struct_items(meta['item_structs']))
 
 
