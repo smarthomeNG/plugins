@@ -3,6 +3,10 @@ yamaha:
     dev:
         yamahayxc_host: 127.0.0.1
 
+        mc_playlist:
+            type: num
+            yamahayxc_cmd: mc_playlist
+
         main:
             yamahayxc_zone: main
 

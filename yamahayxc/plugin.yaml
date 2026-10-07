@@ -373,6 +373,13 @@ item_structs:
                 yamahayxc_cmd: preset
                 enforce_updates: true
 
+            mc_playlist:
+                remark: Abspielen einer der (bis zu 5) gespeicherten MusicCast-Playlisten ab dem ersten
+                    Eintrag, gültige Werte 1-5. Nur-Schreib-Zugriff.
+                type: num
+                yamahayxc_cmd: mc_playlist
+                enforce_updates: true
+
             standby:
                 remark: Bool-Indikator, ob das Gerät im Leerlauf ist. Nur-Lese-Zugriff.
                 type: bool

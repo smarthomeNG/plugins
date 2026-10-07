@@ -65,3 +65,20 @@ def test_numeric_item_values_work_as_booleans():
 
     assert 'v1/main/setPower?power=on' in device.paths()
     assert 'v1/main/setMute?enable=false' in device.paths()
+
+
+def test_mc_playlist_write_plays_stored_playlist():
+    plugin, sh, device, network = make_running_plugin()
+
+    write(plugin, sh, network, 'yamaha.dev.mc_playlist', 3)
+
+    assert 'v1/netusb/manageMcPlaylist?bank=3&type=play&index=0&zone=main' in device.paths()
+
+
+def test_mc_playlist_outside_banks_1_to_5_is_not_sent():
+    plugin, sh, device, network = make_running_plugin()
+
+    write(plugin, sh, network, 'yamaha.dev.mc_playlist', 0)
+    write(plugin, sh, network, 'yamaha.dev.mc_playlist', 6)
+
+    assert not [path for path in device.paths() if 'manageMcPlaylist' in path]

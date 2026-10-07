@@ -132,6 +132,8 @@ class YamahaYXC(SmartPlugin):
             'input',
             'playback',
             'preset',
+            # manageMcPlaylist type=play - not in official YXC spec, like browse_playlist_*
+            'mc_playlist',
             'volume',
             'mute',
             'track',
@@ -374,6 +376,7 @@ class YamahaYXC(SmartPlugin):
             [
                 'state',
                 'preset',
+                'mc_playlist',
                 'alarm_on',
                 'alarm_time',
                 'alarm_beep',
@@ -616,6 +619,7 @@ class YamahaYXC(SmartPlugin):
             'repeat': _CmdSpec(build=self._build_cmd_repeat, label='repeat'),
             'shuffle': _CmdSpec(build=self._build_cmd_shuffle, label='shuffle'),
             'preset': _CmdSpec(build=self._build_cmd_preset),
+            'mc_playlist': _CmdSpec(build=self._build_cmd_mc_playlist),
             'sleep': _CmdSpec(build=self._build_cmd_sleep, label='sleep', func_check='sleep'),
             'sound_program': _CmdSpec(
                 build=self._build_cmd_sound_program, label='sound program', list_check='sound_program_list'
@@ -3102,6 +3106,19 @@ class YamahaYXC(SmartPlugin):
         """
         cmd = 'v1/netusb/recallPreset?zone=main&num={}'.format(value)
         return cmd
+
+    def _build_cmd_mc_playlist(self, value):
+        """
+        return cmd string for "play MusicCast playlist"
+
+        value is playlist bank (1..5), playback starts at the first entry;
+        other values are rejected with a warning (returns None, nothing sent)
+        """
+        bank = int(value)
+        if not 1 <= bank <= 5:
+            self.logger.warning(f'mc_playlist: invalid playlist bank {value}, valid values are 1-5, ignoring')
+            return None
+        return 'v1/netusb/manageMcPlaylist?bank={}&type=play&index=0&zone=main'.format(bank)
 
     def _build_cmd_sleep(self, value, zone, cmd='PUT'):
         """
