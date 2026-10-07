@@ -27,6 +27,7 @@
 
 import requests
 from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
 
 from .webif import WebInterface
 
@@ -37,40 +38,44 @@ class fronius(SmartPlugin):
     """
 
     PLUGIN_VERSION = '0.1.0'
+    ALLOW_MULTIINSTANCE = False  # set to True if the plugin can run as multiple instances simultaneously
 
-    def __init__(self, sh):
+    def __init__(self, sh=None, **kwargs):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
         # Unfortunately the GEN24 does not report a correct device type
         self._fronius_model = 'Symo GEN24'
-
-        self._items = {}
-        self.p_pv_day = 0
+        self._p_pv_day = 0
         self._cyclic_update_active = False
-        self.alive = False
-        self.suspended = False
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
-        self.poll_cycle = self.get_parameter_value('poll_cycle')
-        self.ip_address = self.get_parameter_value('ip_address')
+        self._cycle = self.get_parameter_value('poll_cycle')
+        self._ip_address = self.get_parameter_value('ip_address')
         self._datafile = self.get_parameter_value('data_file')
-        self.init_webinterface(WebInterface)
+        self.itemsApi = Items.get_instance()
         self.scheduler_add('midnight', self._midnight, cron='0 0 * *', prio=3)
+        self.init_webinterface(WebInterface)
 
 #---------------------- run ---------------------------------------------------
     def run(self):
-        self.logger.debug("Fronius Run method called")
+        self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
 
         # setup scheduler for device poll loop
-        self.scheduler_add('poll_device', self.poll_device, cycle=self.poll_cycle)
+        self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
+
+        # let the plugin change the state of pause_item
+#        if self._pause_item:
+#            self._pause_item(False, self.get_fullname())
+
 
 #---------------------- stop --------------------------------------------------
     def stop(self):
-        self.logger.debug("Stop method called")
-        self.scheduler_remove('poll_device')
+        self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
         self.alive = False
+
+        # this stops all schedulers the plugin has started.
+        self.scheduler_remove_all()
 
 #---------------------- parse_item --------------------------------------------
 # Default plugin parse_item method. Is called when the plugin is initialized.
@@ -87,7 +92,7 @@ class fronius(SmartPlugin):
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'fronius_data'):
             self.logger.debug(f'parse item: {item}')
-            self._items[item] = self.get_iattr_value(item.conf, 'fronius_data')
+            self.add_item(item, updating=True)
         return self.update_item
 
 # --------------------- update_item -------------------------------------------
@@ -104,14 +109,10 @@ class fronius(SmartPlugin):
 
         # execute if the plugin is not stopped and only, if the item has not been changed by this plugin:
         if self.alive and caller != self.get_shortname():
-            self.logger.info(f'Update item: {item.property.path}, item has been changed outside this plugin')
-
-            if self.has_iattr(item.conf, 'fronius_data'):
-                self.logger.debug(f'update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}')
-                if self.get_iattr_value(item.conf, 'fronius_data') == 'update' and bool(item()):
-                    self.logger.info('Update of all items of fronius Plugin requested.')
-                    self.poll_device()
-                    item(False)
+            self.logger.info(
+                f"update_item: '{item.property.path}' has been changed outside this plugin "
+                #                f"by caller '{self.callerinfo(caller, source)}'"
+            )
 
 # --------------------------- poll_device -------------------------------------
 # poll the inverter and change the corrosponding items
@@ -122,9 +123,6 @@ class fronius(SmartPlugin):
         if self._cyclic_update_active:
             self.logger.warning('Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
             return
-        elif self.suspended:
-            self.logger.warning('Triggered cyclic poll_device, but Plugin in suspended. Therefore request will be skipped.')
-            return
         else:
             self.logger.debug('Triggering cyclic poll_device')
 
@@ -133,9 +131,9 @@ class fronius(SmartPlugin):
 
         # get the data
         try:
-            response = requests.get(f'http://{self.ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi') 
+            response = requests.get(f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi') 
         except Exception:
-            self.logger.error(f'Error access Fronius inverter at address {self.ip_address}')
+            self.logger.error(f'Error access Fronius inverter at address {self._ip_address}')
             self._cyclic_update_active = False
             return
         response = response.json()
@@ -152,34 +150,34 @@ class fronius(SmartPlugin):
             self.logger.error('Datafile not found')
             file = open(self._datafile, 'w')
             file.write('0.0')
-            self.p_pv_day = 0
+            self._p_pv_day = 0
             file.close()
         file = open(self._datafile, 'r')
         try:            
-            self.p_pv_day = float(file.readline())
+            self._p_pv_day = float(file.readline())
         except Exception:
             self.logger.error('No data in datafile')
-            self.p_pv_day = 0
+            self._p_pv_day = 0
         file.close()
 
-        self.p_pv_day = self.p_pv_day + (p_pv * self.poll_cycle / 3600.0) 
+        self._p_pv_day = self._p_pv_day + (p_pv * self._cycle / 3600.0) 
         with open(self._datafile, 'w') as file:
-            file.write(str(self.p_pv_day))
+            file.write(str(self._p_pv_day))
 
         # Put the date into the items
-        for item in self._items:
+        for item in self.itemsApi.find_items('fronius_data'):
             if self.get_iattr_value(item.conf, 'fronius_data') == 'soc':
-                item(soc, self.get_shortname())
+                item(soc, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv':
-                item(p_pv, self.get_shortname())
+                item(p_pv, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day':
-                item(self.p_pv_day, self.get_shortname())
+                item(self._p_pv_day, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_grid':
-                item(p_grid, self.get_shortname())
+                item(p_grid, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_accu':
-                item(p_accu, self.get_shortname())
+                item(p_accu, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_load':
-                item(p_load, self.get_shortname())
+                item(p_load, self.get_fullname())
 
         # release lock
         self._cyclic_update_active = False
@@ -190,23 +188,11 @@ class fronius(SmartPlugin):
 
     def _midnight(self):
         self.logger.debug('Midnight')
-        self.logger.debug(self.p_pv_day)
-        for item in self._items:
+        self.logger.debug(self._p_pv_day)
+        for item in self.itemsApi.find_items('fronius_data'):
+            #        for item in self._items:
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day_database':
-                item(self.p_pv_day, self.get_shortname())
-        self.p_pv_day = 0.0
+                item(self._p_pv_day, self.get_fullname())
+        self._p_pv_day = 0.0
         with open(self._datafile, 'w') as file:
-            file.write(str(self.p_pv_day))
-
-    # -------------- properties for the web interface -------------------------
-    @property
-    def item_list(self):
-        return list(self._items.keys())
-
-    @property
-    def log_level(self):
-        return self.logger.getEffectiveLevel()
-
-    @property
-    def fronius_model(self):
-        return self._fronius_model
+            file.write(str(self._p_pv_day))
