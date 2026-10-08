@@ -64,7 +64,7 @@ class RRD(SmartPlugin):
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         rrd_dir = self.get_parameter_value('rrd_dir')
         if not rrd_dir:
-            rrd_dir = os.path.join(self.get_sh().base_dir, 'var', 'rrd')
+            rrd_dir = os.path.join(self.get_sh().get_vardir(), 'rrd')
         if not rrd_dir.endswith(os.sep):
             rrd_dir += os.sep
         self._rrd_dir = rrd_dir

@@ -172,7 +172,7 @@ class KNX(SmartPlugin):
                 self.logger.warning(self.translate('Given path is absolute, using {}').format(self.projectpath))
             else:
                 self.projectpath = (
-                    pathlib.Path(self.get_sh().get_basedir()) / self.projectpath / self.base_project_filename
+                    pathlib.Path(self.get_sh().resolve_var_path(str(self.projectpath))) / self.base_project_filename
                 )
                 self.logger.info(self.translate('Given path is relative, using {path}', {'path': self.projectpath}))
 

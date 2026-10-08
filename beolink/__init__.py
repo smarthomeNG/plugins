@@ -81,7 +81,7 @@ class BeoNetlink(SmartPlugin):
             self.logger.error('scan_fromip and scan_toip are not in same class-c subnet')
             # self._init_complete = False
 
-        self.datadir = os.path.join(self._sh.base_dir, 'var', 'bo_netlink')
+        self.datadir = os.path.join(self._sh.get_vardir(), 'bo_netlink')
         if not os.path.isdir(self.datadir):
             os.mkdir(self.datadir)
             self.logger.info('Data directory for plugin created: {}'.format(self.datadir))

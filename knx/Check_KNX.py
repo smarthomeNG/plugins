@@ -16,7 +16,7 @@ if you do not have one, it is a good idea to export it from ETS now
 """
 esf = 'Smarthome.esf'
 
-esf = os.path.join( sh.base_dir, 'var', esf)
+esf = os.path.join(sh.get_vardir(), esf)
 
 if os.path.isfile(esf):
     # pyhon works with utf8 internally so we need to convert it, then chop the columns

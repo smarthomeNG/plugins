@@ -429,7 +429,9 @@ class WebInterface(SmartPluginWebIf):
                         value_dict[key] = dt.isoformat(sep=' ', timespec='milliseconds') if dt is not None else row[key]
                     log_array.append(value_dict)
                 reversed_arr = log_array[::-1]
-            csv_file_path = f'{self.plugin._sh.base_dir}/var/db/{self.plugin.get_instance_name()}_item_{item_id}.csv'
+            csv_file_path = os.path.join(
+                self.plugin.get_sh().get_vardir(), 'db', f'{self.plugin.get_instance_name()}_item_{item_id}.csv'
+            )
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect='excel')
@@ -462,7 +464,7 @@ class WebInterface(SmartPluginWebIf):
             filename += extension
         else:
             filename += '_' + self.plugin.get_instance_name() + extension
-        pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
+        pathname = os.path.join(self.plugin.get_sh().get_vardir(), 'db', filename)
 
         self.plugin.dump(pathname)
         # self.plugin.dump(
@@ -491,7 +493,7 @@ class WebInterface(SmartPluginWebIf):
             filename += extension
         else:
             filename += '_' + self.plugin.get_instance_name() + extension
-        pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
+        pathname = os.path.join(self.plugin.get_sh().get_vardir(), 'db', filename)
 
         if self.plugin.sqlite_dump(pathname):
             mime = 'application/octet-stream'

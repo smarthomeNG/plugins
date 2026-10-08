@@ -119,7 +119,9 @@ class DatabaseAddOn(SmartPlugin):
 
         # path and filename for data storage
         data_storage_file = 'db_addon_data'
-        self.data_storage_path = f'{os.getcwd()}/var/plugin_data/{self.get_fullname()}/{data_storage_file}.pkl'
+        self.data_storage_path = os.path.join(
+            self.get_sh().get_vardir(), 'plugin_data', self.get_fullname(), f'{data_storage_file}.pkl'
+        )
 
         # get debug log options
         self.debug_log = DebugLogOptions(self.log_level)

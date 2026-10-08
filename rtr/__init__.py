@@ -96,7 +96,7 @@ class RTR(SmartPlugin):
 
         self.alive = None
         sh = self.get_sh()
-        self.path = sh.base_dir + '/var/rtr/timer/'
+        self.path = os.path.join(sh.get_vardir(), 'rtr', 'timer', '')
         self._items = Items.get_instance()
 
         # preset the controller defaults

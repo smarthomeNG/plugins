@@ -75,7 +75,7 @@ class Matter(SmartPlugin):
         sidecar = MatterServerSidecar(
             self.get_parameter_value('node_binary'),
             self._plugin_path('server_sidecar_entry'),
-            os.path.abspath(self.get_parameter_value('storage_path')),
+            self.get_sh().resolve_var_path(self.get_parameter_value('storage_path')),
             ServerSidecarSettings(
                 port=port,
                 enable_test_net_dcl=self.get_parameter_value('server_enable_test_net_dcl'),
@@ -101,7 +101,7 @@ class Matter(SmartPlugin):
         sidecar = MatterBridgeSidecar(
             self.get_parameter_value('node_binary'),
             self._plugin_path('bridge_sidecar_entry'),
-            os.path.abspath(self.get_parameter_value('bridge_storage_path')),
+            self.get_sh().resolve_var_path(self.get_parameter_value('bridge_storage_path')),
             BridgeSidecarSettings(
                 matter_port=self.get_parameter_value('bridge_matter_port'),
                 control_port=control_port,

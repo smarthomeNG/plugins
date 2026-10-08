@@ -115,6 +115,7 @@ class StateEngine(SmartPlugin):
 
             StateEngineCurrent.init(self.__sh)
             base = self.__sh.get_basedir()
+            log_directory = os.path.join(self.__sh.resolve_var_path(log_directory), '')
             log_directory = SeLogger.manage_logdirectory(base, log_directory, False)
             SeLogger.log_directory = log_directory
 

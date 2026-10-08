@@ -95,7 +95,7 @@ class Rtr2(SmartPlugin):
         #   return
 
         # set path to cache directory for plugins
-        self.cache_path = os.path.join(self.get_sh().get_basedir(), 'var', 'plugins_cache')
+        self.cache_path = os.path.join(self.get_sh().get_vardir(), 'plugins_cache')
         if not os.path.isdir(self.cache_path):
             # create plugins_cache dir if it does not already exist
             self.logger.warning(f'Createing cache directory {self.cache_path}')
