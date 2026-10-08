@@ -69,7 +69,7 @@ plugin:
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
     version: 2.0.0                 # Plugin version
-    sh_minversion: '1.12'             # minimum shNG version to use this plugin
+    sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
     classname: YamahaYXC              # class containing the plugin

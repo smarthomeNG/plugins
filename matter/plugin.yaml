@@ -12,7 +12,7 @@ plugin:
     documentation: ''   # TODO
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/2102287-neues-plugin-matter'
     version: 0.4.0
-    sh_minversion: '1.12'
+    sh_minversion: '1.12.2.2'
     multi_instance: true            # each instance is its own Matter fabric and bridge identity
     restartable: true
     classname: Matter

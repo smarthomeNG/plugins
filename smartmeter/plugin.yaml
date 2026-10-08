@@ -3,7 +3,7 @@
 plugin:
     classname: Smartmeter
     version: '0.9.0'                 # Plugin version
-    sh_minversion: '1.10.0.3'             # minimum shNG version to use this plugin
+    sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     py_minversion: '3.9'             # minimum Python version to use for this plugin, due to f-strings
     type: interface                  # plugin type (gateway, interface, protocol, system, web)
     description:
