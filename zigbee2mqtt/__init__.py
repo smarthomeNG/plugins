@@ -221,15 +221,9 @@ class Zigbee2Mqtt(MqttPlugin):
         Items the database plugin does not log have no ``db_mark_invalid`` and are skipped, as are
         the items of the bridge itself.
         """
-        for item in list(self._items_read):
-            mark_invalid = getattr(item, 'db_mark_invalid', None)
-            if mark_invalid is None or self._get_z2m_topic_from_item(item) == 'bridge':
-                continue
-            # db_mark_invalid() is not idempotent: repeating it would split one gap into several
-            is_invalid = getattr(item, 'db_is_invalid', None)
-            if is_invalid is not None and is_invalid():
-                continue
-            mark_invalid(caller=self.get_fullname(), source=source)
+        self.db_invalidate_items(
+            list(self._items_read), source, accept=lambda item: self._get_z2m_topic_from_item(item) != 'bridge'
+        )
 
     def remove_item(self, item):
         if item not in self._plg_item_dict:

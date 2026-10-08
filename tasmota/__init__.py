@@ -1781,17 +1781,13 @@ class Tasmota(MqttPlugin):
         Items the database plugin does not log have no ``db_mark_invalid`` and are skipped. With
         ``on_timeout``, items whose timeout invalidation is disabled are skipped as well.
         """
-        for item in self.get_item_list(filter_key='topic', filter_value=tasmota_topic):
-            mark_invalid = getattr(item, 'db_mark_invalid', None)
-            if mark_invalid is None or self._is_stateless_item(item):
-                continue
-            if on_timeout and not self._invalidates_on_timeout(item):
-                continue
-            # db_mark_invalid() is not idempotent: repeating it would split one gap into several
-            is_invalid = getattr(item, 'db_is_invalid', None)
-            if is_invalid is not None and is_invalid():
-                continue
-            mark_invalid(caller=self.get_fullname(), source=source)
+        self.db_invalidate_items(
+            self.get_item_list(filter_key='topic', filter_value=tasmota_topic),
+            source,
+            accept=lambda item: (
+                not self._is_stateless_item(item) and (not on_timeout or self._invalidates_on_timeout(item))
+            ),
+        )
 
     def _invalidates_on_timeout(self, item) -> bool:
         """Whether silence of the device invalidates ``item``: its tasmota_invalidate_on_timeout, else the plugin parameter."""

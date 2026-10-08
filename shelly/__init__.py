@@ -439,18 +439,18 @@ class Shelly(MqttPlugin):
 
         Items the database plugin does not log have no ``db_mark_invalid`` and are skipped.
         """
-        for item in self.get_item_list(filter_key='shelly_id', filter_value=shelly_id):
-            mark_invalid = getattr(item, 'db_mark_invalid', None)
-            config = self.get_item_config(item)
-            if mark_invalid is None or config.get('shelly_attr') == 'online':
-                continue
-            if not config.get('invalidate_on_disconnect', self.invalidate_on_disconnect):
-                continue
-            # db_mark_invalid() is not idempotent: repeating it would split one gap into several
-            is_invalid = getattr(item, 'db_is_invalid', None)
-            if is_invalid is not None and is_invalid():
-                continue
-            mark_invalid(caller=self.get_fullname(), source=source)
+        self.db_invalidate_items(
+            self.get_item_list(filter_key='shelly_id', filter_value=shelly_id),
+            source,
+            accept=self._invalidates_on_disconnect,
+        )
+
+    def _invalidates_on_disconnect(self, item) -> bool:
+        """Whether going offline invalidates ``item``: not the online flag itself; its invalidate_on_disconnect, else the plugin parameter."""
+        config = self.get_item_config(item)
+        if config.get('shelly_attr') == 'online':
+            return False
+        return bool(config.get('invalidate_on_disconnect', self.invalidate_on_disconnect))
 
     def update_items_with_mapping(self, shelly_id: str, source: str, value, item_mapping: str):
         """
