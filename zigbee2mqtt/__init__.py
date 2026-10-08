@@ -273,13 +273,7 @@ class Zigbee2Mqtt(MqttPlugin):
         if caller == self.get_fullname() or (type(caller) is str and caller.startswith(self.get_fullname())):
             return
 
-        # check for pause item
-        if item is self._pause_item:
-            self.logger.debug(f'pause item changed to {item()}')
-            if item() and self.alive:
-                self.stop()
-            elif not item() and not self.alive:
-                self.run()
+        if self._handle_pause_item(item, caller):
             return
 
         if self.alive:

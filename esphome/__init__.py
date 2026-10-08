@@ -209,15 +209,7 @@ class EspHome(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        # check for pause item
-        if item is self._pause_item:
-            if caller != self.get_shortname():
-                self.logger.debug(f'pause item changed to {item()}')
-                if item() and self.alive:
-                    self.stop()
-                elif not item() and not self.alive:
-                    self.run()
-            return
+        # if self._handle_pause_item(item, caller): return  # implemented, but left commented out as before
 
         if self.alive and caller != self.get_fullname():
             # code to execute if the plugin is not stopped

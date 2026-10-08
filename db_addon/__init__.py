@@ -858,14 +858,7 @@ class DatabaseAddOn(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
-        # check for pause item
-        if item is self._pause_item:
-            if caller != self.get_fullname():
-                self.logger.debug(f'pause item changed to {item()}')
-                if item() and self.alive:
-                    self.stop()
-                elif not item() and not self.alive:
-                    self.run()
+        if self._handle_pause_item(item, caller):
             return
 
         if self.alive and caller != self.get_fullname():

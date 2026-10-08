@@ -519,14 +519,7 @@ class Telegram(SmartPlugin):
         Called each time an item changed in SmartHomeNG
         """
 
-        # check for pause item
-        if item is self._pause_item:
-            if caller != self.get_shortname():
-                self.logger.debug(f'pause item changed to {item()}')
-                if item() and self.alive:
-                    self.stop()
-                elif not item() and not self.alive:
-                    self.run()
+        if self._handle_pause_item(item, caller):
             return
 
         if not self.alive:
