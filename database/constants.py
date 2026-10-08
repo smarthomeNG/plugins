@@ -95,3 +95,16 @@ class BufferEntry(NamedTuple):
     duration: 'int | None'
     value: object
     quality: int = QUALITY_VALID
+
+
+class LogHead(NamedTuple):
+    """The newest log row of an item, reduced to what crash recovery inspects.
+
+    :param time:     Start timestamp in milliseconds since epoch.
+    :param duration: Duration in milliseconds; ``None`` while the row is open.
+    :param quality:  Data-quality flag (``QUALITY_VALID`` for a pre-quality row without the column value).
+    """
+
+    time: int
+    duration: 'int | None'
+    quality: int

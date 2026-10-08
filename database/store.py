@@ -26,7 +26,7 @@ import contextlib
 import logging
 
 from lib.db import NO_CURSOR
-from .constants import BufferEntry, QUALITY_VALID
+from .constants import BufferEntry, LogHead, QUALITY_VALID
 from .utils import encode_value, apply_table_names, build_where_clause
 
 
@@ -236,6 +236,17 @@ class ItemStore:
         :rtype:     list
         """
         return self._fetchall('SELECT {item_columns} FROM {item};', cur=cur)
+
+    def max_changed(self, cur=NO_CURSOR) -> 'int | None':
+        """Return the newest ``changed`` timestamp over all item rows, or ``None`` if none is set.
+
+        ``changed`` is written when an item is flushed, so the maximum is the last time any item was flushed.
+
+        :param cur: Optional cursor.
+        :rtype:     int | None
+        """
+        rows = self._fetchall('SELECT MAX(changed) FROM {item};', cur=cur)
+        return rows[0][0] if rows else None
 
     def count(self, cur=NO_CURSOR) -> int:
         """Return the total number of item rows.
@@ -610,6 +621,95 @@ class LogStore:
             cur=cur,
         )
         return rows[0][0] if rows else None
+
+    def last_row(self, item_id: int, cur=NO_CURSOR) -> 'LogHead | None':
+        """Return the row with the newest ``time`` for *item_id*, or ``None`` if the item has no rows.
+
+        :param item_id: Database item ID.
+        :param cur:     Optional cursor.
+        :rtype:         LogHead | None
+        """
+        rows = self._fetchall(
+            'SELECT time, duration, COALESCE(val_quality, :quality) FROM {log} WHERE item_id=:id'
+            ' ORDER BY time DESC LIMIT 1;',
+            {'id': item_id, 'quality': QUALITY_VALID},
+            cur=cur,
+        )
+        return LogHead(*rows[0]) if rows else None
+
+    def window_end(self, item_id: int, after: int, rows: int, cur=NO_CURSOR) -> 'int | None':
+        """Return the ``time`` of the *rows*-th row of *item_id* after *after*, or ``None`` if fewer remain.
+
+        Answered from the ``(item_id, time)`` index alone, so a window of *rows* rows is bounded by that many index
+        entries rather than by a time span.
+
+        :param item_id: Database item ID.
+        :param after:   Exclusive lower bound on ``time``.
+        :param rows:    Window size in rows (at least 1).
+        :param cur:     Optional cursor.
+        :rtype:         int | None
+        """
+        result = self._fetchall(
+            'SELECT time FROM {log} WHERE item_id=:id AND time > :after ORDER BY time LIMIT 1 OFFSET :offset;',
+            {'id': item_id, 'after': after, 'offset': rows - 1},
+            cur=cur,
+        )
+        return result[0][0] if result else None
+
+    def open_row_times(self, item_id: int, after: int, upto: 'int | None', before: int, cur=NO_CURSOR) -> 'list[int]':
+        """Return the ``time`` of every valid-quality open row of *item_id* in (*after*, *upto*], below *before*.
+
+        :param item_id: Database item ID.
+        :param after:   Exclusive lower bound on ``time``.
+        :param upto:    Inclusive upper bound on ``time``; ``None`` for no bound.
+        :param before:  Exclusive upper bound on ``time``.
+        :param cur:     Optional cursor.
+        :rtype:         list[int]
+        """
+        rows = self._fetchall(
+            'SELECT time FROM {log} WHERE item_id=:id AND time > :after AND time <= :upto AND time < :before'
+            ' AND duration IS NULL AND COALESCE(val_quality, :quality)=:quality ORDER BY time;',
+            {
+                'id': item_id,
+                'after': after,
+                'upto': before if upto is None else upto,
+                'before': before,
+                'quality': QUALITY_VALID,
+            },
+            cur=cur,
+        )
+        return [row[0] for row in rows]
+
+    def next_time(self, item_id: int, time: int, cur=NO_CURSOR) -> 'int | None':
+        """Return the ``time`` of the first row of *item_id* after *time*, or ``None`` if there is none.
+
+        :param item_id: Database item ID.
+        :param time:    Exclusive lower bound on ``time``.
+        :param cur:     Optional cursor.
+        :rtype:         int | None
+        """
+        rows = self._fetchall(
+            'SELECT MIN(time) FROM {log} WHERE item_id=:id AND time > :time;', {'id': item_id, 'time': time}, cur=cur
+        )
+        return rows[0][0] if rows else None
+
+    def close_open(self, item_id: int, time: int, duration: int, cur=NO_CURSOR) -> None:
+        """Set *duration* on the open row at *time*.
+
+        Guarded by ``duration IS NULL``: a row that is already closed stays untouched.
+
+        :param item_id:  Database item ID.
+        :param time:     ``time`` of the open row.
+        :param duration: Duration in milliseconds.
+        :param cur:      Optional cursor.
+        """
+        stmt = 'UPDATE {log} SET duration=:duration WHERE item_id=:id AND time=:time AND duration IS NULL;'
+        params = {'id': item_id, 'time': time, 'duration': duration}
+        if cur is not NO_CURSOR:
+            self._execute(stmt, params, cur=cur)
+            return
+        with _self_healing_transaction(self._db) as tcur:
+            self._execute(stmt, params, cur=tcur)
 
     def reanchor_open(self, item_id: int, old_time: int, new_time: int, cur=NO_CURSOR) -> None:
         """Move the still-open row's ``time`` forward to *new_time*.

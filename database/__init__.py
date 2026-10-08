@@ -43,6 +43,7 @@ from lib.module import Modules
 
 from .buffer import BufferManager
 from .maintenance import MaintenanceManager
+from .recovery import CrashRecovery
 from .maxage import MaxageResolver
 from .query import QueryEngine
 from .timescale import TimescaleManager
@@ -300,6 +301,7 @@ class Database(SmartPlugin):
         self._buffer_mgr = BufferManager()
         self._maxage = MaxageResolver(self)
         self._maintenance = MaintenanceManager(self)
+        self._recovery = CrashRecovery(self)
         self._query_engine = QueryEngine(self)
         self._dump_lock = threading.Lock()
 
@@ -439,6 +441,7 @@ class Database(SmartPlugin):
             self._enable_timescale_native_aggregation()
             if self._timescale_native_retention:
                 self._enable_timescale_native_retention()
+        self._close_startup_orphans()
         # Retried from _dump() (self._orphanlist_built) if this attempt
         # fails - no separate retry loop needed here.
         self.build_orphanlist(True)
@@ -974,6 +977,7 @@ class Database(SmartPlugin):
         if self.count_logentries:
             self.scheduler_add('Count logs', self._count_logentries, cycle=6 * 3600, prio=6)
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
+        self.scheduler_add('Recover open rows', self._recover_stale_orphans, cycle=30, prio=7)
         # default_maxage alone (with no item setting its own database_maxage)
         # still needs this scheduler - remove_older_than_maxage()'s worklist
         # fill already handles that case by falling back to _handled_items
@@ -1000,6 +1004,7 @@ class Database(SmartPlugin):
         if len(self._items_with_invalid_after) > 0:
             self.scheduler_remove('Check invalid items')
         self.scheduler_remove('Buffer dump')
+        self.scheduler_remove('Recover open rows')
         if self.count_logentries:
             self.scheduler_remove('Count logs')
         return
@@ -1783,6 +1788,19 @@ class Database(SmartPlugin):
     def audit_maxage(self):
         """See MaintenanceManager.audit_maxage() (maintenance.py)."""
         return self._maintenance.audit_maxage()
+
+    def _close_startup_orphans(self):
+        """See CrashRecovery.close_startup_orphans() (recovery.py)."""
+        return self._recovery.close_startup_orphans()
+
+    def _recover_stale_orphans(self):
+        """Scheduler job: run CrashRecovery.recover_stale() (recovery.py) and unschedule once it is done."""
+        if not self._recovery.recover_stale():
+            self.scheduler_remove('Recover open rows')
+
+    def _recover_stale_slice(self):
+        """See CrashRecovery.recover_stale_slice() (recovery.py)."""
+        return self._recovery.recover_stale_slice()
 
     def adminui_url_root(self):
         """
