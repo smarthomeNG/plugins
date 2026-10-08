@@ -44,7 +44,7 @@ import sys
 from ruamel.yaml import YAML
 from io import BytesIO
 
-install_openpyxl = 'python3 -m pip install --user openpyxl'
+install_openpyxl = f'{sys.executable} -m pip install openpyxl'
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
