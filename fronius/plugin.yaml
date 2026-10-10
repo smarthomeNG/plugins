@@ -1,0 +1,69 @@
+# Metadata for the plugin
+plugin:
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin Auslesen eines Fronius Wechserichters'
+        en: 'Plugin to readout information from Fronius inverter'
+    maintainer: SergeoLacruz
+    tester: SergeoLacruz            # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: pv fronius
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 0.1.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.11             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: fronius             # class containing the plugin
+
+parameters:
+    poll_cycle:
+        type: int
+        default: 10
+        description:
+            de: 'Zyklus, in dem die Informationen abgefragt werden sollen.'
+            en: 'Poll cycle of information.'
+    ip_address:
+        type: str
+        default: '192.168.1.1'
+        description:
+            de: 'IP Adresse des Wechselrichters'
+            en: 'IP Address of inverter'
+    data_file:
+        type: str
+        default: '/usr/local/smarthome/var/db/fronius.txt'
+        description:
+            de: 'Datei für temporäre Werte'
+            en: 'File for temporary values'
+
+
+item_attributes:
+    fronius_data:
+        type: str
+        description:
+            de: 'Datenfeld des Inverters'
+            en: 'Data of inverter'
+        valid_list:
+            - 'soc'
+            - 'p_pv'
+            - 'p_grid'
+            - 'p_accu'
+            - 'p_load'
+            - 'p_pv_day'
+            - 'p_pv_day_database'
+        valid_list_description:
+            de:
+             - 'Ladezustand der Batterie'
+             - 'Aktuelle PV Leistung'
+             - 'Aktuelle Leistung vom Netz'
+             - 'Aktuelle Leistung von der Batterie'
+             - 'Aktueller Verbrauch des Hauses'
+             - 'Tagessumme der PV Leistung'
+             - 'Tagessumme der PV Leistung für Datenbank'
+
+item_structs: NONE 
+logic_parameters: NONE
+plugin_functions: NONE
