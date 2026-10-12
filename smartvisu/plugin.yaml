@@ -204,13 +204,13 @@ item_attributes:
 
     sv_heading_buttons:
         type: list
-    description:
-        de: "Definition von Buttons, die als 'Radiobuttons' oben auf der Seite angezeigt werden. 
-             'sv_heading_buttons' ist eine Liste, die drei Listen enthält. Die Länge jeder der drei Listen 
-             entspricht der Anzahl der Buttons (2 bis 5) in der Top-Navigation. Die erste Liste enthält den Text 
-             der Buttons. Die zweite Liste enthält den jeweiligen Raumnamen zu dem navigiert werden soll. Die 
-             dritte Liste enthält die Namen der Icons (ohne Extension)."
-        en: 'Definition of buttons which are positioned at the top of the page as radiobuttons'
+        description:
+            de: "Definition von Buttons, die als 'Radiobuttons' oben auf der Seite angezeigt werden. 
+                 'sv_heading_buttons' ist eine Liste, die drei Listen enthält. Die Länge jeder der drei Listen 
+                 entspricht der Anzahl der Buttons (2 bis 5) in der Top-Navigation. Die erste Liste enthält den Text 
+                 der Buttons. Die zweite Liste enthält den jeweiligen Raumnamen zu dem navigiert werden soll. Die 
+                 dritte Liste enthält die Namen der Icons (ohne Extension)."
+            en: 'Definition of buttons which are positioned at the top of the page as radiobuttons'
 
     sv_heading_left:
         type: str
