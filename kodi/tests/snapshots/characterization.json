@@ -1,0 +1,1361 @@
+{
+ "jobs_after_run": [
+  "read_initial_values"
+ ],
+ "initial_sends": [
+  {
+   "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"1_Player.GetActivePlayers\", \"method\": \"Player.GetActivePlayers\"}",
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "1_Player.GetActivePlayers",
+    "method": "Player.GetActivePlayers"
+   }
+  },
+  {
+   "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"2_Application.GetProperties\", \"method\": \"Application.GetProperties\", \"params\": {\"properties\": [\"volume\", \"muted\"]}}",
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "2_Application.GetProperties",
+    "method": "Application.GetProperties",
+    "params": {
+     "properties": [
+      "volume",
+      "muted"
+     ]
+    }
+   }
+  }
+ ],
+ "initial_dispatched": [],
+ "writes": [
+  {
+   "item": "dev.control.action",
+   "value": "left",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"3_Input.ExecuteAction\", \"method\": \"Input.ExecuteAction\", \"params\": {\"action\": \"left\"}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "3_Input.ExecuteAction",
+      "method": "Input.ExecuteAction",
+      "params": {
+       "action": "left"
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.action": "left"
+   }
+  },
+  {
+   "item": "dev.control.audio",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"4_Player.SetAudioStream\", \"method\": \"Player.SetAudioStream\", \"params\": {\"playerid\": 0, \"stream\": 1}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "4_Player.SetAudioStream",
+      "method": "Player.SetAudioStream",
+      "params": {
+       "playerid": 0,
+       "stream": 1
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.audio": 1
+   }
+  },
+  {
+   "item": "dev.control.goto",
+   "value": "previous",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"5_Player.GoTo\", \"method\": \"Player.GoTo\", \"params\": {\"playerid\": 0, \"to\": \"previous\"}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "5_Player.GoTo",
+      "method": "Player.GoTo",
+      "params": {
+       "playerid": 0,
+       "to": "previous"
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.goto": "previous"
+   }
+  },
+  {
+   "item": "dev.control.mute",
+   "value": true,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"6_Application.SetMute\", \"method\": \"Application.SetMute\", \"params\": {\"mute\": true}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "6_Application.SetMute",
+      "method": "Application.SetMute",
+      "params": {
+       "mute": true
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.mute": true
+   }
+  },
+  {
+   "item": "dev.control.playpause",
+   "value": true,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"7_Player.PlayPause\", \"method\": \"Player.PlayPause\", \"params\": {\"playerid\": 0, \"play\": \"toggle\"}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "7_Player.PlayPause",
+      "method": "Player.PlayPause",
+      "params": {
+       "playerid": 0,
+       "play": "toggle"
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.playpause": true
+   }
+  },
+  {
+   "item": "dev.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"8_System.Shutdown\", \"method\": \"System.Shutdown\"}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "8_System.Shutdown",
+      "method": "System.Shutdown"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.power": true
+   }
+  },
+  {
+   "item": "dev.control.quit",
+   "value": true,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"9_Application.Quit\", \"method\": \"Application.Quit\"}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "9_Application.Quit",
+      "method": "Application.Quit"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.quit": true
+   }
+  },
+  {
+   "item": "dev.control.seek",
+   "value": 100.0,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"10_Player.Seek\", \"method\": \"Player.Seek\", \"params\": {\"playerid\": 0, \"value\": 100.0}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "10_Player.Seek",
+      "method": "Player.Seek",
+      "params": {
+       "playerid": 0,
+       "value": 100.0
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.seek": 100.0
+   }
+  },
+  {
+   "item": "dev.control.speed",
+   "value": -32,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"11_Player.SetSpeed\", \"method\": \"Player.SetSpeed\", \"params\": {\"playerid\": 0, \"speed\": -32}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "11_Player.SetSpeed",
+      "method": "Player.SetSpeed",
+      "params": {
+       "playerid": 0,
+       "speed": -32
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.speed": -32
+   }
+  },
+  {
+   "item": "dev.control.stop",
+   "value": true,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"12_Player.Stop\", \"method\": \"Player.Stop\", \"params\": {\"playerid\": 0}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "12_Player.Stop",
+      "method": "Player.Stop",
+      "params": {
+       "playerid": 0
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.stop": true
+   }
+  },
+  {
+   "item": "dev.control.subtitle",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"13_Player.SetSubtitle\", \"method\": \"Player.SetSubtitle\", \"params\": {\"playerid\": 0, \"subtitle\": 1, \"enable\": true}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "13_Player.SetSubtitle",
+      "method": "Player.SetSubtitle",
+      "params": {
+       "playerid": 0,
+       "subtitle": 1,
+       "enable": true
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.subtitle": 1
+   }
+  },
+  {
+   "item": "dev.control.volume",
+   "value": 100,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"14_Application.SetVolume\", \"method\": \"Application.SetVolume\", \"params\": {\"volume\": 100}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "14_Application.SetVolume",
+      "method": "Application.SetVolume",
+      "params": {
+       "volume": 100
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.volume": 100
+   }
+  },
+  {
+   "item": "dev.info.macro",
+   "value": true,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.info.macro": true
+   }
+  },
+  {
+   "item": "dev.status.update",
+   "value": true,
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"15_Player.GetActivePlayers\", \"method\": \"Player.GetActivePlayers\"}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "15_Player.GetActivePlayers",
+      "method": "Player.GetActivePlayers"
+     }
+    },
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"16_Application.GetProperties\", \"method\": \"Application.GetProperties\", \"params\": {\"properties\": [\"volume\", \"muted\"]}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "16_Application.GetProperties",
+      "method": "Application.GetProperties",
+      "params": {
+       "properties": [
+        "volume",
+        "muted"
+       ]
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.status.update": true
+   }
+  }
+ ],
+ "reads": [
+  {
+   "command": "status.get_actplayer",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"17_Player.GetActivePlayers\", \"method\": \"Player.GetActivePlayers\"}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "17_Player.GetActivePlayers",
+      "method": "Player.GetActivePlayers"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "status.get_favourites",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"18_Favourites.GetFavourites\", \"method\": \"Favourites.GetFavourites\", \"params\": {\"properties\": [\"window\", \"path\", \"thumbnail\", \"windowparameter\"]}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "18_Favourites.GetFavourites",
+      "method": "Favourites.GetFavourites",
+      "params": {
+       "properties": [
+        "window",
+        "path",
+        "thumbnail",
+        "windowparameter"
+       ]
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "status.get_item",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"19_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 0, \"properties\": [\"title\", \"artist\"]}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "19_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 0,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "status.get_settings",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"20_Settings.GetSettings\", \"method\": \"Settings.GetSettings\"}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "20_Settings.GetSettings",
+      "method": "Settings.GetSettings"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "status.get_status_au",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"21_Application.GetProperties\", \"method\": \"Application.GetProperties\", \"params\": {\"properties\": [\"volume\", \"muted\"]}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "21_Application.GetProperties",
+      "method": "Application.GetProperties",
+      "params": {
+       "properties": [
+        "volume",
+        "muted"
+       ]
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "status.get_status_play",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"22_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 0, \"properties\": [\"type\", \"speed\", \"time\", \"percentage\", \"totaltime\", \"position\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\", \"currentvideostream\", \"videostreams\"]}}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "22_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 0,
+       "properties": [
+        "type",
+        "speed",
+        "time",
+        "percentage",
+        "totaltime",
+        "position",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles",
+        "currentvideostream",
+        "videostreams"
+       ]
+      }
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "status.ping",
+   "sent": [
+    {
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"23_JSONRPC.Ping\", \"method\": \"JSONRPC.Ping\"}",
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "23_JSONRPC.Ping",
+      "method": "JSONRPC.Ping"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  }
+ ],
+ "kodi_replies": [
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Player.GetActivePlayers",
+    "result": [
+     {
+      "playerid": 1,
+      "type": "video"
+     }
+    ]
+   },
+   "command": "Player.GetActivePlayers",
+   "dispatched": [
+    [
+     "info.player",
+     1
+    ],
+    [
+     "info.media",
+     "Video"
+    ]
+   ],
+   "changed": {
+    "dev.info.media": "Video",
+    "dev.info.player": 1
+   },
+   "sent": [
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "24_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"24_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 1, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "25_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"25_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 1, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    }
+   ],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Player.GetActivePlayers",
+    "result": [
+     {
+      "playerid": 0,
+      "type": "audio"
+     },
+     {
+      "playerid": 1,
+      "type": "video"
+     }
+    ]
+   },
+   "command": "Player.GetActivePlayers",
+   "dispatched": [],
+   "changed": {},
+   "sent": [
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "26_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 0,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"26_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 0, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "27_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 0,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"27_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 0, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "28_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"28_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 1, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "29_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"29_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 1, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    }
+   ],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Player.GetActivePlayers",
+    "result": []
+   },
+   "command": "Player.GetActivePlayers",
+   "dispatched": [
+    [
+     "info.state",
+     "No active player"
+    ],
+    [
+     "info.player",
+     0
+    ],
+    [
+     "info.title",
+     ""
+    ],
+    [
+     "info.media",
+     ""
+    ],
+    [
+     "control.stop",
+     true
+    ],
+    [
+     "control.playpause",
+     false
+    ],
+    [
+     "info.streams",
+     null
+    ],
+    [
+     "info.subtitles",
+     null
+    ],
+    [
+     "control.audio",
+     ""
+    ],
+    [
+     "control.subtitle",
+     ""
+    ]
+   ],
+   "changed": {
+    "dev.control.audio": "",
+    "dev.control.playpause": false,
+    "dev.control.subtitle": "",
+    "dev.info.media": "",
+    "dev.info.player": 0,
+    "dev.info.state": "No active player"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Application.GetProperties",
+    "result": {
+     "muted": true,
+     "volume": 42
+    }
+   },
+   "command": "Application.GetProperties",
+   "dispatched": [
+    [
+     "control.mute",
+     true
+    ],
+    [
+     "control.volume",
+     42
+    ]
+   ],
+   "changed": {
+    "dev.control.volume": 42
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Favourites.GetFavourites",
+    "result": {
+     "favourites": [
+      {
+       "title": "Fav",
+       "type": "media"
+      }
+     ]
+    }
+   },
+   "command": "Favourites.GetFavourites",
+   "dispatched": [
+    [
+     "status.get_favourites",
+     {
+      "Fav": {
+       "title": "Fav",
+       "type": "media"
+      }
+     }
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Favourites.GetFavourites",
+    "result": {
+     "favourites": null
+    }
+   },
+   "command": "Favourites.GetFavourites",
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Player.GetItem",
+    "result": {
+     "item": {
+      "title": "Song",
+      "type": "audio",
+      "artist": [
+       "Artist"
+      ]
+     }
+    }
+   },
+   "command": "Player.GetItem",
+   "dispatched": [
+    [
+     "info.media",
+     "Audio"
+    ],
+    [
+     "info.title",
+     "Artist - Song"
+    ]
+   ],
+   "changed": {
+    "dev.info.media": "Audio",
+    "dev.info.title": "Artist - Song"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Player.GetItem",
+    "result": {
+     "item": {
+      "title": "",
+      "label": "Label",
+      "type": "video"
+     }
+    }
+   },
+   "command": "Player.GetItem",
+   "dispatched": [
+    [
+     "info.media",
+     "Video"
+    ],
+    [
+     "info.title",
+     "Label"
+    ]
+   ],
+   "changed": {
+    "dev.info.media": "Video",
+    "dev.info.title": "Label"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "99_Player.GetProperties",
+    "result": {
+     "speed": 0,
+     "percentage": 12.5,
+     "currentaudiostream": {
+      "name": "a"
+     },
+     "audiostreams": [],
+     "subtitleenabled": true,
+     "currentsubtitle": {
+      "name": "s"
+     },
+     "subtitles": []
+    }
+   },
+   "command": "Player.GetProperties",
+   "dispatched": [
+    [
+     "control.speed",
+     0
+    ],
+    [
+     "control.seek",
+     12.5
+    ],
+    [
+     "info.streams",
+     []
+    ],
+    [
+     "control.audio",
+     {
+      "name": "a"
+     }
+    ],
+    [
+     "info.subtitles",
+     []
+    ],
+    [
+     "control.subtitle",
+     {
+      "name": "s"
+     }
+    ],
+    [
+     "info.state",
+     "Paused"
+    ],
+    [
+     "control.stop",
+     false
+    ],
+    [
+     "control.playpause",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.control.audio": {
+     "name": "a"
+    },
+    "dev.control.seek": 12.5,
+    "dev.control.speed": 0,
+    "dev.control.stop": false,
+    "dev.control.subtitle": {
+     "name": "s"
+    },
+    "dev.info.state": "Paused"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "98_Player.GetItem",
+    "error": {
+     "code": -1
+    }
+   },
+   "command": "Player.GetItem",
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "id": "97_Player.GetItem",
+    "result": null
+   },
+   "command": "Player.GetItem",
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": "not json",
+   "command": null,
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  }
+ ],
+ "kodi_notifications": [
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "Player.OnPlay",
+    "params": {
+     "data": {
+      "item": {
+       "type": "movie",
+       "title": "Film"
+      },
+      "player": {
+       "playerid": 1,
+       "speed": 1
+      }
+     },
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "info.player",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.info.player": 1
+   },
+   "sent": [
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "30_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"30_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 1, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "31_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"31_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 1, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    }
+   ],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "Player.OnPlay",
+    "params": {
+     "data": {
+      "item": {
+       "type": "channel",
+       "channeltype": "tv",
+       "title": "News"
+      },
+      "player": {
+       "playerid": 1,
+       "speed": 1
+      }
+     },
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "info.player",
+     1
+    ],
+    [
+     "info.media",
+     "tv"
+    ],
+    [
+     "info.title",
+     "News"
+    ]
+   ],
+   "changed": {
+    "dev.info.media": "tv",
+    "dev.info.title": "News"
+   },
+   "sent": [
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "32_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"32_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 1, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "33_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"33_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 1, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    }
+   ],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "Player.OnPause",
+    "params": {
+     "data": {
+      "item": {
+       "type": "movie"
+      },
+      "player": {
+       "playerid": 1,
+       "speed": 1
+      }
+     },
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "info.state",
+     "Paused"
+    ],
+    [
+     "control.stop",
+     false
+    ],
+    [
+     "control.playpause",
+     false
+    ]
+   ],
+   "changed": {},
+   "sent": [
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "34_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"34_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 1, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "35_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"35_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 1, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    }
+   ],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "Player.OnResume",
+    "params": {
+     "data": {
+      "item": {
+       "type": "movie"
+      },
+      "player": {
+       "playerid": 1,
+       "speed": 1
+      }
+     },
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "info.state",
+     "Playing"
+    ],
+    [
+     "control.stop",
+     false
+    ],
+    [
+     "control.playpause",
+     true
+    ]
+   ],
+   "changed": {
+    "dev.control.playpause": true,
+    "dev.info.state": "Playing"
+   },
+   "sent": [
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "36_Player.GetItem",
+      "method": "Player.GetItem",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "title",
+        "artist"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"36_Player.GetItem\", \"method\": \"Player.GetItem\", \"params\": {\"playerid\": 1, \"properties\": [\"title\", \"artist\"]}}"
+    },
+    {
+     "data": {
+      "jsonrpc": "2.0",
+      "id": "37_Player.GetProperties",
+      "method": "Player.GetProperties",
+      "params": {
+       "playerid": 1,
+       "properties": [
+        "speed",
+        "percentage",
+        "currentaudiostream",
+        "audiostreams",
+        "subtitleenabled",
+        "currentsubtitle",
+        "subtitles"
+       ]
+      }
+     },
+     "payload": "{\"jsonrpc\": \"2.0\", \"id\": \"37_Player.GetProperties\", \"method\": \"Player.GetProperties\", \"params\": {\"playerid\": 1, \"properties\": [\"speed\", \"percentage\", \"currentaudiostream\", \"audiostreams\", \"subtitleenabled\", \"currentsubtitle\", \"subtitles\"]}}"
+    }
+   ],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "Player.OnStop",
+    "params": {
+     "data": {
+      "item": {
+       "type": "movie"
+      },
+      "end": true
+     },
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "info.state",
+     "No active player"
+    ],
+    [
+     "info.media",
+     ""
+    ],
+    [
+     "info.title",
+     ""
+    ],
+    [
+     "info.player",
+     0
+    ],
+    [
+     "control.stop",
+     true
+    ],
+    [
+     "control.playpause",
+     false
+    ],
+    [
+     "info.streams",
+     null
+    ],
+    [
+     "info.subtitles",
+     null
+    ],
+    [
+     "control.audio",
+     ""
+    ],
+    [
+     "control.subtitle",
+     ""
+    ]
+   ],
+   "changed": {
+    "dev.control.audio": "",
+    "dev.control.playpause": false,
+    "dev.control.stop": true,
+    "dev.control.subtitle": "",
+    "dev.info.media": "",
+    "dev.info.player": 0,
+    "dev.info.state": "No active player",
+    "dev.info.title": ""
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "GUI.OnScreensaverActivated",
+    "params": {
+     "data": {},
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "info.state",
+     "Screensaver"
+    ]
+   ],
+   "changed": {
+    "dev.info.state": "Screensaver"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "data": {
+    "jsonrpc": "2.0",
+    "method": "Application.OnVolumeChanged",
+    "params": {
+     "data": {
+      "muted": false,
+      "volume": 77
+     },
+     "sender": "xbmc"
+    }
+   },
+   "command": null,
+   "dispatched": [
+    [
+     "control.mute",
+     false
+    ],
+    [
+     "control.volume",
+     77
+    ]
+   ],
+   "changed": {
+    "dev.control.mute": false,
+    "dev.control.volume": 77
+   },
+   "sent": [],
+   "exception": null
+  }
+ ]
+}

@@ -72,7 +72,7 @@ class WebInterface(SmartPluginWebIf):
         plgitems = []
         for item in self.plugin._plg_item_dict:
             entry = self.plugin._plg_item_dict[item]
-            if item != self.plugin._suspend_item_path and not item.endswith('.read') and entry.get('mapping'):
+            if item != self.plugin._pause_item_path and not item.endswith('.read') and entry.get('mapping'):
                 plgitems.append(entry['item'])
 
         #                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),

@@ -8,6 +8,7 @@ plugin:
     keywords: iot device av epson sdp
     version: 1.0.0
     sh_minversion: '1.9.5'
+    sdp_minversion: '2.0.0'
     py_minversion: '3.7'
     multi_instance: false
     restartable: true
@@ -112,29 +113,6 @@ parameters:
             de: Serieller Anschluss (z.B. /dev/ttyUSB0 oder COM1)
             en: serial port (e.g. /dev/ttyUSB0 or COM1)
 
-    conn_type:
-        type: str
-        default: serial_async
-        valid_list:
-        -   ''
-        -   net_tcp_client
-        -   serial_async
-
-        description:
-            de: Verbindungstyp
-            en: connection type
-
-    command_class:
-        type: str
-        default: SDPCommandParseStr
-        valid_list:
-        -   SDPCommand
-        -   SDPCommandParseStr
-
-        description:
-            de: Klasse für Verarbeitung von Kommandos
-            en: class for command processing
-
     autoreconnect:
         type: bool
         default: true
@@ -191,6 +169,14 @@ parameters:
             de: Item-Pfad für das Standby-Item
             en: item path for standby switch item
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+
+        description:
+            de: Items bei Verbindungsverlust im Datenbank-Log als ungültig markieren (Datenlücke)
+            en: mark items invalid in the database log when the connection is lost (data gap)
+
 
 item_attributes:
 
@@ -205,8 +191,8 @@ item_attributes:
         type: bool
 
         description:
-            de: Item liest/erhält Werte vom Gerät
-            en: Item reads/receives data from the device
+            de: Item fordert Werte vom Gerät an (Werte empfängt jedes Item mit Kommando)
+            en: Item requests data from the device (every item with a command receives its values)
 
     epson_read_group:
         type: list(str)

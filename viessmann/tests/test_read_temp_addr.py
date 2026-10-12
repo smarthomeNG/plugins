@@ -1,3 +1,5 @@
+"""read_temp_addr() reads an unknown address through a temporary command and removes the command afterwards."""
+
 import unittest
 
 from lib.metadata import Metadata

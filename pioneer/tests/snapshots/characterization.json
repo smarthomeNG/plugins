@@ -1,0 +1,3540 @@
+{
+ "jobs_after_run": [
+  "read_initial_values"
+ ],
+ "initial_sends": [
+  {
+   "payload": "?SSE\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SSO\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SSF\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SSP\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SSQ\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SST\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SSU\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SVZ\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?STQ\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?STR\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?STT\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?STU\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?P\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?STY\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?TO\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?AP\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?ZGA\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?BP\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SUA\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "?SUB\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  }
+ ],
+ "initial_dispatched": [],
+ "writes": [
+  {
+   "item": "dev.general.amp",
+   "value": "AMP ON",
+   "sent": [
+    {
+     "payload": "00SAC\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.amp": "AMP ON"
+   }
+  },
+  {
+   "item": "dev.general.dimmer",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "3SAA\r",
+     "data": "3",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.dimmer": 3
+   }
+  },
+  {
+   "item": "dev.general.multizone",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZZ\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.multizone": true
+   }
+  },
+  {
+   "item": "dev.general.pqls",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1PQ\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.pqls": true
+   }
+  },
+  {
+   "item": "dev.general.settings.hdmi.arc",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1STT\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.hdmi.arc": true
+   }
+  },
+  {
+   "item": "dev.general.settings.hdmi.control",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1STQ\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.hdmi.control": true
+   }
+  },
+  {
+   "item": "dev.general.settings.hdmi.controlmode",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1STR\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.hdmi.controlmode": true
+   }
+  },
+  {
+   "item": "dev.general.settings.hdmi.hdzone",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1SVZ\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.hdmi.hdzone": true
+   }
+  },
+  {
+   "item": "dev.general.settings.hdmi.standbythrough",
+   "value": "OFF",
+   "sent": [
+    {
+     "payload": "00STU\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.hdmi.standbythrough": "OFF"
+   }
+  },
+  {
+   "item": "dev.general.settings.language",
+   "value": "English",
+   "sent": [
+    {
+     "payload": "00SSE\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.language": "English"
+   }
+  },
+  {
+   "item": "dev.general.settings.loudness",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1SSU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.loudness": true
+   }
+  },
+  {
+   "item": "dev.general.settings.name",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "\"x\"01SSO\r",
+     "data": "\"x\"01",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.name": "x"
+   }
+  },
+  {
+   "item": "dev.general.settings.speakersystem",
+   "value": "Normal(SB/FH)",
+   "sent": [
+    {
+     "payload": "00SSF\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.speakersystem": "Normal(SB/FH)"
+   }
+  },
+  {
+   "item": "dev.general.settings.surroundposition",
+   "value": "ON SIDE",
+   "sent": [
+    {
+     "payload": "0SSP\r",
+     "data": "0",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.surroundposition": "ON SIDE"
+   }
+  },
+  {
+   "item": "dev.general.settings.xcurve",
+   "value": "OFF",
+   "sent": [
+    {
+     "payload": "0SST\r",
+     "data": "0",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.xcurve": "OFF"
+   }
+  },
+  {
+   "item": "dev.general.settings.xover",
+   "value": "50Hz",
+   "sent": [
+    {
+     "payload": "0SSQ\r",
+     "data": "0",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.settings.xover": "50Hz"
+   }
+  },
+  {
+   "item": "dev.general.sleep",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "030SAB\r",
+     "data": "030",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.sleep": 1
+   }
+  },
+  {
+   "item": "dev.hdzone.control.input",
+   "value": "BD",
+   "sent": [
+    {
+     "payload": "25ZEA\r",
+     "data": "25",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.hdzone.control.input": "BD"
+   }
+  },
+  {
+   "item": "dev.hdzone.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZEO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.hdzone.control.power": true
+   }
+  },
+  {
+   "item": "dev.hdzone.settings.standby",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "0011SUB\r",
+     "data": "0011",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.hdzone.settings.standby": 1
+   }
+  },
+  {
+   "item": "dev.tuner.tunerpreset",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "xPR\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.tuner.tunerpreset": "x"
+   }
+  },
+  {
+   "item": "dev.tuner.tunerpresetdown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "TPD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.tuner.tunerpresetdown": true
+   }
+  },
+  {
+   "item": "dev.tuner.tunerpresetup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "TPI\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.tuner.tunerpresetup": true
+   }
+  },
+  {
+   "item": "dev.zone1.control.input",
+   "value": "BD",
+   "sent": [
+    {
+     "payload": "25FN\r",
+     "data": "25",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.input": "BD"
+   }
+  },
+  {
+   "item": "dev.zone1.control.inputdown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "FD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.inputdown": true
+   }
+  },
+  {
+   "item": "dev.zone1.control.inputup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "FU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.inputup": true
+   }
+  },
+  {
+   "item": "dev.zone1.control.mute",
+   "value": true,
+   "sent": [
+    {
+     "payload": "MO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.mute": true
+   }
+  },
+  {
+   "item": "dev.zone1.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "PO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.power": true
+   }
+  },
+  {
+   "item": "dev.zone1.control.volume",
+   "value": 185,
+   "sent": [
+    {
+     "payload": "185VL\r",
+     "data": "185",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.volume": 185
+   }
+  },
+  {
+   "item": "dev.zone1.control.volumedown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "VD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.volumedown": true
+   }
+  },
+  {
+   "item": "dev.zone1.control.volumeup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "VU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.control.volumeup": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_center",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "C__74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_center": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_height_left",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "LH_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_height_left": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_height_right",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "RH_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_height_right": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_left",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "L__74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_left": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_right",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "R__74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_right": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_wide_left",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "LW_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_wide_left": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.front_wide_right",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "RW_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_wide_right": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.subwoofer",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "SW_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.subwoofer": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.surround_left",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "SL_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.surround_left": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.channel_level.surround_right",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "SR_74CLV\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.surround_right": 12.0
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.dialog",
+   "value": 5,
+   "sent": [
+    {
+     "payload": "5ATH\r",
+     "data": "5",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.dialog": 5
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.dialogdown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "8ATH\r",
+     "data": "True",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.dialogdown": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.dialogup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "9ATH\r",
+     "data": "True",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.dialogup": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.hdmiaudio",
+   "value": "AMP",
+   "sent": [
+    {
+     "payload": "0HA\r",
+     "data": "0",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.hdmiaudio": "AMP"
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.hdmiout",
+   "value": "HDMI OUT 1+2 ON",
+   "sent": [
+    {
+     "payload": "0HO\r",
+     "data": "0",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.hdmiout": "HDMI OUT 1+2 ON"
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.listeningmode",
+   "value": "STEREO (cyclic)",
+   "sent": [
+    {
+     "payload": "0001SR\r",
+     "data": "0001",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.listeningmode": "STEREO (cyclic)"
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.general.speakers",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "1SPK\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.general.speakers": 1,
+    "dev.zone1.settings.sound.general.speakers.speakera": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.bass",
+   "value": 6,
+   "sent": [
+    {
+     "payload": "00BA\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.bass": 6
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.bassdown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "BD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.bassdown": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.bassup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "BI\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.bassup": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.tone",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1TO\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "?TO\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "?TR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "?BA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.read": true,
+    "dev.zone1.settings.sound.tone_control.tone": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.treble",
+   "value": 6,
+   "sent": [
+    {
+     "payload": "00TR\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.treble": 6
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.trebledown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "TD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.trebledown": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.sound.tone_control.trebleup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "TI\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.sound.tone_control.trebleup": true
+   }
+  },
+  {
+   "item": "dev.zone1.settings.standby",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "0150STY\r",
+     "data": "0150",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone1.settings.standby": 1
+   }
+  },
+  {
+   "item": "dev.zone2.control.input",
+   "value": "DVD",
+   "sent": [
+    {
+     "payload": "04ZS\r",
+     "data": "04",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.input": "DVD"
+   }
+  },
+  {
+   "item": "dev.zone2.control.inputdown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZSFD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.inputdown": true
+   }
+  },
+  {
+   "item": "dev.zone2.control.inputup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZSFU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.inputup": true
+   }
+  },
+  {
+   "item": "dev.zone2.control.mute",
+   "value": true,
+   "sent": [
+    {
+     "payload": "Z2MO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.mute": true
+   }
+  },
+  {
+   "item": "dev.zone2.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "APO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.power": true
+   }
+  },
+  {
+   "item": "dev.zone2.control.volume",
+   "value": 81,
+   "sent": [
+    {
+     "payload": "81ZV\r",
+     "data": "81",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.volume": 81
+   }
+  },
+  {
+   "item": "dev.zone2.control.volumedown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.volumedown": true
+   }
+  },
+  {
+   "item": "dev.zone2.control.volumeup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.control.volumeup": true
+   }
+  },
+  {
+   "item": "dev.zone2.settings.sound.channel_level.front_left",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "L__74ZGE\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.settings.sound.channel_level.front_left": 12.0
+   }
+  },
+  {
+   "item": "dev.zone2.settings.sound.channel_level.front_right",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "R__74ZGE\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.settings.sound.channel_level.front_right": 12.0
+   }
+  },
+  {
+   "item": "dev.zone2.settings.sound.tone_control.bass",
+   "value": 6,
+   "sent": [
+    {
+     "payload": "00ZGB\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.settings.sound.tone_control.bass": 6
+   }
+  },
+  {
+   "item": "dev.zone2.settings.sound.tone_control.tone",
+   "value": true,
+   "sent": [
+    {
+     "payload": "1ZGA\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "?ZGA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "?ZGC\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "?ZGB\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.settings.sound.tone_control.read": true,
+    "dev.zone2.settings.sound.tone_control.tone": true
+   }
+  },
+  {
+   "item": "dev.zone2.settings.sound.tone_control.treble",
+   "value": 6,
+   "sent": [
+    {
+     "payload": "00ZGC\r",
+     "data": "00",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone2.settings.sound.tone_control.treble": 6
+   }
+  },
+  {
+   "item": "dev.zone3.control.input",
+   "value": "VIDEO 1 (VIDEO)",
+   "sent": [
+    {
+     "payload": "10ZT\r",
+     "data": "10",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.input": "VIDEO 1 (VIDEO)"
+   }
+  },
+  {
+   "item": "dev.zone3.control.inputdown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZTFD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.inputdown": true
+   }
+  },
+  {
+   "item": "dev.zone3.control.inputup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "ZTFU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.inputup": true
+   }
+  },
+  {
+   "item": "dev.zone3.control.mute",
+   "value": true,
+   "sent": [
+    {
+     "payload": "Z3MO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.mute": true
+   }
+  },
+  {
+   "item": "dev.zone3.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "BPO\r",
+     "data": "O",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.power": true
+   }
+  },
+  {
+   "item": "dev.zone3.control.volume",
+   "value": 81,
+   "sent": [
+    {
+     "payload": "81YV\r",
+     "data": "81",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.volume": 81
+   }
+  },
+  {
+   "item": "dev.zone3.control.volumedown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "YD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.volumedown": true
+   }
+  },
+  {
+   "item": "dev.zone3.control.volumeup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "YU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.control.volumeup": true
+   }
+  },
+  {
+   "item": "dev.zone3.settings.sound.channel_level.front_left",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "L__74ZHE\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.settings.sound.channel_level.front_left": 12.0
+   }
+  },
+  {
+   "item": "dev.zone3.settings.sound.channel_level.front_right",
+   "value": 12.0,
+   "sent": [
+    {
+     "payload": "R__74ZHE\r",
+     "data": "74",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.settings.sound.channel_level.front_right": 12.0
+   }
+  },
+  {
+   "item": "dev.zone3.settings.standby",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "0011SUA\r",
+     "data": "0011",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.zone3.settings.standby": 1
+   }
+  }
+ ],
+ "reads": [
+  {
+   "command": "general.amp",
+   "sent": [
+    {
+     "payload": "?SAC\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.dimmer",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.display",
+   "sent": [
+    {
+     "payload": "?FL\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.error",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.multizone",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.pqls",
+   "sent": [
+    {
+     "payload": "?PQ\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.hdmi.arc",
+   "sent": [
+    {
+     "payload": "?STT\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.hdmi.control",
+   "sent": [
+    {
+     "payload": "?STQ\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.hdmi.controlmode",
+   "sent": [
+    {
+     "payload": "?STR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.hdmi.hdzone",
+   "sent": [
+    {
+     "payload": "?SVZ\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.hdmi.standbythrough",
+   "sent": [
+    {
+     "payload": "?STU\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.language",
+   "sent": [
+    {
+     "payload": "?SSE\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.loudness",
+   "sent": [
+    {
+     "payload": "?SSU\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.name",
+   "sent": [
+    {
+     "payload": "?SSO\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.speakersystem",
+   "sent": [
+    {
+     "payload": "?SSF\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.surroundposition",
+   "sent": [
+    {
+     "payload": "?SSP\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.xcurve",
+   "sent": [
+    {
+     "payload": "?SST\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.settings.xover",
+   "sent": [
+    {
+     "payload": "?SSQ\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.sleep",
+   "sent": [
+    {
+     "payload": "?SAB\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "hdzone.control.input",
+   "sent": [
+    {
+     "payload": "?ZEA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "hdzone.control.power",
+   "sent": [
+    {
+     "payload": "?ZEP\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "hdzone.settings.standby",
+   "sent": [
+    {
+     "payload": "?SUB\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "tuner.genre",
+   "sent": [
+    {
+     "payload": "?GAH\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "tuner.station",
+   "sent": [
+    {
+     "payload": "?GAH\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "tuner.title",
+   "sent": [
+    {
+     "payload": "?GAH\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "tuner.tunerpreset",
+   "sent": [
+    {
+     "payload": "?PR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.control.input",
+   "sent": [
+    {
+     "payload": "?F\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.control.mute",
+   "sent": [
+    {
+     "payload": "?M\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.control.power",
+   "sent": [
+    {
+     "payload": "?P\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.control.volume",
+   "sent": [
+    {
+     "payload": "?V\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_center",
+   "sent": [
+    {
+     "payload": "?C__CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_height_left",
+   "sent": [
+    {
+     "payload": "?LH_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_height_right",
+   "sent": [
+    {
+     "payload": "?RH_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_left",
+   "sent": [
+    {
+     "payload": "?L__CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_right",
+   "sent": [
+    {
+     "payload": "?R__CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_wide_left",
+   "sent": [
+    {
+     "payload": "?LW_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.front_wide_right",
+   "sent": [
+    {
+     "payload": "?RW_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.subwoofer",
+   "sent": [
+    {
+     "payload": "?SW_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.surround_left",
+   "sent": [
+    {
+     "payload": "?SL_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.channel_level.surround_right",
+   "sent": [
+    {
+     "payload": "?SR_CLV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.general.dialog",
+   "sent": [
+    {
+     "payload": "?ATH\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.general.hdmiaudio",
+   "sent": [
+    {
+     "payload": "?HA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.general.hdmiout",
+   "sent": [
+    {
+     "payload": "?HO\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.general.listeningmode",
+   "sent": [
+    {
+     "payload": "?S\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.general.playingmode",
+   "sent": [
+    {
+     "payload": "?L\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.general.speakers",
+   "sent": [
+    {
+     "payload": "?SPK\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.tone_control.bass",
+   "sent": [
+    {
+     "payload": "?BA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.tone_control.tone",
+   "sent": [
+    {
+     "payload": "?TO\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.sound.tone_control.treble",
+   "sent": [
+    {
+     "payload": "?TR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone1.settings.standby",
+   "sent": [
+    {
+     "payload": "?STY\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.control.input",
+   "sent": [
+    {
+     "payload": "?ZS\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.control.mute",
+   "sent": [
+    {
+     "payload": "?Z2M\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.control.power",
+   "sent": [
+    {
+     "payload": "?AP\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.control.volume",
+   "sent": [
+    {
+     "payload": "?ZV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.settings.sound.channel_level.front_left",
+   "sent": [
+    {
+     "payload": "?ZGEL___\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.settings.sound.channel_level.front_right",
+   "sent": [
+    {
+     "payload": "?ZGER___\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.settings.sound.tone_control.bass",
+   "sent": [
+    {
+     "payload": "?ZGB\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.settings.sound.tone_control.tone",
+   "sent": [
+    {
+     "payload": "?ZGA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone2.settings.sound.tone_control.treble",
+   "sent": [
+    {
+     "payload": "?ZGC\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.control.input",
+   "sent": [
+    {
+     "payload": "?ZT\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.control.mute",
+   "sent": [
+    {
+     "payload": "?Z3M\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.control.power",
+   "sent": [
+    {
+     "payload": "?BP\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.control.volume",
+   "sent": [
+    {
+     "payload": "?YV\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.settings.sound.channel_level.front_left",
+   "sent": [
+    {
+     "payload": "?ZHEL___\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.settings.sound.channel_level.front_right",
+   "sent": [
+    {
+     "payload": "?ZHER___\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "zone3.settings.standby",
+   "sent": [
+    {
+     "payload": "?SUA\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  }
+ ],
+ "replies": [
+  {
+   "reply_to": "general.amp",
+   "data": "SAC00",
+   "command": null,
+   "dispatched": [
+    [
+     "general.amp",
+     "AMP ON"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.dimmer",
+   "data": "SAA1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.dimmer",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.general.dimmer": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.display",
+   "data": "FLaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "command": null,
+   "dispatched": [
+    [
+     "general.display",
+     ""
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.error",
+   "data": "E02",
+   "command": null,
+   "dispatched": [
+    [
+     "general.error",
+     "not available now"
+    ]
+   ],
+   "changed": {
+    "dev.general.error": "not available now"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.multizone",
+   "data": "APR1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.multizone",
+     false
+    ],
+    [
+     "zone2.control.power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.general.multizone": false,
+    "dev.zone2.control.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.pqls",
+   "data": "PQ1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.pqls",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.hdmi.arc",
+   "data": "STT1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.hdmi.arc",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.hdmi.control",
+   "data": "STQ1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.hdmi.control",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.hdmi.controlmode",
+   "data": "STR1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.hdmi.controlmode",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.hdmi.hdzone",
+   "data": "SVZ1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.hdmi.hdzone",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.hdmi.standbythrough",
+   "data": "STU00",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.hdmi.standbythrough",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.language",
+   "data": "SSE00",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.language",
+     "English"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.loudness",
+   "data": "SSU1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.loudness",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.name",
+   "data": "SSO11\"a\"",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.name",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.general.settings.name": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.speakersystem",
+   "data": "SSF00",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.speakersystem",
+     "Normal(SB/FH)"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.surroundposition",
+   "data": "SSP0",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.surroundposition",
+     "ON SIDE"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.xcurve",
+   "data": "SST0",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.xcurve",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.settings.xover",
+   "data": "SSQ0",
+   "command": null,
+   "dispatched": [
+    [
+     "general.settings.xover",
+     "50Hz"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.sleep",
+   "data": "SAB111",
+   "command": null,
+   "dispatched": [
+    [
+     "general.sleep",
+     111
+    ]
+   ],
+   "changed": {
+    "dev.general.sleep": 111
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "hdzone.control.input",
+   "data": "ZEA25",
+   "command": null,
+   "dispatched": [
+    [
+     "hdzone.control.input",
+     "BD"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "hdzone.control.power",
+   "data": "ZEP1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.multizone",
+     false
+    ],
+    [
+     "hdzone.control.power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.hdzone.control.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "hdzone.settings.standby",
+   "data": "SUB1111",
+   "command": null,
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "tuner.genre",
+   "data": "GEH05024\"a\"",
+   "command": null,
+   "dispatched": [
+    [
+     "tuner.genre",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.tuner.genre": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "tuner.station",
+   "data": "GEH04022\"a\"",
+   "command": null,
+   "dispatched": [
+    [
+     "tuner.station",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.tuner.station": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "tuner.title",
+   "data": "GEH01020\"a\"",
+   "command": null,
+   "dispatched": [
+    [
+     "tuner.title",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.tuner.title": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "tuner.tunerpreset",
+   "data": "PRA11",
+   "command": null,
+   "dispatched": [
+    [
+     "tuner.tunerpreset",
+     "A11"
+    ]
+   ],
+   "changed": {
+    "dev.tuner.tunerpreset": "A11"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.control.input",
+   "data": "FN25",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.control.input",
+     "BD"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.control.mute",
+   "data": "MUT1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.control.mute",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.zone1.control.mute": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.control.power",
+   "data": "PWR1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.control.power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.zone1.control.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.control.volume",
+   "data": "VOL111",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.control.volume",
+     "111"
+    ]
+   ],
+   "changed": {
+    "dev.zone1.control.volume": 111
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_center",
+   "data": "CLVC__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_center",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_center": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_height_left",
+   "data": "CLVLH_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_height_left",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_height_left": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_height_right",
+   "data": "CLVRH_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_height_right",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_height_right": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_left",
+   "data": "CLVL__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_left",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_left": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_right",
+   "data": "CLVR__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_right",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_right": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_wide_left",
+   "data": "LWVSW_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_wide_left",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_wide_left": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.front_wide_right",
+   "data": "RWVSW_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.front_wide_right",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.front_wide_right": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.subwoofer",
+   "data": "CLVSW_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.subwoofer",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.subwoofer": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.surround_left",
+   "data": "CLVSL_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.surround_left",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.surround_left": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.channel_level.surround_right",
+   "data": "CLVSR_11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.channel_level.surround_right",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.channel_level.surround_right": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.general.dialog",
+   "data": "ATH1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.general.dialog",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.general.dialog": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.general.hdmiaudio",
+   "data": "HA0",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.general.hdmiaudio",
+     "AMP"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.general.hdmiout",
+   "data": "HO0",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.general.hdmiout",
+     "HDMI OUT 1+2 ON"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.general.listeningmode",
+   "data": "SR0001",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.general.listeningmode",
+     "STEREO (cyclic)"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.general.playingmode",
+   "data": "LM0101",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.general.playingmode",
+     "PLIIx MOVIE"
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.sound.general.playingmode": "PLIIx MOVIE"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.general.speakers",
+   "data": "SPK1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.general.speakers",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.tone_control.bass",
+   "data": "BA00",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.tone_control.bass",
+     6
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.tone_control.tone",
+   "data": "TO1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.tone_control.tone",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.sound.tone_control.treble",
+   "data": "TR00",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.sound.tone_control.treble",
+     6
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone1.settings.standby",
+   "data": "STY1111",
+   "command": null,
+   "dispatched": [
+    [
+     "zone1.settings.standby",
+     111.1
+    ]
+   ],
+   "changed": {
+    "dev.zone1.settings.standby": 111.1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.control.input",
+   "data": "Z2F04",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.control.input",
+     "DVD"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.control.mute",
+   "data": "Z2MUT1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.control.mute",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.zone2.control.mute": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.control.power",
+   "data": "APR1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.multizone",
+     false
+    ],
+    [
+     "zone2.control.power",
+     false
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.control.volume",
+   "data": "ZV11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.control.volume",
+     "11"
+    ]
+   ],
+   "changed": {
+    "dev.zone2.control.volume": 11
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.settings.sound.channel_level.front_left",
+   "data": "ZGEL__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.settings.sound.channel_level.front_left",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone2.settings.sound.channel_level.front_left": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.settings.sound.channel_level.front_right",
+   "data": "ZGER__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.settings.sound.channel_level.front_right",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone2.settings.sound.channel_level.front_right": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.settings.sound.tone_control.bass",
+   "data": "ZGB00",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.settings.sound.tone_control.bass",
+     6
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.settings.sound.tone_control.tone",
+   "data": "ZGA1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.settings.sound.tone_control.tone",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone2.settings.sound.tone_control.treble",
+   "data": "ZGC00",
+   "command": null,
+   "dispatched": [
+    [
+     "zone2.settings.sound.tone_control.treble",
+     6
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.control.input",
+   "data": "Z3F10",
+   "command": null,
+   "dispatched": [
+    [
+     "zone3.control.input",
+     "VIDEO 1 (VIDEO)"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.control.mute",
+   "data": "Z3MUT1",
+   "command": null,
+   "dispatched": [
+    [
+     "zone3.control.mute",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.zone3.control.mute": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.control.power",
+   "data": "BPR1",
+   "command": null,
+   "dispatched": [
+    [
+     "general.multizone",
+     false
+    ],
+    [
+     "zone3.control.power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.zone3.control.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.control.volume",
+   "data": "YV11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone3.control.volume",
+     "11"
+    ]
+   ],
+   "changed": {
+    "dev.zone3.control.volume": 11
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.settings.sound.channel_level.front_left",
+   "data": "ZHEL__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone3.settings.sound.channel_level.front_left",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone3.settings.sound.channel_level.front_left": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.settings.sound.channel_level.front_right",
+   "data": "ZHER__11",
+   "command": null,
+   "dispatched": [
+    [
+     "zone3.settings.sound.channel_level.front_right",
+     -19.5
+    ]
+   ],
+   "changed": {
+    "dev.zone3.settings.sound.channel_level.front_right": -19.5
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "zone3.settings.standby",
+   "data": "SUA1111",
+   "command": null,
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  }
+ ]
+}

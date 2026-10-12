@@ -1,0 +1,122 @@
+{
+ "jobs_after_run": [
+  "epson_cyclic",
+  "read_initial_values"
+ ],
+ "initial_sends": [
+  {
+   "payload": "PWR?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  }
+ ],
+ "initial_dispatched": [],
+ "writes": [
+  {
+   "item": "dev.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "PWR ON\r",
+     "data": "ON",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.power": true
+   }
+  },
+  {
+   "item": "dev.source",
+   "value": "Analog",
+   "sent": [
+    {
+     "payload": "SOURCE 21\r",
+     "data": "21",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.source": "Analog"
+   }
+  }
+ ],
+ "reads": [
+  {
+   "command": "power",
+   "sent": [
+    {
+     "payload": "PWR?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "source",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  }
+ ],
+ "replies": [
+  {
+   "reply_to": "power",
+   "data": ": PWR=00",
+   "command": null,
+   "dispatched": [
+    [
+     "power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "power",
+   "data": ":WR=00",
+   "command": null,
+   "dispatched": [
+    [
+     "power",
+     false
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "source",
+   "data": "SOURCE 11",
+   "command": null,
+   "dispatched": [
+    [
+     "source",
+     "Analog"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  }
+ ]
+}

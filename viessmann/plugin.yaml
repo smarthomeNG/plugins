@@ -11,7 +11,7 @@ plugin:
     version: '2.0.0'
     sh_minversion: '1.9.5.1'
     py_minversion: '3.6'
-    sdp_minversion: '1.1.0'
+    sdp_minversion: '2.0.0'
     multi_instance: false
     restartable: true
     classname: viessmann
@@ -128,8 +128,8 @@ item_attributes:
         type: bool
 
         description:
-            de: Liest/erhält Werte vom Gerät
-            en: Reads/receives data from the device
+            de: Fordert Werte vom Gerät an (Werte empfängt jedes Item mit Kommando)
+            en: Requests data from the device (every item with a command receives its values)
 
     viess_read_group:
         type: list(str)

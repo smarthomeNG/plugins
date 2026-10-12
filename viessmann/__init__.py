@@ -47,7 +47,8 @@ else:
         builtins.SDP_standalone = False
     from .protocol import SDPProtocolViessmann
 
-from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_PROTOCOL, SDPError
+from lib.model.sdp.declarations import TransportRule
+from lib.model.sdp.globals import CONN_SER_DIR, PLUGIN_ATTR_SERIAL_PORT, SDPError
 from lib.model.smartdeviceplugin import SDPResultError, SmartDevicePlugin, Standalone
 
 
@@ -63,18 +64,15 @@ class viessmann(SmartDevicePlugin):
 
     PLUGIN_VERSION = '2.0.0'
 
+    TRANSPORTS = (TransportRule(CONN_SER_DIR, requires='serialport'),)
+    PROTOCOL = SDPProtocolViessmann
+
     #: human-readable reason for the last failed read_addr/read_temp_addr/write_addr call, for webif display
     _last_addr_error: str | None = None
 
-    def _set_device_defaults(self):
-
+    def _post_init(self):
         if not SDP_standalone:  # noqa: F821
             self._webif = WebInterface
-
-        self._parameters[PLUGIN_ATTR_PROTOCOL] = SDPProtocolViessmann
-
-        # use callbacks to enable schedulers
-        self._use_callbacks = True
 
     #
     # methods for standalone mode

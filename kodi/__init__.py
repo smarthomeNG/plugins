@@ -45,14 +45,8 @@ else:
     if not hasattr(builtins, 'SDP_standalone'):
         builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (
-    JSON_MOVE_KEYS,
-    PLUGIN_ATTR_CMD_CLASS,
-    PLUGIN_ATTR_PROTOCOL,
-    PROTO_JSONRPC,
-    PLUGIN_ATTR_CONNECTION,
-    CONN_NET_TCP_CLI,
-)
+from lib.model.sdp.declarations import TransportRule
+from lib.model.sdp.globals import CONN_NET_TCP_CLI, PROTO_JSONRPC
 
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
@@ -76,9 +70,9 @@ class kodi(SmartDevicePlugin):
     additional specific information from the device. This is handled by
     ``send_command()`` and ``_update_status()``.
 
-    The "special" (a.k.a. fake) commands (as they are not a single command to
-    send to the device) have to be recognized, so we also tamper with
-    ``is_valid_command()``.
+    The info.* commands are pseudo commands (neither read nor write in
+    commands.py), filled by the plugin from Kodi's replies and notifications;
+    status.update and info.macro writes are handled by the plugin.
 
     NOTE: quite some of the logic in ``on_data_received()``, especially most of
           the code for handling notifications could be achieved by adding complex
@@ -96,27 +90,20 @@ class kodi(SmartDevicePlugin):
 
     PLUGIN_VERSION = '1.7.3'
 
-    def _set_device_defaults(self):
-        self._use_callbacks = True
-        self._parameters.update(
-            {
-                JSON_MOVE_KEYS: ['playerid', 'properties'],
-                PLUGIN_ATTR_CONNECTION: CONN_NET_TCP_CLI,
-                PLUGIN_ATTR_PROTOCOL: PROTO_JSONRPC,
-                PLUGIN_ATTR_CMD_CLASS: 'SDPCommandJSON',
-            }
-        )
+    TRANSPORTS = (TransportRule(CONN_NET_TCP_CLI, requires='host'),)
+    PROTOCOL = PROTO_JSONRPC
+    COMMAND_CLASS = 'SDPCommandJSON'
+    JSON_MOVE_KEYS = ('playerid', 'properties')
 
     def _post_init(self):
         self._activeplayers = []
         self._playerid = 0
 
-        # these commands are not meant to control the kodi device, but to
-        # communicate with the plugin, e.g. triggering updating
-        # player info or returning the player_id. As these commands are not
-        # sent (directly) to the device, they should not be processed via
-        # the SDPCommands class and not listed in commands.py
-        self._special_commands = {'read': ['info.player'], 'write': ['status.update']}
+        # writes handled by the plugin, not sent to Kodi
+        self._plugin_writes = ('status.update', 'info.macro')
+
+        # actions which run only when their item is set to a truthy value
+        self._truthy_only_commands = ('control.power', 'control.quit')
 
     def on_connect(self, by=None):
         super().on_connect(by)
@@ -379,51 +366,18 @@ class kodi(SmartDevicePlugin):
         """
         Checks for special commands and handles them
         """
-        if command in self._special_commands['read' if value is None else 'write']:
-            if command == 'status.update':
-                if value:
-                    self._update_status()
-                return (False, True)
-            elif value is None:
-                self.logger.debug(
-                    f'Special command {command} called for reading, which is not intended. Ignoring request'
-                )
-                return (False, True)
-            else:
-                # this shouldn't happen
-                self.logger.warning(
-                    f'Special command {command} found, no action set for processing. Please inform developers. Ignoring request'
-                )
-                return (False, True)
+        if command in self._plugin_writes:
+            if command == 'status.update' and value:
+                self._update_status()
+            return (False, True)
+
+        if command in self._truthy_only_commands and not value:
+            self.logger.debug(f'Command {command} with value {value} ignored, it only runs for a truthy value')
+            return (False, True)
 
         # add playerid to kwargs for further processing
         kwargs['playerid'] = self._playerid
         return (True, True)
-
-    def is_valid_command(self, command, read=None):
-        """
-        In addition to base class method, allow 'special'
-        commands not defined in commands.py which are meant
-        to control the plugin device, e.g. 'update' to read
-        player status.
-        If not special command, call base class method
-
-        :param command: the command to test
-        :type command: str
-        :param read: check for read (True) or write (False), or both (None)
-        :type read: bool | NoneType
-        :return: True if command is valid, False otherwise
-        :rtype: bool
-        """
-        if read is None:
-            special_commands = self._special_commands['read'] + self._special_commands['write']
-        else:
-            special_commands = self._special_commands['read' if read else 'write']
-        if command in special_commands:
-            self.logger.debug(f'Acknowledging special command {command}, read is {read}')
-            return True
-        else:
-            return super().is_valid_command(command, read)
 
     #
     # new methods

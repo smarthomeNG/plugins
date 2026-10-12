@@ -1,40 +1,50 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-"""
-Tests that on_connect() does not crash when no item is bound to
-'general.verbose'. get_items_for_mapping() returns [] (never None) when
-unbound, so `[...][0]` must not be indexed unconditionally - that would
-raise IndexError on every connection unless a user happened to configure
-an item for that specific mapping.
-"""
+"""Verbose mode activation on connect."""
 
+import os
+import tempfile
 import unittest
-from unittest.mock import MagicMock
 
-from plugins.oppo import oppo
+from tests.sdp_harness import load_sdp_plugin
+from tests.sdp_harness.characterize import items_yaml_from_struct
+
+PLUGIN_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+WITHOUT_VERBOSE = """
+dev:
+    hdmiresolution:
+        type: str
+        oppo_command: general.hdmiresolution
+        oppo_read: true
+"""
 
 
-def _make_plugin(bound_items=None):
-    plugin = object.__new__(oppo)
-    plugin.logger = MagicMock()
-    plugin.send_command = MagicMock()
-    plugin.get_items_for_mapping = MagicMock(return_value=bound_items or [])
-    return plugin
+class TestOnConnect(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.rig = None
 
+    def tearDown(self):
+        if self.rig:
+            self.rig.plugin.stop()
+        self._tmp.cleanup()
 
-class TestOnConnectVerboseGuard(unittest.TestCase):
-    def test_no_bound_item_does_not_raise(self):
-        plugin = _make_plugin(bound_items=[])
-        # must not raise IndexError
-        plugin.on_connect()
-        plugin.send_command.assert_not_called()
+    def connect(self, items):
+        self.rig = load_sdp_plugin(self._tmp.name, 'plugins.oppo', 'oppo', items, params={'host': 'sim'})
+        self.rig.plugin.run()
+        return self.rig
 
-    def test_bound_item_still_activates_verbose(self):
-        item = MagicMock()
-        item.property.value = 2
-        plugin = _make_plugin(bound_items=[item])
-        plugin.on_connect()
-        plugin.send_command.assert_called_once_with('general.verbose', 2)
+    def test_bound_verbose_item_activates_verbose_mode(self):
+        rig = self.connect(items_yaml_from_struct(PLUGIN_DIR, 'UDP-203'))
+
+        self.assertIn('#SVM 2\r', rig.connection.payloads)
+
+    def test_without_verbose_item_connects_without_verbose_mode(self):
+        rig = self.connect(WITHOUT_VERBOSE)
+
+        self.assertNotIn('#SVM', ''.join(rig.connection.payloads))
+        self.assertIsNotNone(rig.job('read_initial_values'))
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ plugin:
     version: '2.0.0'
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
-    sdp_minversion: '1.0.4'
+    sdp_minversion: '2.0.0'
     multi_instance: false
     restartable: true
     classname: lms
@@ -182,7 +182,7 @@ parameters:
 
     resume_initial_read:
         type: bool
-        defaul: false
+        default: false
 
         description:
             de: Bei resume vom Plugin erstmaliges Lesen erneut durchführen
@@ -209,8 +209,8 @@ item_attributes:
         type: bool
 
         description:
-            de: Item liest/erhält Werte vom Gerät
-            en: Item reads/receives data from the device
+            de: Item fordert Werte vom Gerät an (Werte empfängt jedes Item mit Kommando)
+            en: Item requests data from the device (every item with a command receives its values)
 
     lms_read_group:
         type: list(str)
