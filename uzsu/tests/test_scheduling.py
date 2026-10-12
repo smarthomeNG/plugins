@@ -82,3 +82,23 @@ class TestInterpolation(TestUZSUBase):
         before = plugin.interpolation(item=item)
         result = plugin.interpolation('exponential', item=item)
         self.assertEqual(result, before)
+
+
+class TestOneShotAlarm(TestUZSUBase):
+    """An entry with ``once`` fires at its next occurrence and is deactivated afterwards (alarm clock)."""
+
+    def setUp(self):
+        self.plugin = self.plugin_with_entry('main.temp.uzsu', {'value': 21.5, 'time': '07:00', 'once': True})
+        self.item = self.sh.return_item('main.temp.uzsu')
+        self.entry = self.plugin._items[self.item]['list'][0]
+
+    def test_is_scheduled_until_it_has_fired(self):
+        nxt, value, _ = self.plugin._get_time(self.entry, 'next', self.item, 0, 'test')
+        self.assertIsNotNone(nxt)
+        self.assertEqual(value, 21.5)
+
+    def test_deactivated_after_firing(self):
+        self.plugin._set(self.item, 21.5, caller='test', entryindex=0)
+        self.assertFalse(self.entry['active'])
+        nxt, _, _ = self.plugin._get_time(self.entry, 'next', self.item, 0, 'test')
+        self.assertIsNone(nxt)

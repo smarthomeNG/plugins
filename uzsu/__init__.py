@@ -65,6 +65,13 @@
 #
 #     rrule:    You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
 #
+#     holidays: combines the rrule weekdays with the core holiday calendar (series: 'seriesCalculated' ignores it):
+#                  'exclude': no switching on holidays
+#                  'include': switching on the rrule weekdays and additionally on holidays
+#                  'only':    switching on holidays only
+#
+#     holidays_scope: 'all' (default) uses public and custom holidays, 'public' uses public holidays only.
+#
 # Example
 #
 # Activates the light every other day at 16:30 and deactivates it at 17:30 for five times:
@@ -81,7 +88,7 @@ from lib.shtime import Shtime
 
 from datetime import datetime, timedelta
 from time import sleep
-from dateutil.rrule import rrulestr
+from dateutil.rrule import rrulestr, rruleset
 from dateutil import parser
 from dateutil.tz import tzutc
 from unittest import mock
@@ -92,6 +99,7 @@ from .webif import WebInterface
 
 ITEM_TAG = ['uzsu_item']
 PLUGIN_TAG = 'UZSU Plugin'
+HOLIDAY_MODES = ('exclude', 'include', 'only')
 
 
 class UZSU(SmartPlugin):
@@ -122,7 +130,8 @@ class UZSU(SmartPlugin):
         self._sun_warned = set()
 
         self.itemsApi = Items.get_instance()
-        self._timezone = Shtime.get_instance().tzinfo()
+        self._shtime = Shtime.get_instance()
+        self._timezone = self._shtime.tzinfo()
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
         self._interpolation_interval = self.get_parameter_value('interpolation_interval')
         self._interpolation_type = self.get_parameter_value('interpolation_type')
@@ -1105,8 +1114,8 @@ class UZSU(SmartPlugin):
                 return None, None, None
             if 'sun' in time and self._sun_unavailable_for(item, time):
                 return None, None, None
-            if 'rrule' in entry and 'series' not in time:
-                if entry['rrule'] == '':
+            if ('rrule' in entry or entry.get('holidays') in HOLIDAY_MODES) and 'series' not in time:
+                if entry.get('rrule', '') == '':
                     entry['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
                 if 'dtstart' in entry:
                     rrule = rrulestr(entry['rrule'], dtstart=entry['dtstart'])
@@ -1135,6 +1144,7 @@ class UZSU(SmartPlugin):
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(weekbefore, datetime.min.time()))
                             rstr = str(rrule).replace('\n', ';')
                             self.logger.debug(f'{item}: Looking for {timescan} time. Found rrule: {rstr}')
+                rrule = self._apply_holidays(rrule, entry)
                 dt = datetime.now(self._timezone).replace(tzinfo=None)
                 while self.alive:
                     dt = rrule.before(dt) if timescan == 'previous' else rrule.after(dt)
@@ -1251,6 +1261,40 @@ class UZSU(SmartPlugin):
         except Exception as e:
             self.logger.error(f'{item}: Error "{time}" parsing time: {e}')
         return None, None, None
+
+    def _holiday_dates(self, public_only=False):
+        """
+        Returns the dates of the core holiday calendar from one week ago on.
+
+        :param public_only: if True, custom holidays are left out
+        """
+        self._shtime.is_holiday()  # initializes the calendar on first use
+        calendar = self._shtime.public_holidays if public_only else self._shtime.holidays
+        earliest = (datetime.now(self._timezone) - timedelta(days=7)).date()
+        return sorted(day for day in calendar if day >= earliest)
+
+    def _apply_holidays(self, rrule, entry):
+        """
+        Combines an entry's rrule with the core holiday calendar according to the entry's ``holidays`` key
+        (``exclude``, ``include``, ``only``) and ``holidays_scope`` key (``all``, ``public``).
+
+        :param rrule:   recurrence rule of the entry
+        :param entry:   uzsu list entry
+        :return:        rrule, or an rruleset providing the same ``before``/``after`` interface
+        """
+        mode = entry.get('holidays')
+        if mode not in HOLIDAY_MODES:
+            return rrule
+        first = rrule.after(datetime.min, inc=True)
+        if first is None:
+            return rrule
+        ruleset = rruleset()
+        if mode != 'only':
+            ruleset.rrule(rrule)
+        add = ruleset.exdate if mode == 'exclude' else ruleset.rdate
+        for day in self._holiday_dates(entry.get('holidays_scope') == 'public'):
+            add(datetime.combine(day, first.time()))
+        return ruleset
 
     def _series_calculate(self, item, caller=None, source=None):
         """
@@ -1600,15 +1644,11 @@ class UZSU(SmartPlugin):
                     )
                     daycount = new_daycount
         mylist = OrderedDict()
-        actrrule = mydict['rrule'] + ';COUNT=9'
-        rrule = rrulestr(
-            actrrule,
-            dtstart=datetime.combine(
-                datetime.now(self._timezone) - timedelta(days=7),
-                parser.parse(str(starttime.hour) + ':' + str(starttime.minute)).time(),
-            ),
+        dtstart = datetime.combine(
+            datetime.now(self._timezone) - timedelta(days=7),
+            parser.parse(str(starttime.hour) + ':' + str(starttime.minute)).time(),
         )
-        for day in list(rrule):
+        for day in self._series_days(mydict, dtstart):
             mycount = 1
             timestamp = day
             mylist[timestamp] = 'x'
@@ -1621,10 +1661,10 @@ class UZSU(SmartPlugin):
         mylist[now] = 'now'
         mysortedlist = sorted(mylist)
         myindex = mysortedlist.index(now)
-        if timescan == 'next':
-            returnvalue = mysortedlist[myindex + 1]
-        else:
-            returnvalue = mysortedlist[myindex - 1]
+        neighbour = myindex + 1 if timescan == 'next' else myindex - 1
+        if not 0 <= neighbour < len(mysortedlist):
+            return None
+        returnvalue = mysortedlist[neighbour]
 
         # Get correct "sun" for this Day
         if 'sun' in mydict['series']['timeSeriesMin'] and returnvalue is not None:
@@ -1641,6 +1681,34 @@ class UZSU(SmartPlugin):
             returnvalue = returnvalue.replace(tzinfo=self._timezone)
 
         return returnvalue
+
+    def _series_days(self, mydict, dtstart):
+        """
+        Returns the start datetimes of the series occurrences around now.
+
+        :param mydict:  series list entry
+        :param dtstart: first start datetime the entry's rrule is evaluated from
+        :return:        two occurrences before today, today's and the following two; with ``holidays`` set
+                        according to the holiday calendar, otherwise the first nine rrule occurrences
+        """
+        if mydict.get('holidays') not in HOLIDAY_MODES:
+            return list(rrulestr(mydict['rrule'] + ';COUNT=9', dtstart=dtstart))
+        rule = self._apply_holidays(rrulestr(mydict['rrule'], dtstart=dtstart), mydict)
+        midnight = datetime.now(self._timezone).replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0)
+        days = []
+        day = midnight
+        for _ in range(2):
+            day = rule.before(day)
+            if day is None:
+                break
+            days.append(day)
+        day = midnight
+        for _ in range(3):
+            day = rule.after(day)
+            if day is None:
+                break
+            days.append(day)
+        return days
 
     def _series_needs_sun(self, item, seriesstart, seriesend):
         """

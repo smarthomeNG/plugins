@@ -217,6 +217,24 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    })
 
 
+Alarm (einmalige Schaltung)
+===========================
+
+Ein Eintrag mit ``once: True`` schaltet zum nächsten Zeitpunkt und wird danach deaktiviert, vergleichbar mit einem nicht wiederholten Wecker:
+
+.. code:: python
+
+   sh.eg.wohnen.leuchte.uzsu({'active':True, 'list':[
+   {'value':100, 'active':True, 'once':True, 'time': '06:30'}]})
+
+Schaltung an Werktagen, nicht aber an Feiertagen:
+
+.. code:: python
+
+   sh.eg.wohnen.leuchte.uzsu({'active':True, 'list':[
+   {'value':100, 'active':True, 'rrule':'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', 'holidays':'exclude', 'time': '06:30'}]})
+
+
 Datenformat
 ===========
 
@@ -233,3 +251,13 @@ Jedes USZU Item wird als dict-Typ gespeichert. Darin enthalten sind einige allge
 -  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
 
 -  **rrule**: Hier können Wiederholungsregeln wie in `rrule <https://dateutil.readthedocs.io/en/stable/rrule.html>`_ beschrieben festgelegt werden.
+
+-  **holidays**: Verknüpft die Wochentage der ``rrule`` mit dem Feiertagskalender des Cores (``etc/holidays.yaml``). Gilt auch für Serien; das berechnete Wochenraster ``seriesCalculated`` berücksichtigt Feiertage nicht.
+
+   -  ``exclude``: Schaltung entfällt an Feiertagen (z.B. Mo-Fr, aber nicht an Feiertagen)
+   -  ``include``: Schaltung erfolgt an den Wochentagen der ``rrule`` und zusätzlich an Feiertagen
+   -  ``only``: Schaltung erfolgt nur an Feiertagen, die Wochentage der ``rrule`` werden ignoriert
+
+   Ohne diesen Eintrag (oder mit einem anderen Wert) werden Feiertage nicht berücksichtigt. Hat der Eintrag keine ``rrule``, gilt eine tägliche Wiederholung.
+
+-  **holidays_scope**: ``all`` (Standard) berücksichtigt gesetzliche und selbst definierte Feiertage, ``public`` nur gesetzliche Feiertage.
