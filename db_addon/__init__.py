@@ -3334,7 +3334,7 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug('Connect to database.')
                     self._db.connect()
                 else:
-                    self.logger.warning('Database reconnect suppressed since last connection is less then 20sec ago.')
+                    self.logger.info('Database reconnect suppressed since last connection is less then 20sec ago.')
                     return False
 
         except Exception as e:
