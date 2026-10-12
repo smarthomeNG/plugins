@@ -241,6 +241,18 @@ item_structs:
             kodi_read@instance: false
             kodi_write@instance: false
 
+        audio_names:
+            type: list
+            kodi_command@instance: info.audio_names
+            kodi_read@instance: false
+            kodi_write@instance: false
+
+        subtitle_names:
+            type: list
+            kodi_command@instance: info.subtitle_names
+            kodi_read@instance: false
+            kodi_write@instance: false
+
         macro:
             type: bool
             kodi_command@instance: info.macro
@@ -447,6 +459,18 @@ item_structs:
                 kodi_read@instance: false
                 kodi_write@instance: false
 
+            audio_names:
+                type: list
+                kodi_command@instance: info.audio_names
+                kodi_read@instance: false
+                kodi_write@instance: false
+
+            subtitle_names:
+                type: list
+                kodi_command@instance: info.subtitle_names
+                kodi_read@instance: false
+                kodi_write@instance: false
+
             macro:
                 type: bool
                 kodi_command@instance: info.macro
@@ -502,7 +526,7 @@ item_structs:
                 kodi_read@instance: true
                 kodi_write@instance: false
                 kodi_read_group@instance:
-                -   status
+                -   ALL.status
 
             get_status_play:
                 type: bool

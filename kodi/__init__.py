@@ -95,6 +95,9 @@ class kodi(SmartDevicePlugin):
     COMMAND_CLASS = 'SDPCommandJSON'
     JSON_MOVE_KEYS = ('playerid', 'properties')
 
+    # JSON-RPC parameters which take an index as integer, by method
+    INDEX_PARAMS = {'Player.SetAudioStream': 'stream', 'Player.SetSubtitle': 'subtitle'}
+
     def _post_init(self):
         self._activeplayers = []
         self._playerid = 0
@@ -170,18 +173,7 @@ class kodi(SmartDevicePlugin):
                     self.logger.debug(f'received GetActivePlayers, set playerid to {self._playerid}')
                 else:
                     # no active players
-                    self._activeplayers = []
-                    self._dispatch_callback('info.state', 'No active player', by)
-                    self._dispatch_callback('info.player', 0, by)
-                    self._dispatch_callback('info.title', '', by)
-                    self._dispatch_callback('info.media', '', by)
-                    self._dispatch_callback('control.stop', True, by)
-                    self._dispatch_callback('control.playpause', False, by)
-                    self._dispatch_callback('info.streams', None, by)
-                    self._dispatch_callback('info.subtitles', None, by)
-                    self._dispatch_callback('control.audio', '', by)
-                    self._dispatch_callback('control.subtitle', '', by)
-                    self._playerid = 0
+                    self._reset_player_info(by)
                     self.logger.debug('received GetActivePlayers, reset playerid to 0')
 
             # got status info
@@ -228,14 +220,18 @@ class kodi(SmartDevicePlugin):
                 self.logger.debug('Received Player.GetProperties, update media data')
                 self._dispatch_callback('control.speed', result_data.get('speed'), by)
                 self._dispatch_callback('control.seek', result_data.get('percentage'), by)
-                self._dispatch_callback('info.streams', result_data.get('audiostreams'), by)
-                self._dispatch_callback('control.audio', result_data.get('currentaudiostream'), by)
-                self._dispatch_callback('info.subtitles', result_data.get('subtitles'), by)
-                if result_data.get('subtitleenabled'):
-                    subtitle = result_data.get('currentsubtitle')
-                else:
-                    subtitle = 'Off'
-                self._dispatch_callback('control.subtitle', subtitle, by)
+                audio_index = self._track_index(result_data.get('currentaudiostream'))
+                subtitle_index = (
+                    self._track_index(result_data.get('currentsubtitle'))
+                    if result_data.get('subtitleenabled')
+                    else None
+                )
+                self._dispatch_callback('info.streams', result_data.get('audiostreams') or [], by)
+                self._dispatch_callback('info.audio_names', self._track_names(result_data.get('audiostreams')), by)
+                self._dispatch_callback('control.audio', '' if audio_index is None else audio_index, by)
+                self._dispatch_callback('info.subtitles', result_data.get('subtitles') or [], by)
+                self._dispatch_callback('info.subtitle_names', self._track_names(result_data.get('subtitles')), by)
+                self._dispatch_callback('control.subtitle', 'off' if subtitle_index is None else subtitle_index, by)
 
                 # speed != 0 -> play; speed == 0 -> pause
                 if result_data.get('speed') == 0:
@@ -269,18 +265,7 @@ class kodi(SmartDevicePlugin):
             elif data['method'] == 'Player.OnStop':
                 processed = True
                 self.logger.debug('received: stopped player, set playerid to 0')
-                self._dispatch_callback('info.state', 'No active player', by)
-                self._dispatch_callback('info.media', '', by)
-                self._dispatch_callback('info.title', '', by)
-                self._dispatch_callback('info.player', 0, by)
-                self._dispatch_callback('control.stop', True, by)
-                self._dispatch_callback('control.playpause', False, by)
-                self._dispatch_callback('info.streams', None, by)
-                self._dispatch_callback('info.subtitles', None, by)
-                self._dispatch_callback('control.audio', '', by)
-                self._dispatch_callback('control.subtitle', '', by)
-                self._activeplayers = []
-                self._playerid = 0
+                self._reset_player_info(by)
 
             elif data['method'] == 'GUI.OnScreensaverActivated':
                 processed = True
@@ -378,6 +363,63 @@ class kodi(SmartDevicePlugin):
         # add playerid to kwargs for further processing
         kwargs['playerid'] = self._playerid
         return (True, True)
+
+    def _transform_send_data(self, data_dict, **kwargs):
+        """
+        Send the index of an audio stream or subtitle as number, also if it was set as digits in a string.
+        """
+        data_dict = super()._transform_send_data(data_dict, **kwargs)
+        param = self.INDEX_PARAMS.get(data_dict.get('payload'))
+        params = data_dict.get('data')
+        if param and isinstance(params, dict):
+            value = params.get(param)
+            if isinstance(value, str) and value.strip().isdecimal():
+                params[param] = int(value)
+        return data_dict
+
+    def _reset_player_info(self, by):
+        """
+        Set the player related items to "nothing is playing" and forget the active player.
+        """
+        self._activeplayers = []
+        self._playerid = 0
+        self._dispatch_callback('info.state', 'No active player', by)
+        self._dispatch_callback('info.player', 0, by)
+        self._dispatch_callback('info.title', '', by)
+        self._dispatch_callback('info.media', '', by)
+        self._dispatch_callback('control.stop', True, by)
+        self._dispatch_callback('control.playpause', False, by)
+        self._dispatch_callback('info.streams', [], by)
+        self._dispatch_callback('info.audio_names', [], by)
+        self._dispatch_callback('info.subtitles', [], by)
+        self._dispatch_callback('info.subtitle_names', [], by)
+        self._dispatch_callback('control.audio', '', by)
+        self._dispatch_callback('control.subtitle', '', by)
+
+    @staticmethod
+    def _track_index(track):
+        """
+        Index of an audio stream or subtitle as reported by Kodi, None if there is none.
+        """
+        index = track.get('index') if isinstance(track, dict) else None
+        return index if isinstance(index, int) else None
+
+    @staticmethod
+    def _track_names(tracks):
+        """
+        Display names of the audio streams or subtitles reported by Kodi, in index order.
+
+        A name is the language and the stream name (the language is left out if the name contains it),
+        or ``#<index>`` for a track without both.
+        """
+        names = []
+        for track in sorted(tracks or [], key=lambda t: t.get('index', 0)):
+            name = str(track.get('name') or '')
+            language = str(track.get('language') or '')
+            if language and language.lower() in name.lower():
+                language = ''
+            names.append(' - '.join(part for part in (language, name) if part) or f'#{track.get("index", len(names))}')
+        return names
 
     #
     # new methods

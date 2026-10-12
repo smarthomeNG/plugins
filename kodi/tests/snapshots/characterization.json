@@ -675,11 +675,19 @@
     ],
     [
      "info.streams",
-     null
+     []
+    ],
+    [
+     "info.audio_names",
+     []
     ],
     [
      "info.subtitles",
-     null
+     []
+    ],
+    [
+     "info.subtitle_names",
+     []
     ],
     [
      "control.audio",
@@ -865,20 +873,24 @@
      []
     ],
     [
+     "info.audio_names",
+     []
+    ],
+    [
      "control.audio",
-     {
-      "name": "a"
-     }
+     ""
     ],
     [
      "info.subtitles",
      []
     ],
     [
+     "info.subtitle_names",
+     []
+    ],
+    [
      "control.subtitle",
-     {
-      "name": "s"
-     }
+     "off"
     ],
     [
      "info.state",
@@ -894,15 +906,10 @@
     ]
    ],
    "changed": {
-    "dev.control.audio": {
-     "name": "a"
-    },
     "dev.control.seek": 12.5,
     "dev.control.speed": 0,
     "dev.control.stop": false,
-    "dev.control.subtitle": {
-     "name": "s"
-    },
+    "dev.control.subtitle": "off",
     "dev.info.state": "Paused"
    },
    "sent": [],
@@ -1256,16 +1263,16 @@
      "No active player"
     ],
     [
-     "info.media",
-     ""
+     "info.player",
+     0
     ],
     [
      "info.title",
      ""
     ],
     [
-     "info.player",
-     0
+     "info.media",
+     ""
     ],
     [
      "control.stop",
@@ -1277,11 +1284,19 @@
     ],
     [
      "info.streams",
-     null
+     []
+    ],
+    [
+     "info.audio_names",
+     []
     ],
     [
      "info.subtitles",
-     null
+     []
+    ],
+    [
+     "info.subtitle_names",
+     []
     ],
     [
      "control.audio",
@@ -1293,7 +1308,6 @@
     ]
    ],
    "changed": {
-    "dev.control.audio": "",
     "dev.control.playpause": false,
     "dev.control.stop": true,
     "dev.control.subtitle": "",
