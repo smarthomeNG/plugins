@@ -138,9 +138,7 @@ class StateEngine(SmartPlugin):
     def parse_item(self, item):
         item.expand_relativepathes('se_manual_logitem', '', '')
         if self.has_iattr(item.conf, 'se_manual_include') or self.has_iattr(item.conf, 'se_manual_exclude'):
-            item._eval = (
-                "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
-            )
+            item._eval = StateEngineFunctions.SeFunctions.manual_eval_expression(item.property.path)
         elif self.has_iattr(item.conf, 'se_manual_invert'):
             item._eval = 'not sh.' + item.property.path + '()'
         return None

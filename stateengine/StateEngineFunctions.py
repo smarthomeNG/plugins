@@ -60,11 +60,20 @@ class SeFunctions:
     # item_id: Id of "manual" item
     # caller: Caller that triggered the update
     # source: Source that triggered the update
+    # source_details: 'caller:source' of the update of item `source` that triggered the eval (None on older cores)
     # The Method will determine the original caller/source and then check if this original caller/source is not
     # contained in se_manual_exclude list (if given) and is contained in se_manual_include list (if given).
     # If the original caller/source should be considered, the method returns the inverted value of the item.
     # Otherwise, the method returns the current value of the item, so that no change will be made
-    def manual_item_update_eval(self, item_id, caller=None, source=None):
+    @staticmethod
+    def manual_eval_expression(item_id):
+        """Eval expression of a manual item; ``source_details`` is absent from the eval namespace on older cores."""
+        return (
+            f"sh.stateengine_plugin_functions.manual_item_update_eval('{item_id}', caller, source,"
+            " globals().get('source_details'))"
+        )
+
+    def manual_item_update_eval(self, item_id, caller=None, source=None, source_details=None):
         def check_include_exclude(entry_type):
             conf_entry = item.conf['se_manual_{}'.format(entry_type)]
             if isinstance(conf_entry, str):
@@ -123,13 +132,21 @@ class SeFunctions:
             else:
                 elog = StateEngineLogger.SeLoggerDummy()
             elog.header('manual_item_update_eval')
-            elog.info("running for item '{0}' source '{1}' caller '{2}'", item_id, source, caller)
+            elog.info(
+                "running for item '{0}' source '{1}' caller '{2}' source_details '{3}'",
+                item_id,
+                source,
+                caller,
+                source_details,
+            )
 
             retval_no_trigger = item()
             retval_trigger = not item()
             elog.info('Current value of item {0} is {1}', item_id, retval_no_trigger)
 
-            original_caller, original_source = StateEngineTools.get_original_caller(self.__sh, elog, caller, source)
+            original_caller, original_source = StateEngineTools.get_original_caller(
+                self.__sh, elog, caller, source, source_details=source_details
+            )
             elog.info(
                 'get_caller({0}, {1}): original trigger by {2}:{3}', caller, source, original_caller, original_source
             )
