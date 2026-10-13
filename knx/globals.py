@@ -28,7 +28,7 @@
 
 KNXD_CACHEREAD_DELAY = 0.35
 KNXD_CACHEREAD_DELAY = 0.0
-KNXD_CACHEREAD_RETRY_DELAYS = (2.0, 5.0, 15.0)  # seconds before each re-read of unanswered knx_cache group addresses
+KNXD_CACHEREAD_RETRY_DELAYS = ()  # (2.0, 5.0, 15.0)  # seconds before each re-read of unanswered knx_cache group addresses
 
 KNX_DATA_MASK = 0b00111111  # 0x3f up to 6 bits form data content
 KNX_FLAG_MASK = 0b11000000  # 0xC0
