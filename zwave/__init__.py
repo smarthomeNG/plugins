@@ -26,6 +26,7 @@
 from lib.model.smartplugin import SmartPlugin
 
 import logging
+import os
 import time
 
 try:
@@ -112,7 +113,12 @@ class ZWave(SmartPlugin):
         self.alive = True
 
         try:
-            options = ZWaveOption(self._device, config_path=self._config_path, user_path='./var/ozw', cmd_line='')
+            options = ZWaveOption(
+                self._device,
+                config_path=self._config_path,
+                user_path=os.path.join(self._sh.get_vardir(), 'ozw'),
+                cmd_line='',
+            )
         except Exception as e:
             self.logger.error('error on create ZWaveOption - {}'.format(e))
             self.alive = False

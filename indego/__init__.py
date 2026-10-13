@@ -70,7 +70,7 @@ class Indego(SmartPlugin):
         self.user = self.get_parameter_value('user')
         self.password = self.get_parameter_value('password')
         self.img_pfad = self.get_parameter_value('img_pfad')
-        self.cycle = self.get_parameter_value('cycle')
+        self.cycle = self.get_parameter_value('update_cycle')
         self.indego_url = self.get_parameter_value('indego_url')
         self.parent_item = self.get_parameter_value('parent_item')
 

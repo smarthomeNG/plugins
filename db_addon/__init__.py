@@ -38,6 +38,7 @@ from typing import Union, List, Dict
 from dataclasses import dataclass, InitVar
 from collections import deque
 
+from lib.db import NO_CURSOR
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from lib.item.item import Item
@@ -118,7 +119,9 @@ class DatabaseAddOn(SmartPlugin):
 
         # path and filename for data storage
         data_storage_file = 'db_addon_data'
-        self.data_storage_path = f'{os.getcwd()}/var/plugin_data/{self.get_fullname()}/{data_storage_file}.pkl'
+        self.data_storage_path = os.path.join(
+            self.get_sh().get_vardir(), 'plugin_data', self.get_fullname(), f'{data_storage_file}.pkl'
+        )
 
         # get debug log options
         self.debug_log = DebugLogOptions(self.log_level)
@@ -855,14 +858,7 @@ class DatabaseAddOn(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
-        # check for pause item
-        if item is self._pause_item:
-            if caller != self.get_fullname():
-                self.logger.debug(f'pause item changed to {item()}')
-                if item() and self.alive:
-                    self.stop()
-                elif not item() and not self.alive:
-                    self.run()
+        if self._handle_pause_item(item, caller):
             return
 
         if self.alive and caller != self.get_fullname():
@@ -2622,7 +2618,7 @@ class DatabaseAddOn(SmartPlugin):
         """
 
         try:
-            self.db_driver = self._db_plugin.get_parameter_value('driver')
+            self.db_driver = self._db_plugin.driver
         except Exception as e:
             self.logger.error(
                 f"Error {e} occurred during getting database plugin parameter 'driver'. DatabaseAddOn Plugin not loaded."
@@ -2633,6 +2629,8 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.debug("Database is of type 'mysql' found.")
             if self.db_driver.lower() == 'sqlite3':
                 self.logger.debug("Database is of type 'sqlite' found.")
+            if self.db_driver.lower() in lib.db.Database._psycopg_driver_names:
+                self.logger.debug("Database is of type 'postgres'/'timescaledb' found.")
 
         # get database plugin parameters
         try:
@@ -2824,6 +2822,13 @@ class DatabaseAddOn(SmartPlugin):
             )
             return error_result
 
+        if group2 and func not in QUERY_FUNCS_WITH_GROUP2:
+            self.logger.error(
+                f'Requested {group2=} for {func=} on item={database_item.property.path} not supported; '
+                f'group2 is only valid for {QUERY_FUNCS_WITH_GROUP2}. Query cancelled.'
+            )
+            return error_result
+
         # define start and end of query as timestamp in microseconds
         ts_start, ts_end = self._get_start_end_as_timestamp(timeframe, start, end)
         oldest_log = self._get_oldest_log(database_item)
@@ -2883,7 +2888,19 @@ class DatabaseAddOn(SmartPlugin):
             'group2': group2,
             'ignore_value_list': ignore_value_list,
         }
-        query_result = self._query_log_timestamp(**query_params)
+        if self._db_plugin._buffer_mgr.pending_count(database_item):
+            self._db_plugin._dump(items=[database_item])
+
+        query_result = None
+        if not group and not group2:
+            native_result = self._db_plugin._native_cagg_single(
+                func, ts_start, ts_end, database_item.property.path, executor=self._fetchall
+            )
+            if native_result is not None:
+                query_result = [(ts_end, native_result[0])]
+
+        if query_result is None:
+            query_result = self._query_log_timestamp(**query_params)
 
         if self.debug_log.prepare:
             self.logger.debug(f"  result of '_query_log_timestamp' {query_result=}")
@@ -3084,18 +3101,18 @@ class DatabaseAddOn(SmartPlugin):
 
         # define query parts
         _select = {
-            'avg': 'time, AVG(val_num * duration) / AVG(duration) as value ',
-            'avg1': 'time, AVG(value) as value FROM (SELECT time, ROUND(AVG(val_num), 1) as value ',
-            'min': 'time, MIN(val_num) as value ',
-            'max': 'time, MAX(val_num) as value ',
-            'max1': 'time, MAX(value) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
-            'sum': 'time, SUM(val_num) as value ',
-            'on': 'time, SUM(val_bool * duration) / SUM(duration) as value ',
-            'integrate': 'time, SUM(val_num * duration) as value ',
-            'sum_max': 'time, SUM(value) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
-            'sum_avg': 'time, SUM(value) as value FROM (SELECT time, ROUND(AVG(val_num * duration) / AVG(duration), 1) as value ',
-            'sum_min_neg': 'time, SUM(value) as value FROM (SELECT time, IF(min(val_num) < 0, ROUND(MIN(val_num), 1), 0) as value ',
-            'diff_max': 'time, value1 - LAG(value1) OVER (ORDER BY time) AS value FROM (SELECT time, ROUND(MAX(val_num), 1) as value1 ',
+            'avg': 'MIN(time), AVG(val_num * duration) / AVG(duration) as value ',
+            'avg1': 'MIN(time), AVG(value) as value FROM (SELECT MIN(time), ROUND(CAST(AVG(val_num) AS DECIMAL(30,10)), 1) as value ',
+            'min': 'MIN(time), MIN(val_num) as value ',
+            'max': 'MIN(time), MAX(val_num) as value ',
+            'max1': 'MIN(time), MAX(value) as value FROM (SELECT MIN(time), ROUND(CAST(MAX(val_num) AS DECIMAL(30,10)), 1) as value ',
+            'sum': 'MIN(time), SUM(val_num) as value ',
+            'on': 'MIN(time), SUM(val_bool * duration) / SUM(duration) as value ',
+            'integrate': 'MIN(time), SUM(val_num * duration) as value ',
+            'sum_max': 'MIN(time), SUM(value) as value FROM (SELECT MIN(time), ROUND(CAST(MAX(val_num) AS DECIMAL(30,10)), 1) as value ',
+            'sum_avg': 'MIN(time), SUM(value) as value FROM (SELECT MIN(time), ROUND(CAST(AVG(val_num * duration) / AVG(duration) AS DECIMAL(30,10)), 1) as value ',
+            'sum_min_neg': 'MIN(time), SUM(value) as value FROM (SELECT MIN(time), CASE WHEN min(val_num) < 0 THEN ROUND(CAST(MIN(val_num) AS DECIMAL(30,10)), 1) ELSE 0 END as value ',
+            'diff_max': 'time, value1 - LAG(value1) OVER (ORDER BY time) AS value FROM (SELECT MIN(time), ROUND(CAST(MAX(val_num) AS DECIMAL(30,10)), 1) as value1 ',
             'next': 'time, val_num as value ',
             'raw': 'time, val_num as value ',
             'first': 'time, val_num as value ',
@@ -3150,11 +3167,21 @@ class DatabaseAddOn(SmartPlugin):
             'hour': "GROUP BY strftime('%Y%m%d%H', datetime((time/1000),'unixepoch')) ",
         }
 
+        _group_by_postgres = {
+            'year': "GROUP BY date_trunc('year', to_timestamp(time/1000)) ",
+            'month': "GROUP BY date_trunc('month', to_timestamp(time/1000)) ",
+            'week': "GROUP BY date_trunc('week', to_timestamp(time/1000)) ",
+            'day': "GROUP BY date_trunc('day', to_timestamp(time/1000)) ",
+            'hour': "GROUP BY date_trunc('hour', to_timestamp(time/1000)) ",
+        }
+
         # select query parts depending in db driver
         if self.db_driver.lower() == 'pymysql':
             _group_by = _group_by_sql
         elif self.db_driver.lower() == 'sqlite3':
             _group_by = _group_by_sqlite
+        elif self.db_driver.lower() in lib.db.Database._psycopg_driver_names:
+            _group_by = _group_by_postgres
         else:
             self.logger.error('DB Driver unknown')
             return
@@ -3194,9 +3221,6 @@ class DatabaseAddOn(SmartPlugin):
 
         # assemble query
         query = f'SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by.get(group, "")}{_order.get(func, "")}{_limit.get(func, "")}{_table_alias.get(func, "")}{_group_by.get(group2, "")}'.strip()
-
-        if self.db_driver.lower() == 'sqlite3':
-            query = query.replace('IF', 'IIF')
 
         # do debug log
         if self.debug_log.prepare:
@@ -3310,7 +3334,7 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug('Connect to database.')
                     self._db.connect()
                 else:
-                    self.logger.warning('Database reconnect suppressed since last connection is less then 20sec ago.')
+                    self.logger.info('Database reconnect suppressed since last connection is less then 20sec ago.')
                     return False
 
         except Exception as e:
@@ -3319,26 +3343,26 @@ class DatabaseAddOn(SmartPlugin):
 
         return True
 
-    def _execute(self, query: str, params: dict = None, cur=None) -> list:
+    def _execute(self, query: str, params: dict = None, cur=NO_CURSOR) -> list:
         if params is None:
             params = {}
 
         return self._query(self._db.execute, query, params, cur)
 
-    def _fetchone(self, query: str, params: dict = None, cur=None) -> list:
+    def _fetchone(self, query: str, params: dict = None, cur=NO_CURSOR) -> list:
         if params is None:
             params = {}
 
         return self._query(self._db.fetchone, query, params, cur)
 
-    def _fetchall(self, query: str, params: dict = None, cur=None) -> list:
+    def _fetchall(self, query: str, params: dict = None, cur=NO_CURSOR) -> list:
         if params is None:
             params = {}
 
         tuples = self._query(self._db.fetchall, query, params, cur)
         return None if tuples is None else list(tuples)
 
-    def _query(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    def _query(self, fetch, query: str, params: dict = None, cur=NO_CURSOR) -> Union[None, list]:
         """query using commit to get latest data from db"""
 
         if params is None:
@@ -3350,21 +3374,21 @@ class DatabaseAddOn(SmartPlugin):
         if not self._initialize_db():
             return None
 
-        if cur is None:
+        if cur is NO_CURSOR:
             verify_conn = self._db.verify(retry=5)
             if verify_conn == 0:
                 self.logger.error('Connection to database NOT recovered.')
                 return None
 
-        locked_here = cur is None and self.lock_db_for_query
+        locked_here = cur is NO_CURSOR and self.lock_db_for_query
         if locked_here:
             if not self._db.lock(300):
                 self.logger.error("Can't query database due to fail to acquire lock.")
                 return None
-            # explicit cursor once locked: fetch's own cur=None path (it's
+            # explicit cursor once locked: fetch's own cur-omitted path (it's
             # always self._db.execute/fetchone/fetchall) now locks
             # internally too - self._db.lock() is a plain non-reentrant
-            # Lock, so calling fetch(..., cur=None) here while already
+            # Lock, so calling fetch(...) with cur omitted here while already
             # holding it would deadlock against itself.
             cur = self._db.cursor()
 
@@ -3382,7 +3406,7 @@ class DatabaseAddOn(SmartPlugin):
             pass
 
         if locked_here:
-            if cur is not None:
+            if cur is not NO_CURSOR:
                 cur.close()
             self._db.release()
 
@@ -3392,7 +3416,7 @@ class DatabaseAddOn(SmartPlugin):
         return tuples
 
     # ToDo: Check if still needed.
-    def _query_with_close(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    def _query_with_close(self, fetch, query: str, params: dict = None, cur=NO_CURSOR) -> Union[None, list]:
         """query open and close connection for each query to get latest data from db"""
 
         if params is None:
@@ -3402,7 +3426,7 @@ class DatabaseAddOn(SmartPlugin):
             self.logger.debug(f'Called with {query=}, {params=}, {cur=}')
 
         # recovery connection to database
-        if cur is None or not self._db.connected:
+        if cur is NO_CURSOR or not self._db.connected:
             verify_conn = self._db.verify(retry=5)
             if verify_conn == 0:
                 self.logger.error('Connection to database NOT recovered.')
@@ -3412,15 +3436,15 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug('Connection to database recovered.')
 
         # lock database if required
-        locked_here = cur is None and self.lock_db_for_query
+        locked_here = cur is NO_CURSOR and self.lock_db_for_query
         if locked_here:
             if not self._db.lock(300):
                 self.logger.error("Can't query database due to fail to acquire lock.")
                 return None
-            # explicit cursor once locked: fetch's own cur=None path (it's
+            # explicit cursor once locked: fetch's own cur-omitted path (it's
             # always self._db.execute/fetchone/fetchall) now locks
             # internally too - self._db.lock() is a plain non-reentrant
-            # Lock, so calling fetch(..., cur=None) here while already
+            # Lock, so calling fetch(...) with cur omitted here while already
             # holding it would deadlock against itself.
             cur = self._db.cursor()
 
@@ -3435,7 +3459,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # release database
         if locked_here:
-            if cur is not None:
+            if cur is not NO_CURSOR:
                 cur.close()
             self._db.release()
 
@@ -3624,3 +3648,4 @@ ALLOWED_QUERY_FUNCS = [
     'last',
 ]
 ALLOWED_RESULT_TYPES = ['total', 'month', 'day']
+QUERY_FUNCS_WITH_GROUP2 = ['avg1', 'max1', 'sum_max', 'sum_avg', 'sum_min_neg', 'diff_max']

@@ -39,7 +39,10 @@ from ..constants import (
     COL_LOG_TIME,
     COL_LOG_VAL_BOOL,
     COL_LOG_VAL_NUM,
+    COL_LOG_VAL_QUALITY,
     COL_LOG_VAL_STR,
+    QUALITY_INVALID,
+    QUALITY_VALID,
 )
 
 # ------------------------------------------
@@ -68,6 +71,21 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
+    def _log_webif_error(self, context, e):
+        """One-line, no-traceback log for a webif request that failed against
+        the database - graded the same way as every other DB call site in
+        this plugin (INFO for a known/self-healing connection failure, ERROR
+        otherwise), never lets the exception itself reach cherrypy's own
+        handler (which would log a full traceback and 500 the request)."""
+        level = self.logger.info if self.plugin._db.is_connection_error(e) else self.logger.error
+        level(f'{context}: {e}')
+
+    def _ms_to_datetime(self, ms, tzinfo=None):
+        """Convert an epoch-ms log timestamp to a timezone-aware datetime, or None for None input."""
+        if ms is None:
+            return None
+        return datetime.datetime.fromtimestamp(ms / 1000, tz=tzinfo or self.plugin.shtime.tzinfo())
+
     @cherrypy.expose
     def index(
         self,
@@ -82,6 +100,14 @@ class WebInterface(SmartPluginWebIf):
         time_orig=None,
         changed_orig=None,
     ):
+        """Build index.html for cherrypy - thin wrapper, see _index()."""
+        try:
+            return self._index(reload, action, item_id, item_path, time_end, day, month, year, time_orig, changed_orig)
+        except Exception as e:
+            self._log_webif_error('database webif index', e)
+            return 'Database temporarily unavailable, please try again shortly.'
+
+    def _index(self, reload, action, item_id, item_path, time_end, day, month, year, time_orig, changed_orig):
         """
         Build index.html for cherrypy
 
@@ -94,13 +120,29 @@ class WebInterface(SmartPluginWebIf):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
+        invalidate_triggered = False
+        restore_triggered = False
         if action is not None:
+            # Single-row deletion was replaced with a reversible invalidate/restore
+            # toggle (see markLogInvalid/markLogValid) - hard-deleting one entry
+            # corrupted duration-based aggregations for its neighbors. The bulk
+            # "clear entire item history" action (no time_orig/changed_orig) is
+            # unaffected and still a real delete.
+            if (
+                action == 'invalidate_log'
+                and item_id is not None
+                and time_orig is not None
+                and changed_orig is not None
+            ):
+                self.plugin.markLogInvalid(item_id, time=time_orig, changed=changed_orig)
+                action = 'item_details'
+                invalidate_triggered = True
+            if action == 'restore_log' and item_id is not None and time_orig is not None and changed_orig is not None:
+                self.plugin.markLogValid(item_id, time=time_orig, changed=changed_orig)
+                action = 'item_details'
+                restore_triggered = True
             if action == 'delete_log' and item_id is not None:
-                if time_orig is not None and changed_orig is not None:
-                    self.plugin.deleteLog(item_id, time=time_orig, changed=changed_orig)
-                    action = 'item_details'
-                else:
-                    self.plugin.deleteLog(item_id, time_end=time_end)
+                self.plugin.deleteLog(item_id, time_end=time_end)
                 delete_triggered = True
             if action == 'item_details' and item_id is not None:
                 if day is not None and month is not None and year is not None:
@@ -136,17 +178,26 @@ class WebInterface(SmartPluginWebIf):
                             COL_LOG_VAL_NUM,
                             COL_LOG_VAL_BOOL,
                             COL_LOG_CHANGED,
+                            COL_LOG_VAL_QUALITY,
                         ]:
                             if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                                 value_dict[key] = row[key]
                             else:
-                                value_dict[key] = datetime.datetime.fromtimestamp(
-                                    row[key] / 1000, tz=self.plugin.shtime.tzinfo()
-                                )
+                                value_dict[key] = self._ms_to_datetime(row[key])
                                 value_dict['%s_orig' % key] = row[key]
 
                         log_array.append(value_dict)
                     reversed_arr = log_array[::-1]
+
+                chart_data = None
+                if item.property.type in ('num', 'bool'):
+                    # only num/bool populate val_num in the log, see utils.encode_value()
+                    val_col = COL_LOG_VAL_NUM if item.property.type == 'num' else COL_LOG_VAL_BOOL
+                    chart_data = [
+                        [row['%s_orig' % COL_LOG_TIME], row[val_col], row[COL_LOG_DURATION], row[COL_LOG_VAL_QUALITY]]
+                        for row in log_array
+                    ]
+
                 return tmpl.render(
                     p=self.plugin,
                     webif_pagelength=pagelength,
@@ -162,10 +213,18 @@ class WebInterface(SmartPluginWebIf):
                     day=day,
                     month=month,
                     year=year,
+                    csv_time_start=int(time_start),
+                    csv_time_end=int(time_end),
                     delete_triggered=delete_triggered,
+                    invalidate_triggered=invalidate_triggered,
+                    restore_triggered=restore_triggered,
+                    quality_invalid=QUALITY_INVALID,
+                    chart_data=json.dumps(chart_data),
                 )
 
         tmpl = self.tplenv.get_template('index.html')
+
+        unbounded_items, silent_delete_items = self.plugin.audit_maxage()
 
         return tmpl.render(
             p=self.plugin,
@@ -176,6 +235,8 @@ class WebInterface(SmartPluginWebIf):
             item_id=item_id,
             delete_triggered=delete_triggered,
             language=self.plugin.get_sh().get_defaultlanguage(),
+            unbounded_items=unbounded_items,
+            silent_delete_items=silent_delete_items,
         )
 
     @cherrypy.expose
@@ -190,18 +251,57 @@ class WebInterface(SmartPluginWebIf):
             return
         orphan_id = data.get('orphan_id')
         new_id = data.get('new_id')
-        result = {'operation': 'request', 'result': 'success'}
         if orphan_id is not None and new_id is not None and orphan_id != new_id:
             self.logger.info(f'reassigning orphaned id {orphan_id} to new id {new_id}')
             err = self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
             if err:
-                return
-            return json.dumps(result)
+                self._log_webif_error(f'database webif reassign (orphan_id={orphan_id}, new_id={new_id})', err)
+                return json.dumps({'operation': 'request', 'result': 'error', 'message': str(err)})
+            return json.dumps({'operation': 'request', 'result': 'success'})
         else:
             self.logger.warning(f'reassigning orphaned id {orphan_id} to new id {new_id} failed')
+            return json.dumps({'operation': 'request', 'result': 'error', 'message': 'invalid orphan_id/new_id'})
+
+    @cherrypy.expose
+    def delete_orphan_now(self):
+        cl = cherrypy.request.headers['Content-Length']
+        if not cl:
+            return
+        try:
+            rawbody = cherrypy.request.body.read(int(cl))
+            data = json.loads(rawbody)
+        except Exception:
+            return
+        orphan_path = data.get('orphan_path')
+        if orphan_path is None:
+            self.logger.warning('delete_orphan_now: no orphan_path given')
+            return
+        try:
+            self.plugin.delete_orphan_now(orphan_path)
+        except Exception as e:
+            self._log_webif_error(f'database webif delete_orphan_now (orphan_path={orphan_path!r})', e)
+            return
+        return json.dumps({'operation': 'request', 'result': 'success'})
+
+    @cherrypy.expose
+    def convert_legacy_item_schema(self):
+        try:
+            backup_name = self.plugin.convert_legacy_item_schema()
+        except Exception as e:
+            self._log_webif_error('database webif convert_legacy_item_schema', e)
+            return
+        return json.dumps({'operation': 'request', 'result': 'success', 'backup_name': backup_name})
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):
+        """Return data to update the webpage - thin wrapper, see _get_data_html()."""
+        try:
+            return self._get_data_html(dataSet, params)
+        except Exception as e:
+            self._log_webif_error('database webif get_data_html', e)
+            return '{}'
+
+    def _get_data_html(self, dataSet, params):
         """
         Return data to update the webpage
 
@@ -246,13 +346,12 @@ class WebInterface(SmartPluginWebIf):
                         COL_LOG_VAL_NUM,
                         COL_LOG_VAL_BOOL,
                         COL_LOG_CHANGED,
+                        COL_LOG_VAL_QUALITY,
                     ]:
                         if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                             value_dict[key] = row[key]
                         else:
-                            value_dict[key] = datetime.datetime.fromtimestamp(
-                                row[key] / 1000, tz=self.plugin.shtime.tzinfo()
-                            ).isoformat()
+                            value_dict[key] = self._ms_to_datetime(row[key]).isoformat()
                             value_dict['%s_orig' % key] = row[key]
 
                     log_array.append(value_dict)
@@ -269,10 +368,21 @@ class WebInterface(SmartPluginWebIf):
         return {}
 
     @cherrypy.expose
-    def item_csv(self, item_id):
+    def item_csv(self, item_id, time_start=None, time_end=None, tz='local'):
+        """Returns CSV Output for item log data - thin wrapper, see _item_csv()."""
+        try:
+            return self._item_csv(item_id, time_start=time_start, time_end=time_end, tz=tz)
+        except Exception as e:
+            self._log_webif_error(f'database webif item_csv (item_id={item_id!r})', e)
+            return None
+
+    def _item_csv(self, item_id, time_start=None, time_end=None, tz='local'):
         """
         Returns CSV Output for item log data
 
+        :param time_start: restrict export to entries at/after this time, epoch ms (optional)
+        :param time_end: restrict export to entries at/before this time, epoch ms (optional)
+        :param tz: timezone to format the 'time'/'changed' columns in - 'local' (default) or 'utc'
         :return: item log data as CSV
         """
         try:
@@ -281,7 +391,20 @@ class WebInterface(SmartPluginWebIf):
             self.logger.warning(f'item_csv: invalid item_id {item_id!r}')
             return None
         else:
-            rows = self.plugin.readLogs(item_id)
+
+            def _parse_ms(value, param_name):
+                if value in (None, ''):
+                    return None
+                try:
+                    return int(value)
+                except (TypeError, ValueError):
+                    self.logger.warning(f'item_csv: invalid {param_name} {value!r}, ignoring')
+                    return None
+
+            time_start = _parse_ms(time_start, 'time_start')
+            time_end = _parse_ms(time_end, 'time_end')
+            tzinfo = datetime.timezone.utc if tz == 'utc' else self.plugin.shtime.tzinfo()
+            rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
             log_array = []
             if rows is None:
                 reversed_arr = []
@@ -296,17 +419,27 @@ class WebInterface(SmartPluginWebIf):
                         COL_LOG_VAL_NUM,
                         COL_LOG_VAL_BOOL,
                         COL_LOG_CHANGED,
+                        COL_LOG_VAL_QUALITY,
                     ]:
-                        value_dict[key] = row[key]
+                        dt = (
+                            self._ms_to_datetime(row[key], tzinfo=tzinfo)
+                            if key in (COL_LOG_TIME, COL_LOG_CHANGED)
+                            else None
+                        )
+                        value_dict[key] = dt.isoformat(sep=' ', timespec='milliseconds') if dt is not None else row[key]
                     log_array.append(value_dict)
                 reversed_arr = log_array[::-1]
-            csv_file_path = f'{self.plugin._sh.base_dir}/var/db/{self.plugin.get_instance_name()}_item_{item_id}.csv'
+            csv_file_path = os.path.join(
+                self.plugin.get_sh().get_vardir(), 'db', f'{self.plugin.get_instance_name()}_item_{item_id}.csv'
+            )
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect='excel')
-                writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
+                writer.writerow(
+                    ['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'val_quality']
+                )
                 for data in reversed_arr:
-                    writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6]])
+                    writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]])
 
             cherrypy.request.fileName = csv_file_path
             cherrypy.request.hooks.attach('on_end_request', self.download_complete)
@@ -317,17 +450,21 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def db_csvdump(self):
-        """
-        returns the smarthomeNG database as download in csv format
-        """
+        """Returns the smarthomeNG database as download in csv format - thin wrapper, see _db_csvdump()."""
+        try:
+            return self._db_csvdump()
+        except Exception as e:
+            self._log_webif_error('database webif db_csvdump', e)
+            return 'Database temporarily unavailable, please try again shortly.'
 
+    def _db_csvdump(self):
         filename = 'smarthomeng'
         extension = '_dump.csv'
         if self.plugin.get_instance_name() == '':
             filename += extension
         else:
             filename += '_' + self.plugin.get_instance_name() + extension
-        pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
+        pathname = os.path.join(self.plugin.get_sh().get_vardir(), 'db', filename)
 
         self.plugin.dump(pathname)
         # self.plugin.dump(
@@ -342,16 +479,21 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def db_sqldump(self):
-        """
-        returns the smarthomeNG sqlite database as download of a complete sql dump
-        """
+        """Returns the smarthomeNG sqlite database as a sql dump download - thin wrapper, see _db_sqldump()."""
+        try:
+            return self._db_sqldump()
+        except Exception as e:
+            self._log_webif_error('database webif db_sqldump', e)
+            return 'Database temporarily unavailable, please try again shortly.'
+
+    def _db_sqldump(self):
         filename = 'smarthomeng'
         extension = '_dump.sql'
         if self.plugin.get_instance_name() == '':
             filename += extension
         else:
             filename += '_' + self.plugin.get_instance_name() + extension
-        pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
+        pathname = os.path.join(self.plugin.get_sh().get_vardir(), 'db', filename)
 
         if self.plugin.sqlite_dump(pathname):
             mime = 'application/octet-stream'
@@ -367,10 +509,14 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def countall(self, item_path):
-        if item_path is not None:
-            item = self.plugin.items.return_item(item_path)
-            count = item.db('countall', 0)
-            if count is not None:
-                return int(count)
-            else:
-                return 0
+        try:
+            if item_path is not None:
+                item = self.plugin.items.return_item(item_path)
+                count = item.db('countall', 0)
+                if count is not None:
+                    return int(count)
+                else:
+                    return 0
+        except Exception as e:
+            self._log_webif_error(f'database webif countall (item_path={item_path!r})', e)
+            return 0

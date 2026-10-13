@@ -1,0 +1,121 @@
+        :root {
+            --bg-color: #121212;
+            --remote-bg: #222222;
+            --btn-dark: #333333;
+            --btn-light: #4a4a4a;
+            --btn-text: #ffffff;
+            --power-red: #b71c1c;
+            --light-orange: #e65100;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .remote-container {
+            background-color: var(--remote-bg);
+            width: 300px;
+            border-radius: 50px;
+            padding: 35px 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.05);
+            border: 3px solid #111;
+        }
+
+        /* Standard Grid-Systeme */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        /* Basis-Tastendesign */
+        button {
+            background-color: var(--btn-dark);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 2px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #111;
+            transition: all 0.05s ease;
+            text-transform: uppercase;
+            outline: none;
+            user-select: none;
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #000;
+        }
+
+        /* Spezialanpassungen */
+        .btn-power { background-color: var(--power-red); font-size: 0.8rem; }
+        .btn-light-opt { background-color: var(--light-orange); }
+        
+        /* Runde Nummerntasten */
+        .btn-num { 
+            background-color: var(--btn-light); 
+            border-radius: 50%; 
+            width: 48px; 
+            height: 48px; 
+            font-size: 1.1rem; 
+            margin: 0 auto;
+            display: block;
+        }
+
+        /* Lautstärke- & Kanalwippen */
+        .rocker-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .btn-large { height: 60px; font-size: 1rem; }
+        .btn-center-sm { height: 35px; align-self: center; }
+
+        /* Navigationskreuz */
+        .nav-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            width: 220px;
+            margin: 15px auto;
+        }
+        .nav-container button { height: 45px; border-radius: 50%; font-size: 1.1rem; }
+        .nav-blank { visibility: hidden; }
+        .btn-enter { background-color: #555; border-radius: 8px !important; font-size: 0.8rem; }
+
+        /* Farbtasten */
+        .btn-red { background-color: #c62828; }
+        .btn-green { background-color: #2e7d32; }
+        .btn-yellow { background-color: #fbc02d; color: #000; }
+        .btn-blue { background-color: #1565c0; }
+
+        .brand {
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #444;
+            margin-top: 20px;
+            font-size: 1rem;
+        }

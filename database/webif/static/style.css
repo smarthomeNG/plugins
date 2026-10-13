@@ -14,16 +14,35 @@
 
 /* Modal Content/Box */
 .or-modal-content {
-  background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  margin: 5vh auto; /* centered, leaves room so the box never exceeds the viewport */
   padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
+  border: 1px solid var(--bs-border-color);
+  width: 90%; /* Could be more or less, depending on screen size */
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Takes up whatever space is left after the modal's other rows (title, filter,
+   buttons) render, so it - not the modal or the page - is what scrolls. */
+#orphanReassignListWrapper {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px solid var(--bs-border-color);
+}
+
+#orphanReassignList tbody tr {
+  cursor: pointer;
 }
 
 /* The Close Button */
 .or-close {
-  color: #aaa;
+  color: var(--bs-secondary-color);
   float: right;
   font-size: 28px;
   font-weight: bold;
@@ -31,7 +50,7 @@
 
 .or-close:hover,
 .or-close:focus {
-  color: black;
+  color: var(--bs-emphasis-color);
   text-decoration: none;
   cursor: pointer;
 }

@@ -573,7 +573,7 @@ class MPD(SmartPlugin):
     def canWarnNow(self):
         if self.lastWarnTime is None:
             return True
-        if self.lastWarnTime + datetime.timedelta(seconds=self.warnInterval) <= datetime.datetime.now():
+        if self.shtime.add_seconds_naive(self.lastWarnTime, self.warnInterval) <= datetime.datetime.now():
             return True
         return False
 

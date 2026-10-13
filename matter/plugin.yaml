@@ -7,13 +7,13 @@ plugin:
         en: 'Matter controller plugin: connect Matter devices.'
     maintainer: Morg42
     tester: Morg42
-    state: develop
+    state: ready
     keywords: iot matter chip smarthome
     documentation: ''   # TODO
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/2102287-neues-plugin-matter'
-    version: 0.2.0
-    sh_minversion: '1.12'
-    multi_instance: true            # each instance is its own independent Matter fabric/bridge identity - see the
+    version: 0.4.0
+    sh_minversion: '1.12.2.2'
+    multi_instance: true            # each instance is its own Matter fabric and bridge identity
     restartable: true
     classname: Matter
 
@@ -24,6 +24,13 @@ parameters:
         description:
             de: 'Pfad zum Node.js-Binary (muss die von matter-server geforderte Version erfüllen, siehe user_doc.rst)'
             en: 'Path to the Node.js binary (must satisfy the version required by matter-server, see user_doc.rst)'
+
+    server_enabled:
+        type: bool
+        default: true
+        description:
+            de: 'Server-Rolle (Kommissionierung/Steuerung echter Matter-Geräte) aktivieren.'
+            en: 'Enable the server role (commissioning/controlling real Matter devices).'
 
     server_sidecar_entry:
         type: str
@@ -60,12 +67,40 @@ parameters:
             de: 'Netzwerk-Interface fuer lokale Adressen (--primary-interface). Auf Hosts mit mehreren Interfaces auf demselben Subnetz kann die automatische Auswahl ein Interface wählen, über das das Zielgerät nicht erreichbar ist - dann explizit setzen (z.B. en0).'
             en: 'Network interface for link-local addresses (--primary-interface). On hosts with multiple interfaces on the same subnet, automatic selection can pick one the target device is not reachable through - set explicitly (e.g. en0) if commissioning times out with "unreachable" address warnings.'
 
+    server_bluetooth_adapter:
+        type: str
+        default: ''
+        description:
+            de: 'HCI-ID des Bluetooth-Adapters (--bluetooth-adapter, z.B. "0" fuer hci0), nicht die MAC-Adresse. Noetig fuer die Erstkommissionierung eines noch nicht vernetzten Matter-over-Thread-Geraets (BLE-basierte Uebergabe der Thread-Zugangsdaten). Leer = matter-servers eigener Default (kein Bluetooth).'
+            en: 'HCI ID of the Bluetooth adapter (--bluetooth-adapter, e.g. "0" for hci0), not the MAC address. Needed for initial commissioning of a not-yet-networked Matter-over-Thread device (BLE-based handoff of Thread credentials). Empty = matter-servers own default (no Bluetooth).'
+
+    server_otbr_rest_url:
+        type: str
+        default: 'http://localhost:8081'
+        description:
+            de: 'Basis-URL der REST-API des Thread Border Routers (OTBR), fuer den "Automatisch abrufen"-Button bei den Thread Netzwerk-Zugangsdaten (GET /node/dataset/active). Nur relevant, wenn der Border Router erreichbar ist - Default passt, wenn er auf demselben Host wie shng laeuft. Leer = Button wird nicht angezeigt, Zugangsdaten muessen manuell eingefuegt werden.'
+            en: 'Base URL of the Thread Border Routers (OTBR) REST API, used by the "Fetch automatically" button for the Thread network credentials (GET /node/dataset/active). Only relevant if the border router is reachable - the default is correct when it runs on the same host as shng. Empty = button is hidden, credentials must be pasted in manually.'
+
     server_alias_base_item:
         type: str
         default: 'matter.aliases'
         description:
             de: 'Item, unter dem Alias-Definitionen liegen (direkte Kind-Items, jeweils Typ num mit dem aktuellen node_id als Wert - siehe matter_alias). Muss bereits existieren, wird vom Plugin nicht angelegt. Fehlt es, bleibt die Alias-Funktion inaktiv, ohne den Rest des Plugins zu beeinträchtigen. Sollte sich zwischen mehreren Instanzen unterscheiden, falls beide matter_alias nutzen - ein node_id ist nur innerhalb der Fabric der jeweiligen Instanz gueltig, ein geteiltes Basis-Item wuerde Aliase beider Fabrics ununterscheidbar vermischen.'
             en: 'Item under which alias definitions live (direct child items, each type num holding the current node_id as its value - see matter_alias). Must already exist, the plugin never creates it. If missing, alias support just stays inactive, the rest of the plugin is unaffected. Should differ between instances if both use matter_alias - a node_id is only meaningful within its own instances fabric, a shared base item would mix both fabrics aliases indistinguishably.'
+
+    server_generated_items_file:
+        type: str
+        default: 'matter_devices.yaml'
+        description:
+            de: 'Datei (im items-Verzeichnis), in der per "Item erstellen"-Button erzeugte Geräte-Items landen, als Kind-Items unter server_generated_items_base. Datei und Basis-Item werden bei Bedarf automatisch angelegt.'
+            en: 'File (in the items directory) that items created via the "Create item" button are written to, as child items under server_generated_items_base. Both the file and the base item are created automatically as needed.'
+
+    server_generated_items_base:
+        type: str
+        default: 'matter_devices'
+        description:
+            de: 'Basis-Item, unter dem per "Item erstellen"-Button erzeugte Geräte-Items angelegt werden (wird bei Bedarf automatisch angelegt). Sollte sich zwischen mehreren Instanzen unterscheiden - node_ids sind nur innerhalb der Fabric der jeweiligen Instanz eindeutig.'
+            en: 'Base item under which items created via the "Create item" button are placed (created automatically as needed). Should differ between instances - node_ids are only unique within each instances own fabric.'
 
     server_fabric_vendor_id:
         type: int
@@ -85,8 +120,22 @@ parameters:
         type: int
         default: 300
         description:
-            de: 'Wartezeit (Sekunden) auf die Antwort von matter-server auf einen Kopplungsversuch (commission_with_code), bevor das Plugin selbst aufgibt. matter-server versucht dabei jede bekannte Netzwerkadresse des Geräts mit bis zu 30s Timeout und plant intern bis zu 255s für einen Kopplungsversuch ein - ein realer Versuch dauerte schon einmal ca. 3 Minuten bis zur echten Antwort. Kommt die Antwort trotzdem später als dieser Timeout, wird sie nicht verworfen, sondern im Webif nachträglich als Hinweis angezeigt. Für Tests kann ein kürzerer Wert sinnvoll sein, um schneller ein Fehlschlagen zu sehen - auf Kosten davon, öfter in den verzögerten Hinweis statt die direkte Fehlermeldung zu laufen.'
-            en: 'How long (seconds) to wait for matter-servers answer to a pairing attempt (commission_with_code) before the plugin itself gives up. matter-server tries every known network address for the device with up to a 30s timeout each and internally budgets up to 255s for one pairing attempt - a real attempt was observed taking close to 3 minutes before the actual answer arrived. If the answer still arrives after this timeout, it is not discarded - it is shown in the webif afterwards as a delayed notice instead. A shorter value can be useful for testing, to see a failure faster - at the cost of hitting the delayed notice instead of the direct error message more often.'
+            de: 'Wartezeit (Sekunden) auf die Antwort von matter-server auf einen Kopplungsversuch (commission_with_code). matter-server versucht jede bekannte Netzwerkadresse des Geräts mit bis zu 30s Timeout und plant bis zu 255s für einen Versuch ein. Die Kopplung läuft im Hintergrund, ihr Status wird im Webif laufend aktualisiert.'
+            en: 'How long (seconds) to wait for matter-servers answer to a pairing attempt (commission_with_code). matter-server tries every known network address of the device with up to 30s each and budgets up to 255s for one attempt. Pairing runs in the background, its status is updated live in the webif.'
+
+    server_icd_check_cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Intervall (Sekunden) zwischen Prüfungen auf abgelaufene ICD-Geräte (Batterie-/Sleepy-Thread-Geräte, z.B. Tür-/Fensterkontakte). Ein ICD-Gerät meldet sich nur alle IdleModeDuration Sekunden - die Prüfung markiert ein Item als ungültig, sobald es länger als matter_icd_invalid_factor * IdleModeDuration ohne Update ist.'
+            en: 'Interval (seconds) between checks for stale ICD devices (battery/sleepy Thread devices, e.g. door/window contacts). An ICD device only checks in every IdleModeDuration seconds - the check marks an item invalid once it has gone longer than matter_icd_invalid_factor * IdleModeDuration without an update.'
+
+    bridge_enabled:
+        type: bool
+        default: true
+        description:
+            de: 'Bridge-Rolle (shng-Items für andere Matter-Ökosysteme sichtbar machen) aktivieren.'
+            en: 'Enable the bridge role (exposing shng items to other Matter ecosystems).'
 
     bridge_sidecar_entry:
         type: str
@@ -106,8 +155,8 @@ parameters:
         type: int
         default: 5561
         description:
-            de: 'Port, auf dem bridge.js seine WebSocket-Steuer-API anbietet (nur localhost, eigenes Protokoll dieses Plugins - siehe matter-integration-plan.md). Muss sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie bridge_matter_port.'
-            en: 'Port on which bridge.js exposes its WebSocket control API (localhost only, this plugins own protocol - see matter-integration-plan.md). Must differ between instances if running more than one, same reason as bridge_matter_port.'
+            de: 'Port, auf dem bridge.js seine WebSocket-Steuer-API anbietet (nur localhost, eigenes Protokoll dieses Plugins). Muss sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie bridge_matter_port.'
+            en: 'Port on which bridge.js exposes its WebSocket control API (localhost only, this plugins own protocol). Must differ between instances if running more than one, same reason as bridge_matter_port.'
 
     bridge_storage_path:
         type: str
@@ -120,8 +169,8 @@ parameters:
         type: int
         default: 20202021
         description:
-            de: 'Kommissionierungs-Passcode der Bridge. Fest vergeben (v1 hat noch keine Webif-UI fuer eine pro-Kommissionierung generierte Kombination) - siehe matter-integration-plan.md. Sollte sich zwischen mehreren Instanzen unterscheiden - sonst werben zwei Bridges mit identischen Kommissionierungsdaten gleichzeitig im selben LAN, was beim Scannen/Eingeben nicht mehr eindeutig einer bestimmten Instanz zuzuordnen ist.'
-            en: 'Commissioning passcode for the bridge. Fixed (v1 has no webif UI yet for a per-commissioning generated pairing code) - see matter-integration-plan.md. Should differ between instances if running more than one - otherwise two bridges advertise identical commissioning credentials on the same LAN simultaneously, making a scan/manual entry ambiguous about which instance you are actually commissioning.'
+            de: 'Kommissionierungs-Passcode der Bridge. Fest vergeben (v1 hat noch keine Webif-UI fuer eine pro-Kommissionierung generierte Kombination). Sollte sich zwischen mehreren Instanzen unterscheiden - sonst werben zwei Bridges mit identischen Kommissionierungsdaten gleichzeitig im selben LAN, was beim Scannen/Eingeben nicht mehr eindeutig einer bestimmten Instanz zuzuordnen ist.'
+            en: 'Commissioning passcode for the bridge. Fixed (v1 has no webif UI yet for a per-commissioning generated pairing code). Should differ between instances if running more than one - otherwise two bridges advertise identical commissioning credentials on the same LAN simultaneously, making a scan/manual entry ambiguous about which instance you are actually commissioning.'
 
     bridge_discriminator:
         type: int
@@ -198,6 +247,12 @@ item_attributes:
             de: 'Nur-Lese-Item, das die von matter-server erkannte Erreichbarkeit des Node spiegelt (dieselbe Information wie die "verfuegbar"-Spalte im Webif, hier als echtes Item fuer eigene Logik/Struct/Visu). Braucht nur matter_node, kein Endpoint/Cluster.'
             en: 'Read-only item mirroring matter-server''s own node-level reachability tracking (the same information as the webif''s "available" column, exposed here as a real item for your own logic/struct/visu). Only needs matter_node, no endpoint/cluster.'
 
+    matter_icd_invalid_factor:
+        type: num
+        description:
+            de: 'Nur fuer ICD-Geraete (Batterie-/Sleepy-Thread, z.B. Tuer-/Fensterkontakte): ueberschreibt den Standard-Multiplikator (2.5) fuer die Ungueltig-Markierung dieses Items in der Datenbank. Schwelle = Faktor * IdleModeDuration (die vom Geraet selbst gemeldete Melde-Intervall). Vererbt sich wie matter_node an Kind-Items.'
+            en: 'ICD devices only (battery/sleepy Thread, e.g. door/window contacts): overrides the default multiplier (2.5) for marking this item invalid in the database. Threshold = factor * IdleModeDuration (the devices own declared check-in interval). Inherited like matter_node by child items.'
+
     matter_expose_type:
         type: str
         valid_list:
@@ -205,8 +260,8 @@ item_attributes:
             - contact
             - temperature_sensor
         description:
-            de: 'Bridge-Rolle: macht dieses Item als Matter-Bridge-Gerät fuer andere Matter-Controller (Apple Home, Google Home, ...) sichtbar. switch = steuerbarer Bool-Aktor, contact = Nur-Lese-Bool-Sensor (z.B. Tuerkontakt), temperature_sensor = Nur-Lese-Zahlensensor (Grad Celsius).'
-            en: 'Bridge role: exposes this item as a Matter bridge accessory to other Matter controllers (Apple Home, Google Home, ...). switch = commandable bool actuator, contact = read-only bool sensor (e.g. a door contact), temperature_sensor = read-only numeric sensor (degrees Celsius).'
+            de: 'Bridge-Rolle: macht dieses Item als Matter-Bridge-Gerät fuer andere Matter-Controller (Apple Home, Google Home, ...) sichtbar. switch = steuerbarer Bool-Aktor (Item-Typ bool), contact = Nur-Lese-Bool-Sensor, z.B. Tuerkontakt (Item-Typ bool), temperature_sensor = Nur-Lese-Zahlensensor in Grad Celsius (Item-Typ num).'
+            en: 'Bridge role: exposes this item as a Matter bridge accessory to other Matter controllers (Apple Home, Google Home, ...). switch = commandable bool actuator (item type bool), contact = read-only bool sensor, e.g. a door contact (item type bool), temperature_sensor = read-only numeric sensor in degrees Celsius (item type num).'
 
     matter_expose_name:
         type: str
@@ -216,51 +271,41 @@ item_attributes:
 
 item_structs:
     #
-    # Generic, device-agnostic structs, one per Matter cluster with real, validated attribute data
-    # in clusters.py - combine via struct: [x, y] on the item representing one physical device (see
-    # shelly_plug_m_3gen below). Deliberately do NOT set matter_node/matter_endpoint here - those are
-    # only known after a real device is commissioned, not at struct-definition time. Set them
-    # directly on the applying item instead; every descendant item inherits them via this plugin's
-    # own Item.find_attribute() ancestor-walk, no need to restate them on every child.
+    # Generic, device-agnostic structs, one per Matter cluster with validated attribute data in
+    # clusters.py - combine via struct: [x, y] on the item representing one physical device. They
+    # never set matter_node/matter_endpoint (only known once a device is commissioned) - set those on
+    # the applying item, every descendant inherits them. Attributes carry '@instance': a struct
+    # referenced as matter.<struct>@<instance> binds to that plugin instance.
     #
 
     switch:
         type: bool
-        matter_cluster: 6
-        matter_switch: true
+        matter_cluster@instance: 6
+        matter_switch@instance: true
 
         toggle:
             remark: auf True setzen, um den Schaltzustand zu wechseln
             type: bool
-            matter_command: toggle
+            matter_command@instance: toggle
             enforce_updates: true
             autotimer: 1 = 0
 
     electrical_power_measurement:
         # Mixin, not a root - no top-level type of its own. Meant to combine with a root struct
         # (e.g. switch) via struct: [x, electrical_power_measurement], same shape shelly_plug_m_3gen
-        # already uses below.
+        # already uses below. Values arrive already scaled to the physical unit - the plugin applies
+        # the cluster's known divisor itself (clusters.py decode_value()), no on_update needed.
         power:
             remark: aktuelle Leistung in W
             type: num
-
-            power_mw:
-                remark: aktuelle Leistung in mW
-                type: num
-                matter_cluster: 144
-                matter_attribute: 8
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 144
+            matter_attribute@instance: 8
 
         voltage:
             remark: aktuelle Spannung in V
             type: num
-
-            voltage_mv:
-                remark: aktuelle Spannung in mV
-                type: num
-                matter_cluster: 144
-                matter_attribute: 11
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 144
+            matter_attribute@instance: 11
 
             hinweis:
                 remark: In eigenen Tests wurde die Spannung nur einmalig beim Verbinden aktualisiert. Obwohl das Gerät die Spannung laufend misst, wird sie über Matter nicht mehr übertragen - z.B. über MQTT sehr wohl.
@@ -268,32 +313,44 @@ item_structs:
         current:
             remark: aktueller Strom in A
             type: num
-
-            current_ma:
-                remark: aktueller Strom in mA
-                type: num
-                matter_cluster: 144
-                matter_attribute: 12
-                on_update: .. = value / 1000.0
+            matter_cluster@instance: 144
+            matter_attribute@instance: 12
 
     contact:
         # BooleanState.StateValue - no unit conversion needed (already bool), unlike the two below.
         # True/False semantics (open vs. closed) are device-specific per spec, not asserted here.
         remark: Kontaktzustand (BooleanState.StateValue)
         type: bool
-        matter_cluster: 69
-        matter_attribute: 0
+        matter_cluster@instance: 69
+        matter_attribute@instance: 0
 
     temperature_sensor:
+        # Value arrives already scaled to °C - the plugin applies the cluster's known divisor itself
+        # (clusters.py decode_value()), no on_update needed.
         remark: aktuelle Temperatur in °C
         type: num
+        matter_cluster@instance: 1026
+        matter_attribute@instance: 0
 
-        temperature_raw:
-            remark: aktuelle Temperatur in 1/100 °C (Roh-Wert)
+    humidity_sensor:
+        remark: aktuelle relative Luftfeuchtigkeit in %
+        type: num
+        matter_cluster@instance: 1029
+        matter_attribute@instance: 0
+
+    battery:
+        # Mixin, not a root - lives on the device's root endpoint (0), not an application endpoint.
+        percent:
+            remark: Batteriestand in %
             type: num
-            matter_cluster: 1026
-            matter_attribute: 0
-            on_update: .. = value / 100.0
+            matter_cluster@instance: 47
+            matter_attribute@instance: 12
+
+        voltage:
+            remark: Batteriespannung in V
+            type: num
+            matter_cluster@instance: 47
+            matter_attribute@instance: 11
 
     #
     # Ready-made structs for known and tested devices, built on the generic structs above (same
@@ -308,12 +365,12 @@ item_structs:
 
     shelly_plug_m_3gen_simple:
         struct: .switch
-        matter_endpoint: 1
+        matter_endpoint@instance: 1
 
         available:
             remark: Gerät erreichbar
             type: bool
-            matter_available: true
+            matter_available@instance: true
 
     shelly_plug_m_3gen:
         struct: [.shelly_plug_m_3gen_simple, .electrical_power_measurement]

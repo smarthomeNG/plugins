@@ -75,6 +75,12 @@ function mainpage() {
 {% set tabcount = 1 %}
 
 {% block headtable %}
+{% if not p.sun_available %}
+<div class="mb-2 alert alert-warning" role="alert">
+  <strong>{{ _('Sonnenstand nicht verfügbar') }}</strong><br/>
+  {{ _('Breitengrad/Längengrad sind nicht konfiguriert oder es ist keine Ephemeriden-Bibliothek installiert. Sonnenstands-Bedingungen werden nicht erfüllt, sun_tracking() rechnet mit einer Sonnenhöhe von 45°.') }}
+</div>
+{% endif %}
 <table class="table table-striped table-hover">
   <tbody>
     <tr>

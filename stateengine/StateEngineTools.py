@@ -403,7 +403,10 @@ def get_eval_name(eval_func):
 # source: source
 # item: item being updated
 # eval_type: update or change
-def get_original_caller(smarthome, elog, caller, source, item=None, eval_keyword=None, eval_type='update'):
+# source_details: 'caller:source' of the update that triggered the eval (core eval namespace), used for the first hop
+def get_original_caller(
+    smarthome, elog, caller, source, item=None, eval_keyword=None, eval_type='update', source_details=None
+):
     if eval_keyword is None:
         eval_keyword = ['Eval']
     original_caller = caller
@@ -417,9 +420,14 @@ def get_original_caller(smarthome, elog, caller, source, item=None, eval_keyword
         if original_item is None:
             elog.info('get_caller({0}, {1}): original item not found', caller, source)
             break
-        original_manipulated_by = (
-            original_item.property.last_update_by if eval_type == 'update' else original_item.property.last_change_by
-        )
+        if source_details is not None:
+            original_manipulated_by, source_details = source_details, None
+        else:
+            original_manipulated_by = (
+                original_item.property.last_update_by
+                if eval_type == 'update'
+                else original_item.property.last_change_by
+            )
         if ':' not in original_manipulated_by:
             break
         original_caller, __, original_source = original_manipulated_by.partition(':')

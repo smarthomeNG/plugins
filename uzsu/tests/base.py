@@ -21,14 +21,14 @@ class TestUZSUBase(unittest.TestCase):
     environments), and constructs the plugin.
     """
 
-    def plugin(self, parameters=None, tz='Europe/Berlin'):
+    def plugin(self, parameters=None, tz='Europe/Berlin', with_sun=True):
         self.sh = MockSmartHome()
         self.sh.shtime.set_tz(tz)
         # UZSU relies on sh.sun/sh.moon (set up by bin/smarthome.py in a real
         # instance) for sunrise/sunset-bound entries; MockSmartHome doesn't
         # provide these, so build them the same way lib/smarthome.py does.
-        self.sh.sun = Orb('sun', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV)
-        self.sh.moon = Orb('moon', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV)
+        self.sh.sun = Orb('sun', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV) if with_sun else False
+        self.sh.moon = Orb('moon', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV) if with_sun else False
         self.sh.with_items_from(os.path.join(os.path.dirname(__file__), 'test_items.yaml'))
 
         UZSU._parameters = {

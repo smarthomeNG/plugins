@@ -69,7 +69,7 @@ plugin:
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
     version: 2.0.0                 # Plugin version
-    sh_minversion: '1.12'             # minimum shNG version to use this plugin
+    sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
     classname: YamahaYXC              # class containing the plugin
@@ -371,6 +371,13 @@ item_structs:
                 remark: Auswahl voreingestellter Wiedergabelisten.
                 type: num
                 yamahayxc_cmd: preset
+                enforce_updates: true
+
+            mc_playlist:
+                remark: Abspielen einer der (bis zu 5) gespeicherten MusicCast-Playlisten ab dem ersten
+                    Eintrag, gültige Werte 1-5. Nur-Schreib-Zugriff.
+                type: num
+                yamahayxc_cmd: mc_playlist
                 enforce_updates: true
 
             standby:
@@ -1022,6 +1029,7 @@ item_structs:
             available:
                 remark: Bool-Indikator, ob DSP-Funktionen für diese Zone verfügbar sind. Nur-Lese-Zugriff.
                 type: bool
+                yamahayxc_cmd: dsp_available
                 visu_acl: ro
 
     tuner:
@@ -1045,6 +1053,7 @@ item_structs:
         available:
             remark: Bool-Indikator, ob Zone 2 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
             type: bool
+            yamahayxc_cmd: zone_present
             visu_acl: ro
 
     zone3:
@@ -1053,6 +1062,7 @@ item_structs:
         available:
             remark: Bool-Indikator, ob Zone 3 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
             type: bool
+            yamahayxc_cmd: zone_present
             visu_acl: ro
 
     zone4:
@@ -1061,6 +1071,7 @@ item_structs:
         available:
             remark: Bool-Indikator, ob Zone 4 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
             type: bool
+            yamahayxc_cmd: zone_present
             visu_acl: ro
 
 

@@ -13,6 +13,7 @@
 import unittest
 from unittest import mock
 
+from lib.db import NO_CURSOR
 from plugins.database.buffer import BufferManager
 from plugins.database.constants import BufferEntry, QUALITY_NO_DATA, QUALITY_VALID
 from plugins.database.store import ItemStore, LogStore
@@ -75,7 +76,14 @@ class TestQualityStoreLevel(unittest.TestCase):
         import sqlite3
 
         class _DB:
+            # Matches lib.db.Database's real class attribute - ItemStore.insert()
+            # reads this to decide between lastrowid and INSERT...RETURNING.
+            _psycopg_driver_names = frozenset({'psycopg2', 'psycopg'})
+
             def __init__(self):
+                import types
+
+                self._dbapi = types.SimpleNamespace(__name__='sqlite3')
                 self._conn = sqlite3.connect(':memory:')
                 c = self._conn.cursor()
                 c.execute(
@@ -90,27 +98,27 @@ class TestQualityStoreLevel(unittest.TestCase):
                 )
                 self._conn.commit()
 
-            def execute(self, s, p=(), cur=None):
-                c = cur or self._conn.cursor()
+            def execute(self, s, p=(), cur=NO_CURSOR):
+                c = self._conn.cursor() if cur is NO_CURSOR else cur
                 c.execute(s, p)
-                if cur is None:
+                if cur is NO_CURSOR:
                     self._conn.commit()
                     c.close()
                 return c
 
-            def fetchone(self, s, p=(), cur=None):
-                c = cur or self._conn.cursor()
+            def fetchone(self, s, p=(), cur=NO_CURSOR):
+                c = self._conn.cursor() if cur is NO_CURSOR else cur
                 c.execute(s, p)
                 r = c.fetchone()
-                if cur is None:
+                if cur is NO_CURSOR:
                     c.close()
                 return tuple(r) if r else None
 
-            def fetchall(self, s, p=(), cur=None):
-                c = cur or self._conn.cursor()
+            def fetchall(self, s, p=(), cur=NO_CURSOR):
+                c = self._conn.cursor() if cur is NO_CURSOR else cur
                 c.execute(s, p)
                 rows = c.fetchall()
-                if cur is None:
+                if cur is NO_CURSOR:
                     c.close()
                 return [tuple(r) for r in rows]
 
@@ -120,11 +128,40 @@ class TestQualityStoreLevel(unittest.TestCase):
             def rollback(self):
                 self._conn.rollback()
 
+            def close(self):
+                self._conn.close()
+
             def connected(self):
                 return True
 
+            def verify(self, retry=2):
+                """Mock is always connected - mirrors lib.db.Database.verify()'s
+                return contract (nonzero = healthy) without real reconnect logic."""
+                return -1
+
             def cursor(self):
                 return self._conn.cursor()
+
+            def transaction(self):
+                """Mirrors lib.db.Database.transaction()'s observable
+                contract - commit on clean exit, rollback + re-raise on
+                any exception."""
+                import contextlib
+
+                @contextlib.contextmanager
+                def _tx():
+                    c = self._conn.cursor()
+                    try:
+                        yield c
+                    except Exception:
+                        c.close()
+                        self._conn.rollback()
+                        raise
+                    else:
+                        c.close()
+                        self._conn.commit()
+
+                return _tx()
 
         tn = {
             'item': 'item',
@@ -136,6 +173,9 @@ class TestQualityStoreLevel(unittest.TestCase):
         self.item_store = ItemStore(self.db, tn)
         self.log_store = LogStore(self.db, tn)
         self.item_id = self.item_store.insert('solar.power')
+
+    def tearDown(self):
+        self.db.close()
 
     def test_gap_entry_val_quality_is_one(self):
         gap = BufferEntry(time=5000, duration=600, value=None, quality=QUALITY_NO_DATA)
@@ -224,6 +264,20 @@ class TestQualityEndToEnd(TestDatabaseBase):
         last = plugin._buffer_mgr.last_entry(item)
         self.assertEqual(QUALITY_VALID, last.quality)
         self.assertIsNone(last.duration)  # still open, untouched
+
+    def test_db_is_invalid_reflects_open_gap_state(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        self.create_item(plugin, 'main.num')
+
+        plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
+        self.assertFalse(item.db_is_invalid())
+
+        item.db_mark_invalid()
+        self.assertTrue(item.db_is_invalid())
+
+        item.db_mark_valid()
+        self.assertFalse(item.db_is_invalid())
 
     def test_implicit_revalidation_uses_gap_start_not_prev_change(self):
         """A new value arriving while a gap is open must close the gap using

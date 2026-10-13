@@ -3581,7 +3581,7 @@ class Sonos(SmartPlugin):
 
         try:
             src = io.open('plugins/sonos/soco/__init__.py', encoding='utf-8').read()
-            metadata = dict(re.findall('__([a-z]+)__ = "([^"]+)"', src))
+            metadata = dict(re.findall(r'__([a-z]+)__ = [\'"]([^\'"]+)[\'"]', src))
         except Exception as e:
             self.logger.warning(f'Version of used Soco module not available. Exception: {e}')
             self.logger.warning(f'DEBUG get socoversion: Current dir: {os.getcwd()}')
@@ -3617,13 +3617,7 @@ class Sonos(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
-        # check for pause item
-        if item is self._pause_item and caller != self.get_fullname():
-            self.logger.debug(f'pause item changed to {item()}')
-            if item() and self.alive:
-                self.stop()
-            elif not item() and not self.alive:
-                self.run()
+        if self._handle_pause_item(item, caller):
             return
 
         # check for sonos item

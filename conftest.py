@@ -51,8 +51,10 @@ def pytest_ignore_collect(collection_path, config):
                 requested.append(pathlib.Path(arg).resolve())
             except OSError:
                 continue
+        # requested paths are resolved, so compare against the resolved collection path (symlinked plugin dirs)
+        resolved = collection_path.resolve()
         explicitly_requested = any(
-            _is_priv(arg.parts) and (arg == collection_path or arg in collection_path.parents) for arg in requested
+            _is_priv(arg.parts) and (arg == resolved or arg in resolved.parents) for arg in requested
         )
         return None if explicitly_requested else True
 

@@ -44,15 +44,8 @@ else:
     # with __name__ != '__main__' even in standalone mode
     if not hasattr(builtins, 'SDP_standalone'):
         builtins.SDP_standalone = False
-from lib.model.sdp.globals import (
-    PLUGIN_ATTR_NET_HOST,
-    PLUGIN_ATTR_CONNECTION,
-    PLUGIN_ATTR_SERIAL_PORT,
-    PLUGIN_ATTR_CONN_TERMINATOR,
-    CONN_NET_TCP_CLI,
-    CONN_SER_ASYNC,
-    PLUGIN_ATTR_CMD_CLASS,
-)
+from lib.model.sdp.declarations import TransportRule
+from lib.model.sdp.globals import CONN_NET_TCP_CLI, CONN_SER_ASYNC
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -62,32 +55,20 @@ CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 class oppo(SmartDevicePlugin):
     """Device class for Oppo.
 
-    Most of the work is done by the base class, so we only set default parameters
-    for the connection (to be overwritten by device attributes from the plugin
-    configuration) and add a fixed terminator byte to outgoing datagrams.
-
     The know-how is in the commands.py (and some DT_ classes...)
     """
 
     PLUGIN_VERSION = '1.0.1'
 
-    def _set_device_defaults(self):
-
-        # set our own preferences concerning connections
-        if PLUGIN_ATTR_NET_HOST in self._parameters and self._parameters[PLUGIN_ATTR_NET_HOST]:
-            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
-        elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
-            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
-
-        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
-
-        b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
-        b = b.decode('unicode-escape').encode()
-        self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
-        self._use_callbacks = True
-        self._last_command = ''
+    TRANSPORTS = (
+        TransportRule(CONN_NET_TCP_CLI, requires='host'),
+        TransportRule(CONN_SER_ASYNC, requires='serialport'),
+    )
+    COMMAND_CLASS = SDPCommandParseStr
+    LINE_TERMINATED = True
 
     def on_connect(self, by=None):
+        super().on_connect(by)
         verbose_items = self.get_items_for_mapping('general.verbose')
         if not verbose_items:
             self.logger.debug('No item bound to general.verbose, skipping verbose mode activation.')
@@ -95,12 +76,6 @@ class oppo(SmartDevicePlugin):
         verbose = verbose_items[0].property.value
         self.logger.debug(f'Activating verbose mode {verbose} after connection.')
         self.send_command('general.verbose', verbose)
-
-    def _transform_send_data(self, data=None, **kwargs):
-        if isinstance(data, dict):
-            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
-            data['payload'] = f'{data.get("payload", "")}\r'
-        return data
 
     def _process_additional_data(self, command, data, value, custom, by):
 

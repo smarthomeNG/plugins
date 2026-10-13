@@ -18,12 +18,12 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import telnetlib
+import socket
 from lib.model.smartplugin import SmartPlugin
 
 
 class NUT(SmartPlugin):
-    PLUGIN_VERSION = '1.3.4'
+    PLUGIN_VERSION = '1.3.5'
     ALLOW_MULTIINSTANCE = True
 
     def __init__(self, sh):
@@ -41,7 +41,6 @@ class NUT(SmartPlugin):
         self._ups = self.get_parameter_value('ups')
         self._timeout = self.get_parameter_value('timeout')
 
-        self._conn = None
         self._items = {}
         self.logger.info('NUT Plugin initialized')
 
@@ -52,8 +51,6 @@ class NUT(SmartPlugin):
     def stop(self):
         self.alive = False
         self.scheduler_remove('poll_nut_device')
-        if self._conn:
-            self._conn.close()
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'nut_var'):
@@ -65,14 +62,34 @@ class NUT(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         return
 
+    def _read_list(self, sock):
+        """
+        Read from ``sock`` until the end marker of the ``LIST VAR`` reply (or timeout/EOF).
+
+        :return: bytes between the begin and end marker, empty if the begin marker never arrived
+        """
+        begin = 'BEGIN LIST VAR {}\n'.format(self._ups).encode('ascii')
+        end = 'END LIST VAR {}\n'.format(self._ups).encode('ascii')
+        buf = b''
+        try:
+            while end not in buf:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                buf += chunk
+        except socket.timeout:
+            pass
+        start = buf.find(begin)
+        if start < 0:
+            return b''
+        return buf[start + len(begin) :].split(end, 1)[0]
+
     def _read_ups(self):
         self.logger.debug(f'Trying to connect to {self._host} on port {self._port}')
         try:
-            self._conn = telnetlib.Telnet(self._host, self._port)
-            self._conn.write('LIST VAR {}\n'.format(self._ups).encode('ascii'))
-            self._conn.read_until('BEGIN LIST VAR {}\n'.format(self._ups).encode('ascii'), self._timeout)
-            result = self._conn.read_until('END LIST VAR {}\n'.format(self._ups).encode('ascii'))
-            self._conn.close()
+            with socket.create_connection((self._host, self._port), self._timeout) as sock:
+                sock.sendall('LIST VAR {}\n'.format(self._ups).encode('ascii'))
+                result = self._read_list(sock)
         except Exception as e:
             self.logger.info('Exception during sending in openWebsocket(): {0}'.format(e))
             return

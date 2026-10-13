@@ -34,7 +34,7 @@ import requests
 import json
 import time
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import sys
 
@@ -521,7 +521,7 @@ class mieleathome(SmartPlugin):
             except Exception as err:
                 self.logger.warning('mieleathome - error during _getalldevices in poll_device - {}'.format(err))
                 pass
-            if self.last_ping_timestamp < datetime.now() - timedelta(minutes=5):
+            if self.last_ping_timestamp < self.shtime.add_seconds(self.shtime.now(), -5 * 60).replace(tzinfo=None):
                 self.logger.debug('mieleathome - no ping since 5 minutes - retry to get new Event-Connection')
                 try:
                     self.event_server.reconnect()

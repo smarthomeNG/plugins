@@ -3,17 +3,16 @@
 """
 Tier-2: Eval namespace regression tests.
 
-Guards against the regression introduced by b0f64e67 (plugins ruff star-import
-cleanup), which removed the local variable assignments that served as the
-implicit eval() scope in three stateengine files:
+Guards against a regression that removes the local variable assignments
+serving as the implicit eval() scope in three stateengine files:
 
     sh = self._sh          # noqa: F841
     shtime = self._shtime  # noqa: F841
     stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
 
 Without these, any eval expression using ``sh.``, ``shtime.``, or
-``stateengine_eval.`` would raise NameError — caught internally and turned
-into "condition not matching", causing stateengine to fall through to the
+``stateengine_eval.`` raises NameError - caught internally and turned into
+"condition not matching", causing stateengine to fall through to the
 suspend state.
 
 Test strategy
@@ -119,7 +118,7 @@ class TestSeValueEvalNamespace(unittest.TestCase):
     def test_missing_sh_raises_name_error(self):
         """
         Sanity: verify the test harness actually catches a NameError if an
-        undefined name is used — confirming the regression would be caught.
+        undefined name is used.
         """
         v = self._make_value()
         v._SeValue__eval = 'undefined_name_xyz is not None'

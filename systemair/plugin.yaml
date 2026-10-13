@@ -52,13 +52,18 @@ item_attributes:
     systemair_regaddr:
         type: num
         description:
-            de: "--> Details bitte der README.md enthehmen"
-            en: "--> Lookup details in README.md"
-    coil_regaddr:
+            de: 'Adressiert ein Modbus-Halteregister (Funktion "Read Holding Registers"). Die Registeradressen entsprechen den Angaben aus der offiziellen Systemair Modbus-Dokumentation.'
+            en: 'Addresses a Modbus holding register (function "Read Holding Registers"). Register addresses correspond to the official Systemair Modbus documentation.'
+    mod_write:
+        type: bool
+        description:
+            de: 'Macht ein Item mit gesetztem systemair_regaddr beschreibbar. Ohne dieses Attribut wird das Register nur gelesen.'
+            en: 'Makes an item with systemair_regaddr set writable. Without this attribute, the register is only read.'
+    systemair_coiladdr:
         type: num
         description:
-            de: "--> Details bitte der README.md enthehmen"
-            en: "--> Lookup details in README.md"
+            de: 'Adressiert ein Modbus-Coil-Register (Funktion "Read Discrete Inputs"), z.B. für Alarm- und Statusmeldungen.'
+            en: 'Addresses a Modbus coil register (function "Read Discrete Inputs"), e.g. for alarm and status signals.'
 
 
 item_structs: NONE

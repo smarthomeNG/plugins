@@ -4,6 +4,7 @@
 <script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
 <script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.de.min.js"></script>
 <script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.fr.min.js"></script>
+<script src="/gstatic/chartjs/Chart.min.js"></script>
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
@@ -18,34 +19,57 @@
         { className: "type", targets: 3 },
         { className: "value", targets: 4 },
         { className: "id", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        {%  if p.count_logentries %}
         { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        {% endif %}
         { className: "maxage", targets: -2 },
         { className: "no-sort actions", targets: -1 }
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {%  if p.count_logentries %}
       orphantable = $('#orphantable').DataTable( {
         columnDefs: [
-        { responsivePriority: 1, targets: 1 },
-        { responsivePriority: 2, targets: 2 },
-        { className: "item", targets: 1 },
-        { className: "time", targets: 2 },
-        { className: "type", targets: 3 },
-        { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
-        { className: "reassign", targets: 5 },
-        { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        { responsivePriority: 1, targets: 2 },
+        { responsivePriority: 2, targets: 3 },
+        { orderable: false, className: "no-sort select", targets: 1 },
+        { className: "item", targets: 2 },
+        { className: "time", targets: 3 },
+        { className: "type", targets: 4 },
+        { className: "id", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "reassign", targets: 6 },
+        { className: "logcount", targets: 8, render: $.fn.dataTable.render.number('.', ',', 0, '') },
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {% else %}
       orphantable = $('#orphantable').DataTable( {
         columnDefs: [
-        { responsivePriority: 1, targets: 1 },
-        { responsivePriority: 2, targets: 2 },
-        { className: "item", targets: 1 },
-        { className: "time", targets: 2 },
-        { className: "type", targets: 3 },
-        { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
-        { className: "reassign", targets: 5 },
+        { responsivePriority: 1, targets: 2 },
+        { responsivePriority: 2, targets: 3 },
+        { orderable: false, className: "no-sort select", targets: 1 },
+        { className: "item", targets: 2 },
+        { className: "time", targets: 3 },
+        { className: "type", targets: 4 },
+        { className: "id", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "reassign", targets: 6 },
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {% endif %}
+
+      if ($('#audittable_delete').length) {
+        audittable_delete = $('#audittable_delete').DataTable( {
+          columnDefs: [
+          { responsivePriority: 1, targets: 1 },
+          { className: "item", targets: 1 },
+          { className: "maxage", targets: 2 },
+          { className: "no-sort actions", targets: -1 }
+          ].concat($.fn.dataTable.defaults.columnDefs)});
+      }
+
+      if ($('#audittable_unbounded').length) {
+        audittable_unbounded = $('#audittable_unbounded').DataTable( {
+          columnDefs: [
+          { responsivePriority: 1, targets: 1 },
+          { className: "item", targets: 1 },
+          { className: "no-sort actions", targets: -1 }
+          ].concat($.fn.dataTable.defaults.columnDefs)});
+      }
 
       detailtable = $('#item_details_table').DataTable( {
         order: [[2, 'desc']],
@@ -80,6 +104,10 @@
 <style>
     .hidden {
       display:none;
+    }
+    .select {
+      width: 30px;
+      text-align:center;
     }
     .logcount {
       width: 100px;
@@ -126,18 +154,30 @@
 			<td class="py-1"></td>
 		</tr>
 		<tr>
-			<td class="py-1" width="150px"><strong>{{ _('Cleanup ist aktiv') }}</strong></td>
+			<td class="py-1" width="150px"><strong>{{ _('Löschvorgang aktiv') }}</strong></td>
 			<td class="py-1">{% if p.remove_orphan %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1" width="150px"><strong></strong></td>
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 		</tr>
-		{% set first = True %}
+		{% if p.driver == 'sqlite3' %}
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Journal-Modus') }}</strong></td>
+			<td class="py-1">{{ (p._db.current_journal_mode() or '?')|upper }}</td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+		</tr>
+		{% else %}
+		{% set ns = namespace(row_open=false) %}
 		{% for key, value in p._db._params.items() %}
-			{% if loop.index % 4 == 0 %}
+			{% if loop.index % 4 == 1 %}
+				{% if ns.row_open %}</tr>{% endif %}
 				<tr>
-				{% endif %}
+				{% set ns.row_open = true %}
+			{% endif %}
 					{% if key != "passwd" %}
 					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
 					{% else %}
@@ -147,10 +187,9 @@
 					{% if loop.index % 3 > 0 and loop.last %}
 						<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
 					{% endif %}
-				{% if loop.index % 4 == 0 and not first %}
-				</tr>
-			{% endif %}
 		{% endfor %}
+		{% if ns.row_open %}</tr>{% endif %}
+		{% endif %}
 	</tbody>
 </table>
 {% endblock headtable %}

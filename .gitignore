@@ -46,3 +46,8 @@ Thumbs.db
 # and package-lock.json are tracked for reproducible installs, the
 # installed packages themselves are not.
 matter/sidecar/node_modules/
+
+# local mise config - pins tool versions AND an absolute venv path specific
+# to this machine (see ../shng/.gitignore for the same convention)
+/*.toml
+!/pyproject.toml

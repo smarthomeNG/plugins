@@ -48,17 +48,8 @@ else:
     if not hasattr(builtins, 'SDP_standalone'):
         builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (
-    PLUGIN_ATTR_MODEL,
-    PLUGIN_ATTR_NET_HOST,
-    PLUGIN_ATTR_CONNECTION,
-    PLUGIN_ATTR_SERIAL_PORT,
-    PLUGIN_ATTR_CONN_TERMINATOR,
-    PLUGIN_ATTR_CMD_CLASS,
-    CONN_NULL,
-    CONN_NET_TCP_CLI,
-    CONN_SER_ASYNC,
-)
+from lib.model.sdp.declarations import TransportRule
+from lib.model.sdp.globals import PLUGIN_ATTR_MODEL, CONN_NET_TCP_CLI, CONN_SER_ASYNC
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -73,32 +64,12 @@ class denon(SmartDevicePlugin):
 
     PLUGIN_VERSION = '1.2.0'
 
-    def _set_device_defaults(self):
-        self._use_callbacks = True
-        self._custom_inputnames = {}
-
-        # set our own preferences concerning connections
-        if PLUGIN_ATTR_NET_HOST in self._parameters and self._parameters[PLUGIN_ATTR_NET_HOST]:
-            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
-        elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
-            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
-        else:
-            self.logger.error(
-                'Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work'
-            )
-            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
-
-        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
-
-        b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
-        b = b.decode('unicode-escape').encode()
-        self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
-
-    def _transform_send_data(self, data=None, **kwargs):
-        if isinstance(data, dict):
-            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
-            data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
-        return data
+    TRANSPORTS = (
+        TransportRule(CONN_NET_TCP_CLI, requires='host'),
+        TransportRule(CONN_SER_ASYNC, requires='serialport'),
+    )
+    COMMAND_CLASS = SDPCommandParseStr
+    LINE_TERMINATED = True
 
     def update_item(self, item: Item, caller: str | None = None, source: str | None = None, dest: str | None = None):
         cond_custominputnames = item.conf.get('denon_command') == 'general.custom_inputnames'
@@ -128,20 +99,8 @@ class denon(SmartDevicePlugin):
                 dict1 = self.get_lookup('VIDEOSELECT', 'fwd')
                 dict2 = item.property.value
                 merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
-                table = 'VIDEOSELECT'
                 self.logger.debug(f'Updating videoselect lookup to: {merged_dict}')
-                self._commands.update_lookup_table(table, merged_dict)
-                for mode in ('rev', 'rci', 'list'):
-                    try:
-                        self.logger.debug(f'trying to set item for lookup {table} and mode {mode}.')
-                        lu_items = self._items_by_lookup[table][mode]
-                        if not isinstance(lu_items, list):
-                            lu_items = [lu_items]
-                        for lu_item in lu_items:
-                            lu_item(self.get_lookup(table, mode), self.get_fullname())
-                            self.logger.debug(f'Set lu_item {lu_item}')
-                    except (KeyError, AttributeError):
-                        pass
+                self.update_lookup('VIDEOSELECT', merged_dict)
             except Exception as e:
                 self.logger.debug(f'Issue updating videoselect lookup: {e}')
             self.logger.debug('Querying input of all zones.')

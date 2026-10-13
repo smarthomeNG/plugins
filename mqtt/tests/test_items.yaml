@@ -1,0 +1,20 @@
+dev:
+    temperature:
+        type: num
+        mqtt_topic_in: device/state
+        mqtt_select_in: temp
+    humidity:
+        type: num
+        mqtt_topic_in: device/state
+        mqtt_select_in: hum
+    active:
+        type: bool
+        mqtt_topic_in: device/state
+        mqtt_select_in: state.on
+    whole_state:
+        type: dict
+        mqtt_topic_in: device/state
+    orphan_select:
+        type: num
+        mqtt_topic_out: device/set
+        mqtt_select_in: temp

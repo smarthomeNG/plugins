@@ -274,5 +274,52 @@ class TestStartupGuard(_Base):
         self.assertIs(result_after, True)
 
 
+# ── SOURCE_DETAILS: triggering update from core, not the trigger item's latest ──
+
+
+class TestSourceDetails(_Base):
+    """A visu write followed by an excluded actuator echo on the same item still counts as manual."""
+
+    def setUp(self):
+        super().setUp()
+        _register_item(self.sh, self.path, value=False, conf={'se_manual_exclude': ['^KNX:1.1.4:ga']})
+        echo = _register_item(self.sh, 'room.pos')
+        echo.property.last_update_by = 'KNX:1.1.4:ga=2/4/0'
+        self.fn.ab_alive = True
+
+    def test_source_details_of_visu_write_trigger(self):
+        result = self.fn.manual_item_update_eval(self.path, 'Eval:Visu', 'room.pos', 'Visu:192.168.2.10')
+        self.assertIs(result, True)
+
+    def test_without_source_details_trigger_item_is_read(self):
+        result = self.fn.manual_item_update_eval(self.path, 'Eval:Visu', 'room.pos')
+        self.assertIs(result, False)
+
+
+class TestManualEvalExpression(unittest.TestCase):
+    """The eval expression stateengine sets on manual items, run against old and new core eval namespaces."""
+
+    def _run(self, namespace):
+        calls = []
+
+        class _Functions:
+            def manual_item_update_eval(self, item_id, caller=None, source=None, source_details=None):
+                calls.append((item_id, caller, source, source_details))
+
+        class _Sh:
+            stateengine_plugin_functions = _Functions()
+
+        eval(SeFunctions.manual_eval_expression('room.manual'), {'sh': _Sh(), **namespace})
+        return calls
+
+    def test_passes_source_details_from_namespace(self):
+        calls = self._run({'caller': 'Eval:Visu', 'source': 'room.pos', 'source_details': 'Visu:ip'})
+        self.assertEqual(calls, [('room.manual', 'Eval:Visu', 'room.pos', 'Visu:ip')])
+
+    def test_namespace_without_source_details_passes_none(self):
+        calls = self._run({'caller': 'Eval:Visu', 'source': 'room.pos'})
+        self.assertEqual(calls, [('room.manual', 'Eval:Visu', 'room.pos', None)])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,8 @@
+import decimal
+from unittest import mock
+
 from plugins.database import Database
-from plugins.database.constants import QUALITY_NO_DATA
+from plugins.database.constants import QUALITY_INVALID, QUALITY_NO_DATA
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -54,10 +57,42 @@ class TestDatabaseSingleQualityFilter(TestDatabaseBase):
         self.assertSingle(10, res)
 
 
+class TestDatabaseSingleInvalidQualityFilter(TestDatabaseBase):
+    """A manually invalidated row (val_quality=QUALITY_INVALID) must be
+    excluded from aggregations exactly like a QUALITY_NO_DATA gap - the
+    exclusion filter matches on val_quality alone, so this must hold even
+    though (unlike a gap) the row still carries a real, non-NULL value."""
+
+    def test_avg_excludes_invalidated_row_despite_preserved_value(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=self.t(0), duration=self.t(2), val=10, it='num')
+        # Value is preserved (unlike a QUALITY_NO_DATA gap), not None -
+        # only the quality flag marks it as excluded.
+        plugin.insertLog(id, time=self.t(2), duration=self.t(1), val=999, it='num', quality=QUALITY_INVALID)
+        plugin.insertLog(id, time=self.t(3), duration=self.t(2), val=20, it='num')
+
+        res = plugin._single('avg', start=self.t(0), end=self.t(6), item='main.num')
+
+        # Same math as the QUALITY_NO_DATA case: 15, not skewed by the 999.
+        self.assertSingle(15, res)
+
+
 class TestDatabaseSingle(TestDatabaseBase):
     def test_single_no_log_returns_none(self):
         plugin = self.plugin()
         res = plugin._single('avg', start=0, item='main.num')
+        self.assertIsNone(res)
+
+    def test_single_raw_no_log_returns_none(self):
+        # every other func here is an ungrouped SQL aggregate, which always
+        # returns exactly one (NULL) row even with no matching data - 'raw'
+        # has no aggregate and no GROUP BY, so an empty range genuinely
+        # returns zero rows; _single() must report "no data" like every
+        # other func here, not index logs['tuples'][0][0] unconditionally
+        # (IndexError on zero rows).
+        plugin = self.plugin()
+        res = plugin._single('raw', start=0, item='main.num')
         self.assertIsNone(res)
 
     def test_single_avg(self):
@@ -120,6 +155,30 @@ class TestDatabaseSingle(TestDatabaseBase):
         self.create_log(plugin, 'main.num', [(1, 2, 10), (2, 3, 20)])
         res = plugin._single('on', start=0, end='now', item='main.num')
         self.assertSingle(1, res)
+
+    def test_single_duty_cycle_matches_on(self):
+        # 'duty_cycle' is the more descriptive name for the same query as
+        # 'on' - both accepted, must return identical results.
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [(1, 2, 10), (2, 3, 20)])
+        res = plugin._single('duty_cycle', start=0, end='now', item='main.num')
+        self.assertSingle(1, res)
+
+    def test_single_coerces_mariadb_decimal_to_float(self):
+        # Regression: MariaDB/MySQL return decimal.Decimal (not float) for
+        # SUM()/AVG() over exact-numeric columns - 'on''s SUM(val_bool *
+        # duration) is exactly this case (val_bool and duration are both
+        # integer-typed columns; sqlite, used by this test fixture, never
+        # returns Decimal at all, so this simulates a real driver's return
+        # value directly). Decimal doesn't mix with the plain floats
+        # _series() injects elsewhere (e.g. float(item()) boundary
+        # values), so an uncoerced Decimal risks a TypeError there, and a
+        # bare Decimal returned to a logic doing arithmetic on it.
+        plugin = self.plugin()
+        with mock.patch.object(plugin, '_fetchall', return_value=[(decimal.Decimal('0.5'),)]):
+            res = plugin._single('on', start=0, end='now', item='main.num')
+        self.assertIsInstance(res, float)
+        self.assertEqual(0.5, res)
 
     def test_single_returns_last_value_outside_range(self):
         """When selecting single value and the database contains one last

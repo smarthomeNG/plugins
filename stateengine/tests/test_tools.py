@@ -158,6 +158,32 @@ class TestGetOriginalCaller(unittest.TestCase):
         )
         self.assertEqual(caller, 'knx')
 
+    def test_source_details_replace_first_hop_lookup(self):
+        """source_details of the triggering update win over the trigger item's current last_update_by."""
+        self._add_item('room.pos', last_update_by='KNX:1.1.4:ga=2/4/0')
+        caller, source = StateEngineTools.get_original_caller(
+            self.sh, self.elog, 'Eval:Visu', 'room.pos', source_details='Visu:192.168.2.10'
+        )
+        self.assertEqual((caller, source), ('Visu', '192.168.2.10'))
+
+    def test_source_details_of_eval_continue_the_chain(self):
+        """source_details naming another eval are followed through the next item's last_update_by."""
+        self._add_item('hop1.item', last_update_by='admin:user')
+        self._add_item('hop2.item', last_update_by='knx:final.source')
+        caller, source = StateEngineTools.get_original_caller(
+            self.sh, self.elog, 'Eval', 'hop1.item', source_details='Eval:hop2.item'
+        )
+        self.assertEqual((caller, source), ('knx', 'final.source'))
+
+    def test_source_details_return_trigger_item(self):
+        """With item parameter and source_details, the original item is the trigger item."""
+        src = self._add_item('my.item', last_update_by='KNX:echo')
+        orig_caller, _, orig_item = StateEngineTools.get_original_caller(
+            self.sh, self.elog, 'Eval', 'my.item', item=MockItem('trigger.item'), source_details='Visu:ip'
+        )
+        self.assertEqual(orig_caller, 'Visu')
+        self.assertIs(orig_item, src)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # cast_num

@@ -1,0 +1,22 @@
+trv:
+    temp:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: temp
+    online:
+        type: bool
+        shelly_id: ABC123
+        shelly_attr: online
+    battery:
+        type: num
+        shelly_id: ABC123
+        shelly_group: sensor
+        shelly_attr: battery
+        shelly_invalidate_on_disconnect: false
+    target_t:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: target_t
+        shelly_invalidate_on_disconnect: true

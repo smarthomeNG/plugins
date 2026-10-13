@@ -14,7 +14,7 @@ from tests.mock.core import MockSmartHome
 class TestDatabaseBase(unittest.TestCase):
     TIME_FACTOR = 1000
 
-    def plugin(self):
+    def plugin(self, **param_overrides):
         self.sh = MockSmartHome()
         self.sh.with_items_from(common.BASE + '/plugins/database/tests/test_items.yaml')
 
@@ -35,6 +35,9 @@ class TestDatabaseBase(unittest.TestCase):
         Database._parameters = {
             'driver': 'sqlite3',
             'connect': {'database': self._db_file.name},
+            'sqlite_wal_mode': False,
+            'timescale_hypertable': False,
+            'timescale_chunk_interval': '168h',
             'prefix': '',
             'cycle': 60,
             'removeold_cycle': 91,
@@ -47,9 +50,12 @@ class TestDatabaseBase(unittest.TestCase):
             'default_maxage_action': 'delete',
             'default_maxage_interval': '24h',
             'max_aggregate_intervals': 30,
+            'invalid_check_cycle': 60,
+            'invalid_check_grace_time': 60,
             'copy_database': False,
             'copy_database_name': '',
         }
+        Database._parameters.update(param_overrides)
 
         plugin = Database.__new__(Database)
         # Mirrors lib.plugin.PluginWrapper's real load sequence: _set_sh() is
@@ -59,8 +65,24 @@ class TestDatabaseBase(unittest.TestCase):
         # Database(self.sh) directly skips that wiring entirely.
         plugin._set_sh(self.sh)
         plugin.__init__(self.sh)
+        # update_item() gates on self.alive (matches this codebase's own
+        # convention - see plugins/database/__init__.py's update_item) -
+        # run() is what sets it in production, but run() also starts real
+        # schedulers/threads that a unit test doesn't want, so tests get
+        # the "plugin is running" flag directly instead.
+        plugin.alive = True
         for item in self.sh.return_items():
             plugin.parse_item(item)
+        # lib.db.Database connects lazily on first query, so most tests
+        # leave a real sqlite3 connection open with nothing to close it -
+        # closing here covers both self._db and self._db_maint regardless
+        # of whether a given test ever touched them. Guarded with hasattr:
+        # a driver-module import failure makes Database.__init__() return
+        # early, before one or both attributes are ever assigned.
+        if hasattr(plugin, '_db'):
+            self.addCleanup(plugin._db.close)
+        if hasattr(plugin, '_db_maint'):
+            self.addCleanup(plugin._db_maint.close)
         return plugin
 
     def t(self, s):

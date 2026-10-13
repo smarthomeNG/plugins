@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Tests for plugins.database.store — ItemStore and LogStore."""
 
+import contextlib
+import types
 import unittest
 import sqlite3
 import time
@@ -10,8 +12,9 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
+from lib.db import NO_CURSOR
 from plugins.database.store import ItemStore, LogStore
-from plugins.database.constants import BufferEntry, QUALITY_VALID, QUALITY_NO_DATA
+from plugins.database.constants import BufferEntry, QUALITY_VALID, QUALITY_NO_DATA, QUALITY_INVALID
 from plugins.database.utils import to_timestamp
 
 
@@ -24,9 +27,17 @@ from plugins.database.utils import to_timestamp
 class _MockDB:
     """Thin SQLite in-memory wrapper for store tests (no SmartHomeNG needed)."""
 
-    def __init__(self):
+    # Matches lib.db.Database's real class attribute - ItemStore.insert()
+    # reads this to decide between lastrowid and INSERT...RETURNING.
+    _psycopg_driver_names = frozenset({'psycopg2', 'psycopg'})
+
+    def __init__(self, dbapi_name='sqlite3'):
         self._conn = sqlite3.connect(':memory:')
         self._conn.row_factory = sqlite3.Row
+        # sqlite3 (3.35+) supports RETURNING too, so a mock claiming to be
+        # psycopg2 here still exercises the real RETURNING SQL path end to
+        # end, not just a call-count check.
+        self._dbapi = types.SimpleNamespace(__name__=dbapi_name)
         self._setup()
 
     def _setup(self):
@@ -44,27 +55,27 @@ class _MockDB:
         self._conn.commit()
         c.close()
 
-    def execute(self, stmt, params=(), cur=None):
-        c = cur or self._conn.cursor()
+    def execute(self, stmt, params=(), cur=NO_CURSOR):
+        c = self._conn.cursor() if cur is NO_CURSOR else cur
         # sqlite3 accepts both sequences (qmark) and dicts (named params)
         c.execute(stmt, params)
-        if cur is None:
+        if cur is NO_CURSOR:
             self._conn.commit()
             c.close()
 
-    def fetchone(self, stmt, params=(), cur=None):
-        c = cur or self._conn.cursor()
+    def fetchone(self, stmt, params=(), cur=NO_CURSOR):
+        c = self._conn.cursor() if cur is NO_CURSOR else cur
         c.execute(stmt, params)
         row = c.fetchone()
-        if cur is None:
+        if cur is NO_CURSOR:
             c.close()
         return tuple(row) if row else None
 
-    def fetchall(self, stmt, params=(), cur=None):
-        c = cur or self._conn.cursor()
+    def fetchall(self, stmt, params=(), cur=NO_CURSOR):
+        c = self._conn.cursor() if cur is NO_CURSOR else cur
         c.execute(stmt, params)
         rows = c.fetchall()
-        if cur is None:
+        if cur is NO_CURSOR:
             c.close()
         return [tuple(r) for r in rows]
 
@@ -74,11 +85,37 @@ class _MockDB:
     def rollback(self):
         self._conn.rollback()
 
+    def close(self):
+        self._conn.close()
+
     def connected(self):
         return True
 
+    def verify(self, retry=2):
+        """Mock is always connected - mirrors lib.db.Database.verify()'s
+        return contract (nonzero = healthy) without any real reconnect logic."""
+        return -1
+
     def cursor(self):
         return self._conn.cursor()
+
+    @contextlib.contextmanager
+    def transaction(self):
+        """Mirrors lib.db.Database.transaction()'s observable contract -
+        commit on clean exit, rollback + re-raise on any exception - so
+        store.py's transaction()-using write paths stay testable against
+        this lightweight mock without needing the full sqlite3-backed
+        plugin harness in base.py."""
+        cur = self._conn.cursor()
+        try:
+            yield cur
+        except Exception:
+            cur.close()
+            self._conn.rollback()
+            raise
+        else:
+            cur.close()
+            self._conn.commit()
 
 
 TABLE_NAMES = {
@@ -93,6 +130,9 @@ class TestItemStore(unittest.TestCase):
     def setUp(self):
         self.db = _MockDB()
         self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def tearDown(self):
+        self.db.close()
 
     def test_insert_returns_sequential_ids(self):
         id1 = self.store.insert('item.one')
@@ -129,6 +169,99 @@ class TestItemStore(unittest.TestCase):
         self.assertEqual(1, calls['execute'], 'expected exactly one INSERT statement')
         self.assertEqual(0, calls['fetchone'], 'insert() must not issue a follow-up lookup query')
 
+    def test_insert_own_cur_path_uses_transaction(self):
+        # insert() must go through self._db.transaction()/lock() when
+        # called without cur=, not open a raw cursor via self._db.cursor()
+        # directly (bypassing transaction()/lock() entirely despite the
+        # class docstring promising otherwise). A spy proves this more
+        # robustly than just checking the row exists (which a
+        # lost/uncommitted write wouldn't necessarily reveal against
+        # :memory:).
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.store.insert('item.one')
+        self.assertEqual(1, len(calls), 'insert() without cur= must go through self._db.transaction()')
+
+    def test_insert_own_cur_path_rolls_back_on_failure(self):
+        # A failing statement inside the own-cur transaction() block must
+        # not leave a partial row behind.
+        with self.assertRaises(Exception):
+            with self.db.transaction() as cur:
+                cur.execute('INSERT INTO item(name) VALUES (?)', ('probe',))
+                raise RuntimeError('simulated failure mid-transaction')
+        rows = self.store.find_all()
+        self.assertEqual([], rows, 'a rolled-back insert must not be visible afterward')
+
+
+class TestItemStoreInsertOnPsycopg(unittest.TestCase):
+    """insert() on a psycopg2/psycopg driver can't use cursor.lastrowid (it's
+    tied to Postgres OIDs, not the SERIAL column - see store.py's docstring)
+    and must use INSERT...RETURNING id instead. sqlite3 (3.35+) also supports
+    RETURNING, so _MockDB(dbapi_name='psycopg2') exercises the real SQL path,
+    not just which branch got taken."""
+
+    def setUp(self):
+        self.db = _MockDB(dbapi_name='psycopg2')
+        self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_insert_returns_sequential_ids(self):
+        id1 = self.store.insert('item.one')
+        id2 = self.store.insert('item.two')
+        self.assertEqual(id1, 1)
+        self.assertEqual(id2, 2)
+
+    def test_insert_does_not_touch_lastrowid(self):
+        # cursor.lastrowid is real (sqlite3-backed) but must not be relied
+        # on for this driver - the cursor transaction() yields is wrapped so
+        # reading .lastrowid raises, proving insert() never touches it.
+        # sqlite3.Connection.cursor is a read-only C slot, so the wrapping
+        # happens at _MockDB.transaction()'s Python level instead.
+        class _NoLastrowid:
+            def __init__(self, cur):
+                self._cur = cur
+
+            def __getattr__(self, name):
+                if name == 'lastrowid':
+                    raise AssertionError('insert() must not read lastrowid for a psycopg driver')
+                return getattr(self._cur, name)
+
+        real_transaction = self.db.transaction
+
+        @contextlib.contextmanager
+        def wrapped_transaction():
+            with real_transaction() as cur:
+                yield _NoLastrowid(cur)
+
+        self.db.transaction = wrapped_transaction
+        new_id = self.store.insert('item.one')
+        self.assertEqual(1, new_id)
+
+    def test_insert_own_cur_path_uses_transaction(self):
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.store.insert('item.one')
+        self.assertEqual(1, len(calls), 'insert() without cur= must go through self._db.transaction()')
+
+    def test_insert_with_explicit_cur_does_not_open_own_transaction(self):
+        with self.db.transaction() as cur:
+            new_id = self.store.insert('item.one', cur=cur)
+        self.assertEqual(1, new_id)
+
     def test_find_by_name(self):
         self.store.insert('my.item')
         row = self.store.find('my.item')
@@ -152,6 +285,23 @@ class TestItemStore(unittest.TestCase):
         self.assertAlmostEqual(row[4], 42.0)  # val_num
         self.assertEqual(row[2], 1000)  # time
 
+    def test_update_own_cur_path_uses_transaction(self):
+        # cur omitted means "own lock + commit via transaction()" (see the
+        # class docstring); update() must follow the same two-branch shape
+        # as insert()/delete() - a raw explicit-None execute leaves the UPDATE
+        # in an open transaction nothing is guaranteed to ever commit.
+        item_id = self.store.insert('my.item')
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.store.update(item_id, time=1000, val=1.0, item_type='num', changed=1000)
+        self.assertEqual(1, len(calls), 'update() without cur= must go through self._db.transaction()')
+
     def test_count(self):
         self.store.insert('a')
         self.store.insert('b')
@@ -162,6 +312,127 @@ class TestItemStore(unittest.TestCase):
         self.store.delete(item_id)
         self.assertIsNone(self.store.find('gone'))
 
+    def test_delete_removes_item_and_its_logs_atomically(self):
+        item_id = self.store.insert('gone')
+        log_store = LogStore(self.db, TABLE_NAMES)
+        log_store.insert(item_id, BufferEntry(time=0, duration=None, value=1.0, quality=QUALITY_VALID), 'num', 0)
+
+        self.store.delete(item_id)
+
+        self.assertIsNone(self.store.find('gone'))
+        self.assertEqual(0, log_store.count(item_id), 'delete() must remove the log rows too, not just the item row')
+
+    def test_delete_own_cur_path_uses_transaction(self):
+        # delete() must go through the same self._db.transaction()
+        # primitive insert() already uses when called without cur=, not
+        # call self._db.commit() directly via LogStore.delete_range()'s
+        # own default commit=True.
+        item_id = self.store.insert('gone')
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.store.delete(item_id)
+        self.assertEqual(1, len(calls), 'delete() without cur= must go through self._db.transaction() exactly once')
+
+    def test_delete_with_explicit_cur_never_calls_commit_directly(self):
+        # delete()/delete_range() must not call self._db.commit()
+        # unconditionally (default commit=True) when called with an
+        # explicit cur from inside the caller's own open transaction() -
+        # that would commit the caller's transaction early, before the
+        # caller's own block finished. A caller-supplied cur must mean the
+        # caller alone decides when to commit.
+        item_id = self.store.insert('gone')
+        commit_calls = []
+        orig_commit = self.db.commit
+        self.db.commit = lambda: (commit_calls.append(1), orig_commit())[-1]
+
+        with self.db.transaction() as tcur:
+            self.store.delete(item_id, cur=tcur)
+            self.assertEqual(0, len(commit_calls), 'delete() with an explicit cur must never call commit() itself')
+
+        # the mock's own transaction() commits via self._conn directly, not
+        # via self.db.commit() - so commit_calls staying at 0 here is
+        # correct; what matters is the delete is actually persisted once
+        # the caller's own block exits.
+        self.assertIsNone(self.store.find('gone'))
+
+
+class _LegacyMockDB(_MockDB):
+    """Same as _MockDB, but with a plain, non-key id column on the item
+    table instead of sqlite3's INTEGER PRIMARY KEY rowid alias."""
+
+    def _setup(self):
+        c = self._conn.cursor()
+        c.execute(
+            'CREATE TABLE item (id INTEGER,'
+            ' name VARCHAR(255), time BIGINT, val_str TEXT,'
+            ' val_num REAL, val_bool BOOLEAN, changed BIGINT)'
+        )
+        c.execute(
+            'CREATE TABLE log (time BIGINT, item_id INTEGER, duration BIGINT,'
+            ' val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT,'
+            ' val_quality TINYINT DEFAULT 0)'
+        )
+        self._conn.commit()
+        c.close()
+
+
+class TestItemStoreLegacySqliteSchema(unittest.TestCase):
+    """Covers store.py's id_is_autoincrement()/_insert_legacy_sqlite()
+    against a sqlite3 item table whose id column is plain, not the
+    rowid alias."""
+
+    def setUp(self):
+        self.db = _LegacyMockDB()
+        self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_id_is_autoincrement_false_for_legacy_table(self):
+        self.assertFalse(self.store.id_is_autoincrement())
+
+    def test_id_is_autoincrement_true_for_current_schema(self):
+        self.assertTrue(ItemStore(_MockDB(), TABLE_NAMES).id_is_autoincrement())
+
+    def test_insert_actually_sets_the_id_column(self):
+        new_id = self.store.insert('test.one')
+        row = self.store.find('test.one')
+        self.assertIsNotNone(row, 'the row must exist')
+        self.assertEqual(new_id, row[0], "the row's own id column must equal what insert() returned")
+
+    def test_insert_assigns_sequential_ids_via_max_plus_one(self):
+        id1 = self.store.insert('test.one')
+        id2 = self.store.insert('test.two')
+        self.assertEqual(1, id1)
+        self.assertEqual(2, id2)
+
+    def test_update_after_insert_actually_takes_effect(self):
+        # lastrowid-based id would make this UPDATE's WHERE id=... match nothing.
+        item_id = self.store.insert('test.one')
+        self.store.update(item_id, time=1000, val=42.0, item_type='num', changed=1000)
+        row = self.store.find('test.one')
+        self.assertEqual(1000, row[2], 'time')
+        self.assertAlmostEqual(42.0, row[4], msg='val_num')
+
+    def test_autoincrement_check_runs_only_once(self):
+        calls = {'fetchall': 0}
+        orig_fetchall = self.db.fetchall
+
+        def spy_fetchall(*a, **kw):
+            calls['fetchall'] += 1
+            return orig_fetchall(*a, **kw)
+
+        self.db.fetchall = spy_fetchall
+        self.store.insert('test.one')
+        self.store.insert('test.two')
+        self.assertEqual(1, calls['fetchall'], 'PRAGMA table_info must be checked once and cached, not per insert')
+
 
 class TestLogStore(unittest.TestCase):
     def setUp(self):
@@ -170,8 +441,46 @@ class TestLogStore(unittest.TestCase):
         self.log_store = LogStore(self.db, TABLE_NAMES)
         self.item_id = self.item_store.insert('test.item')
 
+    def tearDown(self):
+        self.db.close()
+
     def _entry(self, t, d=None, v=1.0, q=QUALITY_VALID):
         return BufferEntry(time=t, duration=d, value=v, quality=q)
+
+    def _spy_transaction(self):
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy
+        return calls
+
+    def test_insert_own_cur_path_uses_transaction(self):
+        # Same cur-omitted contract as ItemStore: own lock + commit via
+        # transaction(). A raw explicit-None execute leaves the INSERT pending
+        # in an open transaction until some unrelated later call happens
+        # to commit the shared connection - or a rollback discards it.
+        calls = self._spy_transaction()
+        self.log_store.insert(self.item_id, self._entry(1000), 'num', 1000)
+        self.assertEqual(1, len(calls), 'insert() without cur= must go through self._db.transaction()')
+
+    def test_update_own_cur_path_uses_transaction(self):
+        self.log_store.insert(self.item_id, self._entry(1000), 'num', 1000)
+        calls = self._spy_transaction()
+        self.log_store.update(self.item_id, self._entry(1000, d=5, v=2.0), 'num', 2000)
+        self.assertEqual(1, len(calls), 'update() without cur= must go through self._db.transaction()')
+
+    def test_upsert_own_cur_path_uses_exactly_one_transaction(self):
+        # upsert() is a check-then-act (find, then insert or update); with
+        # cur omitted, both steps must share one transaction - two separate
+        # self-committing calls would reopen the id()-style race the
+        # explicit-cur path avoids.
+        calls = self._spy_transaction()
+        self.log_store.upsert(self.item_id, self._entry(1000), 'num', 1000)
+        self.assertEqual(1, len(calls), 'upsert() without cur= must wrap find+write in one transaction()')
 
     def test_insert_and_find(self):
         e = self._entry(1000, 500, 3.14)
@@ -194,6 +503,13 @@ class TestLogStore(unittest.TestCase):
         rows = self.log_store.find(self.item_id, 1000)
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][2], 500)  # duration
+
+    def test_count_exclude_gaps(self):
+        self.log_store.insert(self.item_id, self._entry(1000, d=10), 'num', 0)
+        self.log_store.insert(self.item_id, self._entry(2000, d=10, v=None, q=QUALITY_NO_DATA), 'num', 0)
+
+        self.assertEqual(2, self.log_store.count(self.item_id))
+        self.assertEqual(1, self.log_store.count(self.item_id, exclude_gaps=True))
 
     def test_count_range(self):
         for t in (100, 200, 300, 400):
@@ -218,6 +534,44 @@ class TestLogStore(unittest.TestCase):
             self.log_store.insert(self.item_id, self._entry(t, 50, 1.0), 'num', t)
         self.log_store.delete_range(self.item_id, time_end=250)
         self.assertEqual(self.log_store.count(self.item_id), 2)
+
+    def test_delete_range_own_cur_path_uses_transaction(self):
+        self.log_store.insert(self.item_id, self._entry(100, 50, 1.0), 'num', 100)
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.log_store.delete_range(self.item_id)
+        self.assertEqual(
+            1, len(calls), 'delete_range() without cur= must go through self._db.transaction() exactly once'
+        )
+
+    def test_delete_range_with_explicit_cur_never_calls_commit_directly(self):
+        # delete_range() must not call self._db.commit() unconditionally,
+        # bypassing the lock, when called with an explicit cur from inside
+        # the caller's own open transaction() - see
+        # test_delete_with_explicit_cur_never_calls_commit_directly above
+        # for the ItemStore twin of this requirement.
+        self.log_store.insert(self.item_id, self._entry(100, 50, 1.0), 'num', 100)
+        commit_calls = []
+        orig_commit = self.db.commit
+        self.db.commit = lambda: (commit_calls.append(1), orig_commit())[-1]
+
+        with self.db.transaction() as tcur:
+            self.log_store.delete_range(self.item_id, cur=tcur)
+            self.assertEqual(
+                0, len(commit_calls), 'delete_range() with an explicit cur must never call commit() itself'
+            )
+
+        # the mock's own transaction() commits via self._conn directly, not
+        # via self.db.commit() - so commit_calls staying at 0 here is
+        # correct; what matters is the delete is actually persisted once
+        # the caller's own block exits.
+        self.assertEqual(0, self.log_store.count(self.item_id))
 
     # Quality tests
 
@@ -244,6 +598,76 @@ class TestLogStore(unittest.TestCase):
         self.log_store.insert(self.item_id, gap, 'num', changed=3600)
         rows = self.db.fetchall('SELECT val_quality FROM log WHERE item_id=? AND time=?', (self.item_id, 3000))
         self.assertEqual(rows[0][0], QUALITY_NO_DATA)
+
+    def test_edge_value_skips_gap_rows(self):
+        # edge_value()'s ORDER BY time LIMIT 1 must skip all-NULL gap rows -
+        # a non-empty tuple of Nones is truthy in Python, so a caller
+        # decoding it (e.g. _compact_maxage()) would get value=None back
+        # and skip writing an aggregate, while the matching delete_range()
+        # call (which does NOT exclude gaps - it's a real row to clean up
+        # too) still removes every row in the interval, including any real
+        # ones: silent data loss.
+        self.log_store.insert(self.item_id, self._entry(50, 50, 99.0, QUALITY_VALID), 'num', 50)
+        self.log_store.insert(self.item_id, self._entry(100, None, None, QUALITY_NO_DATA), 'num', 100)
+
+        first = self.log_store.edge_value(self.item_id, 'ASC')
+        last = self.log_store.edge_value(self.item_id, 'DESC')
+
+        self.assertIsNotNone(first, 'must skip the gap row and find the real value')
+        self.assertAlmostEqual(first[1], 99.0)  # val_num
+        self.assertEqual(last, first, 'the only non-gap row must be both edges')
+
+    def test_edge_value_none_when_only_gap_rows_present(self):
+        self.log_store.insert(self.item_id, self._entry(100, None, None, QUALITY_NO_DATA), 'num', 100)
+        self.assertIsNone(self.log_store.edge_value(self.item_id, 'ASC'))
+
+    def test_aggregate_excludes_gap_rows(self):
+        # Regression: aggregate()'s SUM/AVG/etc used to run over gap rows
+        # too - harmless for SUM/AVG (NULL propagates out), but COUNT(*)
+        # would count a gap as a real data point, inflating readings.
+        self.log_store.insert(self.item_id, self._entry(50, 50, 10.0, QUALITY_VALID), 'num', 50)
+        self.log_store.insert(self.item_id, self._entry(150, 50, 20.0, QUALITY_VALID), 'num', 150)
+        self.log_store.insert(self.item_id, self._entry(250, None, None, QUALITY_NO_DATA), 'num', 250)
+
+        self.assertEqual(2, self.log_store.aggregate(self.item_id, 'COUNT(*)'))
+        self.assertAlmostEqual(30.0, self.log_store.aggregate(self.item_id, 'SUM(val_num)'))
+
+    def test_set_quality_flips_quality_without_touching_value(self):
+        """set_quality() must be a reversible flag flip: duration/val_* stay put."""
+        e = self._entry(4000, 500, 42.0, QUALITY_VALID)
+        self.log_store.insert(self.item_id, e, 'num', changed=4500)
+
+        self.log_store.set_quality(self.item_id, QUALITY_INVALID, time=4000, changed=4500)
+
+        rows = self.db.fetchall(
+            'SELECT val_quality, val_num, duration FROM log WHERE item_id=? AND time=?', (self.item_id, 4000)
+        )
+        self.assertEqual(rows[0][0], QUALITY_INVALID)
+        self.assertAlmostEqual(rows[0][1], 42.0)  # val_num preserved
+        self.assertEqual(rows[0][2], 500)  # duration preserved
+
+    def test_set_quality_is_reversible(self):
+        e = self._entry(5000, 500, 7.5, QUALITY_VALID)
+        self.log_store.insert(self.item_id, e, 'num', changed=5500)
+
+        self.log_store.set_quality(self.item_id, QUALITY_INVALID, time=5000, changed=5500)
+        self.log_store.set_quality(self.item_id, QUALITY_VALID, time=5000, changed=5500)
+
+        rows = self.db.fetchall('SELECT val_quality, val_num FROM log WHERE item_id=? AND time=?', (self.item_id, 5000))
+        self.assertEqual(rows[0][0], QUALITY_VALID)
+        self.assertAlmostEqual(rows[0][1], 7.5)
+
+    def test_set_quality_only_matches_given_criteria(self):
+        """Same time+changed matching as delete_range - other rows untouched."""
+        for t in (100, 200, 300):
+            self.log_store.insert(self.item_id, self._entry(t, 50, float(t), QUALITY_VALID), 'num', changed=t)
+
+        self.log_store.set_quality(self.item_id, QUALITY_INVALID, time=200, changed=200)
+
+        rows = self.db.fetchall('SELECT time, val_quality FROM log WHERE item_id=? ORDER BY time', (self.item_id,))
+        self.assertEqual(
+            [(r[0], r[1]) for r in rows], [(100, QUALITY_VALID), (200, QUALITY_INVALID), (300, QUALITY_VALID)]
+        )
 
 
 if __name__ == '__main__':

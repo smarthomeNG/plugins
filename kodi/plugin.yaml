@@ -9,7 +9,7 @@ plugin:
     version: 1.7.3
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
-    sdp_minversion: '1.0.3'
+    sdp_minversion: '2.0.0'
     multi_instance: true
     restartable: true
     classname: kodi
@@ -41,7 +41,7 @@ parameters:
 
     resume_initial_read:
         type: bool
-        defaul: true
+        default: true
         description:
             de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
             en: 'Repeat initial read on resume'
@@ -126,6 +126,14 @@ parameters:
             de: Port für Netzwerkverbindung
             en: network port
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+
+        description:
+            de: Items bei Verbindungsverlust im Datenbank-Log als ungültig markieren (Datenlücke)
+            en: mark items invalid in the database log when the connection is lost (data gap)
+
 item_attributes:
 
     kodi_command:
@@ -139,8 +147,8 @@ item_attributes:
         type: bool
 
         description:
-            de: Item liest/erhält Werte vom Gerät
-            en: Item reads/receives data from the device
+            de: Item fordert Werte vom Gerät an (Werte empfängt jedes Item mit Kommando)
+            en: Item requests data from the device (every item with a command receives its values)
 
     kodi_read_group:
         type: list(str)
@@ -200,43 +208,55 @@ item_structs:
         player:
             type: num
             kodi_command@instance: info.player
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
 
         state:
             type: str
             kodi_command@instance: info.state
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
 
         media:
             type: str
             kodi_command@instance: info.media
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
 
         title:
             type: str
             kodi_command@instance: info.title
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
 
         streams:
             type: list
             kodi_command@instance: info.streams
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
 
         subtitles:
             type: list
             kodi_command@instance: info.subtitles
-            kodi_read@instance: true
+            kodi_read@instance: false
+            kodi_write@instance: false
+
+        audio_names:
+            type: list
+            kodi_command@instance: info.audio_names
+            kodi_read@instance: false
+            kodi_write@instance: false
+
+        subtitle_names:
+            type: list
+            kodi_command@instance: info.subtitle_names
+            kodi_read@instance: false
             kodi_write@instance: false
 
         macro:
             type: bool
             kodi_command@instance: info.macro
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
     status:
@@ -320,73 +340,73 @@ item_structs:
         playpause:
             type: bool
             kodi_command@instance: control.playpause
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         seek:
             type: num
             kodi_command@instance: control.seek
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         audio:
             type: foo
             kodi_command@instance: control.audio
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         speed:
             type: num
             kodi_command@instance: control.speed
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         subtitle:
             type: foo
             kodi_command@instance: control.subtitle
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         stop:
             type: bool
             kodi_command@instance: control.stop
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         goto:
             type: str
             kodi_command@instance: control.goto
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         power:
             type: bool
             kodi_command@instance: control.power
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         quit:
             type: bool
             kodi_command@instance: control.quit
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         mute:
             type: bool
             kodi_command@instance: control.mute
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         volume:
             type: num
             kodi_command@instance: control.volume
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         action:
             type: str
             kodi_command@instance: control.action
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
     ALL:
@@ -406,43 +426,55 @@ item_structs:
             player:
                 type: num
                 kodi_command@instance: info.player
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: false
 
             state:
                 type: str
                 kodi_command@instance: info.state
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: false
 
             media:
                 type: str
                 kodi_command@instance: info.media
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: false
 
             title:
                 type: str
                 kodi_command@instance: info.title
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: false
 
             streams:
                 type: list
                 kodi_command@instance: info.streams
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: false
 
             subtitles:
                 type: list
                 kodi_command@instance: info.subtitles
-                kodi_read@instance: true
+                kodi_read@instance: false
+                kodi_write@instance: false
+
+            audio_names:
+                type: list
+                kodi_command@instance: info.audio_names
+                kodi_read@instance: false
+                kodi_write@instance: false
+
+            subtitle_names:
+                type: list
+                kodi_command@instance: info.subtitle_names
+                kodi_read@instance: false
                 kodi_write@instance: false
 
             macro:
                 type: bool
                 kodi_command@instance: info.macro
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
         status:
@@ -494,7 +526,7 @@ item_structs:
                 kodi_read@instance: true
                 kodi_write@instance: false
                 kodi_read_group@instance:
-                -   status
+                -   ALL.status
 
             get_status_play:
                 type: bool
@@ -533,73 +565,73 @@ item_structs:
             playpause:
                 type: bool
                 kodi_command@instance: control.playpause
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             seek:
                 type: num
                 kodi_command@instance: control.seek
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             audio:
                 type: foo
                 kodi_command@instance: control.audio
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             speed:
                 type: num
                 kodi_command@instance: control.speed
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             subtitle:
                 type: foo
                 kodi_command@instance: control.subtitle
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             stop:
                 type: bool
                 kodi_command@instance: control.stop
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             goto:
                 type: str
                 kodi_command@instance: control.goto
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             power:
                 type: bool
                 kodi_command@instance: control.power
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             quit:
                 type: bool
                 kodi_command@instance: control.quit
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             mute:
                 type: bool
                 kodi_command@instance: control.mute
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             volume:
                 type: num
                 kodi_command@instance: control.volume
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
             action:
                 type: str
                 kodi_command@instance: control.action
-                kodi_read@instance: true
+                kodi_read@instance: false
                 kodi_write@instance: true
 
     old_info:
@@ -612,7 +644,7 @@ item_structs:
         player:
             type: num
             kodi_command@instance: info.player
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
             kodi_read_group@instance:
             -   old_info
@@ -620,7 +652,7 @@ item_structs:
         state:
             type: str
             kodi_command@instance: info.state
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
             kodi_read_group@instance:
             -   old_info
@@ -628,7 +660,7 @@ item_structs:
         media:
             type: str
             kodi_command@instance: info.media
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
             kodi_read_group@instance:
             -   old_info
@@ -636,7 +668,7 @@ item_structs:
         title:
             type: str
             kodi_command@instance: info.title
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
             kodi_read_group@instance:
             -   old_info
@@ -644,7 +676,7 @@ item_structs:
         audiostreams:
             type: list
             kodi_command@instance: info.streams
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
             kodi_read_group@instance:
             -   old_info
@@ -652,7 +684,7 @@ item_structs:
         subtitles:
             type: list
             kodi_command@instance: info.subtitles
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: false
             kodi_read_group@instance:
             -   old_info
@@ -696,13 +728,13 @@ item_structs:
         stop:
             type: bool
             kodi_command@instance: control.stop
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         playpause:
             type: bool
             kodi_command@instance: control.playpause
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         previous:
@@ -718,43 +750,43 @@ item_structs:
         seek:
             type: num
             kodi_command@instance: control.seek
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         speed:
             type: num
             kodi_command@instance: control.speed
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         volume:
             type: num
             kodi_command@instance: control.volume
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         mute:
             type: bool
             kodi_command@instance: control.mute
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         macro:
             type: bool
             kodi_command@instance: info.macro
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         on_off:
             type: bool
             kodi_command@instance: control.power
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         input:
             type: str
             kodi_command@instance: control.action
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         get_favourites:
@@ -768,13 +800,13 @@ item_structs:
         audiostream:
             type: foo
             kodi_command@instance: control.audio
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
         subtitle:
             type: foo
             kodi_command@instance: control.subtitle
-            kodi_read@instance: true
+            kodi_read@instance: false
             kodi_write@instance: true
 
 

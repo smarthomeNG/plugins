@@ -27,6 +27,7 @@ import json
 from lib.module import Modules
 from lib.model.mqttplugin import MqttPlugin
 from lib.item import Items
+from lib.utils import Utils
 
 from .webif import WebInterface
 
@@ -39,7 +40,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.8.3'
+    PLUGIN_VERSION = '1.9.0'
 
     def __init__(self, sh):
         """
@@ -63,12 +64,18 @@ class Shelly(MqttPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.gen1debug = self.get_parameter_value('gen1debug')
+        self.invalidate_on_disconnect = bool(self.get_parameter_value('invalidate_on_disconnect'))
         self.debuggen1devices = self.get_parameter_value('debuggen1devices')
         for i in range(len(self.debuggen1devices)):
             self.debuggen1devices[i] = self.debuggen1devices[i].lower()
 
         # Initialization code goes here
         self.shelly_devices = {}  # dict to store information about discovered shelly devices
+
+        # log dedupe state
+        self.logged_attrs = []
+        self.devices_with_unhandled_status = []
+        self.unhandled_status_logged = []
 
         # add subscription to get Gen 1 device announces (gets Gen2 announces, if device is configured correctly)
         self.add_subscription('shellies/announce', 'dict', callback=self.on_mqtt_announce)
@@ -149,6 +156,10 @@ class Shelly(MqttPlugin):
             return
 
         config_data = {}
+        if self.has_iattr(item.conf, 'shelly_invalidate_on_disconnect'):
+            config_data['invalidate_on_disconnect'] = Utils.to_bool(
+                self.get_iattr_value(item.conf, 'shelly_invalidate_on_disconnect')
+            )
 
         if self.has_iattr(item.conf, 'shelly_type') and self.get_iattr_value(item.conf, 'shelly_type') != '':
             result = self.parse_item_old(item)
@@ -422,6 +433,25 @@ class Shelly(MqttPlugin):
                 typ = f"'{typ}'"
         return typ
 
+    def _invalidate_device_items(self, shelly_id: str, source: str) -> None:
+        """
+        Mark the items of ``shelly_id`` invalid in the database log.
+
+        Items the database plugin does not log have no ``db_mark_invalid`` and are skipped.
+        """
+        self.db_invalidate_items(
+            self.get_item_list(filter_key='shelly_id', filter_value=shelly_id),
+            source,
+            accept=self._invalidates_on_disconnect,
+        )
+
+    def _invalidates_on_disconnect(self, item) -> bool:
+        """Whether going offline invalidates ``item``: not the online flag itself; its invalidate_on_disconnect, else the plugin parameter."""
+        config = self.get_item_config(item)
+        if config.get('shelly_attr') == 'online':
+            return False
+        return bool(config.get('invalidate_on_disconnect', self.invalidate_on_disconnect))
+
     def update_items_with_mapping(self, shelly_id: str, source: str, value, item_mapping: str):
         """
         Update all items that have the given mapping with a new value
@@ -444,10 +474,6 @@ class Shelly(MqttPlugin):
                     source = self.shelly_devices[shelly_id]['app']
                 item(value, caller=self.get_shortname(), source=source)
         return
-
-    logged_attrs = []
-    devices_with_unhandled_status = []
-    unhandled_status_logged = []
 
     def list_attribute(self, shelly_id, group, attr, typ):
 
@@ -638,7 +664,7 @@ class Shelly(MqttPlugin):
                 self.shelly_devices[shelly_id]['conf_id'] = config_data['shelly_conf_id']
                 if config_data['shelly_list_attrs']:
                     self.shelly_devices[shelly_id]['list_attrs'] = config_data['shelly_list_attrs']
-            self.update_items_from_status(shelly_id, '', 'online', self.shelly_devices.get('online', True))
+            self.update_items_from_status(shelly_id, '', 'online', self.shelly_devices[shelly_id].get('online', True))
 
         except Exception as e:
             self.logger.exception(
@@ -677,7 +703,10 @@ class Shelly(MqttPlugin):
 
             self.logger.dbghigh(f'on_mqtt_online: topic {topic} = {payload}, qos={qos} -> shelly_id={shelly_id}')
             self.shelly_devices[shelly_id]['online'] = payload
-            if self.shelly_devices[shelly_id].get('mac)', None) is not None:
+            # a retained 'false' is a replay, not a drop
+            if not payload and not retain:
+                self._invalidate_device_items(shelly_id, 'lwt_offline')
+            if self.shelly_devices[shelly_id].get('mac', None) is not None:
                 self.update_items_from_status(shelly_id, '', 'online', payload)
 
         except Exception as e:
@@ -1185,6 +1214,9 @@ class Shelly(MqttPlugin):
                 'fs_free',
                 'uptime',
                 'timestamp',
+                'fw_info',
+                'ps_mode',
+                'dbg_flags',
             ]:
                 # Following sub types for 'info' of shellysw2 are handled through sensor group:
                 #  - 'accel' ('tilt', 'vibration')
@@ -1220,6 +1252,10 @@ class Shelly(MqttPlugin):
                 if len(sub_property) > 0:
                     self.handle_gen1_info_lights(shelly_id, sub_property, topic, payload)
 
+            elif property == 'thermostats':  # for TRV
+                for index, thermostat in enumerate(sub_property):
+                    self.update_items_from_gen1_thermostat(shelly_id, index, thermostat)
+
             elif property == 'sensor':
                 self.update_items_from_status(shelly_id, 'sensor', 'state', sub_property['state'], 'info')
 
@@ -1244,6 +1280,43 @@ class Shelly(MqttPlugin):
                 )
 
         return
+
+    # Gen1 TRV thermostat keys -> item attribute, for plain values and for {'value': ...} sub-dicts
+    TRV_PLAIN_ATTRS = {
+        'pos': 'valve_pos',
+        'schedule': 'schedule',
+        'schedule_profile': 'schedule_profile',
+        'boost_minutes': 'boost_minutes',
+        'window_open': 'window_open',
+        'temperature_offset': 'temperature_offset',
+    }
+    TRV_VALUE_ATTRS = {'tmp': 'temp', 'target_t': 'target_t'}
+
+    def update_items_from_gen1_thermostat(self, shelly_id: str, index: int, thermostat: dict):
+        """
+        Update items of group ``thermostat:<index>`` from the thermostat data of a Gen1 TRV (SHTRV-01)
+
+        :param shelly_id: Id of the shelly device
+        :param index: number of the thermostat
+        :param thermostat: thermostat data, from the TRV's 'status' message or an entry of 'thermostats' in 'info'
+        """
+        group = f'thermostat:{index}'
+        for key, attr in self.TRV_PLAIN_ATTRS.items():
+            if key in thermostat:
+                self.update_items_from_status(shelly_id, group, attr, thermostat[key])
+        for key, attr in self.TRV_VALUE_ATTRS.items():
+            if key in thermostat:
+                self.update_items_from_status(shelly_id, group, attr, thermostat[key]['value'])
+
+    def handle_gen1_trv_status(self, shelly_id: str, status: dict):
+        """
+        Update items from the 'status' message of a Gen1 TRV (SHTRV-01)
+
+        :param shelly_id: Id of the shelly device
+        :param status: payload of topic ``shellies/<shelly_id>/status``
+        """
+        self.update_items_from_gen1_thermostat(shelly_id, 0, status)
+        self.update_items_from_status(shelly_id, 'sensor', 'battery', status['bat'])
 
     def handle_gen1_status(self, shelly_id: str, property, topic, payload, group=None):
         """
@@ -1272,6 +1345,8 @@ class Shelly(MqttPlugin):
                 self.update_items_from_status(shelly_id, '', property, payload)
             elif property == 'info':
                 self.handle_gen1_info(shelly_id, topic, payload)
+            elif property == 'status' and isinstance(payload, dict) and 'target_t' in payload:  # TRV
+                self.handle_gen1_trv_status(shelly_id, payload)
             else:
                 self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, position='*1.1')
 

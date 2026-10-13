@@ -8,17 +8,17 @@ from plugins.uzsu.tests.base import TestUZSUBase
 class TestPlainTimeEntries(TestUZSUBase):
     """Coverage for _get_time() with a plain HH:MM entry.
 
-    These exercise the datetime.now(self._timezone) fix in _get_time(): the
+    These exercise datetime.now(self._timezone) in _get_time(): the
     rrule search seed and the final scheduled time must consistently be in
     shng's configured timezone.
 
-    NOTE: a true red/green regression test (proving the OS-tz vs configured-tz
-    bug specifically) isn't practical here without monkeypatching
-    datetime.datetime.now() itself - the bug only manifests when the OS
-    timezone and configured timezone disagree about *which calendar day it
-    currently is* (i.e. right at local midnight). force_os_tz alone doesn't
-    shift "now" far enough to hit that window. These tests instead confirm
-    the now-fixed code produces correct, consistently-tz-aware results.
+    NOTE: a true red/green test for the OS-tz vs configured-tz case isn't
+    practical here without monkeypatching datetime.datetime.now() itself -
+    that discrepancy only manifests when the OS timezone and configured
+    timezone disagree about *which calendar day it currently is* (i.e.
+    right at local midnight). force_os_tz alone doesn't shift "now" far
+    enough to hit that window. These tests instead confirm the code
+    produces correct, consistently-tz-aware results.
     """
 
     def setUp(self):
@@ -82,3 +82,23 @@ class TestInterpolation(TestUZSUBase):
         before = plugin.interpolation(item=item)
         result = plugin.interpolation('exponential', item=item)
         self.assertEqual(result, before)
+
+
+class TestOneShotAlarm(TestUZSUBase):
+    """An entry with ``once`` fires at its next occurrence and is deactivated afterwards (alarm clock)."""
+
+    def setUp(self):
+        self.plugin = self.plugin_with_entry('main.temp.uzsu', {'value': 21.5, 'time': '07:00', 'once': True})
+        self.item = self.sh.return_item('main.temp.uzsu')
+        self.entry = self.plugin._items[self.item]['list'][0]
+
+    def test_is_scheduled_until_it_has_fired(self):
+        nxt, value, _ = self.plugin._get_time(self.entry, 'next', self.item, 0, 'test')
+        self.assertIsNotNone(nxt)
+        self.assertEqual(value, 21.5)
+
+    def test_deactivated_after_firing(self):
+        self.plugin._set(self.item, 21.5, caller='test', entryindex=0)
+        self.assertFalse(self.entry['active'])
+        nxt, _, _ = self.plugin._get_time(self.entry, 'next', self.item, 0, 'test')
+        self.assertIsNone(nxt)

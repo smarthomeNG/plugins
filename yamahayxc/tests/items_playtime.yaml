@@ -1,0 +1,25 @@
+yamaha:
+
+    one:
+        yamahayxc_host: 127.0.0.1
+        yamahayxc_zone: main
+
+        play_time:
+            type: num
+            yamahayxc_cmd: play_time
+
+        total_time:
+            type: num
+            yamahayxc_cmd: total_time
+
+    two:
+        yamahayxc_host: 127.0.0.2
+        yamahayxc_zone: main
+
+        play_time:
+            type: num
+            yamahayxc_cmd: play_time
+
+        total_time:
+            type: num
+            yamahayxc_cmd: total_time

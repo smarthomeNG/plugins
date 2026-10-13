@@ -27,7 +27,7 @@
 import asyncio
 import threading
 from concurrent.futures import CancelledError
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import json
 
@@ -350,7 +350,7 @@ class Husky2(SmartPlugin):
         self.alive = True
         self.logger.debug('Init finished, husky2 plugin is running')
 
-        dt = self.shtime.now() + timedelta(seconds=self.poll_cycle)
+        dt = self.shtime.add_seconds(self.shtime.now(), self.poll_cycle)
         self.scheduler_add(
             'poll_husky_device_' + self.instance, self.poll_device, cycle=self.poll_cycle, prio=5, next=dt
         )

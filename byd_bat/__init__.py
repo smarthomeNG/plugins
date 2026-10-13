@@ -723,7 +723,7 @@ class byd_bat(SmartPlugin):
 
         # Log-Verzeichnis erstellen
         if self.log_data:
-            self.log_dir = self.create_logdirectory(self.get_sh().get_basedir(), byd_log_directory)
+            self.log_dir = self.create_logdirectory(self.get_sh().get_vardir(), byd_log_directory)
             self.log_debug('log_dir=' + self.log_dir)
 
         #        self.simulate_data()  # for internal tests only [TEST]
@@ -3009,12 +3009,10 @@ class byd_bat(SmartPlugin):
     # Routinen fuer das Logging der Daten
     # -----------------------------------------------------------------------
 
-    def create_logdirectory(self, base, log_directory):
+    def create_logdirectory(self, var_dir, log_directory):
         # Erstellt das Verzeichnis 'log_directory' im Log-Verzeichnis von smarthomeNG.
         if log_directory[0] != '/':
-            if base[-1] != '/':
-                base += '/'
-            log_directory = base + 'var/log/' + log_directory
+            log_directory = os.path.join(var_dir, 'log', log_directory)
         if not os.path.exists(log_directory):
             os.makedirs(log_directory)
         return log_directory

@@ -19,8 +19,6 @@ They are importable and testable in complete isolation.
 import datetime
 import time as _time
 
-from .constants import QUALITY_NO_DATA
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Value encoding / decoding
@@ -132,7 +130,15 @@ def apply_table_names(query: str, table_names: dict) -> str:
 
 
 def build_where_clause(
-    item_id: int, *, time=None, time_start=None, time_end=None, changed=None, changed_start=None, changed_end=None
+    item_id: int,
+    *,
+    time=None,
+    time_start=None,
+    time_end=None,
+    changed=None,
+    changed_start=None,
+    changed_end=None,
+    exclude_gaps=False,
 ) -> tuple:
     """Build a parameterised SQL WHERE clause from optional filter criteria.
 
@@ -148,6 +154,13 @@ def build_where_clause(
     :param changed:       Exact ``changed`` timestamp match (optional).
     :param changed_start: Lower bound on ``changed`` (optional).
     :param changed_end:   Upper bound on ``changed`` (optional).
+    :param exclude_gaps:  If True, exclude ``val_quality != 0`` (no-data gap)
+                          rows - for callers that compute a derived value
+                          from the matched rows (aggregate/edge_value),
+                          where an all-NULL gap row would corrupt the
+                          result. Callers that operate on raw rows
+                          (delete/find/count) leave this False - a gap
+                          marker is still a real row there.
     :returns:             ``(where_sql, params_dict)`` tuple ready for use in
                           a parameterised query.
     :rtype:               tuple[str, dict]
@@ -173,5 +186,7 @@ def build_where_clause(
     if changed_end is not None:
         clauses.append('changed < :changed_end')
         params['changed_end'] = changed_end
+    if exclude_gaps:
+        clauses.append('(val_quality IS NULL OR val_quality = 0)')
 
     return ' AND '.join(clauses), params

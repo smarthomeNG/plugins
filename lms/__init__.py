@@ -48,14 +48,8 @@ else:
     if not hasattr(builtins, 'SDP_standalone'):
         builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (
-    CUSTOM_SEP,
-    PLUGIN_ATTR_NET_HOST,
-    PLUGIN_ATTR_RECURSIVE,
-    PLUGIN_ATTR_CMD_CLASS,
-    PLUGIN_ATTR_CONNECTION,
-    PLUGIN_ATTR_CONN_TERMINATOR,
-)
+from lib.model.sdp.declarations import CustomTokenSpec, TransportRule
+from lib.model.sdp.globals import CONN_NET_TCP_CLI, CUSTOM_SEP, PLUGIN_ATTR_NET_HOST
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -67,46 +61,32 @@ class lms(SmartDevicePlugin):
 
     PLUGIN_VERSION = '2.0.0'
 
-    def _set_device_defaults(self):
-        self.custom_commands = 1
-        self._token_pattern = '([0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}'
-        # for substitution in reply_pattern
-        self._custom_patterns = {1: '(?:[0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}', 2: '', 3: ''}
-        self._use_callbacks = True
-        self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
-        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
-        self._parameters[PLUGIN_ATTR_CONNECTION] = 'net_tcp_client'
+    TRANSPORTS = (TransportRule(CONN_NET_TCP_CLI, requires='host'),)
+    COMMAND_CLASS = SDPCommandParseStr
+    LINE_TERMINATED = True
+    CUSTOM_TOKEN = CustomTokenSpec(
+        index=1,
+        token_re='([0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}',
+        reply_re='(?:[0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}',
+        recursive=True,
+    )
 
-        self._parameters['web_port'] = self.get_parameter_value('web_port')
-        if self.get_parameter_value('web_host') == '':
-            host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
-            if host.startswith('http'):
-                self._parameters['web_host'] = host
-            else:
-                self._parameters['web_host'] = f'http://{host}'
-        else:
-            host = self.get_parameter_value('web_host')
-            if host.startswith('http'):
-                self._parameters['web_host'] = host
-            else:
-                self._parameters['web_host'] = f'http://{host}'
-        self._parameters['CURRENT_LIST_ID'] = {}
+    def _post_init(self):
+        self.template_vars['CURRENT_LIST_ID'] = {}
+        self._web_port = self.get_parameter_value('web_port')
+        host = self.get_parameter_value('web_host') or self._parameters.get(PLUGIN_ATTR_NET_HOST)
+        self._web_host = host if host.startswith('http') else f'http://{host}'
 
     def on_connect(self, by=None):
+        super().on_connect(by)
         self.logger.debug('Activating listen mode after connection.')
         self.send_command('server.listenmode', True)
         self.logger.debug('Subscribing all players to playlist changes.')
-        for player in self._custom_values.get(1):
+        for player in self.custom_tokens(1):
             if player == '-':
                 continue
             else:
                 self.send_command('player.info.player.status_subscribe' + CUSTOM_SEP + player, True)
-
-    def _transform_send_data(self, data=None, **kwargs):
-        if isinstance(data, dict):
-            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
-            data['payload'] = f'{data.get("payload")}{data["limit_response"]}'
-        return data
 
     def _transform_received_data(self, data):
         # fix weird representation of MAC address (%3A = :), etc.
@@ -123,7 +103,7 @@ class lms(SmartDevicePlugin):
         if command == 'server.newclient':
             self.logger.debug(f'Got new client connection {command}, re-reading players.')
             self.send_command('server.players')
-            if value in self._custom_values.get(1):
+            if value in self.custom_tokens(1):
                 self.logger.debug(f'Subscribing to updates: {value}')
                 self.send_command('player.info.player.status_subscribe' + CUSTOM_SEP + value, True)
                 self.read_all_commands('player.info.currentsong' + CUSTOM_SEP + value)
@@ -135,7 +115,7 @@ class lms(SmartDevicePlugin):
 
         if command == 'server.players':
             self.logger.debug(f'Got command players {command} data {data} value {value} by {by}')
-            for player in self._custom_values.get(1):
+            for player in self.custom_tokens(1):
                 if player == '-':
                     continue
                 elif player in value.keys():
@@ -163,7 +143,7 @@ class lms(SmartDevicePlugin):
                 return -1
 
             self.logger.debug(f'Got command syncgroups {command} data {data} value {value} by {by}')
-            for player in self._custom_values.get(1):
+            for player in self.custom_tokens(1):
                 idx = find_player_index(player, value)
                 if idx >= 0:
                     synced = value[idx].split(',')
@@ -227,8 +207,8 @@ class lms(SmartDevicePlugin):
         # set album art URL
         if command == f'player.info.currentsong.album{CUSTOM_SEP}{custom}':
             self.logger.debug(f'Got command album {command} data {data} value {value} custom {custom} by {by}')
-            host = self._parameters['web_host']
-            port = self._parameters['web_port']
+            host = self._web_host
+            port = self._web_port
             if port == 0:
                 url = f'{host}/music/current/cover.jpg?player={custom}'
             else:
@@ -244,7 +224,7 @@ class lms(SmartDevicePlugin):
 
         if command == f'player.playlist.current_id{CUSTOM_SEP}{custom}':
             self.logger.debug(f'Got command id {command} data {data} value {value} custom {custom} by {by}')
-            self._parameters['CURRENT_LIST_ID'][custom] = value
+            self.template_vars['CURRENT_LIST_ID'][custom] = value
             trigger_read('player.playlist.current_name')
             trigger_read('player.playlist.current_url')
 

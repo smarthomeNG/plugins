@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samsung AA59-00445A Volle Nachbildung</title>
+    <link rel="stylesheet" href="static/remote.css">
+</head>
+<body>
+
+    <div class="remote-container">
+        
+        <!-- BLOCK 1: Power, Source, Licht & Belegungen -->
+        <div class="grid-3">
+            <button class="btn-power" onclick="sendKey('KEY_POWER')">Power</button>
+            <button onclick="sendKey('KEY_SOURCE')">Source</button>
+            <button class="btn-light-opt" onclick="sendKey('KEY_LIGHT')">Light</button>
+        </div>
+
+        <!-- BLOCK 2: Nummernblock 1-9 -->
+        <div class="grid-3">
+            <button class="btn-num" onclick="sendKey('KEY_1')">1</button>
+            <button class="btn-num" onclick="sendKey('KEY_2')">2</button>
+            <button class="btn-num" onclick="sendKey('KEY_3')">3</button>
+        </div>
+        <div class="grid-3">
+            <button class="btn-num" onclick="sendKey('KEY_4')">4</button>
+            <button class="btn-num" onclick="sendKey('KEY_5')">5</button>
+            <button class="btn-num" onclick="sendKey('KEY_6')">6</button>
+        </div>
+        <div class="grid-3">
+            <button class="btn-num" onclick="sendKey('KEY_7')">7</button>
+            <button class="btn-num" onclick="sendKey('KEY_8')">8</button>
+            <button class="btn-num" onclick="sendKey('KEY_9')">9</button>
+        </div>
+
+        <!-- BLOCK 3: Zeile unter Ziffern block -->
+        <div class="grid-3">
+            <button onclick="sendKey('KEY_TTX_MIX')">TTX/Mix</button>
+            <button class="btn-num" onclick="sendKey('KEY_0')">0</button>
+            <button onclick="sendKey('KEY_PRECH')">Pre-Ch</button>
+        </div>
+
+        <!-- BLOCK 4: Vol / Mute / CH Steuerung -->
+        <div class="rocker-container">
+            <button class="btn-large" onclick="sendKey('KEY_VOLUP')">Vol +</button>
+            <button class="btn-center-sm" onclick="sendKey('KEY_MUTE')">Mute</button>
+            <button class="btn-large" onclick="sendKey('KEY_CHUP')">Ch +</button>
+        </div>
+        <div class="rocker-container">
+            <button class="btn-large" onclick="sendKey('KEY_VOLDOWN')">Vol -</button>
+            <button class="btn-center-sm" onclick="sendKey('KEY_CH_LIST')">List</button>
+            <button class="btn-large" onclick="sendKey('KEY_CHDOWN')">Ch -</button>
+        </div>
+
+        <!-- BLOCK 5: Smart Hub & Hauptmenüs -->
+        <div class="grid-3">
+            <button onclick="sendKey('KEY_CONTENT')">Content</button>
+            <button onclick="sendKey('KEY_SMART_HUB')">Smart Hub</button>
+            <button onclick="sendKey('KEY_GUIDE')">Guide</button>
+        </div>
+
+        <!-- BLOCK 6: Systemmenüs -->
+        <div class="grid-3">
+            <button onclick="sendKey('KEY_MENU')">Menu</button>
+            <button onclick="sendKey('KEY_TOOLS')">Tools</button>
+            <button onclick="sendKey('KEY_INFO')">Info</button>
+        </div>
+
+        <!-- BLOCK 7: Steuerkreuz (D-Pad) -->
+        <div class="nav-container">
+            <div class="nav-blank"></div>
+            <button onclick="sendKey('KEY_UP')">▲</button>
+            <div class="nav-blank"></div>
+            
+            <button onclick="sendKey('KEY_LEFT')">◀</button>
+            <button class="btn-enter" onclick="sendKey('KEY_ENTER')">Enter</button>
+            <button onclick="sendKey('KEY_RIGHT')">▶</button>
+            
+            <div class="nav-blank"></div>
+            <button onclick="sendKey('KEY_DOWN')">▼</button>
+            <div class="nav-blank"></div>
+        </div>
+
+        <!-- BLOCK 8: Navigation Verlassen -->
+        <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <button onclick="sendKey('KEY_RETURN')">Return</button>
+            <button onclick="sendKey('KEY_EXIT')">Exit</button>
+        </div>
+
+        <!-- BLOCK 9: Farbwahltasten (A, B, C, D) -->
+        <div class="grid-4">
+            <button class="btn-red" onclick="sendKey('KEY_RED')">A</button>
+            <button class="btn-green" onclick="sendKey('KEY_GREEN')">B</button>
+            <button class="btn-yellow" onclick="sendKey('KEY_YELLOW')">C</button>
+            <button class="btn-blue" onclick="sendKey('KEY_BLUE')">D</button>
+        </div>
+
+        <!-- BLOCK 10: Erweiterte Funktionen (3D, Formate, Videotext) -->
+        <div class="grid-3">
+            <button onclick="sendKey('KEY_MEDIA_P')">Media P.</button>
+            <button onclick="sendKey('KEY_INTERNET')">e-Manual</button>
+            <button onclick="sendKey('KEY_3D')">3D</button>
+        </div>
+        <div class="grid-3">
+            <button onclick="sendKey('KEY_AD')">AD/SUBT.</button>
+            <button onclick="sendKey('KEY_P_SIZE')">P.Size</button>
+            <button onclick="sendKey('KEY_SUBTITLE')">Subtitle</button>
+        </div>
+
+        <!-- BLOCK 11: Transport- / Playersteuerung -->
+        <div class="grid-4">
+            <button onclick="sendKey('KEY_REWIND')">◀◀</button>
+            <button onclick="sendKey('KEY_PAUSE')">⏸</button>
+            <button onclick="sendKey('KEY_PLAY')">▶</button>
+            <button onclick="sendKey('KEY_FF')">▶▶</button>
+        </div>
+        <div class="grid-3">
+            <button onclick="sendKey('KEY_STOP')">■ Stop</button>
+            <button onclick="sendKey('KEY_REC')">● Rec</button>
+            <button onclick="sendKey('KEY_W_LINK')">Social</button>
+        </div>
+
+        <div class="brand">SAMSUNG</div>
+    </div>
+
+    <script>
+        // Passe diese URL an deinen Brücken-Server an
+        const SERVER_URL = 'http://192.168.178';
+
+        function sendKey(keyCode) {
+            const targetUrl = `${SERVER_URL}?key=${keyCode}`;
+            
+            fetch(targetUrl, { mode: 'no-cors' })
+            .then(() => {
+                console.log('Übermittelt: ' + keyCode);
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+            });
+        }
+    </script>
+</body>
+</html>

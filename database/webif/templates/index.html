@@ -2,7 +2,7 @@
 {% set update_interval = [(((10 * (p._handled_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
 
 {% set dataSet = 'overview' %}
-{% set tab1title = _('Database Items') %}
+{% set tab1title = _('Database Items') ~ ' (' ~ len(p._handled_items) ~ ')' %}
 
 {% block pluginstyles %}
 <link rel="stylesheet" href="static/style.css">
@@ -45,6 +45,27 @@
 		}
 		return false;
 	}
+
+	function convertLegacyItemSchema() {
+		if (!confirm('{{ _('Item-Tabelle jetzt konvertieren? Die alte Tabelle bleibt unter einem Sicherungsnamen erhalten.') }}')) {
+			return;
+		}
+		$.ajax({
+			type: "POST",
+			url: "convert_legacy_item_schema",
+			contentType: 'application/json',
+			dataType: 'json',
+			error: function() {
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+			},
+			success: function(response) {
+				if (response.backup_name) {
+					alert('{{ _('Konvertiert. Die alte Tabelle wurde gesichert als:') }} ' + response.backup_name);
+				}
+				window.location.reload();
+			}
+		})
+	}
 </script>
 
 {% if delete_triggered %}
@@ -57,8 +78,16 @@
 	</div>
 {% endif %}
 
+{% if p.item_table_needs_conversion() %}
+	<div class="mb-2 alert alert-warning" role="alert">
+		<strong>{{ _('Altes Item-Tabellenformat erkannt') }}</strong><br/>
+		{{ _('Neue Items erhalten keine funktionierende Datenbank-ID, solange dies nicht konvertiert wird. Die alte Tabelle bleibt dabei als Sicherung erhalten.') }}
+		<button type="button" class="btn btn-warning btn-sm" onclick="convertLegacyItemSchema()">{{ _('Konvertieren') }}</button>
+	</div>
+{% endif %}
+
 <div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-    <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
+    <strong>{{ _('Löschvorgang wurde erfolgreich gestartet!') }}</strong><br/>
     {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann je nach Datenbank Größe einige Zeit dauern und wird parallel zur aktuellen Funktion des Plugins erfolgen.') }}
     <button type="button" class="close" data-hide="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
@@ -106,6 +135,7 @@
 		<tbody>
 		{% for item in items %}
 			{% if p.has_iattr(item.conf, 'database') %}
+				{% set itemid = p.id(item, create=False) %}
 				{% if item.property.type == 'bool' %}
 					{% if item.property.value == 0 %}
 						{% set val = 'False' %}
@@ -125,9 +155,9 @@
 					<td>{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
 					<td id="{{ item }}_type">{{ item.property.type }}</td>
 					<td id="{{ item }}_value">{{ val }}</td>
-					<td id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
+					<td id="{{ item }}_id">{{ itemid }}</td>
 					{%  if p.count_logentries %}
-						<td id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
+						<td id="{{ item }}_logcount">{{ p._item_logcount[itemid] }}</td>
 					{% endif %}
 					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
 						<td id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
@@ -139,13 +169,18 @@
 						{% endif %}
 					{% endif %}
 					<td>
-						{% if p.id(item, create=False) == None %}
+						{% if itemid == None %}
 							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('CSV Export nicht möglich') }}">CSV</button>
 						{% else %}
-							<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
+							<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ itemid }}')">CSV</button>
 						{% endif %}
-						<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
-						<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
+						{% if itemid == None %}
+							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('Noch keine Datenbank-ID') }}"><i class="fas fa-search"></i></button>
+							<button type="button" disabled class="btn btn-danger btn-sm" title="{{ _('Noch keine Datenbank-ID') }}"><i class="fas fa-history"></i></button>
+						{% else %}
+							<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ itemid }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
+							<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ itemid }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
+						{% endif %}
 					</td>
 				</tr>
 			{% endif %}
@@ -156,86 +191,198 @@
 {% endblock bodytab1 %}
 
 
-{% if len(p.orphanlist) > 0 %}
-	{% set tabcount = 3 %}
-{%  endif %}
+{% set audit_flagged_count = len(unbounded_items) + len(silent_delete_items) %}
 
-{% set tab3title = _('Verwaiste Items') %}
+{% if len(p.orphanlist) > 0 %}
+	{% set tab3title = _('Verwaiste Items') ~ ' (' ~ len(p.orphanlist) ~ ')' %}
+{% else %}
+	{% set tab3title = "hidden" %}
+{% endif %}
+
+{% if len(silent_delete_items) > 0 %}
+	{% set tab4title = '<span class="text-danger-emphasis">' ~ _('Aufbewahrungs-Audit') ~ ' (' ~ audit_flagged_count ~ ')</span>' %}
+{% else %}
+	{% set tab4title = _('Aufbewahrungs-Audit') ~ ' (' ~ audit_flagged_count ~ ')' %}
+{% endif %}
+
+{% set tabcount = 4 %}
+
 {% block bodytab3 %}
 
 <script type="text/javascript">
-	function reassignOrphan(selObj) {
-		// get modal box data from elements
-		var orphanID = document.getElementById('orphan-item-id').textContent;
-		var orphanItem = document.getElementById('orphan-item-name').textContent;
-		var newID = document.getElementById('orphanSelect').value;
-		var newItem = document.getElementById('orphanSelect').selectedOptions[0].text;
+	// Populates the reassign modal for one or several orphans (row button passes a 1-item list).
+	function openReassignModal(targets) {
+		if (targets.length === 0) return;
+		window.orphanReassignTargets = targets;
+		window.orphanReassignTargetId = null;
+		document.getElementById('orphan-item-name').textContent = targets.map(function(o) { return o.path; }).join(', ');
+		document.getElementById('orphan-item-id').textContent = targets.map(function(o) { return o.id; }).join(', ');
+		document.getElementById('orphanReassignFilter').value = '';
+		filterReassignList('');
+		$('#orphanReassignList tbody tr').removeClass('table-active');
+		document.getElementById('orphanAssignBtn').disabled = true;
+		document.getElementById('orphanModal').style.display = 'block';
+	}
 
-		// reset elements (just to be sure...)
+	function closeReassignModal() {
+		document.getElementById('orphanModal').style.display = 'none';
+	}
+
+	function selectReassignTarget(row) {
+		$('#orphanReassignList tbody tr').removeClass('table-active');
+		$(row).addClass('table-active');
+		window.orphanReassignTargetId = $(row).data('id');
+		document.getElementById('orphanAssignBtn').disabled = false;
+	}
+
+	function filterReassignList(query) {
+		var q = query.toLowerCase();
+		$('#orphanReassignList tbody tr').each(function() {
+			$(this).toggle($(this).data('path').indexOf(q) !== -1);
+		});
+	}
+
+	function selectedOrphans() {
+		return $('.orphan-select:checked').map(function() {
+			return {id: $(this).data('id'), path: $(this).data('path')};
+		}).get();
+	}
+
+	// Toggled by both the header "select all" and each row checkbox.
+	function updateOrphanBulkButtons() {
+		var total = $('.orphan-select').length;
+		var checked = $('.orphan-select:checked').length;
+		$('#orphanBulkReassignBtn, #orphanBulkDeleteBtn').prop('disabled', checked === 0);
+		$('#orphanSelectAll').prop('checked', total > 0 && checked === total);
+	}
+
+	function reassignOrphan() {
+		var targets = window.orphanReassignTargets || [];
+		var newID = window.orphanReassignTargetId;
+		if (newID == null) return;
+
 		document.getElementById('orphan-item-id').textContent = "";
 		document.getElementById('orphan-item-name').textContent = "";
-		document.getElementById('orphanSelect').selectedIndex = 0;
+		closeReassignModal();
 
-		var mydata = {"orphan_id": orphanID, "new_id": newID};
-		$.ajax({
-			type: "POST",
-			url: "reassign",
-			data: JSON.stringify(mydata),
-			contentType: 'application/json',
-			dataType: 'json',
-			error: function() {
-				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
-				document.getElementById('orphanModal').style.display = 'none';
-			},
-			success: function() {
-				document.getElementById('orphanModal').style.display = 'none';
-				// reload page to reflect recalculated orphans
-				setTimeout(window.location.reload(), 3000); 
+		// Sequential, not parallel - parallel requests would all serialize on the same DB lock anyway.
+		function reassignNext(index) {
+			if (index >= targets.length) {
+				window.location.reload();
+				return;
 			}
-		})
+			$.ajax({
+				type: "POST",
+				url: "reassign",
+				data: JSON.stringify({"orphan_id": targets[index].id, "new_id": newID}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function() {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				},
+				complete: function() {
+					reassignNext(index + 1);
+				}
+			});
+		}
+		reassignNext(0);
+	}
+
+	function deleteOrphansNow(targets) {
+		if (targets.length === 0) return;
+		var names = targets.map(function(o) { return o.path; }).join(', ');
+		var question = targets.length === 1
+			? '{{ _('Wollen Sie das verwaiste Item') }} ' + names + ' {{ _('und alle zugehörigen Daten endgültig löschen?') }}'
+			: '{{ _('Wollen Sie die folgenden verwaisten Items und alle zugehörigen Daten endgültig löschen?') }} ' + names;
+		if (!confirm(question)) {
+			return;
+		}
+		function deleteNext(index) {
+			if (index >= targets.length) {
+				window.location.reload();
+				return;
+			}
+			$.ajax({
+				type: "POST",
+				url: "delete_orphan_now",
+				data: JSON.stringify({"orphan_path": targets[index].path}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function() {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				},
+				complete: function() {
+					deleteNext(index + 1);
+				}
+			});
+		}
+		deleteNext(0);
+	}
+
+	function deleteOrphanNow(orphanItem) {
+		deleteOrphansNow([{path: orphanItem}]);
 	}
 </script>
 
 <div id="orphanModal" class="or-modal">
 	<div class="or-modal-content">
-		<span class="or-close" onclick="document.getElementById('orphanModal').style.display = 'none';">&times;</span>
+		<span class="or-close" onclick="closeReassignModal();">&times;</span>
 		<div>
-			<strong>Neuzuweisen von Itemreihe <span id='orphan-item-name'></span> (ID <span id='orphan-item-id'></span>)</strong>
+			<strong>{{ _('Neuzuweisen von Itemreihe') }} <span id='orphan-item-name'></span> (ID <span id='orphan-item-id'></span>)</strong>
 		</div>
-		<div>
-			<span>Bitte wählen Sie die Itemreihe aus, der die verwaisten Daten zugewiesen werden sollen: </span>
-			<select id="orphanSelect" name="{{ item }}_reassign" onchange="btn = document.getElementById('orphanAssignBtn'); if (this.value == -1) { btn.disabled = true; } else { btn.disabled = false; }">
-				<option value=-1 selected="selected"></option>
-				{% for newitem in items %}
-					{% set newitemid = p.id(newitem, create=False) %}
-					{% if p.has_iattr(newitem.conf, 'database') %}
-						<option value={{ newitemid }}>{{ newitem.property.path }} ({{ newitemid }})</option>
-					{% endif %}
-				{% endfor %}
-			</select>
-			<button type="button" id="orphanAssignBtn" disabled class="btn btn-danger btn-sm" onclick="reassignOrphan()">Zuweisen</button>
-			<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('orphanModal').style.display = 'none';">Abbrechen</button>
+		<div class="mt-2 mb-2">
+			<span>{{ _('Bitte wählen Sie die Itemreihe aus, der die verwaisten Daten zugewiesen werden sollen:') }}</span>
+			<input type="text" id="orphanReassignFilter" class="form-control form-control-sm mt-1" placeholder="{{ _('Filtern...') }}" oninput="filterReassignList(this.value);">
 		</div>
-	</div>		
+		<div id="orphanReassignListWrapper">
+			<table id="orphanReassignList" class="table table-striped table-hover table-sm">
+				<thead>
+					<tr>
+						<th>{{ _('Item') }}</th>
+						<th class="dt-head-right">{{ _('DB-ID') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for newitem in items %}
+						{% set newitemid = p.id(newitem, create=False) %}
+						{% if p.has_iattr(newitem.conf, 'database') %}
+							<tr data-id="{{ newitemid }}" data-path="{{ newitem.property.path|lower }}" onclick="selectReassignTarget(this);">
+								<td>{{ newitem.property.path }}</td>
+								<td class="dt-head-right">{{ newitemid }}</td>
+							</tr>
+						{% endif %}
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div class="mt-2">
+			<button type="button" id="orphanAssignBtn" disabled class="btn btn-danger btn-sm" onclick="reassignOrphan()">{{ _('Zuweisen') }}</button>
+			<button type="button" class="btn btn-shng btn-sm" onclick="closeReassignModal();">{{ _('Abbrechen') }}</button>
+		</div>
+	</div>
 </div>
 
 <div class="container-fluid m-2 table-resize">
 	<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;" class="mb-2">
+		<button type="button" id="orphanBulkReassignBtn" disabled class="btn btn-shng btn-sm" onclick="openReassignModal(selectedOrphans());">{{ _('Ausgewählte neu zuweisen') }}</button>
+		<button type="button" id="orphanBulkDeleteBtn" disabled class="btn btn-danger btn-sm" onclick="deleteOrphansNow(selectedOrphans());">{{ _('Ausgewählte löschen') }}</button>
 		{% if p.remove_orphan or len(p.orphanlist) == 0 %}
-			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
+			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Alle löschen') }}</button>
 		{% else %}
-			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Datenbank-Cleanup starten') }}</button>
+			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup').done(function() { window.location.reload(); }); $('#cleanup').show(); }">{{ _('Alle löschen') }}</button>
 		{% endif %}
 	</div>
 
 	<table id="orphantable">
 		<thead>
 		<tr><th></th>
+			<th><input type="checkbox" id="orphanSelectAll" onclick="$('.orphan-select').prop('checked', this.checked); updateOrphanBulkButtons();"></th>
 			<th>{{ _('Verwaistes Item') }}</th>
 			<th>{{ _('Letzte Änderung') }}</th>
 			<th>{{ _('Typ') }}</th>
 			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			<th>{{ _('Neuzuweisung') }}</th>
+			<th>{{ _('Löschen') }}</th>
 			{%  if p.count_logentries %}
 				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
@@ -244,30 +391,35 @@
 		<tbody>
 		{% for item in p.orphanlist %}
 			{% set itemid = p.id(item, create=False) %}
+			{% set lastchange = p.db_lastchange(item) %}
 			<tr>
 				<td></td>
+				<td><input type="checkbox" class="orphan-select" data-id="{{ itemid }}" data-path="{{ item }}" onclick="updateOrphanBulkButtons();"></td>
 				<td id="{{ item }}_orphan_path">{{ item }}</td>
 			    <td id="{{ item }}_orphan_time">
 				{% if language == 'en' %}
-					{% if p.db_lastchange(item) is none %}
+					{% if lastchange is none %}
 						{{ _('Wert invalide') }}
 					{% else %}
-						{{ p.db_lastchange(item).strftime('%m/%d/%Y %H:%M:%S') }}
+						{{ lastchange.strftime('%m/%d/%Y %H:%M:%S') }}
 					{% endif %}
 				{% else %}
-					{% if p.db_lastchange(item) is none %}
+					{% if lastchange is none %}
 						{{ _('Wert invalide') }}
 					{% else %}
-						{{ p.db_lastchange(item).strftime('%d.%m.%Y %H:%M:%S') }}
+						{{ lastchange.strftime('%d.%m.%Y %H:%M:%S') }}
 					{% endif %}
 				{% endif %}</td>
 				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
 				<td id="{{ item }}_orphan_id">{{ itemid }}</td>
 				<td id="{{ item }}_orphan_reassign">
-					<button type="button" id="orphanBtn" class="btn btn-danger btn-sm" value="{{ itemid }}-{{ item }}" onclick="document.getElementById('orphan-item-name').textContent = '{{ item }}'; document.getElementById('orphan-item-id').textContent = '{{ itemid }}'; document.getElementById('orphanModal').style.display = 'block';"><i class="fas fa-share"></i></button>
+					<button type="button" id="orphanBtn" class="btn btn-danger btn-sm" value="{{ itemid }}-{{ item }}" onclick="openReassignModal([{id: {{ itemid }}, path: '{{ item }}'}]);"><i class="fas fa-share"></i></button>
+				</td>
+				<td id="{{ item }}_orphan_delete">
+					<button type="button" class="btn btn-danger btn-sm" onclick="deleteOrphanNow('{{ item }}')"><i class="fas fa-trash"></i></button>
 				</td>
 				{%  if p.count_logentries %}
-					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[p.id(item, create=False)] }}</td>
+					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[itemid] }}</td>
 				{% endif %}
 			</tr>
 		{% endfor %}
@@ -276,18 +428,82 @@
 </div>
 {% endblock bodytab3 %}
 
+{% block bodytab4 %}
+{% set adminui_url = p.adminui_url_root() %}
+<div class="container-fluid m-2 table-resize">
+	{% if len(unbounded_items) == 0 and len(silent_delete_items) == 0 %}
+		<p>{{ _('Keine Auffälligkeiten gefunden.') }}</p>
+	{% endif %}
+
+	{% if len(silent_delete_items) > 0 %}
+		<h5 class="text-danger-emphasis">{{ _('Items ohne eigenes database_maxage_action') }}</h5>
+		<p>{{ _('Diese Items haben ein wirksames maximales Alter, löschen ältere Daten aber über die geerbte Standardaktion statt über eine eigene, bewusst gesetzte database_maxage_action.') }}</p>
+		<table id="audittable_delete">
+			<thead>
+			<tr>
+				<th></th>
+				<th>{{ _('Item') }}</th>
+				<th>{{ _('konfiguriertes max. Alter') }}</th>
+				<th>{{ _('geerbte Aktion') }}</th>
+				<th>{{ _('Aktionen') }}</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for item in silent_delete_items %}
+				<tr>
+					<td></td>
+					<td>{{ item.property.path }}</td>
+					<td>
+						{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
+							{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}
+						{% else %}
+							default: {{ p._default_maxage }} {{ _('Tage') }}
+						{% endif %}
+					</td>
+					<td>{{ p._maxage.action_for(item) }}</td>
+					<td>
+						{% if adminui_url %}
+							<a class="btn btn-shng btn-sm" href="{{ adminui_url }}/items?select={{ item.property.path | urlencode }}" target="_blank"><i class="fas fa-pen"></i></a>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
+
+	{% if len(unbounded_items) > 0 %}
+		<h5>{{ _('Items ohne max. Alter (unbegrenztes Wachstum)') }}</h5>
+		<table id="audittable_unbounded">
+			<thead>
+			<tr>
+				<th></th>
+				<th>{{ _('Item') }}</th>
+				<th>{{ _('Aktionen') }}</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for item in unbounded_items %}
+				<tr>
+					<td></td>
+					<td>{{ item.property.path }}</td>
+					<td>
+						{% if adminui_url %}
+							<a class="btn btn-shng btn-sm" href="{{ adminui_url }}/items?select={{ item.property.path | urlencode }}" target="_blank"><i class="fas fa-pen"></i></a>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
+</div>
+{% endblock bodytab4 %}
+
 {% block buttons %}
 {%  if p.driver == 'sqlite3' %}
 	<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.sqldump')">{{ _('SQL Dump') }}</button>
 {%  endif %}
 
 <button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.csvdump')">{{ _('CSV Dump') }}</button>
-
-<!--
-{% if p.remove_orphan or len(p.orphanlist) == 0 %}
-	<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Cleanup aktivieren') }}</button>
-{%  else %}
-	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Cleanup aktivieren') }}</button>
-{%  endif %}
--->
 {% endblock buttons %}

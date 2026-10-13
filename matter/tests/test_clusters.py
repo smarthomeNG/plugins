@@ -2,7 +2,16 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 """Unit tests for clusters.py's name/unit lookups - pure data, no network."""
 
-from plugins.matter.clusters import attribute_info, cluster_name, decode_value, device_type_name, switch_info
+from plugins.matter.clusters import (
+    SwitchSpec,
+    attribute_info,
+    cluster_name,
+    cluster_struct,
+    decode_value,
+    device_type_name,
+    encode_value,
+    switch_info,
+)
 
 
 def test_known_cluster_name():
@@ -38,6 +47,29 @@ def test_temperature_measurement_divisor_matches_bridge_js_scaling():
     assert decode_value(0x402, 0, 2150) == 21.5
 
 
+def test_relative_humidity_measurement_cluster_name():
+    assert cluster_name(0x405) == 'RelativeHumidityMeasurement'
+
+
+def test_relative_humidity_measurement_divisor():
+    # verified against a real IKEA TIMMERFLOTTE: raw 2681 -> 26.81%
+    assert decode_value(0x405, 0, 2681) == 26.81
+
+
+def test_power_source_cluster_name():
+    assert cluster_name(0x2F) == 'PowerSource'
+
+
+def test_power_source_bat_voltage_divisor():
+    # verified against a real IKEA TIMMERFLOTTE: raw 3039 (mV) -> 3.039V
+    assert decode_value(0x2F, 11, 3039) == 3.039
+
+
+def test_power_source_bat_percent_remaining_divisor():
+    # verified against a real IKEA TIMMERFLOTTE: raw 200 (half-percent units) -> 100%
+    assert decode_value(0x2F, 12, 200) == 100.0
+
+
 def test_known_attribute_info():
     info = attribute_info(0x06, 0)
     assert info.name == 'OnOff'
@@ -63,9 +95,25 @@ def test_decode_value_passes_through_none():
     assert decode_value(0x90, 17, None) is None
 
 
+def test_encode_value_is_the_inverse_of_decode_value():
+    assert encode_value(0x402, 0, 21.5) == 2150
+
+
+def test_encode_value_rounds_to_the_nearest_raw_unit():
+    # 100.3 * 2 = 200.6 - not a whole raw unit, must round rather than truncate/error.
+    assert encode_value(0x2F, 12, 100.3) == 201
+
+
+def test_encode_value_passes_through_when_no_divisor():
+    assert encode_value(0x06, 0, True) is True
+
+
+def test_encode_value_passes_through_none():
+    assert encode_value(0x90, 17, None) is None
+
+
 def test_switch_info_known_cluster():
-    # verified against real hardware: OnOff attribute 0, On/Off commands
-    assert switch_info(0x06) == (0x00, 'on', 'off')
+    assert switch_info(0x06) == SwitchSpec(0x00, 'on', 'off')
 
 
 def test_switch_info_unknown_cluster_returns_none():
@@ -77,5 +125,26 @@ def test_device_type_name_known():
     assert device_type_name(0x010A) == 'On/Off Plug-in Unit'
 
 
+def test_device_type_name_temperature_and_humidity_sensor():
+    # verified against real hardware: IKEA TIMMERFLOTTE reports 770/775 on its two endpoints
+    assert device_type_name(0x0302) == 'Temperature Sensor'
+    assert device_type_name(0x0307) == 'Humidity Sensor'
+
+
+def test_device_type_name_contact_sensor():
+    # verified against real hardware: Aqara door/window contact reports device type 21
+    assert device_type_name(0x0015) == 'Contact Sensor'
+
+
 def test_device_type_name_unknown_falls_back_to_numeric():
     assert device_type_name(9999) == 'type_9999'
+
+
+def test_cluster_struct_known_and_unknown():
+    assert cluster_struct(0x06).name == 'switch'
+    assert cluster_struct(0x28) is None
+    assert cluster_struct(9999) is None
+
+
+def test_decode_value_passes_bools_through():
+    assert decode_value(0x402, 0, True) is True

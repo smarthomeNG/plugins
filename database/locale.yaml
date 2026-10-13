@@ -3,6 +3,7 @@ plugin_translations:
     'Aktionen':           {'de': '=', 'en': 'Actions'}
     'Verbunden':          {'de': '=', 'en': 'Connected'}
     'Treiber':            {'de': '=', 'en': 'Driver'}
+    'Journal-Modus':      {'de': '=', 'en': 'Journal Mode'}
     'Ja':                 {'de': '=', 'en': 'Yes'}
     'Nein':               {'de': '=', 'en': 'No'}
     'mit':                {'de': '=', 'en': 'with'}
@@ -22,11 +23,42 @@ plugin_translations:
     'Typ':                {'de': '=', 'en': 'Type'}
     'Tabelle':            {'de': '=', 'en': 'Table'}
     'Verwaistes Item':    {'de': '=', 'en': 'Orphan item'}
+    'Min':                {'de': '=', 'en': '='}
+    'Max':                {'de': '=', 'en': '='}
+    'Durchschnitt':       {'de': '=', 'en': 'Average'}
+    'Wahr':               {'de': '=', 'en': 'True'}
+    'Falsch':             {'de': '=', 'en': 'False'}
 
     'Plugin-API':         {'de': '=', 'en': 'Plugin API'}
     'Database Items':     {'de': '=', 'en': '='}
     'Verwaiste Items':    {'de': '=', 'en': 'Orphan Items'}
     'Parameter':          {'de': '=', 'en': 'Parameters'}
+    'Löschen':            {'de': '=', 'en': 'Delete'}
+    'Item':               {'de': '=', 'en': '='}
+    'Aufbewahrungs-Audit':
+        'de': '='
+        'en': 'Retention Audit'
+    'Keine Auffälligkeiten gefunden.':
+        'de': '='
+        'en': 'No issues found.'
+    'Items ohne eigenes database_maxage_action':
+        'de': '='
+        'en': 'Items without their own database_maxage_action'
+    'Diese Items haben ein wirksames maximales Alter, löschen ältere Daten aber über die geerbte Standardaktion statt über eine eigene, bewusst gesetzte database_maxage_action.':
+        'de': '='
+        'en': 'These items have an effective maximum age, but delete older data via the inherited default action instead of their own, deliberately set database_maxage_action.'
+    'geerbte Aktion':
+        'de': '='
+        'en': 'inherited action'
+    'Items ohne max. Alter (unbegrenztes Wachstum)':
+        'de': '='
+        'en': 'Items without max. age (unbounded growth)'
+    'Wollen Sie das verwaiste Item':
+        'de': '='
+        'en': 'Do you want to permanently delete the orphan item'
+    'und alle zugehörigen Daten endgültig löschen?':
+        'de': '='
+        'en': 'and all its associated data?'
 
     'Wert':               {'de': '=', 'en': 'Value'}
     'DB-ID':              {'de': '=', 'en': '='}
@@ -76,6 +108,9 @@ plugin_translations:
     'CSV Export nicht verfügbar':
         'de': '='
         'en': 'CSV Export not available'
+    'Noch keine Datenbank-ID':
+        'de': '='
+        'en': 'No database ID yet'
     'Historische Daten':
         'de': '='
         'en': 'Historical Data'
@@ -91,6 +126,21 @@ plugin_translations:
     'Datenbank-Cleanup starten':
         'de': '='
         'en': 'Start Database-Cleanup'
+    'Altes Item-Tabellenformat erkannt':
+        'de': '='
+        'en': 'Old item table format detected'
+    'Neue Items erhalten keine funktionierende Datenbank-ID, solange dies nicht konvertiert wird. Die alte Tabelle bleibt dabei als Sicherung erhalten.':
+        'de': '='
+        'en': 'New items get no working database ID until this is converted. The old table is kept as a backup.'
+    'Konvertieren':
+        'de': '='
+        'en': 'Convert'
+    'Item-Tabelle jetzt konvertieren? Die alte Tabelle bleibt unter einem Sicherungsnamen erhalten.':
+        'de': '='
+        'en': 'Convert the item table now? The old table is kept under a backup name.'
+    'Konvertiert. Die alte Tabelle wurde gesichert als:':
+        'de': '='
+        'en': 'Converted. The old table was backed up as:'
     'Cleanup ist aktiv':
         'de': '='
         'en': 'Cleanup is active'

@@ -1,2 +1,6 @@
-#Only needed when using the plugin with MySQL databases
+#Only needed when using the plugin with MySQL/MariaDB databases
 #pymysql
+
+#Only needed when using the plugin with PostgreSQL/TimescaleDB databases (either one)
+#psycopg2-binary
+#psycopg[binary]

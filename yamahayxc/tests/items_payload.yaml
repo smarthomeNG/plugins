@@ -1,0 +1,19 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+
+        main:
+            yamahayxc_zone: main
+
+            passthru:
+                type: str
+                yamahayxc_cmd: passthru
+
+            passthru_num:
+                type: num
+                yamahayxc_cmd: passthru
+
+            alarm_on:
+                type: bool
+                yamahayxc_cmd: alarm_on

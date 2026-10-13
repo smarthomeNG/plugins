@@ -70,7 +70,7 @@ class modbus_tcp(SmartPlugin):
     devices.
     """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -111,6 +111,7 @@ class modbus_tcp(SmartPlugin):
         self._regToRead = {}
         self._regToWrite = {}
         self._pollStatus = {}
+        self._poll_items = []
 
         # Threading lock for data shared between SmartHomeNG thread(s) and asyncio thread
         self.lock = threading.Lock()
@@ -218,6 +219,10 @@ class modbus_tcp(SmartPlugin):
             self.add_item(item, updating=True)
             return self.update_item
 
+        if self.has_iattr(item.conf, 'modbusPoll') and self.get_iattr_value(item.conf, 'modbusPoll'):
+            self._poll_items.append(item)
+            return self.update_item
+
         if self.has_iattr(item.conf, AttrAddress):
             self.logger.debug(f"parse item: {item}")
             regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
@@ -306,13 +311,16 @@ class modbus_tcp(SmartPlugin):
         slaveUnit = self._slaveUnit
         dataDirection = 'read'
 
-        # check for pause item
-        if self._pause_item is not None and item is self._pause_item:
-            if caller != self.get_shortname():
-                self.logger.debug(f'pause item changed to {item()}')
+        # New cores centralize pause handling. Keep SmartHomeNG 1.11 support,
+        # but always compare the full instance name (not the short plugin name).
+        if item is self._pause_item:
+            handler = getattr(super(), '_handle_pause_item', None)
+            if handler is not None:
+                handler(item, caller)
+            elif caller != self.get_fullname():
                 if item() and self.alive:
                     self.stop()
-                elif (not item()) and (not self.alive):
+                elif not item() and not self.alive:
                     self.run()
             return
 
@@ -321,6 +329,11 @@ class modbus_tcp(SmartPlugin):
             return
 
         if not self.alive:
+            return
+
+        if any(item is poll_item for poll_item in self._poll_items):
+            if item():
+                self._trigger_async_read()
             return
 
         if self.has_iattr(item.conf, AttrDirection):
@@ -935,7 +948,9 @@ class modbus_tcp(SmartPlugin):
         return self._cycle_param is not None and self._cycle_param < 0
 
     def _incoming_data_enabled(self) -> bool:
-        return self._crontab is not None or (self._cycle_param is not None and self._cycle_param != 0)
+        return bool(self._poll_items) or self._crontab is not None or (
+            self._cycle_param is not None and self._cycle_param != 0
+        )
 
     def _write_data_enabled(self) -> bool:
         return bool(self._regToWrite)
