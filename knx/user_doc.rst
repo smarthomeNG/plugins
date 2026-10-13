@@ -220,6 +220,9 @@ Funktionsweise des Cache-Lesens
 - Das Plugin wiederholt deshalb die Anfrage für alle Gruppenadressen ohne Wert nach 2, 5 und 15 Sekunden
   (``KNXD_CACHEREAD_RETRY_DELAYS`` in ``globals.py``). Trifft während dieser Zeit ein Telegramm für die Gruppenadresse
   ein, wird sie nicht mehr angefragt.
+- Die Wiederholungen laufen über eine eigene, kurzlebige Verbindung zum knxd (Wartezeit auf die Antworten:
+  ``KNXD_CACHEREAD_TIMEOUT``). Beobachtet wurde, dass der knxd auf der Verbindung des Gruppenmonitors nach einer
+  Cache-Anfrage alle Gruppentelegramme ablehnt. Das Plugin sendet dort deshalb nur die Cache-Anfragen der Startphase.
 - Gruppenadressen, die danach noch ohne Wert sind, werden mit dem Loglevel aus dem Parameter
   ``loglevel_knxd_cache_problems`` protokolliert und im Webinterface rot markiert.
 - Werte, die ein Item beim Start initialisieren, tragen im Source den Suffix ``:init``, z.B.

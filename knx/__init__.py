@@ -40,6 +40,7 @@ from lib.shtime import Shtime
 from . import dpts
 from . import knxproj
 from .cachereads import CacheReadTracker
+from .connection import CacheReadConnection, KnxdFrameReader, frame_packet
 from .knxd import KNXD
 from .globals import (
     DPT,
@@ -51,6 +52,7 @@ from .globals import (
     ITEMS,
     KNXD_CACHEREAD_DELAY,
     KNXD_CACHEREAD_RETRY_DELAYS,
+    KNXD_CACHEREAD_TIMEOUT,
     KNX_CACHE,
     KNX_DATA_MASK,
     KNX_DPT,
@@ -102,8 +104,9 @@ class KNX(SmartPlugin):
         self._client = Tcp_client(
             name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30
         )
+        self._frames = KnxdFrameReader(self.handle_knxd_message, self._log_knxd_framing_error)
         self._client.set_callbacks(
-            connected=self.handle_connect, data_received=self.parse_knxd_message
+            connected=self.handle_connect, data_received=self._frames.feed
         )  # , disconnected=disconnected_callback, data_received=receive_callback
 
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -212,10 +215,7 @@ class KNX(SmartPlugin):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('Illegal data size: {}').format(repr(data)))
             return False
-        # prepend data length for knxd
-        send = bytearray(len(data).to_bytes(2, byteorder='big'))
-        send.extend(data)
-        self._client.send(send)
+        self._client.send(frame_packet(data))
 
     def groupwrite(self, ga, payload, dpt, flag='write'):
         pkt = bytearray([0, KNXD.GROUP_PACKET])
@@ -259,14 +259,21 @@ class KNX(SmartPlugin):
                 self.logger.debug(self.translate('groupwrite telegram for: {} - Value: {} sent.').format(ga, payload))
             self._send(pkt)
 
-    def _cacheread(self, ga):
+    def _cacheread_request(self, ga):
+        """Build the knxd request reading ``ga`` from the group cache; None if ``ga`` cannot be encoded"""
         pkt = bytearray([0, KNXD.CACHE_READ])
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except Exception:
             self.logger.warning('_cacheread: ' + self.translate('problem encoding ga: {}').format(ga))
-            return
+            return None
         pkt.extend([0, 0])
+        return pkt
+
+    def _cacheread(self, ga):
+        pkt = self._cacheread_request(ga)
+        if pkt is None:
+            return
         if not self.alive:
             self.logger.info(self.translate('not reading knxd cache for ga {} because plugin is not alive.').format(ga))
         else:
@@ -280,6 +287,27 @@ class KNX(SmartPlugin):
             self._cacheread(ga)
             # wait a little to not overdrive the knxd unless there is a fix
             time.sleep(KNXD_CACHEREAD_DELAY)
+
+    def _cacheread_on_own_connection(self, gas):
+        """Read the given group addresses from the knxd cache over a short-lived connection of their own"""
+        if not self.alive:
+            self.logger.info(
+                self.translate('not reading knxd cache for ga {} because plugin is not alive.').format(', '.join(gas))
+            )
+            return
+        requests = [pkt for pkt in map(self._cacheread_request, gas) if pkt is not None]
+        try:
+            replies = CacheReadConnection(self.host, self.port, self.handle_knxd_message).read(
+                requests, KNXD_CACHEREAD_TIMEOUT, pause=KNXD_CACHEREAD_DELAY
+            )
+        except OSError as e:
+            self.logger.warning(self.translate('knxd cache read connection failed: {}').format(e))
+            return
+        if replies < len(requests):
+            self.logger.log(
+                self._cache_problem_loglevel(),
+                self.translate('knxd answered {} of {} cache reads').format(replies, len(requests)),
+            )
 
     def _cache_problem_loglevel(self):
         """Numeric log level configured by ``loglevel_knxd_cache_problems``"""
@@ -318,7 +346,7 @@ class KNX(SmartPlugin):
         if gas:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('retrying knxd cache read for ga: {}').format(', '.join(gas)))
-            self._cacheread_all(gas)
+            self._cacheread_on_own_connection(gas)
         self._schedule_cacheread_retry()
 
     def groupread(self, ga):
@@ -393,7 +421,7 @@ class KNX(SmartPlugin):
         self._send(enable_cache)
 
         # set next kind of data to expect from connection
-        self._isLength = True
+        self._frames.reset()
 
         # if this is the first connect after init of plugin then read the
         # group addresses from knxd which have the knx_cache attribute
@@ -468,37 +496,21 @@ class KNX(SmartPlugin):
             value = {'control': bool(value[0]), 'value': bool(value[1])}
         return value
 
-    def parse_knxd_message(self, client, data):
+    def _log_knxd_framing_error(self, description):
+        self.logger.error(f'KNX[{self.get_instance_name()}]: {description}')
+
+    def handle_knxd_message(self, data):
         """
         inspects a message from knxd (eibd)
 
-        :param client: Tcp_client
-        :param data: message from knxd as bytearray
+        :param data: complete message from knxd as bytearray, without its length prefix
 
-        a message from knxd will have 4 extra bytes plus eventually the knx telegram payload
-        2 byte length
+        a message from knxd consists of
         2 byte knxd message type   --> see eibtypes.h
+        followed by eventually a knx telegram of at least 6 bytes if valid
 
-        knx telegram then consists of least 6 bytes if valid
-
-        The process consists of two steps:
-        * At first the variable ``self._isLength`` is True and the length for the
-          following knxd message plus eventual knx telegram is set to ``client.terminator``
-        * then the next call to parse_knxd_message is awaited to contain
-          the knxd message type in the first two bytes and then following eventually a knx telegram
+        The length prefix is stripped by ``KnxdFrameReader`` before this method is called.
         """
-        if self._isLength:
-            self._isLength = False
-            try:
-                # expecting an unsigned short integer:
-                client.terminator = struct.unpack('>H', data)[0]
-            except Exception:
-                self.logger.error(f'KNX[{self.get_instance_name()}]: problem unpacking length: {data}')
-            return
-        else:
-            self._isLength = True
-            client.terminator = 2
-
         # expecting the type of the following knxd telegram as an unsigned short integer
         knxd_msg_type = struct.unpack('>H', data[0:2])[0]
 

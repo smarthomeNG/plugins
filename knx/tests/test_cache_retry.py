@@ -6,6 +6,7 @@ import struct
 import threading
 import time
 import unittest
+from unittest import mock
 
 import lib.translation
 from tests import common
@@ -18,6 +19,7 @@ SRC_PA = bytes([0x11, 0x05])  # 1.1.5
 OTHER_PA = bytes([0x11, 0x09])  # 1.1.9
 GA_LAMP = bytes([0x09, 0x01])  # 1/1/1
 GA_SENSOR = bytes([0x09, 0x02])  # 1/1/2
+GA_ACTUATOR = bytes([0x09, 0x03])  # 1/1/3, no item: written directly
 RESPONSE_OFF = bytes([0x00, 0x40])
 WRITE_OFF = bytes([0x00, 0x80])
 RESPONSE_ON = bytes([0x00, 0x41])  # group response, value 1
@@ -32,6 +34,23 @@ class RecordCollector(logging.Handler):
         self.records.append(record)
 
 
+class FakeKnxdConnection:
+    """One client connection of FakeKnxd.
+
+    Models knxd as observed in field logs (not from knxd's source): a CACHE_READ sent on a
+    connection after OPEN_GROUPCON leaves that connection rejecting every group packet."""
+
+    def __init__(self, sock):
+        self.sock = sock
+        self.frames = []
+        self.group_open = False
+        self.group_broken = False
+        self.closed = threading.Event()
+
+    def message_types(self):
+        return [struct.unpack('>H', frame[:2])[0] for frame in self.frames]
+
+
 class FakeKnxd:
     """Minimal eibd server: answers the first cache read per GA with 'no value' and every
     later one with the cached value. Without a configured group cache it rejects every request."""
@@ -40,19 +59,27 @@ class FakeKnxd:
         self.cache_configured = cache_configured
         self.server = socket.socket()
         self.server.bind(('127.0.0.1', 0))
-        self.server.listen(1)
+        self.server.listen(5)
         self.port = self.server.getsockname()[1]
         self.cache_reads = 0
-        self.conn = None
+        self.invalid_replies = 0
+        self.answer_cache_reads = True
+        self.group_packets = []  # group packets knxd accepted
+        self.connections = []
         self.frames = []
-        self._thread = threading.Thread(target=self._serve, daemon=True)
+        self._thread = threading.Thread(target=self._accept_loop, daemon=True)
         self._thread.start()
 
-    def _read_exactly(self, size):
+    @property
+    def conn(self):
+        """Socket of the first client connection, which the plugin uses for group traffic"""
+        return self.connections[0].sock if self.connections else None
+
+    def _read_exactly(self, sock, size):
         data = b''
         while len(data) < size:
             try:
-                chunk = self.conn.recv(size - len(data))
+                chunk = sock.recv(size - len(data))
             except OSError:
                 return None
             if not chunk:
@@ -60,40 +87,67 @@ class FakeKnxd:
             data += chunk
         return data
 
-    def _read_frame(self):
-        head = self._read_exactly(2)
+    def _read_frame(self, sock):
+        head = self._read_exactly(sock, 2)
         if head is None:
             return None
-        return self._read_exactly(struct.unpack('>H', head)[0])
+        return self._read_exactly(sock, struct.unpack('>H', head)[0])
 
     def push_telegram(self, src, dst, apci):
         """Deliver a group monitor telegram: src/dst as 2 bytes each, apci as 2 bytes"""
-        self._send_frame(struct.pack('>H', KNXD.GROUP_PACKET) + src + dst + apci)
+        self._send_frame(self.conn, struct.pack('>H', KNXD.GROUP_PACKET) + src + dst + apci)
 
     def push_invalid_request(self):
         """Deliver an unattributed INVALID_REQUEST reject"""
-        self._send_frame(struct.pack('>H', KNXD.INVALID_REQUEST))
+        self._send_frame(self.conn, struct.pack('>H', KNXD.INVALID_REQUEST))
 
-    def _send_frame(self, body):
-        self.conn.sendall(struct.pack('>H', len(body)) + body)
+    def _send_frame(self, sock, body):
+        sock.sendall(struct.pack('>H', len(body)) + body)
 
-    def _serve(self):
-        self.conn, _ = self.server.accept()
-        while (frame := self._read_frame()) is not None:
+    def _reject(self, connection):
+        self.invalid_replies += 1
+        self._send_frame(connection.sock, struct.pack('>H', KNXD.INVALID_REQUEST))
+
+    def _accept_loop(self):
+        while True:
+            try:
+                sock, _ = self.server.accept()
+            except OSError:
+                return
+            connection = FakeKnxdConnection(sock)
+            self.connections.append(connection)
+            threading.Thread(target=self._serve, args=(connection,), daemon=True).start()
+
+    def _serve(self, connection):
+        while (frame := self._read_frame(connection.sock)) is not None:
+            connection.frames.append(frame)
             self.frames.append(frame)
+            msg_type = struct.unpack('>H', frame[:2])[0]
             if not self.cache_configured:
-                self._send_frame(struct.pack('>H', KNXD.INVALID_REQUEST))
-            elif struct.unpack('>H', frame[:2])[0] == KNXD.CACHE_READ:
+                self._reject(connection)
+            elif msg_type == KNXD.OPEN_GROUPCON:
+                connection.group_open = True
+                self._send_frame(connection.sock, struct.pack('>H', KNXD.OPEN_GROUPCON))
+            elif msg_type == KNXD.CACHE_READ:
                 self.cache_reads += 1
+                if not self.answer_cache_reads:
+                    continue
+                connection.group_broken = connection.group_broken or connection.group_open
                 reply = struct.pack('>H', KNXD.CACHE_READ) + SRC_PA + frame[2:4]
                 if self.cache_reads > 1:
                     reply += RESPONSE_ON
-                self._send_frame(reply)
+                self._send_frame(connection.sock, reply)
+            elif msg_type == KNXD.GROUP_PACKET:
+                if connection.group_broken:
+                    self._reject(connection)
+                else:
+                    self.group_packets.append(frame)
+        connection.closed.set()
 
     def close(self):
         self.server.close()
-        if self.conn:
-            self.conn.close()
+        for connection in self.connections:
+            connection.sock.close()
 
 
 def wait_for(condition, timeout=5.0):
@@ -160,6 +214,54 @@ class TestKnxCacheRetry(unittest.TestCase):
         self.assertTrue(wait_for(lambda: self.knxd.cache_reads == 2))
         self.assertTrue(wait_for(lambda: self.sh.lamp()))
         self.assertEqual(self.plugin.get_unsatisfied_cache_read_ga(), [])
+
+    def test_group_write_is_accepted_after_a_cache_read_retry(self):
+        self.start_plugin()
+        self.assertTrue(wait_for(lambda: self.knxd.cache_reads == 1))
+        self.assertTrue(wait_for(lambda: self.plugin.get_unsatisfied_cache_read_ga() == ['1/1/1']))
+        self.assertTrue(wait_for(lambda: self.knxd.connections[0].group_open))
+
+        self.plugin._cacheread_retry()
+        self.assertTrue(wait_for(lambda: self.knxd.cache_reads == 2))
+        self.plugin.groupwrite('1/1/3', True, '1')
+
+        self.assertTrue(wait_for(lambda: any(frame[2:4] == GA_ACTUATOR for frame in self.knxd.group_packets)))
+        self.assertEqual(self.knxd.invalid_replies, 0)
+
+    def test_retry_reads_use_a_connection_of_their_own_that_is_closed_afterwards(self):
+        self.start_plugin()
+        self.assertTrue(wait_for(lambda: self.plugin.get_unsatisfied_cache_read_ga() == ['1/1/1']))
+        self.assertTrue(wait_for(lambda: self.knxd.connections[0].group_open))
+
+        self.plugin._cacheread_retry()
+
+        self.assertTrue(wait_for(lambda: len(self.knxd.connections) == 2 and self.knxd.connections[1].closed.is_set()))
+        group_connection, cache_connection = self.knxd.connections
+        self.assertEqual(cache_connection.message_types(), [KNXD.CACHE_READ])
+        after_open = group_connection.message_types()
+        after_open = after_open[after_open.index(KNXD.OPEN_GROUPCON) :]
+        self.assertNotIn(KNXD.CACHE_READ, after_open)
+
+    def test_retry_round_knxd_does_not_answer_gives_up_after_the_timeout_and_says_so(self):
+        self.start_plugin()
+        self.assertTrue(wait_for(lambda: self.plugin.get_unsatisfied_cache_read_ga() == ['1/1/1']))
+        self.knxd.answer_cache_reads = False
+
+        with mock.patch('plugins.knx.KNXD_CACHEREAD_TIMEOUT', 0.2):
+            started = time.monotonic()
+            self.plugin._cacheread_retry()
+
+        self.assertLess(time.monotonic() - started, 2.0)
+        self.assertTrue(any('answered 0 of 1 cache reads' in r.getMessage() for r in self.records))
+
+    def test_retry_round_with_unreachable_knxd_warns_instead_of_raising(self):
+        self.start_plugin()
+        self.assertTrue(wait_for(lambda: self.plugin.get_unsatisfied_cache_read_ga() == ['1/1/1']))
+        self.knxd.server.close()
+
+        self.plugin._cacheread_retry()
+
+        self.assertTrue(any('cache read connection failed' in r.getMessage() for r in self.records))
 
     def test_rejected_cache_request_warns_about_missing_group_cache(self):
         self.start_plugin(cache_configured=False)

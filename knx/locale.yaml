@@ -78,6 +78,16 @@ plugin_translations:
         en: '='
         fr: ''
 
+    "knxd answered {} of {} cache reads":
+        de: "knxd hat {} von {} Cache-Anfragen beantwortet"
+        en: '='
+        fr: ''
+
+    "knxd cache read connection failed: {}":
+        de: "Verbindung zum knxd für Cache-Anfragen fehlgeschlagen: {}"
+        en: '='
+        fr: ''
+
     "knxd rejected a request and has answered no knx_cache read, it probably has no group cache (knxd.ini: cache = <section> in [main])":
         de: "knxd hat eine Anfrage abgelehnt und noch keine knx_cache-Anfrage beantwortet, vermutlich fehlt ein Group Cache (knxd.ini: cache = <Abschnitt> in [main])"
         en: '='
