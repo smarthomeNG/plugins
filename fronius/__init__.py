@@ -26,6 +26,8 @@
 #########################################################################
 
 import requests
+from datetime import datetime, time
+
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 
@@ -46,32 +48,27 @@ class fronius(SmartPlugin):
         super().__init__()
 
         # Unfortunately the GEN24 does not report a correct device type
+        self.logger.info('fronius plugin started')
         self._fronius_model = 'Symo GEN24'
         self._p_pv_day = 0
         self._cyclic_update_active = False
         self._cycle = self.get_parameter_value('poll_cycle')
         self._ip_address = self.get_parameter_value('ip_address')
-        self._datafile = self.get_parameter_value('data_file')
         self.itemsApi = Items.get_instance()
         self.scheduler_add('midnight', self._midnight, cron='0 0 * *', prio=3)
         self.init_webinterface(WebInterface)
 
 #---------------------- run ---------------------------------------------------
     def run(self):
-        self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
+        self.logger.debug(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
 
         # setup scheduler for device poll loop
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
 
-        # let the plugin change the state of pause_item
-#        if self._pause_item:
-#            self._pause_item(False, self.get_fullname())
-
-
 #---------------------- stop --------------------------------------------------
     def stop(self):
-        self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
+        self.logger.debug(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
         self.alive = False
 
         # this stops all schedulers the plugin has started.
@@ -109,7 +106,7 @@ class fronius(SmartPlugin):
 
         # execute if the plugin is not stopped and only, if the item has not been changed by this plugin:
         if self.alive and caller != self.get_shortname():
-            self.logger.info(
+            self.logger.debug(
                 f"update_item: '{item.property.path}' has been changed outside this plugin "
                 #                f"by caller '{self.callerinfo(caller, source)}'"
             )
@@ -143,26 +140,8 @@ class fronius(SmartPlugin):
         p_accu = float(response['Body']['Data']['Site']['P_Akku'])
         p_load = response['Body']['Data']['Site']['P_Load']
 
-        # Calculates the sum and store it in a file so that it survives a restart
-        try:
-            file = open(self._datafile, 'r')
-        except FileNotFoundError:
-            self.logger.error('Datafile not found')
-            file = open(self._datafile, 'w')
-            file.write('0.0')
-            self._p_pv_day = 0
-            file.close()
-        file = open(self._datafile, 'r')
-        try:            
-            self._p_pv_day = float(file.readline())
-        except Exception:
-            self.logger.error('No data in datafile')
-            self._p_pv_day = 0
-        file.close()
-
-        self._p_pv_day = self._p_pv_day + (p_pv * self._cycle / 3600.0) 
-        with open(self._datafile, 'w') as file:
-            file.write(str(self._p_pv_day))
+        if p_pv < 2:
+            p_pv = 0
 
         # Put the date into the items
         for item in self.itemsApi.find_items('fronius_data'):
@@ -170,6 +149,10 @@ class fronius(SmartPlugin):
                 item(soc, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv':
                 item(p_pv, self.get_fullname())
+
+                # Calculate the day engery using db plugin
+                last_midnight = int(datetime.combine(datetime.today(), time.min).timestamp() * 1000)
+                self._p_pv_day = item.db('integrate',last_midnight) / 3600000
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day':
                 item(self._p_pv_day, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_grid':
@@ -193,6 +176,3 @@ class fronius(SmartPlugin):
             #        for item in self._items:
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day_database':
                 item(self._p_pv_day, self.get_fullname())
-        self._p_pv_day = 0.0
-        with open(self._datafile, 'w') as file:
-            file.write(str(self._p_pv_day))
