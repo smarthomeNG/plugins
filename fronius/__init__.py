@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-      <Michael Buchmann>                        <EMAIL>
+#  Copyright 2020-2026  <Michael Buchmann>                        <EMAIL>
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Plugin for Fronius solar inverter  to run with SmartHomeNG version 1.8 and
-#  upwards.
+#  Plugin for Fronius solar inverter Symo GEN24 to run with SmartHomeNG
+#  version 1.1 and upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ class fronius(SmartPlugin):
         return self.update_item
 
 # --------------------- update_item -------------------------------------------
-#        
+#
 #        Item has been updated
 #
 #        This method is called, if the value of an item has been updated by SmartHomeNG.
@@ -128,17 +128,22 @@ class fronius(SmartPlugin):
 
         # get the data
         try:
-            response = requests.get(f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi') 
+            response = requests.get(f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
         except Exception:
-            self.logger.error(f'Error access Fronius inverter at address {self._ip_address}')
+            self.logger.error(f'Fronius inverter at address {self._ip_address} did not answer')
             self._cyclic_update_active = False
             return
-        response = response.json()
-        soc = float(response['Body']['Data']['Inverters']['1']['SOC'])
-        p_pv = float(response['Body']['Data']['Site']['P_PV'])
-        p_grid = float(response['Body']['Data']['Site']['P_Grid'])
-        p_accu = float(response['Body']['Data']['Site']['P_Akku'])
-        p_load = float(response['Body']['Data']['Site']['P_Load'])
+        try:
+            response = response.json()
+            soc = float(response['Body']['Data']['Inverters']['1']['SOC'])
+            p_pv = float(response['Body']['Data']['Site']['P_PV'])
+            p_grid = float(response['Body']['Data']['Site']['P_Grid'])
+            p_accu = float(response['Body']['Data']['Site']['P_Akku'])
+            p_load = float(response['Body']['Data']['Site']['P_Load'])
+        except Exception:
+            self.logger.error(f'Fronius inverter at address {self._ip_address} returned invalid data')
+            self._cyclic_update_active = False
+            return
 
         # Remove noise
         if p_pv < 2:
@@ -169,14 +174,13 @@ class fronius(SmartPlugin):
         # release lock
         self._cyclic_update_active = False
 
-    # ------------------------------ _midnight --------------------------------
-    # Called by the scheduler at midnight. It resets the daily engergy sum and
-    # stores the value in the database item if it exists. 
-
+# ------------------------------ _midnight --------------------------------
+# Called by the scheduler at midnight. Store the daily engergy sum
+# into the database item if it exists.
+# -----------------------------------------------------------------------------
     def _midnight(self):
         self.logger.debug('Midnight')
         self.logger.debug(self._p_pv_day)
         for item in self.itemsApi.find_items('fronius_data'):
-            #        for item in self._items:
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day_database':
                 item(self._p_pv_day, self.get_fullname())
