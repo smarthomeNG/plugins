@@ -31,6 +31,7 @@ import asyncio
 import inspect
 import logging
 import time
+import struct
 from .webif import WebInterface
 
 from pymodbus import ModbusException
@@ -733,8 +734,15 @@ class modbus_tcp(SmartPlugin):
             )
             return
 
+        if regPara['factor'] == 0:
+            self.logger.error('cannot write register with factor zero')
+            return
         if regPara['factor'] != 1:
-            value = value * (1 / regPara['factor'])
+            try:
+                value = value * (1 / regPara['factor'])
+            except (TypeError, ValueError, OverflowError) as e:
+                self.logger.error(f'cannot scale write value: {e}')
+                return
 
         self.logger.debug(
             f"write {value} to {objectType}.{address}.{address} (address.slaveUnit) dataType:{dataTypeStr}"
@@ -748,7 +756,7 @@ class modbus_tcp(SmartPlugin):
         elif objectType in ('HoldingRegister',):
             try:
                 registers = self._value_to_registers(value, dataType, bits, bo, wo)
-            except (TypeError, ValueError, ModbusException) as e:
+            except (TypeError, ValueError, OverflowError, struct.error, ModbusException) as e:
                 self.logger.error(f"cannot encode value for datatype={dataTypeStr}: {e}")
                 return
 
@@ -814,7 +822,7 @@ class modbus_tcp(SmartPlugin):
             bits = 16
 
         if dataType.lower() == 'string':
-            registerCount = int(bits / 2)  # string: bits means bytes -> string16 = 16 bytes -> 8 registers
+            registerCount = max(1, (bits + 1) // 2)  # stringNN specifies bytes, including odd lengths
         else:
             registerCount = max(1, (bits + 15) // 16)
 
@@ -876,9 +884,9 @@ class modbus_tcp(SmartPlugin):
         Check if a returned value is a bad value and return True if it is
         """
         if dataType == 'int16':
-            return value == BAD_VALUE_SINT16
+            return value in (BAD_VALUE_SINT16, -BAD_VALUE_SINT16)
         elif dataType == 'int32':
-            return value == BAD_VALUE_SINT32
+            return value in (BAD_VALUE_SINT32, -BAD_VALUE_SINT32)
         elif dataType == 'uint16':
             return value == BAD_VALUE_UINT16
         elif dataType == 'uint32':
@@ -924,7 +932,7 @@ class modbus_tcp(SmartPlugin):
                 word_order='big',
                 string_encoding='ASCII'
             )
-            return value.rstrip('\x00')
+            return value[:bits].rstrip('\x00')
 
         if cls._is_little_endian(byteOrder):
             registers = cls._swap_register_bytes(registers)

@@ -146,7 +146,7 @@ def test_reads_writes_and_clean_shutdown(tmp_path, simulator, cycle):
             else:
                 rig.job(plugin._scheduler_name()).fire()
         wait_until(lambda: rig.item('dev.value')() == 123.4)
-        assert rig.item('dev.coil')() is True
+        wait_until(lambda: rig.item('dev.coil')() is True)
         wait_until(lambda: rig.item('dev.input')() == 0x1234)
         wait_until(lambda: rig.item('dev.discrete')() is True)
         assert all(unit == 7 for unit, _ in simulator.requests)
