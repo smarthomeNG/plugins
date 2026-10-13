@@ -28,6 +28,7 @@
 
 KNXD_CACHEREAD_DELAY = 0.35
 KNXD_CACHEREAD_DELAY = 0.0
+KNXD_CACHEREAD_RETRY_DELAYS = (2.0, 5.0, 15.0)  # seconds before each re-read of unanswered knx_cache group addresses
 
 KNX_DATA_MASK = 0b00111111  # 0x3f up to 6 bits form data content
 KNX_FLAG_MASK = 0b11000000  # 0xC0
@@ -47,6 +48,8 @@ KNX_CACHE = 'knx_cache'  # get item from knx_cache
 KNX_INIT = 'knx_init'  # query knx upon init
 KNX_LISTEN = 'knx_listen'  # write or response from knx will change the value of this item
 KNX_POLL = 'knx_poll'  # query (poll) a ga on knx in regular intervals
+
+KNX_SOURCE_INIT = 'init'  # source suffix of values that initialise an item at start (knx_cache, knx_init)
 
 KNX_DTP = 'knx_dtp'  # often misspelled argument in config files, instead should be knx_dpt
 

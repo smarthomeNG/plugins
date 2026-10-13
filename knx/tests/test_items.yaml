@@ -1,0 +1,9 @@
+lamp:
+    type: bool
+    knx_dpt: 1
+    knx_cache: 1/1/1
+
+sensor:
+    type: bool
+    knx_dpt: 1
+    knx_init: 1/1/2
