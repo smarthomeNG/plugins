@@ -32,10 +32,13 @@ class Simulator(socketserver.ThreadingTCPServer):
         self.coils = {0: True}
         self.requests = []
         self.drop_next = False
+        self.hold = False
+        self.release = threading.Event()
         self.thread = threading.Thread(target=self.serve_forever, kwargs={'poll_interval': 0.05}, daemon=True)
         self.thread.start()
 
     def close(self):
+        self.release.set()
         self.shutdown()
         self.server_close()
         self.thread.join(timeout=2)
@@ -59,6 +62,9 @@ class Handler(socketserver.BaseRequestHandler):
                 pdu = self.read_exact(length - 1)
                 function = pdu[0]
                 self.server.requests.append((unit, function))
+                if self.server.hold:
+                    self.server.release.wait()
+                    return
                 if self.server.drop_next:
                     self.server.drop_next = False
                     self.request.shutdown(socket.SHUT_RDWR)
@@ -76,7 +82,7 @@ class Handler(socketserver.BaseRequestHandler):
                             packed[offset // 8] |= 1 << (offset % 8)
                     reply = bytes([function, len(packed)]) + packed
                 elif function == 5:
-                    self.server.coils[address] = count == 0xff00
+                    self.server.coils[address] = count == 0xFF00
                     reply = pdu
                 elif function == 16:
                     values = struct.unpack('>' + 'H' * count, pdu[6:])
@@ -90,7 +96,7 @@ class Handler(socketserver.BaseRequestHandler):
             return
 
 
-ITEMS = '''
+ITEMS = """
 dev:
     value:
         type: num
@@ -113,7 +119,7 @@ dev:
     poll:
         type: bool
         modbusPoll: true
-'''
+"""
 
 
 @pytest.fixture
@@ -126,9 +132,13 @@ def simulator():
 
 
 def rig_for(tmp_path, simulator, cycle=1, items=ITEMS, **params):
-    return load_plugin(str(tmp_path), 'plugins.modbus_tcp', 'modbus_tcp', items,
-                       params={'host': '127.0.0.1', 'port': simulator.server_address[1],
-                               'cycle': cycle, 'slaveUnit': 7, **params})
+    return load_plugin(
+        str(tmp_path),
+        'plugins.modbus_tcp',
+        'modbus_tcp',
+        items,
+        params={'host': '127.0.0.1', 'port': simulator.server_address[1], 'cycle': cycle, 'slaveUnit': 7, **params},
+    )
 
 
 @pytest.mark.parametrize('cycle', [1, 0, -1])
@@ -172,8 +182,7 @@ async def cancel_reader(plugin):
 
 
 def test_disabled_reads_do_not_connect(tmp_path, simulator):
-    rig = rig_for(tmp_path, simulator, cycle=0,
-                  items='dev:\n    value:\n        type: num\n        modBusAddress: 0\n')
+    rig = rig_for(tmp_path, simulator, cycle=0, items='dev:\n    value:\n        type: num\n        modBusAddress: 0\n')
     try:
         rig.plugin.run()
         assert rig.plugin._connection_task is None
@@ -224,13 +233,18 @@ def test_crontab_and_restart(tmp_path, simulator):
 
 
 def test_write_only_mode_and_self_callback(tmp_path, simulator):
-    rig = rig_for(tmp_path, simulator, cycle=0, items='''
+    rig = rig_for(
+        tmp_path,
+        simulator,
+        cycle=0,
+        items="""
 dev:
     value:
         type: num
         modBusAddress: 0
         modBusDirection: write
-''')
+""",
+    )
     plugin = rig.plugin
     try:
         plugin.run()
@@ -262,22 +276,36 @@ def test_overlapping_read_triggers_are_coalesced(tmp_path, simulator):
         plugin.stop()
 
 
-@pytest.mark.parametrize('datatype,bits,value', [
-    ('uint', 16, 0x1234), ('uint', 32, 0x12345678), ('uint', 64, 0x123456789abcdef0),
-    ('int', 16, -1234), ('int', 32, -123456), ('int', 64, -123456789),
-    ('float', 32, 12.5), ('float', 64, -12.5),
-])
-@pytest.mark.parametrize('byteorder,wordorder', [('BIG', 'BIG'), ('BIG', 'LITTLE'),
-                                             ('LITTLE', 'BIG'), ('LITTLE', 'LITTLE')])
+@pytest.mark.parametrize(
+    'datatype,bits,value',
+    [
+        ('uint', 16, 0x1234),
+        ('uint', 32, 0x12345678),
+        ('uint', 64, 0x123456789ABCDEF0),
+        ('int', 16, -1234),
+        ('int', 32, -123456),
+        ('int', 64, -123456789),
+        ('float', 32, 12.5),
+        ('float', 64, -12.5),
+    ],
+)
+@pytest.mark.parametrize(
+    'byteorder,wordorder', [('BIG', 'BIG'), ('BIG', 'LITTLE'), ('LITTLE', 'BIG'), ('LITTLE', 'LITTLE')]
+)
 def test_codec_round_trip(datatype, bits, value, byteorder, wordorder):
     registers = modbus_tcp._value_to_registers(value, datatype, bits, byteorder, wordorder)
     assert modbus_tcp._registers_to_value(registers, datatype, bits, byteorder, wordorder) == value
 
 
-@pytest.mark.parametrize('byteorder,wordorder,expected', [
-    ('BIG', 'BIG', [0x1234, 0x5678]), ('BIG', 'LITTLE', [0x5678, 0x1234]),
-    ('LITTLE', 'BIG', [0x3412, 0x7856]), ('LITTLE', 'LITTLE', [0x7856, 0x3412]),
-])
+@pytest.mark.parametrize(
+    'byteorder,wordorder,expected',
+    [
+        ('BIG', 'BIG', [0x1234, 0x5678]),
+        ('BIG', 'LITTLE', [0x5678, 0x1234]),
+        ('LITTLE', 'BIG', [0x3412, 0x7856]),
+        ('LITTLE', 'LITTLE', [0x7856, 0x3412]),
+    ],
+)
 def test_known_wire_order(byteorder, wordorder, expected):
     assert modbus_tcp._value_to_registers(0x12345678, 'uint', 32, byteorder, wordorder) == expected
 
@@ -287,3 +315,40 @@ def test_string_and_register_bits():
     assert modbus_tcp._registers_to_value([0x4142, 0], 'string', 4, 'BIG', 'BIG') == 'AB'
     assert modbus_tcp._value_to_registers('1000000000000001', 'bit', 16, 'BIG', 'BIG') == [0x8001]
     assert modbus_tcp._registers_to_value([0x8001], 'bit', 16, 'BIG', 'BIG') == [True] + [False] * 14 + [True]
+
+
+def test_cancelling_the_reader_during_a_request_stops_it(tmp_path, simulator):
+    simulator.hold = True
+    rig = rig_for(tmp_path, simulator, cycle=-1)
+    plugin = rig.plugin
+    try:
+        plugin.run()
+        wait_until(lambda: simulator.requests)
+        plugin.run_asyncio_coro(cancel_reader(plugin), timeout=3)
+        assert plugin._reader_task.done()
+    finally:
+        plugin.stop()
+
+
+def test_cancelling_a_write_during_a_request_is_not_an_error(tmp_path, simulator):
+    simulator.hold = True
+    rig = rig_for(tmp_path, simulator, cycle=1)
+    plugin = rig.plugin
+    try:
+        plugin.run()
+        wait_until(lambda: plugin.connected)
+        rig.item('dev.coil')(True, 'test')
+        wait_until(lambda: simulator.requests)
+        wait_until(lambda: plugin._write_tasks)
+        write_tasks = list(plugin._write_tasks)
+        plugin.run_asyncio_coro(cancel_tasks(write_tasks), timeout=3)
+        assert all(task.cancelled() for task in write_tasks)
+    finally:
+        plugin.stop()
+    assert not [msg for msg in rig.logs.messages() if 'exception' in msg.lower() or 'failed' in msg.lower()]
+
+
+async def cancel_tasks(tasks):
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)

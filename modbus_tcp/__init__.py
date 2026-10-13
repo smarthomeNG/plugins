@@ -42,9 +42,9 @@ from pymodbus.client import AsyncModbusTcpClient
 # pymodbus >= 3.10 renamed the 'slave' keyword argument to 'device_id'.
 # Detect once at import time so the plugin runs with both old and new pymodbus.
 try:
-    _UNIT_KWARG = 'slave' if 'slave' in inspect.signature(
-        AsyncModbusTcpClient.read_holding_registers
-    ).parameters else 'device_id'
+    _UNIT_KWARG = (
+        'slave' if 'slave' in inspect.signature(AsyncModbusTcpClient.read_holding_registers).parameters else 'device_id'
+    )
 except Exception:
     _UNIT_KWARG = 'slave'
 
@@ -118,14 +118,14 @@ class modbus_tcp(SmartPlugin):
         self.lock = threading.Lock()
 
         # Async infrastructure (SmartPlugin-managed event loop thread)
-        self._connection_task = None          # background reconnect/connection keeper
-        self._reader_task = None              # continuous acquisition task
-        self._scheduled_read_task = None      # scheduler-triggered one-shot read task
-        self._write_tasks = set()             # currently pending/running async write tasks
-        self._client_lock = None              # asyncio.Lock to serialize requests on one TCP connection
-        self._read_cycle_lock = None          # asyncio.Lock to avoid overlapping full read passes
+        self._connection_task = None  # background reconnect/connection keeper
+        self._reader_task = None  # continuous acquisition task
+        self._scheduled_read_task = None  # scheduler-triggered one-shot read task
+        self._write_tasks = set()  # currently pending/running async write tasks
+        self._client_lock = None  # asyncio.Lock to serialize requests on one TCP connection
+        self._read_cycle_lock = None  # asyncio.Lock to avoid overlapping full read passes
 
-        self._aclient = None                  # AsyncModbusTcpClient instance (created in run()/async thread)
+        self._aclient = None  # AsyncModbusTcpClient instance (created in run()/async thread)
 
         self.connected = False
         self.error_count = 0
@@ -169,11 +169,7 @@ class modbus_tcp(SmartPlugin):
         if not self._cycle_is_immediate() and (scheduler_cycle is not None or self._crontab is not None):
             self.error_count = 0
             self.scheduler_add(
-                self._scheduler_name(),
-                self._trigger_async_read,
-                cycle=scheduler_cycle,
-                cron=self._crontab,
-                prio=5
+                self._scheduler_name(), self._trigger_async_read, cycle=scheduler_cycle, cron=self._crontab, prio=5
             )
 
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished")
@@ -225,7 +221,7 @@ class modbus_tcp(SmartPlugin):
             return self.update_item
 
         if self.has_iattr(item.conf, AttrAddress):
-            self.logger.debug(f"parse item: {item}")
+            self.logger.debug(f'parse item: {item}')
             regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
             objectType = 'HoldingRegister'
             value = item()
@@ -263,12 +259,12 @@ class modbus_tcp(SmartPlugin):
 
             byteOrder = (str(byteOrderStr).split('.')[-1]).upper()
             if byteOrder not in ('BIG', 'LITTLE'):
-                self.logger.warning(f"Invalid byteOrder -> default(BIG) is used. Error:{byteOrderStr}")
+                self.logger.warning(f'Invalid byteOrder -> default(BIG) is used. Error:{byteOrderStr}')
                 byteOrder = 'BIG'
 
             wordOrder = (str(wordOrderStr).split('.')[-1]).upper()
             if wordOrder not in ('BIG', 'LITTLE'):
-                self.logger.warning(f"Invalid wordOrder -> default(BIG) is used. Error:{wordOrderStr}")
+                self.logger.warning(f'Invalid wordOrder -> default(BIG) is used. Error:{wordOrderStr}')
                 wordOrder = 'BIG'
 
             regPara = {
@@ -281,26 +277,26 @@ class modbus_tcp(SmartPlugin):
                 'item': item,
                 'value': value,
                 'objectType': objectType,
-                'dataDir': dataDirection
+                'dataDir': dataDirection,
             }
 
             if dataDirection == 'read':
                 self._regToRead.update({reg: regPara})
-                self.logger.info(f"parse item: {item} Attributes {regPara}")
+                self.logger.info(f'parse item: {item} Attributes {regPara}')
 
             elif dataDirection == 'read_write':
                 self._regToRead.update({reg: regPara})
                 self._regToWrite.update({reg: regPara})
-                self.logger.info(f"parse item: {item} Attributes {regPara}")
+                self.logger.info(f'parse item: {item} Attributes {regPara}')
                 return self.update_item
 
             elif dataDirection == 'write':
                 self._regToWrite.update({reg: regPara})
-                self.logger.info(f"parse item: {item} Attributes {regPara}")
+                self.logger.info(f'parse item: {item} Attributes {regPara}')
                 return self.update_item
 
             else:
-                self.logger.warning("Invalid data direction -> default(read) is used")
+                self.logger.warning('Invalid data direction -> default(read) is used')
                 self._regToRead.update({reg: regPara})
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -340,7 +336,9 @@ class modbus_tcp(SmartPlugin):
         if self.has_iattr(item.conf, AttrDirection):
             dataDirection = self.get_iattr_value(item.conf, AttrDirection)
             if not (dataDirection == 'read_write' or dataDirection == 'write'):
-                self.logger.debug(f'update_item: {item} Writing is not allowed - selected dataDirection:{dataDirection}')
+                self.logger.debug(
+                    f'update_item: {item} Writing is not allowed - selected dataDirection:{dataDirection}'
+                )
                 return
 
             if self.has_iattr(item.conf, AttrAddress):
@@ -368,7 +366,7 @@ class modbus_tcp(SmartPlugin):
                 try:
                     self.run_asyncio_coro(self._schedule_write(regPara, item()), timeout=1)
                 except Exception as e:
-                    self.logger.error(f"update_item: scheduling async write failed: {e}")
+                    self.logger.error(f'update_item: scheduling async write failed: {e}')
 
     # ---------------------------------------------------------------------
     # Logging helper
@@ -385,10 +383,10 @@ class modbus_tcp(SmartPlugin):
                 self.logger.error(message)
             elif self.error_count < 100:
                 if self.error_count % 10 == 0:
-                    self.logger.error(f"{message} [Logging suppressed every 10th error]")
+                    self.logger.error(f'{message} [Logging suppressed every 10th error]')
             else:
                 if self.error_count % 100 == 0:
-                    self.logger.error(f"{message} [Logging suppressed every 100th error]")
+                    self.logger.error(f'{message} [Logging suppressed every 100th error]')
 
     # ---------------------------------------------------------------------
     # Async start/stop + tasks (SmartPlugin asyncio)
@@ -399,7 +397,7 @@ class modbus_tcp(SmartPlugin):
         Coroutine for the asyncio session that communicates with the Modbus device.
         It will only terminate when the plugin is stopped.
         """
-        self.logger.info("plugin_coro started")
+        self.logger.info('plugin_coro started')
 
         # Create async primitives in the correct loop
         self._client_lock = asyncio.Lock()
@@ -415,30 +413,28 @@ class modbus_tcp(SmartPlugin):
 
         if not incoming_enabled and self._regToRead:
             self.logger.warning(
-                f"{self.get_fullname()}: cycle is 0 and no crontab is configured; "
-                f"{len(self._regToRead)} read item(s) will keep init/cache/database values"
+                f'{self.get_fullname()}: cycle is 0 and no crontab is configured; '
+                f'{len(self._regToRead)} read item(s) will keep init/cache/database values'
             )
 
         # Start background connection management only when reads or writes can happen.
         if incoming_enabled or write_enabled:
-            self._connection_task = asyncio.create_task(self._connection_keeper(), name="connection_keeper")
+            self._connection_task = asyncio.create_task(self._connection_keeper(), name='connection_keeper')
         else:
             self.logger.info(
-                f"{self.get_fullname()}: no incoming data processing and no write items; "
-                f"not opening a Modbus TCP connection"
+                f'{self.get_fullname()}: no incoming data processing and no write items; '
+                f'not opening a Modbus TCP connection'
             )
 
         # Start continuous acquisition task only for immediate mode.
         # Positive cycle/crontab reads are triggered by SmartHomeNG scheduler.
         if self._cycle_is_immediate():
-            self._reader_task = asyncio.create_task(self._acquisition_loop(), name="acquisition_loop")
+            self._reader_task = asyncio.create_task(self._acquisition_loop(), name='acquisition_loop')
         else:
-            self.logger.info(
-                f"{self.get_fullname()}: no continuous incoming data processing"
-            )
+            self.logger.info(f'{self.get_fullname()}: no continuous incoming data processing')
 
         self.alive = True
-        self.logger.info("plugin_coro: Plugin is running (self.alive=True)")
+        self.logger.info('plugin_coro: Plugin is running (self.alive=True)')
 
         # wait until STOP is received
         await self.wait_for_asyncio_termination()
@@ -448,12 +444,8 @@ class modbus_tcp(SmartPlugin):
 
         # Cancel tasks and close client
         tasks_to_cancel = [
-            task for task in [
-                self._reader_task,
-                self._scheduled_read_task,
-                self._connection_task,
-                *self._write_tasks
-            ]
+            task
+            for task in [self._reader_task, self._scheduled_read_task, self._connection_task, *self._write_tasks]
             if task and not task.done()
         ]
         for task in tasks_to_cancel:
@@ -461,13 +453,10 @@ class modbus_tcp(SmartPlugin):
         if tasks_to_cancel:
             try:
                 await asyncio.wait_for(
-                    asyncio.gather(*tasks_to_cancel, return_exceptions=True),
-                    timeout=self._shutdown_timeout
+                    asyncio.gather(*tasks_to_cancel, return_exceptions=True), timeout=self._shutdown_timeout
                 )
             except asyncio.TimeoutError:
-                self.logger.warning(
-                    f"Timeout while stopping Modbus async tasks after {self._shutdown_timeout} seconds"
-                )
+                self.logger.warning(f'Timeout while stopping Modbus async tasks after {self._shutdown_timeout} seconds')
 
         self._close_client()
 
@@ -478,9 +467,9 @@ class modbus_tcp(SmartPlugin):
         self._read_cycle_lock = None
 
         self.alive = False
-        self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
+        self.logger.info('plugin_coro: Plugin is stopped (self.alive=False)')
 
-        self.logger.info("plugin_coro finished")
+        self.logger.info('plugin_coro finished')
         return
 
     async def _connection_keeper(self):
@@ -496,7 +485,7 @@ class modbus_tcp(SmartPlugin):
                     self.connected = False
 
                 # If pymodbus exposes .connected use it; else rely on our flag
-                pm_connected = getattr(self._aclient, "connected", None)
+                pm_connected = getattr(self._aclient, 'connected', None)
                 if pm_connected is False:
                     self.connected = False
 
@@ -507,19 +496,19 @@ class modbus_tcp(SmartPlugin):
                         ok = False
                         self.error_count += 1
                         self.log_error(
-                            f"connection exception: {self._host}:{self._port} {e}, errors: {self.error_count}"
+                            f'connection exception: {self._host}:{self._port} {e}, errors: {self.error_count}'
                         )
 
                     if ok:
                         self.connected = True
                         self.error_count = 0
                         backoff = 1.0
-                        self.logger.info(f"connected to {self._host}:{self._port}")
+                        self.logger.info(f'connected to {self._host}:{self._port}')
                     else:
                         self.connected = False
                         self.error_count += 1
                         self.log_error(
-                            f"could not connect to {self._host}:{self._port}, connection_attempts: {self.error_count}"
+                            f'could not connect to {self._host}:{self._port}, connection_attempts: {self.error_count}'
                         )
                         await asyncio.sleep(backoff)
                         backoff = min(backoff * 2.0, 30.0)
@@ -532,7 +521,7 @@ class modbus_tcp(SmartPlugin):
                 break
             except Exception as e:
                 # Never crash the plugin
-                self.logger.error(f"connection_keeper unexpected error: {e}")
+                self.logger.error(f'connection_keeper unexpected error: {e}')
                 await asyncio.sleep(2.0)
 
     async def _wait_connected(self, timeout=None):
@@ -570,7 +559,7 @@ class modbus_tcp(SmartPlugin):
                 break
             except Exception as e:
                 # Never crash the plugin
-                self.logger.error(f"acquisition_loop unexpected error: {e}")
+                self.logger.error(f'acquisition_loop unexpected error: {e}')
                 await asyncio.sleep(1.0)
 
     async def _read_registers_once(self):
@@ -583,7 +572,7 @@ class modbus_tcp(SmartPlugin):
             return 0
 
         if self._read_cycle_lock is not None and self._read_cycle_lock.locked():
-            self.logger.debug("read cycle already running, skipping overlapping trigger")
+            self.logger.debug('read cycle already running, skipping overlapping trigger')
             return 0
 
         async with self._read_cycle_lock:
@@ -603,17 +592,19 @@ class modbus_tcp(SmartPlugin):
                 try:
                     raw_value = await self.__read_Registers_async(regPara)
                 except ModbusException as e:
+                    self._reraise_if_cancelled(e)
                     if not self.alive:
-                        self.logger.debug(f"Modbus read cancelled while stopping: {e}")
+                        self.logger.debug(f'Modbus read cancelled while stopping: {e}')
                         break
-                    self.logger.error(f"ModbusException raised while reading: {e}")
+                    self.logger.error(f'ModbusException raised while reading: {e}')
                     self._close_client()
                     raw_value = None
                 except Exception as e:
+                    self._reraise_if_cancelled(e)
                     if not self.alive:
-                        self.logger.debug(f"read cancelled while stopping: {e}")
+                        self.logger.debug(f'read cancelled while stopping: {e}')
                         break
-                    self.logger.error(f"read exception: {e}")
+                    self.logger.error(f'read exception: {e}')
                     self._close_client()
                     raw_value = None
 
@@ -634,7 +625,7 @@ class modbus_tcp(SmartPlugin):
                     item = regPara['item']
                     item(value, self.get_fullname())
                 except Exception as e:
-                    self.logger.error(f"item write failed for {reg}: {e}")
+                    self.logger.error(f'item write failed for {reg}: {e}')
 
                 with self.lock:
                     if 'read_dt' in regPara:
@@ -652,7 +643,7 @@ class modbus_tcp(SmartPlugin):
                 with self.lock:
                     self._pollStatus['last_dt'] = datetime.now()
                     self._pollStatus['regCount'] = regCount
-            self.logger.debug(f"read cycle: read {regCount} register(s) in {duration} seconds")
+            self.logger.debug(f'read cycle: read {regCount} register(s) in {duration} seconds')
             return regCount
 
     def _trigger_async_read(self):
@@ -664,13 +655,13 @@ class modbus_tcp(SmartPlugin):
         try:
             self.run_asyncio_coro(self._schedule_triggered_read(), timeout=1)
         except Exception as e:
-            self.logger.error(f"trigger_async_read: scheduling read failed: {e}")
+            self.logger.error(f'trigger_async_read: scheduling read failed: {e}')
 
     async def _schedule_triggered_read(self):
         if self._scheduled_read_task is not None and not self._scheduled_read_task.done():
-            self.logger.debug("triggered read already running")
+            self.logger.debug('triggered read already running')
             return False
-        self._scheduled_read_task = asyncio.create_task(self._read_registers_once(), name="triggered_read")
+        self._scheduled_read_task = asyncio.create_task(self._read_registers_once(), name='triggered_read')
         self._scheduled_read_task.add_done_callback(self._log_read_task_result)
         return True
 
@@ -680,7 +671,7 @@ class modbus_tcp(SmartPlugin):
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            self.logger.error(f"read task failed: {e}")
+            self.logger.error(f'read task failed: {e}')
 
     # ---------------------------------------------------------------------
     # Async Modbus IO (read/write) - based on original logic, but await-based
@@ -705,7 +696,7 @@ class modbus_tcp(SmartPlugin):
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            self.logger.error(f"write task failed: {e}")
+            self.logger.error(f'write task failed: {e}')
 
     async def __write_Registers_async(self, regPara, value):
         """
@@ -730,7 +721,7 @@ class modbus_tcp(SmartPlugin):
         # Wait for connection (reconnect in background)
         if not await self._wait_connected(timeout=self._write_timeout):
             self.log_error(
-                f"write skipped (not connected after {self._write_timeout} seconds): {self._host}:{self._port}"
+                f'write skipped (not connected after {self._write_timeout} seconds): {self._host}:{self._port}'
             )
             return
 
@@ -745,19 +736,19 @@ class modbus_tcp(SmartPlugin):
                 return
 
         self.logger.debug(
-            f"write {value} to {objectType}.{address}.{address} (address.slaveUnit) dataType:{dataTypeStr}"
+            f'write {value} to {objectType}.{address}.{address} (address.slaveUnit) dataType:{dataTypeStr}'
         )
 
         registers = None
         if objectType == 'Coil':
             if not isinstance(value, bool):
-                self.logger.error(f"Value is not boolean: {value}")
+                self.logger.error(f'Value is not boolean: {value}')
                 return
         elif objectType in ('HoldingRegister',):
             try:
                 registers = self._value_to_registers(value, dataType, bits, bo, wo)
             except (TypeError, ValueError, OverflowError, struct.error, ModbusException) as e:
-                self.logger.error(f"cannot encode value for datatype={dataTypeStr}: {e}")
+                self.logger.error(f'cannot encode value for datatype={dataTypeStr}: {e}')
                 return
 
         # IMPORTANT ASYNC TRANSITION: actual Modbus write is awaited, never blocking a SmartHomeNG thread
@@ -766,28 +757,33 @@ class modbus_tcp(SmartPlugin):
                 if objectType == 'Coil':
                     result = await asyncio.wait_for(
                         self._aclient.write_coil(address, value, **{_UNIT_KWARG: slaveUnit}),
-                        timeout=self._write_timeout
+                        timeout=self._write_timeout,
                     )
                 elif objectType == 'HoldingRegister':
                     result = await asyncio.wait_for(
                         self._aclient.write_registers(address, registers, **{_UNIT_KWARG: slaveUnit}),
-                        timeout=self._write_timeout
+                        timeout=self._write_timeout,
                     )
                 elif objectType == 'DiscreteInput':
-                    self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
+                    self.logger.warning(
+                        f'this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}'
+                    )
                     return
                 elif objectType == 'InputRegister':
-                    self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
+                    self.logger.warning(
+                        f'this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}'
+                    )
                     return
                 else:
                     return
         except Exception as e:
-            self.logger.error(f"write exception: {e}")
+            self._reraise_if_cancelled(e)
+            self.logger.error(f'write exception: {e}')
             self._close_client()
             return
 
         if result is None or result.isError():
-            self.logger.error(f"write error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit)")
+            self.logger.error(f'write error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit)')
             return
 
         # Update stats dict (shared with webif) - protect with threading lock
@@ -836,13 +832,19 @@ class modbus_tcp(SmartPlugin):
                 if objectType == 'Coil':
                     result = await self._aclient.read_coils(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
                 elif objectType == 'DiscreteInput':
-                    result = await self._aclient.read_discrete_inputs(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
+                    result = await self._aclient.read_discrete_inputs(
+                        address, count=registerCount, **{_UNIT_KWARG: slaveUnit}
+                    )
                 elif objectType == 'InputRegister':
-                    result = await self._aclient.read_input_registers(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
+                    result = await self._aclient.read_input_registers(
+                        address, count=registerCount, **{_UNIT_KWARG: slaveUnit}
+                    )
                 elif objectType == 'HoldingRegister':
-                    result = await self._aclient.read_holding_registers(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
+                    result = await self._aclient.read_holding_registers(
+                        address, count=registerCount, **{_UNIT_KWARG: slaveUnit}
+                    )
                 else:
-                    self.logger.error(f"{AttrObjectType} not supported: {objectType}")
+                    self.logger.error(f'{AttrObjectType} not supported: {objectType}')
                     return None
         except Exception as e:
             # Connection likely lost
@@ -851,7 +853,7 @@ class modbus_tcp(SmartPlugin):
         if result is None or result.isError():
             self.error_count += 1
             self.log_error(
-                f"read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}"
+                f'read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}'
             )
             return None
 
@@ -860,15 +862,15 @@ class modbus_tcp(SmartPlugin):
             return result.bits[0]
 
         self.logger.debug(
-            f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount} result:{result}"
+            f'read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount} result:{result}'
         )
 
         try:
             return self._registers_to_value(result.registers, dataType, bits, bo, wo)
         except (TypeError, ValueError, ModbusException) as e:
             self.logger.error(
-                f"unable to unpack data for datatype={dataType.lower()} for read "
-                f"{objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}: {e}"
+                f'unable to unpack data for datatype={dataType.lower()} for read '
+                f'{objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}: {e}'
             )
             return None
 
@@ -877,6 +879,19 @@ class modbus_tcp(SmartPlugin):
     # ---------------------------------------------------------------------
     # Helpers
     # ---------------------------------------------------------------------
+
+    @staticmethod
+    def _reraise_if_cancelled(exc: Exception) -> None:
+        """
+        Raise CancelledError if exc is the result of cancelling the running task.
+
+        pymodbus converts a CancelledError raised during a request into a ModbusIOException
+        chained to it; handlers that log and continue would otherwise swallow the cancellation.
+        Task.cancelling() (Python >= 3.11) covers any other exception raised after cancel().
+        """
+        cancelling = getattr(asyncio.current_task(), 'cancelling', None)
+        if isinstance(exc.__cause__, asyncio.CancelledError) or (cancelling is not None and cancelling()):
+            raise asyncio.CancelledError from exc
 
     @staticmethod
     def is_NaN(value, dataType: str) -> bool:
@@ -903,19 +918,19 @@ class modbus_tcp(SmartPlugin):
                 cls._normalize_value_for_datatype(value, data_type),
                 AsyncModbusTcpClient.DATATYPE.STRING,
                 word_order='big',
-                string_encoding='ASCII'
+                string_encoding='ASCII',
             )
         if data_type == 'bit':
             registers = cls._encode_register_bits(value, bits)
         else:
             modbus_type = cls._modbus_datatype(data_type, bits)
             if modbus_type is None:
-                raise ValueError(f"Number of bits or datatype not supported: {dataType}{bits}")
+                raise ValueError(f'Number of bits or datatype not supported: {dataType}{bits}')
             registers = AsyncModbusTcpClient.convert_to_registers(
                 cls._normalize_value_for_datatype(value, data_type),
                 modbus_type,
                 word_order=cls._word_order_string(wordOrder),
-                string_encoding='ASCII'
+                string_encoding='ASCII',
             )
 
         if cls._is_little_endian(byteOrder):
@@ -927,10 +942,7 @@ class modbus_tcp(SmartPlugin):
         data_type = dataType.lower()
         if data_type == 'string':
             value = AsyncModbusTcpClient.convert_from_registers(
-                registers,
-                AsyncModbusTcpClient.DATATYPE.STRING,
-                word_order='big',
-                string_encoding='ASCII'
+                registers, AsyncModbusTcpClient.DATATYPE.STRING, word_order='big', string_encoding='ASCII'
             )
             return value[:bits].rstrip('\x00')
 
@@ -942,13 +954,10 @@ class modbus_tcp(SmartPlugin):
 
         modbus_type = cls._modbus_datatype(data_type, bits)
         if modbus_type is None:
-            raise ValueError(f"Number of bits or datatype not supported: {dataType}{bits}")
+            raise ValueError(f'Number of bits or datatype not supported: {dataType}{bits}')
 
         value = AsyncModbusTcpClient.convert_from_registers(
-            registers,
-            modbus_type,
-            word_order=cls._word_order_string(wordOrder),
-            string_encoding='ASCII'
+            registers, modbus_type, word_order=cls._word_order_string(wordOrder), string_encoding='ASCII'
         )
         return value
 
@@ -956,15 +965,17 @@ class modbus_tcp(SmartPlugin):
         return self._cycle_param is not None and self._cycle_param < 0
 
     def _incoming_data_enabled(self) -> bool:
-        return bool(self._poll_items) or self._crontab is not None or (
-            self._cycle_param is not None and self._cycle_param != 0
+        return (
+            bool(self._poll_items)
+            or self._crontab is not None
+            or (self._cycle_param is not None and self._cycle_param != 0)
         )
 
     def _write_data_enabled(self) -> bool:
         return bool(self._regToWrite)
 
     def _scheduler_name(self) -> str:
-        return f"poll_device_{self.get_fullname()}"
+        return f'poll_device_{self.get_fullname()}'
 
     def _close_client(self):
         client = self._aclient
@@ -1031,13 +1042,13 @@ class modbus_tcp(SmartPlugin):
     def _encode_register_bits(value, bits: int):
         if isinstance(value, str):
             if not value or not set(value).issubset({'0', '1'}):
-                raise ValueError(f"Value is not a bitstring: {value}")
+                raise ValueError(f'Value is not a bitstring: {value}')
             bit_values = [char == '1' for char in value]
         else:
             try:
                 bit_values = [bool(bit) for bit in value]
             except TypeError as e:
-                raise ValueError(f"Value is not a bitstring or bit list: {value}") from e
+                raise ValueError(f'Value is not a bitstring or bit list: {value}') from e
 
         bit_count = max(bits, len(bit_values))
         register_count = max(1, (bit_count + 15) // 16)
@@ -1045,7 +1056,7 @@ class modbus_tcp(SmartPlugin):
         registers = []
         for offset in range(0, len(padded_bits), 16):
             register = 0
-            for index, bit in enumerate(padded_bits[offset:offset + 16]):
+            for index, bit in enumerate(padded_bits[offset : offset + 16]):
                 if bit:
                     register |= 1 << (15 - index)
             registers.append(register)
@@ -1054,4 +1065,4 @@ class modbus_tcp(SmartPlugin):
     @staticmethod
     def makedictkey(objectType: str, regAddr, slaveUnit) -> str:
         # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
-        return f"{str(objectType)}.{str(regAddr)}.{str(slaveUnit)}"
+        return f'{str(objectType)}.{str(regAddr)}.{str(slaveUnit)}'
