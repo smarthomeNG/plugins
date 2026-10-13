@@ -44,6 +44,18 @@ class CacheReadTracker:
         self._lock = threading.Lock()
         self._pending: list[str] = []
         self._rounds_done = 0
+        self._replied = False
+
+    @property
+    def replied(self) -> bool:
+        """True once knxd answered any cache read of the current run, with or without a value"""
+        with self._lock:
+            return self._replied
+
+    def note_reply(self) -> None:
+        """Record that knxd answered a cache read, which proves it has a group cache"""
+        with self._lock:
+            self._replied = True
 
     @property
     def pending(self) -> list[str]:
@@ -61,6 +73,7 @@ class CacheReadTracker:
         with self._lock:
             self._pending = list(dict.fromkeys(gas))
             self._rounds_done = 0
+            self._replied = False
             return list(self._pending)
 
     def answered(self, ga: str) -> bool:

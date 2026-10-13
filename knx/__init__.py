@@ -281,6 +281,13 @@ class KNX(SmartPlugin):
             # wait a little to not overdrive the knxd unless there is a fix
             time.sleep(KNXD_CACHEREAD_DELAY)
 
+    def _cache_problem_loglevel(self):
+        """Numeric log level configured by ``loglevel_knxd_cache_problems``"""
+        loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
+        if not isinstance(loglevel, int):
+            loglevel = logging.getLevelName(loglevel)
+        return loglevel
+
     def _cacheread_retry_jobname(self):
         return f'KNX[{self.get_instance_name()}] cache read retry'
 
@@ -290,11 +297,8 @@ class KNX(SmartPlugin):
         if delay is None:
             unanswered = self._cache_reads.pending
             if unanswered:
-                loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
-                if not isinstance(loglevel, int):
-                    loglevel = logging.getLevelName(loglevel)
                 self.logger.log(
-                    loglevel,
+                    self._cache_problem_loglevel(),
                     self.translate('no knxd cache value for group addresses {} after all retries').format(
                         ', '.join(unanswered)
                     ),
@@ -514,22 +518,20 @@ class KNX(SmartPlugin):
             n byte data optional, only indicated by length
         """
 
-        # knxd will only deliver 4 bytes and no command/data payload when it is unable to provide a group address from cache.
+        is_cache_reply = knxd_msg_type in (KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT)
+        if is_cache_reply:
+            self._cache_reads.note_reply()
+
+        # knxd answers a cache read it has no value for with only the 4 bytes source and destination address
         if len(knx_data) < 6:
-            knx_data_str = binascii.hexlify(knx_data).decode()
-            src = ''
-            dst = ''
-            try:
-                src = self.decode(knx_data[0:2], 'pa')
+            if is_cache_reply and len(knx_data) == 4:
                 dst = self.decode(knx_data[2:4], 'ga')
-            finally:
                 self._cache_ga_response_no_value.append(dst)
-                loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
-                if not isinstance(loglevel, int):
-                    loglevel = logging.getLevelName(loglevel)
-                self.logger.log(
-                    loglevel,
-                    f'{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse',
+                self.logger.log(self._cache_problem_loglevel(), f'cache miss: knxd has no value for ga {dst}')
+            else:
+                msg_name = KNXD.MessageDescriptions.get(knxd_msg_type, knxd_msg_type)
+                self.logger.warning(
+                    f'ignoring truncated knxd message {msg_name}, {len(knx_data)} bytes [{binascii.hexlify(knx_data).decode()}]'
                 )
             return
 
@@ -704,11 +706,16 @@ class KNX(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(msg)
 
-        if knxd_msg_type == KNXD.INVALID_REQUEST and self._cache_reads.pending and not self._warned_no_group_cache:
+        if (
+            knxd_msg_type == KNXD.INVALID_REQUEST
+            and self._cache_reads.pending
+            and not self._cache_reads.replied
+            and not self._warned_no_group_cache
+        ):
             self._warned_no_group_cache = True
             self.logger.warning(
                 self.translate(
-                    'knxd rejected a request while knx_cache group addresses are unanswered, knxd needs a group cache (knxd.ini: cache = <section> in [main])'
+                    'knxd rejected a request and has answered no knx_cache read, it probably has no group cache (knxd.ini: cache = <section> in [main])'
                 )
             )
 

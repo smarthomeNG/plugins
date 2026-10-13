@@ -78,8 +78,8 @@ plugin_translations:
         en: '='
         fr: ''
 
-    "knxd rejected a request while knx_cache group addresses are unanswered, knxd needs a group cache (knxd.ini: cache = <section> in [main])":
-        de: "knxd hat eine Anfrage abgelehnt, während Gruppenadressen mit knx_cache unbeantwortet sind. knxd benötigt einen Group Cache (knxd.ini: cache = <Abschnitt> in [main])"
+    "knxd rejected a request and has answered no knx_cache read, it probably has no group cache (knxd.ini: cache = <section> in [main])":
+        de: "knxd hat eine Anfrage abgelehnt und noch keine knx_cache-Anfrage beantwortet, vermutlich fehlt ein Group Cache (knxd.ini: cache = <Abschnitt> in [main])"
         en: '='
         fr: ''
 

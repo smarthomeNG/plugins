@@ -70,6 +70,10 @@ class FakeKnxd:
         """Deliver a group monitor telegram: src/dst as 2 bytes each, apci as 2 bytes"""
         self._send_frame(struct.pack('>H', KNXD.GROUP_PACKET) + src + dst + apci)
 
+    def push_invalid_request(self):
+        """Deliver an unattributed INVALID_REQUEST reject"""
+        self._send_frame(struct.pack('>H', KNXD.INVALID_REQUEST))
+
     def _send_frame(self, body):
         self.conn.sendall(struct.pack('>H', len(body)) + body)
 
@@ -163,6 +167,33 @@ class TestKnxCacheRetry(unittest.TestCase):
         self.assertTrue(wait_for(lambda: any('group cache' in r.getMessage() for r in self.records)))
         time.sleep(0.3)
         self.assertEqual(sum('group cache' in r.getMessage() for r in self.records), 1)
+
+    def test_reject_after_cache_replies_does_not_blame_missing_group_cache(self):
+        self.start_plugin()
+        self.assertTrue(wait_for(lambda: self.knxd.cache_reads == 1))
+        self.assertTrue(wait_for(lambda: self.plugin.get_unsatisfied_cache_read_ga() == ['1/1/1']))
+
+        self.knxd.push_invalid_request()
+        time.sleep(0.3)
+
+        self.assertFalse(any('group cache' in r.getMessage() for r in self.records))
+
+    def test_empty_cache_answer_is_logged_as_cache_miss(self):
+        self.start_plugin()
+
+        self.assertTrue(
+            wait_for(lambda: any('cache miss' in r.getMessage() and '1/1/1' in r.getMessage() for r in self.records))
+        )
+        self.assertFalse(any('not enough data' in r.getMessage() for r in self.records))
+
+    def test_truncated_group_packet_is_not_reported_as_cache_miss(self):
+        self.start_plugin()
+        self.assertTrue(wait_for(lambda: self.knxd.cache_reads == 1))
+
+        self.knxd.push_telegram(SRC_PA, GA_LAMP, b'')
+
+        self.assertTrue(wait_for(lambda: any('truncated' in r.getMessage() for r in self.records)))
+        self.assertEqual(sum('cache miss' in r.getMessage() for r in self.records), 1)
 
     def test_cache_value_source_is_marked_initial(self):
         self.start_plugin()

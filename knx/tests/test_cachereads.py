@@ -9,6 +9,13 @@ class TestCacheReadTracker(unittest.TestCase):
     def setUp(self):
         self.tracker = CacheReadTracker(retry_delays=(2.0, 5.0))
 
+    def test_replied_after_note_reply_until_next_start(self):
+        self.assertFalse(self.tracker.replied)
+        self.tracker.note_reply()
+        self.assertTrue(self.tracker.replied)
+        self.tracker.start(['1/1/1'])
+        self.assertFalse(self.tracker.replied)
+
     def test_start_returns_unique_gas_in_order(self):
         self.assertEqual(self.tracker.start(['1/1/1', '1/1/2', '1/1/1']), ['1/1/1', '1/1/2'])
         self.assertEqual(self.tracker.pending, ['1/1/1', '1/1/2'])
