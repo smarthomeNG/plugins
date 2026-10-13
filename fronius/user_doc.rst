@@ -41,13 +41,12 @@ Nachfolgend eine Beispielkonfiguration:
         plugin_name: fronius
         poll_cycle: 10
         ip_address: 192.168.1.181
-        data_file: /usr/local/smarthome/var/db/fronius.txt
 
 items.yaml
 ----------
 
-Items für das plugins müssen den Eintrag ``sim: track`` enthalten. Es gibt
-folgendes Einträge:
+Items für das plugins müssen den Eintrag ``fronius_data: xxx`` enthalten. Es gibt
+folgendes Möglichkeiten für xxx:
 
 - soc: Ladezustand der Batterie
 - p_pv: Aktuelle PV Leistung
@@ -56,7 +55,6 @@ folgendes Einträge:
 - p_load: Aktueller Verbrauch der Hauses
 - p_pv_day: Aktuell erzeugte Energie des Tages
 - p_pv_day_database: Item für Tagesenergie in der Datenbank
-
 
 Nachfolgend eine Beispielkonfiguration:
 
@@ -72,6 +70,7 @@ Nachfolgend eine Beispielkonfiguration:
       SolarPower:
         type: num
         fronius_data: p_pv
+        database: yes
       SolarDailyPower:
         type: num
         fronius_data: p_pv_day
@@ -88,15 +87,15 @@ Tagesenergie
 ------------
 
 Umrichter der Serie GEN24 geben über das REST API keine Energiesummen aus.
-Das plugin berechnet sie daher selber. Dazu wird die PV Leistung p_pv über
-die Zeit aufintegriert. Die dabei berechnete Energie kann stets aktuell
-über p_pv_day abgefragt werden. Damit der Wert einen Reset übersteht wird
-er ein einer Datei gespeichert.
+Das Plugin berechnet sie daher selber. Dazu wird die PV Leistung p_pv über
+den Tag aufintegriert. Die dabei berechnete Energie kann stets aktuell
+über p_pv_day abgefragt werden. Die Berechnung erfolgt über eine Funktion
+des database plugins. p_pv muss daher mit database: yes definiert werden.
+
 Zu Mitternacht wird der Wert p_pv_day auf den Wert p_pv_day_database kopiert
 und zu Null gesetzt. Somit kann der nächste Tage gezählt werden. Der Wert
 p_pv_day_database kann in der Datenbank gespeichert werden. Dann hat man
 eine Statistik über die Tagesenergie.
-
 
 Web Interface
 =============
