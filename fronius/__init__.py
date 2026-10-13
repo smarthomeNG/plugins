@@ -138,8 +138,9 @@ class fronius(SmartPlugin):
         p_pv = float(response['Body']['Data']['Site']['P_PV'])
         p_grid = float(response['Body']['Data']['Site']['P_Grid'])
         p_accu = float(response['Body']['Data']['Site']['P_Akku'])
-        p_load = response['Body']['Data']['Site']['P_Load']
+        p_load = float(response['Body']['Data']['Site']['P_Load'])
 
+        # Remove noise
         if p_pv < 2:
             p_pv = 0
 
@@ -150,9 +151,12 @@ class fronius(SmartPlugin):
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv':
                 item(p_pv, self.get_fullname())
 
-                # Calculate the day engery using db plugin
+                # Calculate the day engery using db plugin. Check if p_pv item is in database.
                 last_midnight = int(datetime.combine(datetime.today(), time.min).timestamp() * 1000)
-                self._p_pv_day = item.db('integrate',last_midnight) / 3600000
+                try:
+                    self._p_pv_day = item.db('integrate',last_midnight) / 3600000
+                except Exception:
+                    self.logger.error(f'Item {item} is not in database. Please add database: yes to the item file.')
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_pv_day':
                 item(self._p_pv_day, self.get_fullname())
             if self.get_iattr_value(item.conf, 'fronius_data') == 'p_grid':
