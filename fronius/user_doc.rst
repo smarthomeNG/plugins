@@ -46,7 +46,7 @@ items.yaml
 ----------
 
 Items für das plugins müssen den Eintrag ``fronius_data: xxx`` enthalten. Es gibt
-folgendes Möglichkeiten für xxx:
+folgende Möglichkeiten für xxx:
 
 - soc: Ladezustand der Batterie
 - p_pv: Aktuelle PV Leistung

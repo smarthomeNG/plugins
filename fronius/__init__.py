@@ -55,7 +55,7 @@ class fronius(SmartPlugin):
         self._cycle = self.get_parameter_value('poll_cycle')
         self._ip_address = self.get_parameter_value('ip_address')
         self.itemsApi = Items.get_instance()
-        self.scheduler_add('midnight', self._midnight, cron='0 0 * *', prio=3)
+        self.scheduler_add('midnight', self._midnight, cron='55 23 * *', prio=3)
         self.init_webinterface(WebInterface)
 
 #---------------------- run ---------------------------------------------------
