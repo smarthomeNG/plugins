@@ -93,7 +93,8 @@ class AppleTV(SmartPlugin):
 
         self._items = {}
         self._state = {}
-        self._loop = asyncio.get_event_loop()
+        self._loop = asyncio.new_event_loop()
+        self.set_asyncio_executor_names(self._loop)
         self._push_listener_loop = None
         self._cycle = 5
         self._scheduler_running = False

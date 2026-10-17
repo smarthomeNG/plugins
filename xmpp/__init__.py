@@ -68,6 +68,7 @@ class XMPP(SmartPlugin):
         self._join = joins
         self._connected = 0
         self._loop = asyncio.get_event_loop()
+        self.set_asyncio_executor_names(self._loop)
 
     def run(self):
         self.alive = True

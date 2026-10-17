@@ -161,6 +161,7 @@ class Telegram(SmartPlugin):
             return
 
         self._loop = asyncio.new_event_loop()  # new_event is required for multi-instance
+        self.set_asyncio_executor_names(self._loop)
         asyncio.set_event_loop(self._loop)
 
         self._application = Application.builder().token(self._token).build()

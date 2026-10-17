@@ -315,6 +315,7 @@ class Husky2(SmartPlugin):
 
     def huky2Thread(self):
         self.asyncLoop = asyncio.new_event_loop()
+        self.set_asyncio_executor_names(self.asyncLoop)
 
         task = self.asyncLoop.create_task(self.initWorker())
         task.add_done_callback(self.startFinished)
