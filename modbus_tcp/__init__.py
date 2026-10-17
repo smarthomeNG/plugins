@@ -755,12 +755,12 @@ class modbus_tcp(SmartPlugin):
         try:
             async with self._client_lock:
                 if objectType == 'Coil':
-                    result = await asyncio.wait_for(
+                    result = await self._await_request(
                         self._aclient.write_coil(address, value, **{_UNIT_KWARG: slaveUnit}),
                         timeout=self._write_timeout,
                     )
                 elif objectType == 'HoldingRegister':
-                    result = await asyncio.wait_for(
+                    result = await self._await_request(
                         self._aclient.write_registers(address, registers, **{_UNIT_KWARG: slaveUnit}),
                         timeout=self._write_timeout,
                     )
@@ -879,6 +879,22 @@ class modbus_tcp(SmartPlugin):
     # ---------------------------------------------------------------------
     # Helpers
     # ---------------------------------------------------------------------
+
+    @staticmethod
+    async def _await_request(request, timeout):
+        """
+        Await a pymodbus request with a timeout.
+
+        Before Python 3.12 ``asyncio.wait_for`` runs the request in an inner task. When the awaiting task is
+        cancelled, pymodbus ends that task with a ModbusIOException; it is retrieved here so asyncio does not
+        log it as 'Task exception was never retrieved'.
+        """
+        task = asyncio.ensure_future(request)
+        try:
+            return await asyncio.wait_for(task, timeout)
+        finally:
+            if task.done() and not task.cancelled():
+                task.exception()
 
     @staticmethod
     def _reraise_if_cancelled(exc: Exception) -> None:
