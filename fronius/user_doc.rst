@@ -93,11 +93,14 @@ den Tag aufintegriert. Die dabei berechnete Energie kann stets aktuell
 des database plugins. p_pv muss daher mit database: yes definiert werden.
 
 Zu Mitternacht wird der Wert p_pv_day auf den Wert p_pv_day_database kopiert
-und zu Null gesetzt. Somit kann der nächste Tage gezählt werden. Der Wert
+und zu Null gesetzt. Somit kann der nächste Tag gezählt werden. Der Wert
 p_pv_day_database kann in der Datenbank gespeichert werden. Dann hat man
 eine Statistik über die Tagesenergie.
 
 Web Interface
 =============
 
-Das Plugin stellt ein WebIF zur Verfügung, in dem alle mit dem Plugin verknüpften Items gelistet sind.
+Das Plugin stellt ein WebIF zur Verfügung, in dem alle mit dem Plugin verknüpften
+Items gelistet sind. Die Plugin Parameter IP Adresse der Abfragezyklus werden
+ebenfalls angezeigt. Angabe für Model steht im Quelltext des plugins. Der
+Inverter gibt leider keinen Modellnamen oder Typ über das REST-API aus.

@@ -32,13 +32,6 @@ parameters:
         description:
             de: 'IP Adresse des Wechselrichters'
             en: 'IP Address of inverter'
-    data_file:
-        type: str
-        default: '/usr/local/smarthome/var/db/fronius.txt'
-        description:
-            de: 'Datei für temporäre Werte'
-            en: 'File for temporary values'
-
 
 item_attributes:
     fronius_data:
@@ -63,6 +56,14 @@ item_attributes:
              - 'Aktueller Verbrauch des Hauses'
              - 'Tagessumme der PV Leistung'
              - 'Tagessumme der PV Leistung für Datenbank'
+            en:
+             - 'Battery state of charge'
+             - 'Actual PV power'
+             - 'Actual power coming from grid'
+             - 'Actual power coming from battery'
+             - 'Actual power of the house'
+             - 'Engergy collected during the actual day'
+             - 'Total engery for the day to be written into the database'
 
 item_structs: NONE 
 logic_parameters: NONE

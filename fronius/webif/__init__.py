@@ -24,9 +24,6 @@
 #
 #########################################################################
 
-import datetime
-import time
-import os
 import json
 
 from lib.item import Items
@@ -38,8 +35,7 @@ from lib.model.smartplugin import SmartPluginWebIf
 # ------------------------------------------
 
 import cherrypy
-import csv
-from jinja2 import Environment, FileSystemLoader
+# from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
