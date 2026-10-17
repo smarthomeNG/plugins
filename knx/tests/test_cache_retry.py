@@ -150,6 +150,13 @@ class FakeKnxd:
             connection.sock.close()
 
 
+def unused_port():
+    """A TCP port on localhost nothing listens on"""
+    with socket.socket() as sock:
+        sock.bind(('127.0.0.1', 0))
+        return sock.getsockname()[1]
+
+
 def wait_for(condition, timeout=5.0):
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -257,7 +264,7 @@ class TestKnxCacheRetry(unittest.TestCase):
     def test_retry_round_with_unreachable_knxd_warns_instead_of_raising(self):
         self.start_plugin()
         self.assertTrue(wait_for(lambda: self.plugin.get_unsatisfied_cache_read_ga() == ['1/1/1']))
-        self.knxd.server.close()
+        self.plugin.port = unused_port()
 
         self.plugin._cacheread_retry()
 
