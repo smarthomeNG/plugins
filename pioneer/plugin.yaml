@@ -54,11 +54,11 @@ parameters:
 
     timeout:
         type: num
-        default: 3
+        default: 1
 
         description:
-            de: Timeout für Geräteantwort
-            en: timeout for device replies
+            de: Lese-Timeout für serielle Verbindung (Sekunden), begrenzt die Wartezeit beim Schließen der Verbindung
+            en: serial read timeout (seconds), limits the wait on closing the connection
 
     terminator:
         type: str
