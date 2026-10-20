@@ -8,9 +8,9 @@ list request per layer; if a hint is missing or wrong the layer is scanned.
 """
 
 from collections.abc import Callable
-from enum import StrEnum
 from typing import NamedTuple, Protocol
 
+from .compat import StrEnum
 from .query import HitKind
 
 PAGE_SIZE = 8

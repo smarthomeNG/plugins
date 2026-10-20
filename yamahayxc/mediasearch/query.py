@@ -11,8 +11,9 @@ Grammar of the raw query string:
 Matching is case-insensitive (casefold).
 """
 
-from enum import StrEnum
 from typing import NamedTuple
+
+from .compat import StrEnum
 
 
 class SearchTarget(StrEnum):

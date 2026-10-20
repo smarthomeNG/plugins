@@ -4,9 +4,9 @@ import logging
 import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
-from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
+from .compat import StrEnum
 from .cds import CdsSearchFinder
 from .query import parse_query
 from .replay import CursorError, Hit, ListCursor, ListEntry, ListPage, ReplayResult, replay
