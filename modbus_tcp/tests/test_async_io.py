@@ -26,8 +26,10 @@ class Simulator(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-    def __init__(self):
-        super().__init__(('127.0.0.1', 0), Handler)
+    def __init__(self, port=0):
+        super().__init__(('127.0.0.1', port), Handler)
+        self.live = set()
+        self.accepted = 0
         self.registers = {0: 1234, 1: 0x1234, 2: 0x5678}
         self.coils = {0: True}
         self.requests = []
@@ -39,6 +41,11 @@ class Simulator(socketserver.ThreadingTCPServer):
 
     def close(self):
         self.release.set()
+        for connection in list(self.live):
+            try:
+                connection.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
         self.shutdown()
         self.server_close()
         self.thread.join(timeout=2)
@@ -55,6 +62,8 @@ class Handler(socketserver.BaseRequestHandler):
         return data
 
     def handle(self):
+        self.server.live.add(self.request)
+        self.server.accepted += 1
         try:
             while True:
                 header = self.read_exact(7)
@@ -94,6 +103,8 @@ class Handler(socketserver.BaseRequestHandler):
                 self.request.sendall(struct.pack('>HHHB', tid, protocol, len(reply) + 1, unit) + reply)
         except (EOFError, OSError):
             return
+        finally:
+            self.server.live.discard(self.request)
 
 
 ITEMS = """
@@ -211,6 +222,30 @@ def test_reconnect_after_connection_drop(tmp_path, simulator):
         simulator.registers[0] = 789
         plugin._trigger_async_read()
         wait_until(lambda: rig.item('dev.value')() == 78.9)
+    finally:
+        plugin.stop()
+
+
+def test_reconnect_after_outage_keeps_a_single_connection(tmp_path, simulator):
+    rig = rig_for(tmp_path, simulator)
+    plugin = rig.plugin
+    port = simulator.server_address[1]
+    try:
+        plugin.run()
+        wait_until(lambda: plugin.connected)
+        simulator.close()
+        wait_until(lambda: not plugin.connected)
+        time.sleep(1.5)
+        revived = Simulator(port)
+        try:
+            wait_until(lambda: plugin.connected and revived.live, timeout=10)
+            time.sleep(1.5)
+            plugin._trigger_async_read()
+            wait_until(lambda: plugin._scheduled_read_task.done())
+            assert len(revived.live) == 1
+            assert revived.accepted == 1
+        finally:
+            revived.close()
     finally:
         plugin.stop()
 

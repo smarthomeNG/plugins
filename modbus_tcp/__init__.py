@@ -404,7 +404,7 @@ class modbus_tcp(SmartPlugin):
         self._read_cycle_lock = asyncio.Lock()
 
         # Create client in our loop thread (important for asyncio transports)
-        self._aclient = AsyncModbusTcpClient(self._host, port=self._port)
+        self._aclient = self._new_client()
         self.connected = False
         self.error_count = 0
 
@@ -481,7 +481,7 @@ class modbus_tcp(SmartPlugin):
         while self.alive:
             try:
                 if self._aclient is None:
-                    self._aclient = AsyncModbusTcpClient(self._host, port=self._port)
+                    self._aclient = self._new_client()
                     self.connected = False
 
                 # If pymodbus exposes .connected use it; else rely on our flag
@@ -992,6 +992,13 @@ class modbus_tcp(SmartPlugin):
 
     def _scheduler_name(self) -> str:
         return f'poll_device_{self.get_fullname()}'
+
+    def _new_client(self):
+        """
+        Create the pymodbus client. Its built-in auto-reconnect is disabled because `_connection_keeper` is the
+        only reconnect loop; two loops connecting concurrently leave an orphaned socket open on the device.
+        """
+        return AsyncModbusTcpClient(self._host, port=self._port, reconnect_delay=0)
 
     def _close_client(self):
         client = self._aclient
