@@ -28,10 +28,13 @@ import json
 import inspect
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, NamedTuple
 from lib.model.smartplugin import SmartPlugin
 from lib.network import Udp_server
+
+from .hostworkers import HostWorkers
+from .mediasearch import SearchReport, SearchStatus, YxcListCursor, run_search
+from .mediasearch.cds import CdsClient, CdsSearchFinder, MediaServerError, resolve_server, ssdp_locations
 
 
 class _CmdSpec(NamedTuple):
@@ -102,7 +105,7 @@ class YamahaYXC(SmartPlugin):
     This is the main plugin class YamahaYXC to control YXC-compatible devices.
     """
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '2.1.0'
     ALLOW_MULTIINSTANCE = False
     # one instance manages many hosts: an item change must not stop them all
     STOP_ON_ITEM_CHANGE = False
@@ -318,6 +321,10 @@ class YamahaYXC(SmartPlugin):
             'queue_save_playlist',
             'queue_clear',
             'queue_update',
+            # media search (see mediasearch/): search_play takes the query, search_status/search_result publish the outcome
+            'search_play',
+            'search_status',
+            'search_result',
         ]
 
         # capability (getFeatures-derived, read-only) list-valued cmds ->
@@ -459,6 +466,10 @@ class YamahaYXC(SmartPlugin):
                 'queue_save_playlist',
                 'queue_clear',
                 'queue_update',
+                # search.* items are pushed by the search worker, never read from a device response
+                'search_play',
+                'search_status',
+                'search_result',
             ]
             + list(self._yamaha_range_cmds)
             + list(self._yamaha_list_cmds)
@@ -723,6 +734,8 @@ class YamahaYXC(SmartPlugin):
             'queue_delete': _CmdSpec(build=self._build_cmd_queue_delete, label='queue delete'),
             'queue_clear': _CmdSpec(build=self._build_cmd_queue_clear, label='queue clear'),
             'queue_save_playlist': _CmdSpec(build=self._handle_queue_save_playlist, full_context=True),
+            # media search: only queues the request, search_status/search_result are pushed by the worker
+            'search_play': _CmdSpec(build=self._handle_search_play, full_context=True),
         }
         # cheap startup guard against self._yamaha_cmd_specs/_yamaha_zone_cmds
         # drifting apart (e.g. a build target's real signature no longer
@@ -792,8 +805,17 @@ class YamahaYXC(SmartPlugin):
         self._cycle = self.get_parameter_value('cycle')
 
         # one single-thread executor per host processes its push notifications, see _data_received()
-        self._notification_workers = {}
-        self._notification_lock = threading.Lock()
+        self._notification_workers = HostWorkers('yamahayxc')
+        # media search: configured server ('' = off), lazily resolved finder, SSDP lookup, one worker per host
+        self._media_server_setting = (self.get_parameter_value('media_server') or '').strip()
+        self._media_finder = None
+        self._media_finder_lock = threading.Lock()
+        self._media_locations = ssdp_locations
+        self._search_workers = HostWorkers('yamahayxc-search')
+        # latest search request number per host; an outdated running search stops at its next layer
+        self._search_generation = {}
+        # per host: serializes the device-global browse cursor between browse_* writes and search replays
+        self._cursor_locks = {}
         # last total_time per host, the reference for play_time percent
         self._yamaha_total_time = {}
         # dropped together once a host's last item is gone, see _forget_unused_hosts()
@@ -808,6 +830,8 @@ class YamahaYXC(SmartPlugin):
             self._yamaha_last_seen,
             self._yamaha_fail_count,
             self._yamaha_total_time,
+            self._search_generation,
+            self._cursor_locks,
         )
 
         self.srv_port = 41100
@@ -863,7 +887,8 @@ class YamahaYXC(SmartPlugin):
         """
         self.alive = False
         self.scheduler_remove_all()
-        self._stop_notification_workers()
+        self._notification_workers.stop()
+        self._search_workers.stop()
         if self.sock:
             self.sock.close()
             self.sock = None
@@ -885,29 +910,9 @@ class YamahaYXC(SmartPlugin):
             self.logger.debug(f'Received notify from unknown host {self._host_label(host)}')
             return
         try:
-            self._notification_worker(host).submit(self._handle_notification, addr, data)
+            self._notification_workers.submit(host, self._handle_notification, addr, data)
         except RuntimeError:
             self.logger.debug(f'plugin stopping, dropped notify from {self._host_label(host)}')
-
-    def _notification_worker(self, host):
-        """return the notification worker of host, creating it on first use"""
-        with self._notification_lock:
-            worker = self._notification_workers.get(host)
-            if worker is None:
-                worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix=f'yamahayxc-{host}')
-                self._notification_workers[host] = worker
-            return worker
-
-    def _stop_notification_workers(self, keep_hosts=()):
-        """shut down the notification workers of all hosts not in keep_hosts, dropping their queued notifications"""
-        with self._notification_lock:
-            stopped = [
-                self._notification_workers.pop(host)
-                for host in list(self._notification_workers)
-                if host not in keep_hosts
-            ]
-        for worker in stopped:
-            worker.shutdown(wait=False, cancel_futures=True)
 
     def _handle_notification(self, addr, data):
         """worker entry point: process one notification, logging instead of raising"""
@@ -1055,7 +1060,8 @@ class YamahaYXC(SmartPlugin):
             for host in [host for host in state if host not in known_hosts]:
                 del state[host]
                 forgotten = True
-        self._stop_notification_workers(keep_hosts=known_hosts)
+        self._notification_workers.stop(keep_hosts=known_hosts)
+        self._search_workers.stop(keep_hosts=known_hosts)
         if forgotten:
             self._update_all_link_hosts_items()
 
@@ -1148,6 +1154,16 @@ class YamahaYXC(SmartPlugin):
         if yamaha_cmd in self._yamaha_trigger_cmds and item() is not True:
             return None
 
+        if yamaha_cmd.startswith('browse_'):
+            # the device has one browse cursor: wait for a running media search replay to finish
+            with self._cursor_lock(yamaha_host):
+                self._apply_cmd(yamaha_cmd, item, yamaha_host, yamaha_zone)
+        else:
+            self._apply_cmd(yamaha_cmd, item, yamaha_host, yamaha_zone)
+        return None
+
+    def _apply_cmd(self, yamaha_cmd, item, yamaha_host, yamaha_zone):
+        """send the payload for a written cmd and refresh the scope it belongs to, see update_item()"""
         yamaha_payload = self._dispatch_cmd_build(yamaha_cmd, item, yamaha_host, yamaha_zone)
         if yamaha_payload:
             self.logger.dbgmed('command sent: {} -> {}'.format(yamaha_cmd, yamaha_payload))
@@ -1180,6 +1196,9 @@ class YamahaYXC(SmartPlugin):
         elif yamaha_cmd == 'queue_save_playlist':
             # copies the queue elsewhere, doesn't change it - nothing to refresh
             pass
+        elif yamaha_cmd == 'search_play':
+            # _handle_search_play() only queued the request
+            pass
         elif yamaha_cmd in self._yamaha_zone_cmds:
             self._update_zone_state(yamaha_host, yamaha_zone)
         elif yamaha_cmd in self._yamaha_alarm_cmds:
@@ -1193,7 +1212,6 @@ class YamahaYXC(SmartPlugin):
 
         if yamaha_cmd in self._yamaha_trigger_cmds:
             item(False, self.get_fullname())
-        return None
 
     def _dispatch_cmd_build(self, yamaha_cmd, item, yamaha_host, yamaha_zone):
         """
@@ -1437,6 +1455,111 @@ class YamahaYXC(SmartPlugin):
         self._link_disband(host, zone)
         return None
 
+    def _handle_search_play(self, item, host, zone):
+        """dispatch target for 'search_play' - queues item() as a media search for host, see search_play()"""
+        self.search_play(host, item())
+        return None
+
+    # media search
+
+    def search_play(self, host, query):
+        """
+        search the configured media server for query and play the best match on host
+
+        host is the configured device host (name or IP). Usable from logics. Returns
+        False if the request was refused (feature off, unknown host), True if it was
+        queued: the search runs asynchronously, search.status and search.result
+        report the outcome. A newer request for the same host supersedes a running
+        one. Query syntax: see mediasearch/query.py.
+        """
+        try:
+            host = socket.gethostbyname(host)
+        except OSError:
+            host = None
+        if host not in self._hosts():
+            self.logger.warning('media search: unknown host, ignoring')
+            return False
+        if not self._media_server_setting:
+            self.logger.warning(f'media search: no media_server configured, ignoring (host {self._host_label(host)})')
+            self._push_search(host, SearchReport(SearchStatus.DISABLED, None))
+            return False
+        generation = self._search_generation.get(host, 0) + 1
+        self._search_generation[host] = generation
+        self._push_search(host, SearchReport(SearchStatus.BUSY, None), keep_result=True)
+        try:
+            self._search_workers.submit(host, self._search_worker, host, str(query), generation)
+        except RuntimeError:
+            self.logger.debug(f'plugin stopping, dropped media search for {self._host_label(host)}')
+            return False
+        return True
+
+    def _cursor_lock(self, host):
+        """return the lock guarding host's device-global browse cursor"""
+        return self._cursor_locks.setdefault(host, threading.RLock())
+
+    def _search_worker(self, host, query, generation):
+        """worker entry point: run one search, publishing the outcome unless a newer request superseded it"""
+        if not self.alive:
+            return
+
+        def superseded():
+            return not self.alive or self._search_generation.get(host) != generation
+
+        if superseded():
+            return
+        try:
+            report = self._search_and_play(host, query, superseded)
+        except MediaServerError as e:
+            self.logger.warning(f'media search: media server failed: {e}')
+            report = SearchReport(SearchStatus.ERROR, None)
+        except Exception as e:
+            self.logger.error(f'media search failed: {e}')
+            report = SearchReport(SearchStatus.ERROR, None)
+        if not superseded():
+            self._push_search(host, report)
+
+    def _search_and_play(self, host, query, superseded):
+        """run the search against the media server, rediscovering the server once if it fails"""
+        cursor = YxcListCursor(self, host)
+        for attempt in (0, 1):
+            finder = self._get_media_finder()
+            try:
+                return run_search(query, finder, cursor, self._cursor_lock(host), superseded)
+            except MediaServerError:
+                self._drop_media_finder(finder)
+                if attempt:
+                    raise
+
+    def _get_media_finder(self):
+        """return the finder for the configured media server, resolving the server on first use"""
+        with self._media_finder_lock:
+            if self._media_finder is None:
+                server = resolve_server(self._media_server_setting, locations=lambda: self._media_locations())
+                self.logger.info(f'media search: using media server {server.friendly_name} at {server.control_url}')
+                self._media_finder = CdsSearchFinder(server, CdsClient(server.control_url))
+            return self._media_finder
+
+    def _drop_media_finder(self, finder):
+        """forget finder so the next search resolves the media server again"""
+        with self._media_finder_lock:
+            if self._media_finder is finder:
+                self._media_finder = None
+
+    def _push_search(self, host, report, keep_result=False):
+        """publish report on host's search.status and search.result items"""
+        for item in self._items_for(host, None, 'search_status'):
+            item(str(report.status), self.get_fullname())
+        if keep_result:
+            return
+        hit = report.hit
+        result = (
+            {'type': str(hit.kind), 'title': hit.title, 'album': hit.album, 'path': [step.text for step in hit.path]}
+            if hit and report.status is SearchStatus.OK
+            else {}
+        )
+        for item in self._items_for(host, None, 'search_result'):
+            item(result, self.get_fullname())
+
     #
     # initialization functions
     #
@@ -1461,18 +1584,24 @@ class YamahaYXC(SmartPlugin):
         for yamaha_host in sorted(self._hosts()):
             self.logger.info('Initializing items for host: {}'.format(self._host_label(yamaha_host)))
             self._resync_host(yamaha_host)
+            initial = SearchStatus.IDLE if self._media_server_setting else SearchStatus.DISABLED
+            self._push_search(yamaha_host, SearchReport(initial, None))
 
-    def _resync_host(self, host):
+    def _resync_host(self, host, require_features=False):
         """
         re-read capabilities and state of host and refresh its items
 
         Capabilities come first, same order as at startup: _update_state()
         doesn't touch capability lists (input_sources etc.) at all. Failures
         are logged instead of raised, so one misbehaving device can't keep
-        the remaining hosts from being initialized.
+        the remaining hosts from being initialized. With require_features
+        the state is only refreshed if the capabilities are known after
+        the fetch, so a host that still doesn't answer costs a single request.
         """
         try:
             self._update_features(host)
+            if require_features and host not in self._yamaha_features:
+                return
             self._update_state(host)
             self._update_debug_items(host)
         except Exception:
@@ -1495,20 +1624,31 @@ class YamahaYXC(SmartPlugin):
         every zone/global item on every cycle would make enforce_updates
         items (power, volume, ...) refire every cycle even when nothing on
         the device changed.
+
+        A host whose capabilities are still unknown (its getFeatures at
+        startup failed or was rejected) is resynced here as soon as it
+        answers usably, unless it is flagged unreachable: that recovery
+        resyncs it anyway.
         """
         if not self.alive:
             return
         for yamaha_host in sorted(self._hosts()):
-            if not self._items_for(yamaha_host, None, 'reachable'):
-                continue
-            zones = self._zones(yamaha_host)
-            zone = 'main' if 'main' in zones else next(iter(zones), None)
-            if zone is None:
-                self.logger.debug(
-                    f'poll_device: no zone configured for {self._host_label(yamaha_host)}, cannot probe reachability'
-                )
-                continue
-            self._submit_payload(yamaha_host, self._build_cmd_get_state(zone))
+            self._probe_host(yamaha_host)
+            if yamaha_host not in self._yamaha_features and self._yamaha_reachable.get(yamaha_host) is not False:
+                self._resync_host(yamaha_host, require_features=True)
+
+    def _probe_host(self, yamaha_host):
+        """request main zone's (else any zone's) getStatus from host if it has a 'reachable' item, see poll_device()"""
+        if not self._items_for(yamaha_host, None, 'reachable'):
+            return
+        zones = self._zones(yamaha_host)
+        zone = 'main' if 'main' in zones else next(iter(zones), None)
+        if zone is None:
+            self.logger.debug(
+                f'poll_device: no zone configured for {self._host_label(yamaha_host)}, cannot probe reachability'
+            )
+            return
+        self._submit_payload(yamaha_host, self._build_cmd_get_state(zone))
 
     def _configured_host(self, item):
         """
@@ -1600,13 +1740,17 @@ class YamahaYXC(SmartPlugin):
         tuner.func_list (valid bands), tuner.range_step ('am'/'fm'
         min/max/step) and tuner.preset.type into
         self._yamaha_tuner_features[host].
-        Leaves both unset on network error, so validation is skipped (fails
-        open) rather than blocking all commands for that host.
+        An answer is only taken over if it is a successful one that lists
+        zones. Anything else (no answer, a rejection like response_code 5
+        while the device is busy, an empty body) leaves the capabilities
+        stored so far untouched, or unset if there are none yet - then
+        validation is skipped (fails open) rather than blocking all
+        commands for that host.
         """
         data = self._submit_payload(host, self._build_cmd_get_features())
-        if not data:
+        if not isinstance(data, dict) or data.get('response_code') != 0 or not data.get('zone'):
             self.logger.info(
-                'Could not retrieve features for host {}, skipping capability validation'.format(self._host_label(host))
+                'Could not retrieve features for host {}, keeping previous capabilities'.format(self._host_label(host))
             )
             return
 

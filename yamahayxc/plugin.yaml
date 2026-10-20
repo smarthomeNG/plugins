@@ -68,7 +68,7 @@ plugin:
     state: ready
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
-    version: 2.0.0                 # Plugin version
+    version: 2.1.0                 # Plugin version
     sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
@@ -81,6 +81,13 @@ parameters:
         description:
             de: 'Intervall in Sekunden für die periodische Erreichbarkeitsprüfung der konfigurierten Geräte (siehe Item-Attribut reachable).'
             en: 'Interval in seconds for the periodic reachability check of configured devices (see the reachable item attribute).'
+
+    media_server:
+        type: str
+        default: ''
+        description:
+            de: 'Medienserver für die Suche (Item search): Name des UPnP-Medienservers (friendlyName, wird per SSDP gesucht) oder die URL seiner Gerätebeschreibung (http://...). Leer schaltet die Suche ab.'
+            en: 'Media server for the search (item search): UPnP media server name (friendlyName, found via SSDP) or the URL of its device description (http://...). Empty disables the search.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -593,6 +600,33 @@ item_structs:
                     remark: True schreiben, um die Warteschlange neu abzufragen.
                     type: bool
                     yamahayxc_cmd: queue_update
+                    enforce_updates: true
+
+            search:
+                remark: >-
+                    Titel oder Album auf dem UPnP-Medienserver (Plugin-Parameter media_server) suchen und
+                    das beste Ergebnis abspielen. Ein Text wird geschrieben, z.B. 'help' (Titel enthält alle
+                    Wörter), '"let it be"' (Phrase), 'album: abbey road' (nur Alben) oder 'title: yesterday'
+                    (nur Titel). Läuft asynchron, Ergebnis siehe status/result. Wirkt auf die Zone main;
+                    eine neuere Suche ersetzt eine laufende.
+                type: str
+                yamahayxc_cmd: search_play
+                enforce_updates: true
+
+                status:
+                    remark: Zustand der letzten Suche (idle, busy, ok, no_match, path_failed, error, disabled).
+                        Nur-Lese-Zugriff.
+                    type: str
+                    yamahayxc_cmd: search_status
+                    visu_acl: ro
+                    enforce_updates: true
+
+                result:
+                    remark: Abgespielter Treffer als Dict mit type (album/track), title, album, path.
+                        Leer, wenn nichts abgespielt wurde. Nur-Lese-Zugriff.
+                    type: dict
+                    yamahayxc_cmd: search_result
+                    visu_acl: ro
                     enforce_updates: true
 
         tuner:

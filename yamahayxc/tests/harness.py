@@ -8,8 +8,9 @@ FakeNetwork stands in for the MusicCast HTTP endpoints behind requests.request()
 import json
 import time
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from unittest.mock import patch
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from tests import common
 from tests.mock.core import MockScheduler, MockSmartHome
@@ -35,10 +36,105 @@ class RecordingScheduler(MockScheduler):
         self.jobs.discard(name)
 
 
+ATTR_SELECT = 1 << 0
+ATTR_PLAY = 1 << 1
+ATTR_PLAY_NOW = 1 << 23
+
+
+@dataclass
+class Entry:
+    """One line of a browse list; children is None for a playable track, a list for a container"""
+
+    text: str
+    children: list['Entry'] | None = None
+
+    @property
+    def attribute(self):
+        return ATTR_SELECT | ATTR_PLAY_NOW if self.children is not None else ATTR_PLAY | ATTR_PLAY_NOW
+
+
+def container(text, *children):
+    return Entry(text, list(children))
+
+
+def track(text):
+    return Entry(text)
+
+
+@dataclass
+class FakeBrowse:
+    """
+    netusb browsing of a FakeDevice: a tree of lists and the one device-global position in it.
+
+    Answers getListInfo (8 lines per call, aligned to 8), setListControl select/return/play and
+    manageList play_now like the real device; `played` records what it was told to play, as
+    (action, texts from layer 0 down to the played entry).
+    """
+
+    root: Entry
+    power: str = 'on'
+    input: str = 'server'
+    stack: list[Entry] = field(default_factory=list)
+    played: list[tuple[str, tuple[str, ...]]] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.stack = [self.root]
+
+    def handle(self, path):
+        """Return the response body for a browse/power/input request path, or None if it is not one"""
+        endpoint, _, query = path.partition('?')
+        args = {key: values[0] for key, values in parse_qs(query).items()}
+        current = self.stack[-1]
+        if endpoint == 'v1/main/setPower':
+            self.power = args['power']
+        elif endpoint == 'v1/main/setInput':
+            self.input = args['input']
+        elif endpoint == 'v1/main/getStatus':
+            return {'power': self.power, 'input': self.input}
+        elif endpoint == 'v1/netusb/getListInfo':
+            index = int(args['index'])
+            if index % 8 or self.power != 'on' or args['input'] != self.input:
+                return {'response_code': 4 if index % 8 else 5}
+            return {
+                'menu_layer': len(self.stack) - 1,
+                'menu_name': current.text,
+                'max_line': len(current.children),
+                'index': index,
+                'playing_index': 255,
+                'list_info': [
+                    {'text': entry.text, 'attribute': entry.attribute} for entry in current.children[index : index + 8]
+                ],
+            }
+        elif endpoint in ('v1/netusb/setListControl', 'v1/netusb/manageList'):
+            return self._control(args, current)
+        else:
+            return None
+        return {}
+
+    def _control(self, args, current):
+        action = args['type']
+        if action == 'return':
+            if len(self.stack) > 1:
+                self.stack.pop()
+            return {}
+        index = int(args['index'])
+        if not 0 <= index < len(current.children):
+            return {'response_code': 4}
+        entry = current.children[index]
+        if action == 'select':
+            if entry.children is None:
+                return {'response_code': 4}
+            self.stack.append(entry)
+        else:
+            self.played.append((action, tuple(e.text for e in self.stack[1:]) + (entry.text,)))
+        return {}
+
+
 class FakeDevice:
     """One MusicCast device. `responses` maps an endpoint suffix (e.g. 'getStatus') to a body dict."""
 
-    def __init__(self, features=None):
+    def __init__(self, features=None, browse=None):
+        self.browse = browse
         self.up = True
         self.gate = None  # threading.Event: while set and unset-waiting, getStatus blocks until it is set
         self.calls = []
@@ -50,6 +146,10 @@ class FakeDevice:
         self.calls.append((method, path, data))
         if self.gate is not None and path.endswith('getStatus'):
             self.gate.wait(5)
+        if self.browse is not None:
+            body = self.browse.handle(path)
+            if body is not None:
+                return {'response_code': 0, **body}
         if path.endswith('getFeatures'):
             return {'response_code': 0, **self.features}
         for suffix, body in self.responses.items():
@@ -95,13 +195,13 @@ def wait_until(condition, timeout=2.0):
     return condition()
 
 
-def make_plugin(items_file, network, initialize=True):
-    """Build a running YamahaYXC with items parsed from tests/<items_file>; runs _initialize() against network."""
+def make_plugin(items_file, network, initialize=True, parameters=None):
+    """Build a running YamahaYXC with items parsed from tests/<items_file> and the given plugin parameters; runs _initialize() against network."""
     sh = MockSmartHome()
     sh.scheduler = RecordingScheduler()
     sh.with_items_from(ITEMS_DIR + items_file)
 
-    YamahaYXC._parameters = {'cycle': 30}
+    YamahaYXC._parameters = {'cycle': 30, **(parameters or {})}
     plugin = YamahaYXC.__new__(YamahaYXC)
     plugin._set_sh(sh)
     plugin.__init__(sh)
