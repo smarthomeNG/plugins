@@ -1,0 +1,35 @@
+vac:
+    battery:
+        type: num
+        deebot: battery
+
+    state:
+        type: str
+        deebot: state
+
+    fan_speed:
+        type: str
+        deebot: fan_speed
+
+    start:
+        type: bool
+        deebot: cmd_start
+
+    clean_rooms:
+        type: list
+        deebot: cmd_clean_rooms
+
+    rooms:
+        type: list
+        deebot: rooms
+
+    map_svg:
+        type: str
+        deebot: map_svg
+
+    unknown_feature:
+        type: str
+        deebot: does_not_exist
+
+    unrelated:
+        type: str

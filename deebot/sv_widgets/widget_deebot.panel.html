@@ -1,0 +1,43 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<div>
+  <p>The widget needs the items of the struct deebot.all below one base item, here saugroboter.</p>
+
+  <div class="twig">Example:<br>
+    <code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+      {{ deebot.panel('', 'saugroboter', ['brush', 'side_brush', 'filter', 'round_mop'], '', true) }}
+    {% endverbatim %}{% endfilter %}</code>
+  </div>
+  <div class="html">
+    {{ deebot.panel('', 'saugroboter', ['brush', 'side_brush', 'filter', 'round_mop'], '', true) }}
+  </div>
+</div>
+
+<script type="text/javascript">
+  $( document ).ready(function() {
+       io.write('saugroboter.status.state', 'cleaning');
+       io.write('saugroboter.status.active', true);
+       io.write('saugroboter.status.battery', 78);
+       io.write('saugroboter.status.available', true);
+       io.write('saugroboter.status.station_state', 'idle');
+       io.write('saugroboter.settings.fan_speed', 'normal');
+       io.write('saugroboter.settings.water_amount', 'low');
+       io.write('saugroboter.statistics.clean_area', 12);
+       io.write('saugroboter.statistics.clean_time', 340);
+       io.write('saugroboter.lifespan.lifespan_brush', 62);
+       io.write('saugroboter.lifespan.lifespan_side_brush', 40);
+       io.write('saugroboter.lifespan.lifespan_filter', 12);
+       io.write('saugroboter.lifespan.lifespan_round_mop', 90);
+       io.write('saugroboter.map.rooms', [{id: 3, name: 'Küche'}, {id: 4, name: 'Flur'}]);
+    });
+</script>
+{% endblock %}

@@ -14,6 +14,17 @@ deebot_ozmo
 
 Das Plugin steuert und überwacht einen Ecovacs Deebot Ozmo Saugroboter (920 / 950 / 960).
 
+.. attention::
+
+   Das Plugin ist veraltet; Ersatz ist das Plugin :doc:`deebot </plugins/deebot/user_doc>`, das auch
+   die Ozmo 920/950 unterstützt.
+
+   Seit Juli 2026 lehnt Ecovacs die Anmeldung einer Installation ab, die nicht per E-Mail bestätigt
+   wurde (Fehler ``1013``). Die zugrunde liegende Bibliothek ``deebotozmo`` 1.7.8 (letzte Version von
+   2021) kennt diese Bestätigung nicht, und das Plugin erzeugt bei jedem Start eine neue zufällige
+   Geräte-ID. Konten, für die Ecovacs die Bestätigung verlangt, können sich mit diesem Plugin daher
+   nicht mehr anmelden.
+
 Voraussetzungen
 ================
 

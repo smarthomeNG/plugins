@@ -1,0 +1,475 @@
+# Metadata for the plugin
+plugin:
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin für Ecovacs Deebot Saugroboter über die Ecovacs Cloud'
+        en: 'Plugin for Ecovacs Deebot vacuum robots using the Ecovacs cloud'
+    maintainer: Morg
+    state: develop                  # change to ready when done with development
+    keywords: iot vacuum robot clean ecovacs deebot
+
+    version: '0.4.0'                # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: '1.12.2.2'       # minimum shNG version to use this plugin
+    py_minversion: '3.14'           # minimum Python version to use for this plugin
+    multi_instance: true            # plugin supports multi instance
+    restartable: true
+    classname: Deebot               # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    account:
+        type: str
+        mandatory: true
+        description:
+            de: 'Ecovacs Konto Login (E-Mail-Adresse)'
+            en: 'Ecovacs account login (e-mail address)'
+
+    password:
+        type: str
+        mandatory: true
+        hide: true
+        description:
+            de: 'Ecovacs Konto Passwort'
+            en: 'Ecovacs account password'
+
+    country:
+        type: str
+        mandatory: true
+        description:
+            de: 'Land des Ecovacs Kontos als zweistelliger ISO-Code (z.B. DE). Bestimmt den Cloud-Server'
+            en: 'Country of the Ecovacs account as two-letter ISO code (e.g. DE). Selects the cloud server'
+
+    device:
+        type: str
+        default: ''
+        description:
+            de: 'Name (Nickname), Gerätename oder ID des Saugroboters. Leer: erster Roboter des Kontos'
+            en: 'Nickname, device name or id of the vacuum. Empty: first vacuum of the account'
+
+    enable_map:
+        type: bool
+        default: true
+        description:
+            de: 'Karte als SVG erzeugen (Item map_svg und Web Interface)'
+            en: 'Render the map as SVG (item map_svg and web interface)'
+
+    map_trace:
+        type: bool
+        default: true
+        description:
+            de: 'Reinigungsspur in der Karte zeigen. Ohne Spur wird die Karte deutlich kleiner'
+            en: 'Show the cleaning trace in the map. Without the trace the map is considerably smaller'
+
+    map_css:
+        type: str
+        default: '.u{fill: transparent}'
+        description:
+            de: 'CSS-Regeln, die an das Stylesheet der Karte angehängt werden. Standard: durchsichtiger Boden (.u), damit die Karte zum Theme passt. Leer lässt die Farben des Roboters unverändert'
+            en: 'CSS rules appended to the style sheet of the map. Default: transparent floor (.u) so the map fits the theme. Empty keeps the colours of the vacuum unchanged'
+
+    room_names:
+        type: list
+        default: []
+        description:
+            de: 'Eigene Raumnamen, überschreiben die Namen des Roboters. Liste von Einträgen {room: 3, name: Küche}; mit map: <Kartenname oder Karten-ID> gilt ein Eintrag nur für diese Karte, sonst für alle. Namen und IDs der Karten liefert das Item maps'
+            en: 'Own room names, they override the names of the vacuum. List of entries {room: 3, name: Kitchen}; with map: <map name or map id> an entry applies to that map only, otherwise to all. Names and ids of the maps are provided by the item maps'
+
+    room_preselect:
+        type: list
+        default: []
+        description:
+            de: 'Im smartVISU Widget vorausgewählte Räume. Liste von Einträgen {room: 3}; map: <Kartenname oder Karten-ID> beschränkt einen Eintrag auf eine Karte, select: false hebt eine allgemeine Vorauswahl auf'
+            en: 'Rooms preselected in the smartVISU widget. List of entries {room: 3}; map: <map name or map id> limits an entry to one map, select: false cancels a general preselection'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    deebot:
+        type: str
+        description:
+            de: 'Wert oder Funktion des Saugroboters, die das Item liest bzw. steuert'
+            en: 'Value or function of the vacuum the item reads or controls'
+        valid_list:
+            - state
+            - active
+            - battery
+            - available
+            - error_code
+            - error_text
+            - fan_speed
+            - water_amount
+            - station_state
+            - clean_area
+            - clean_time
+            - total_area
+            - total_time
+            - total_cleanings
+            - lifespan_air_freshener
+            - lifespan_blade
+            - lifespan_brush
+            - lifespan_cleaning_fluid
+            - lifespan_cleaning_solution
+            - lifespan_dust_bag
+            - lifespan_dust_bucket
+            - lifespan_dust_case_heap
+            - lifespan_dust_container_filter
+            - lifespan_filter
+            - lifespan_hand_filter
+            - lifespan_heavy_duty_cleaning_solution
+            - lifespan_humidify
+            - lifespan_humidify_maintenance
+            - lifespan_lens_brush
+            - lifespan_mop_washing_tray
+            - lifespan_round_mop
+            - lifespan_sewage_box
+            - lifespan_side_brush
+            - lifespan_station_filter
+            - lifespan_strainer
+            - lifespan_trimmer_brush
+            - lifespan_unit_care
+            - lifespan_uv_sanitizer
+            - lifespan_water_sink
+            - lifespan_weed_rope
+            - position
+            - charger_position
+            - rooms
+            - maps
+            - map_svg
+            - cmd_start
+            - cmd_pause
+            - cmd_resume
+            - cmd_stop
+            - cmd_dock
+            - cmd_locate
+            - cmd_empty_dustbin
+            - cmd_clean_rooms
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    status:
+        name: 'Status des Saugroboters'
+        state:
+            remark: 'Zustand: idle, cleaning, returning, docked, error oder paused'
+            type: str
+            visu_acl: ro
+            deebot@instance: state
+        active:
+            remark: 'true, solange der Roboter fährt (cleaning oder returning)'
+            type: bool
+            visu_acl: ro
+            deebot@instance: active
+        battery:
+            remark: 'Akkustand in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: battery
+        available:
+            remark: 'true, wenn der Roboter über die Ecovacs Cloud erreichbar ist'
+            type: bool
+            visu_acl: ro
+            deebot@instance: available
+        error_code:
+            remark: 'Fehlercode des Roboters, 0 = kein Fehler'
+            type: num
+            visu_acl: ro
+            deebot@instance: error_code
+        error_text:
+            remark: 'Fehlerbeschreibung zu error_code'
+            type: str
+            visu_acl: ro
+            deebot@instance: error_text
+        station_state:
+            remark: 'Zustand der Station: idle, emptying_dustbin, washing_mop oder drying_mop'
+            type: str
+            visu_acl: ro
+            deebot@instance: station_state
+
+    settings:
+        name: 'Einstellungen'
+        fan_speed:
+            remark: 'Saugstufe: quiet, normal, max oder max_plus (je nach Modell)'
+            type: str
+            visu_acl: rw
+            deebot@instance: fan_speed
+        water_amount:
+            remark: 'Wassermenge: low, medium oder high (je nach Modell)'
+            type: str
+            visu_acl: rw
+            deebot@instance: water_amount
+
+    control:
+        name: 'Steuerung'
+        cmd_start:
+            remark: 'auf True setzen, um die Reinigung zu starten (pausiert: fortsetzen); setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_start
+        cmd_pause:
+            remark: 'auf True setzen, um die Reinigung zu pausieren; setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_pause
+        cmd_resume:
+            remark: 'auf True setzen, um die Reinigung fortzusetzen; setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_resume
+        cmd_stop:
+            remark: 'auf True setzen, um die Reinigung zu beenden; setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_stop
+        cmd_dock:
+            remark: 'auf True setzen, um zur Ladestation zurückzufahren; setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_dock
+        cmd_locate:
+            remark: 'auf True setzen, damit der Roboter einen Ton abspielt; setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_locate
+        cmd_empty_dustbin:
+            remark: 'auf True setzen, um den Staubbehälter in der Station zu entleeren; setzt sich selbst zurück'
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_empty_dustbin
+        cmd_clean_rooms:
+            remark: 'Liste von Raum-IDs (siehe rooms) schreiben, um diese Räume einmal zu reinigen; setzt sich selbst zurück'
+            type: list
+            visu_acl: rw
+            enforce_updates: true
+            deebot@instance: cmd_clean_rooms
+
+    statistics:
+        name: 'Statistik'
+        clean_area:
+            remark: 'Fläche der aktuellen/letzten Reinigung in m²'
+            type: num
+            visu_acl: ro
+            deebot@instance: clean_area
+        clean_time:
+            remark: 'Dauer der aktuellen/letzten Reinigung in Sekunden'
+            type: num
+            visu_acl: ro
+            deebot@instance: clean_time
+        total_area:
+            remark: 'Gesamtfläche aller Reinigungen (Wert wie vom Gerät geliefert)'
+            type: num
+            visu_acl: ro
+            deebot@instance: total_area
+        total_time:
+            remark: 'Gesamtdauer aller Reinigungen (Wert wie vom Gerät geliefert)'
+            type: num
+            visu_acl: ro
+            deebot@instance: total_time
+        total_cleanings:
+            remark: 'Anzahl aller Reinigungen'
+            type: num
+            visu_acl: ro
+            deebot@instance: total_cleanings
+
+    lifespan:
+        name: 'Verschleissteile (Restlebensdauer in %)'
+        lifespan_air_freshener:
+            remark: 'Restlebensdauer air freshener in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_air_freshener
+        lifespan_blade:
+            remark: 'Restlebensdauer blade in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_blade
+        lifespan_brush:
+            remark: 'Restlebensdauer brush in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_brush
+        lifespan_cleaning_fluid:
+            remark: 'Restlebensdauer cleaning fluid in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_cleaning_fluid
+        lifespan_cleaning_solution:
+            remark: 'Restlebensdauer cleaning solution in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_cleaning_solution
+        lifespan_dust_bag:
+            remark: 'Restlebensdauer dust bag in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_dust_bag
+        lifespan_dust_bucket:
+            remark: 'Restlebensdauer dust bucket in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_dust_bucket
+        lifespan_dust_case_heap:
+            remark: 'Restlebensdauer dust case heap in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_dust_case_heap
+        lifespan_dust_container_filter:
+            remark: 'Restlebensdauer dust container filter in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_dust_container_filter
+        lifespan_filter:
+            remark: 'Restlebensdauer filter in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_filter
+        lifespan_hand_filter:
+            remark: 'Restlebensdauer hand filter in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_hand_filter
+        lifespan_heavy_duty_cleaning_solution:
+            remark: 'Restlebensdauer heavy duty cleaning solution in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_heavy_duty_cleaning_solution
+        lifespan_humidify:
+            remark: 'Restlebensdauer humidify in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_humidify
+        lifespan_humidify_maintenance:
+            remark: 'Restlebensdauer humidify maintenance in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_humidify_maintenance
+        lifespan_lens_brush:
+            remark: 'Restlebensdauer lens brush in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_lens_brush
+        lifespan_mop_washing_tray:
+            remark: 'Restlebensdauer mop washing tray in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_mop_washing_tray
+        lifespan_round_mop:
+            remark: 'Restlebensdauer round mop in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_round_mop
+        lifespan_sewage_box:
+            remark: 'Restlebensdauer sewage box in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_sewage_box
+        lifespan_side_brush:
+            remark: 'Restlebensdauer side brush in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_side_brush
+        lifespan_station_filter:
+            remark: 'Restlebensdauer station filter in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_station_filter
+        lifespan_strainer:
+            remark: 'Restlebensdauer strainer in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_strainer
+        lifespan_trimmer_brush:
+            remark: 'Restlebensdauer trimmer brush in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_trimmer_brush
+        lifespan_unit_care:
+            remark: 'Restlebensdauer unit care in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_unit_care
+        lifespan_uv_sanitizer:
+            remark: 'Restlebensdauer uv sanitizer in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_uv_sanitizer
+        lifespan_water_sink:
+            remark: 'Restlebensdauer water sink in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_water_sink
+        lifespan_weed_rope:
+            remark: 'Restlebensdauer weed rope in %'
+            type: num
+            visu_acl: ro
+            deebot@instance: lifespan_weed_rope
+
+    map:
+        name: 'Position und Karte'
+        position:
+            remark: 'Position des Roboters auf der Karte als {x, y, angle}'
+            type: dict
+            visu_acl: ro
+            deebot@instance: position
+        charger_position:
+            remark: 'Position der Ladestation auf der Karte als {x, y, angle}'
+            type: dict
+            visu_acl: ro
+            deebot@instance: charger_position
+        rooms:
+            remark: 'Räume der aktuellen Karte als Liste von {id, name, map, preselect}; die ids für clean_rooms()'
+            type: list
+            visu_acl: ro
+            deebot@instance: rooms
+        maps:
+            remark: 'Gespeicherte Karten als Liste von {id, name, active, built}; die ids für room_names und room_preselect'
+            type: list
+            visu_acl: ro
+            deebot@instance: maps
+        map_svg:
+            remark: 'Karte mit Räumen, Spur und Roboter als SVG (groß, nur bei Bedarf einbinden)'
+            type: str
+            visu_acl: ro
+            cache: false
+            deebot@instance: map_svg
+
+    all:
+        name: 'Alle Items des Saugroboters'
+        status:
+            struct: deebot.status
+        settings:
+            struct: deebot.settings
+        control:
+            struct: deebot.control
+        statistics:
+            struct: deebot.statistics
+        lifespan:
+            struct: deebot.lifespan
+        map:
+            struct: deebot.map
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    clean_rooms:
+        type: bool
+        description:
+            de: 'Reinigt die angegebenen Räume. Die Raum-IDs liefert das Item mit deebot: rooms'
+            en: 'Clean the given rooms. The room ids are provided by the item with deebot: rooms'
+        parameters:
+            rooms:
+                type: list
+                description:
+                    de: 'Liste der Raum-IDs'
+                    en: 'List of room ids'
+            count:
+                type: int
+                default: 1
+                description:
+                    de: 'Anzahl der Reinigungsdurchgänge'
+                    en: 'Number of cleaning passes'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
