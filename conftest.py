@@ -10,7 +10,10 @@ smartmeter/dlms_test.py), which can fail to import if its dependencies aren't in
 even though it was never meant to run under pytest.
 """
 
+import functools
 import pathlib
+
+PLUGINS_DIR = pathlib.Path(__file__).resolve().parent
 
 
 def _is_superseded(parts):
@@ -25,6 +28,29 @@ def _is_priv(parts):
     # worktree collector into priv_repos/) - same convention as plugins/.gitignore's
     # "/priv_*" pattern.
     return any(part.startswith('priv_') for part in parts)
+
+
+@functools.cache
+def _requirements_files():
+    # imported lazily: core is only importable once pytest has put its root on sys.path
+    import bin.shngversion
+    from lib.shpypi import Requirements_files
+
+    return Requirements_files(version=bin.shngversion.get_shng_version(), for_tests=True)
+
+
+def _excluded_by_version_bounds(path):
+    """
+    Return True if path is a plugin directory whose plugin.yaml sh_/py_ min/max version bounds
+    exclude the running SmartHomeNG or Python version.
+
+    Uses the check that tools/build_test_requirements.py applies, so a plugin without installed
+    requirements is not collected either. A plugin.yaml that cannot be loaded excludes nothing.
+    """
+    if not path.is_dir() or path.parent.resolve() != PLUGINS_DIR or not (path / 'plugin.yaml').is_file():
+        return False
+    use_it, reason = _requirements_files()._test_plugin_versions(str(path / 'requirements.txt'))
+    return not use_it and reason != ''
 
 
 def pytest_ignore_collect(collection_path, config):
@@ -57,6 +83,9 @@ def pytest_ignore_collect(collection_path, config):
             _is_priv(arg.parts) and (arg == resolved or arg in resolved.parents) for arg in requested
         )
         return None if explicitly_requested else True
+
+    if _excluded_by_version_bounds(collection_path):
+        return True
 
     if collection_path.is_file() and 'tests' not in parts:
         return True
