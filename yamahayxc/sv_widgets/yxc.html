@@ -84,6 +84,7 @@
 /**
 * Yamaha YXC - full device control, derived from a single root item
 *
+* @docu
 * Assumes the shng item config combines the yamahayxc plugin's structs as
 * struct: [amp, dsp, netusb, tuner, link] on item_root (any of dsp/netusb/
 * tuner/link may be omitted - the matching popup trigger just never
@@ -425,7 +426,7 @@
 /**
 * Yamaha YXC - button that plays a MusicCast playlist bank
 *
-* Writes the bank number to item_root.netusb.mc_playlist.
+* @docu The widget writes the bank number to item_root.netusb.mc_playlist.
 *
 * @param {item} root item for the device, e.g. 'eg.wohnen.rxav'
 * @param {num} MusicCast playlist bank, 1-5

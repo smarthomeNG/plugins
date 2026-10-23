@@ -1,0 +1,39 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Sebastian Helms
+* @copyright   2026
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<script>
+    io.write('dg.bad.wxbad.netusb.mc_playlist', 0);
+</script>
+    /** get docu text from widgets docstring */
+    {% if widgetlist[widget].docu is not empty %}
+        {{- widgetlist[widget].docu|replace({'*':'', '\r\n*\r\n': '\n\n', '\r\n': ' '})|nl2br -}}
+    {% endif %}
+	<h5>Example</h5>
+     
+    	<div class="twig">
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+			{{ yxc.playlist_button('dg.bad.wxbad', 1, 'pics/slideshow/slide_04.jpg', 'Bank 1' ) }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+    <br>
+	<div class="html">
+		<div class="block">
+			<div class="set-1" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+				<div data-role="collapsible" data-collapsed="false">
+					<h3>Yamaha RX-V483</h3>
+					{{ yxc.playlist_button('dg.bad.wxbad', 1, 'pics/slideshow/slide_04.jpg', 'Bank 1' ) }}
+				</div>
+			</div>
+		</div>
+    </div>
+    
+{% endblock %}
