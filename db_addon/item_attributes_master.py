@@ -27,8 +27,6 @@ FILENAME_PLUGIN = 'plugin.yaml'
 
 DOC_FILE_NAME = 'user_doc.rst'
 
-PLUGIN_VERSION = '1.2.10'
-
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {
         'verbrauch_heute': {

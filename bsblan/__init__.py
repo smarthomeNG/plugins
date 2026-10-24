@@ -31,7 +31,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Bsblan(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.2'
     url = ''
     _items = []
 
