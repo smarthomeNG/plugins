@@ -562,3 +562,83 @@ $.widget("sv.yxc_browse", $.sv.widget, {
     }
 
 });
+
+
+// ----- yxc.tuner ------------------------------------------------------------
+
+$.widget("sv.yxc_tuner", $.sv.widget, {
+
+    initSelector: '[data-widget="yxc.tuner"]',
+
+    options: {},
+
+    _create: function() {
+        this._super();
+        var self = this;
+
+        this.itemScan = this.element.data('itemScan');
+        this.itemPresetStore = this.element.data('itemPresetStore');
+        this.itemPresetClear = this.element.data('itemPresetClear');
+
+        this.$scanInfo = this.element.find('.yxc-tuner-scan-info');
+        this.$scanStart = this.element.find('.yxc-tuner-scan-start');
+        this.$scanCancel = this.element.find('.yxc-tuner-scan-cancel');
+        this.$slot = this.element.find('.yxc-tuner-slot');
+
+        this._onClick(this.$scanStart, function() {
+            if (confirm('DAB-Sendersuchlauf starten? Das kann einige Minuten dauern.'))
+                io.write(self.itemScan, 'start');
+        });
+        this._onClick(this.$scanCancel, function() {
+            io.write(self.itemScan, 'cancel');
+        });
+        this._onClick(this.element.find('.yxc-tuner-preset-store'), function() {
+            var slot = self._slot();
+            if (slot && confirm('Aktuellen Sender auf Preset ' + slot + ' speichern?'))
+                io.write(self.itemPresetStore, slot);
+        });
+        this._onClick(this.element.find('.yxc-tuner-preset-clear'), function() {
+            var slot = self._slot();
+            if (slot && confirm('Preset ' + slot + ' löschen?'))
+                io.write(self.itemPresetClear, slot);
+        });
+    },
+
+    _onClick: function($el, handler) {
+        this._on($el, {
+            'click': function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                handler();
+            }
+        });
+    },
+
+    // preset number typed into the store/clear box, 0 if empty or out of range
+    _slot: function() {
+        var slot = Number(this.$slot.val());
+        var max = Number(this.$slot.attr('max'));
+        return slot >= 1 && slot <= max ? slot : 0;
+    },
+
+    // seek steps through frequencies (am/fm), dab steps through services and
+    // offers the initial scan; the preset boxes are limited to the device's preset count
+    _update: function(response) {
+        var isDab = String(response[0]) === 'dab';
+        var presetMax = Number(response[1]);
+        var scanning = String(response[2]) === 'initial_scan';
+        var progress = Number(response[3]) || 0;
+        var stations = Number(response[4]) || 0;
+
+        this.element.find('.yxc-tuner-seek').toggle(!isDab);
+        this.element.find('.yxc-tuner-dab-service').toggle(isDab);
+        this.$scanStart.toggle(!scanning);
+        this.$scanCancel.toggle(scanning);
+        this.$scanInfo.text(scanning ? 'Suchlauf ' + progress + ' %' : stations + ' Sender');
+        if (presetMax > 0) {
+            this.element.find('.yxc-tuner-preset input').attr('max', presetMax);
+            this.$slot.attr('max', presetMax);
+        }
+    }
+
+});

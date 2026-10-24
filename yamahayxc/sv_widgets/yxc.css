@@ -160,8 +160,37 @@
     padding: 0 1px;
 }
 
-.yxc-tuner-station {
+.yxc-tuner-band {
+    max-width: 120px;
+    margin: 0 auto;
+}
+
+.yxc-tuner-station,
+.yxc-tuner-ensemble,
+.yxc-tuner-dls {
     text-align: center;
+}
+
+.yxc-tuner-ensemble,
+.yxc-tuner-dls {
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.yxc-tuner-scan-info {
+    text-align: center;
+    font-size: 0.8em;
+}
+
+.yxc-tuner-dab-service,
+.yxc-tuner-slot-row {
+    text-align: center;
+}
+
+.yxc-tuner-slot {
+    display: inline-block;
+    width: 70px;
+    vertical-align: middle;
 }
 
 .yxc-tuner-preset {

@@ -1,0 +1,43 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+
+        main:
+            yamahayxc_zone: main
+
+            tuner_band:
+                type: str
+                yamahayxc_cmd: tuner_band
+
+            tuner_station:
+                type: str
+                yamahayxc_cmd: tuner_station
+
+            tuner_ensemble:
+                type: str
+                yamahayxc_cmd: tuner_ensemble
+
+            tuner_dls:
+                type: str
+                yamahayxc_cmd: tuner_dls
+
+            tuner_preset:
+                type: num
+                yamahayxc_cmd: tuner_preset
+
+            tuner_preset_max:
+                type: num
+                yamahayxc_cmd: tuner_preset_max
+
+            tuner_dab_status:
+                type: str
+                yamahayxc_cmd: tuner_dab_status
+
+            tuner_dab_scan_progress:
+                type: num
+                yamahayxc_cmd: tuner_dab_scan_progress
+
+            tuner_dab_station_count:
+                type: num
+                yamahayxc_cmd: tuner_dab_station_count

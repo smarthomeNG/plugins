@@ -82,3 +82,31 @@ def test_mc_playlist_outside_banks_1_to_5_is_not_sent():
     write(plugin, sh, network, 'yamaha.dev.mc_playlist', 6)
 
     assert not [path for path in device.paths() if 'manageMcPlaylist' in path]
+
+
+def test_dab_service_write_selects_the_next_or_previous_service():
+    plugin, sh, device, network = make_running_plugin()
+
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_service', 'next')
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_service', 'previous')
+
+    assert 'v1/tuner/setDabService?dir=next' in device.paths()
+    assert 'v1/tuner/setDabService?dir=previous' in device.paths()
+
+
+def test_dab_scan_write_starts_or_cancels_the_initial_scan():
+    plugin, sh, device, network = make_running_plugin()
+
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', 'start')
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', 'cancel')
+
+    assert 'v1/tuner/startDabInitialScan' in device.paths()
+    assert 'v1/tuner/cancelDabInitialScan' in device.paths()
+
+
+def test_dab_scan_write_with_another_value_sends_nothing():
+    plugin, sh, device, network = make_running_plugin()
+
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', 'stop')
+
+    assert not [path for path in device.paths() if 'Scan' in path]

@@ -105,7 +105,7 @@ class YamahaYXC(SmartPlugin):
     This is the main plugin class YamahaYXC to control YXC-compatible devices.
     """
 
-    PLUGIN_VERSION = '2.1.0'
+    PLUGIN_VERSION = '2.2.0'
     ALLOW_MULTIINSTANCE = False
     # one instance manages many hosts: an item change must not stop them all
     STOP_ON_ITEM_CHANGE = False
@@ -165,10 +165,17 @@ class YamahaYXC(SmartPlugin):
             'tuner_seek',
             'tuner_tuned',
             'tuner_station',
+            'tuner_ensemble',
+            'tuner_dls',
             'tuner_preset',
             'tuner_preset_store',
             'tuner_preset_clear',
             'tuner_preset_switch',
+            'tuner_dab_service',
+            'tuner_dab_scan',
+            'tuner_dab_status',
+            'tuner_dab_scan_progress',
+            'tuner_dab_station_count',
             'sound_program',
             'surround_3d',
             'direct',
@@ -243,6 +250,7 @@ class YamahaYXC(SmartPlugin):
             'tuner_freq_min',
             'tuner_freq_max',
             'tuner_freq_step',
+            'tuner_preset_max',
             # zone-discovery/DSP-availability indicators, pushed by
             # _update_zone_flags() from getFeatures data (never read from
             # getStatus) - let a visu show/hide zone2/3/4 or DSP controls
@@ -545,15 +553,23 @@ class YamahaYXC(SmartPlugin):
             'tuner_seek',
             'tuner_tuned',
             'tuner_station',
+            'tuner_ensemble',
+            'tuner_dls',
             'tuner_preset',
             'tuner_preset_store',
             'tuner_preset_clear',
             'tuner_preset_switch',
+            'tuner_dab_service',
+            'tuner_dab_scan',
+            'tuner_dab_status',
+            'tuner_dab_scan_progress',
+            'tuner_dab_station_count',
             'update_tuner',
             'tuner_band_values',
             'tuner_freq_min',
             'tuner_freq_max',
             'tuner_freq_step',
+            'tuner_preset_max',
         }
         # dist/Link (multi-room grouping) is a single global resource per
         # device, like tuner - a device has one role/group at a time, not one
@@ -695,6 +711,8 @@ class YamahaYXC(SmartPlugin):
             'tuner_preset_store': _CmdSpec(build=self._build_cmd_tuner_store_preset),
             'tuner_preset_clear': _CmdSpec(build=self._handle_tuner_preset_clear, full_context=True),
             'tuner_preset_switch': _CmdSpec(build=self._build_cmd_tuner_switch_preset),
+            'tuner_dab_service': _CmdSpec(build=self._build_cmd_tuner_dab_service),
+            'tuner_dab_scan': _CmdSpec(build=self._build_cmd_tuner_dab_scan),
             # UPnP/USB/DLNA content browsing - see _yamaha_cmds' browse_*
             # comment. browse_page needs full_context (calls
             # _update_browse_state() itself, with getListInfo's own longer
@@ -786,9 +804,7 @@ class YamahaYXC(SmartPlugin):
         # _yamaha_features[host][zone] = {'func_list': set, 'input_list': set, 'volume_range': (min, max, step) or None}
         # populated from getFeatures in _update_features(); left empty (validation skipped) if unreachable
         self._yamaha_features = {}
-        # store discovered tuner capabilities per host:
-        # _yamaha_tuner_features[host] = {'func_list': set, 'am_range': (min,max,step) or None,
-        #                                  'fm_range': (min,max,step) or None, 'preset_type': 'common'/'separate'/None}
+        # discovered tuner capabilities per host, see _update_features()
         self._yamaha_tuner_features = {}
 
         # reachability bookkeeping, updated at the _submit_payload() choke
@@ -1796,10 +1812,12 @@ class YamahaYXC(SmartPlugin):
                 'am_range': am_range,
                 'fm_range': fm_range,
                 'preset_type': tuner.get('preset', {}).get('type'),
+                'preset_count': tuner.get('preset', {}).get('num'),
             }
         else:
             self._yamaha_tuner_features.pop(host, None)
         self._update_tuner_band_values_item(host)
+        self._update_tuner_preset_max_item(host)
 
     def _update_range_items(self, host, zones):
         """
@@ -1864,6 +1882,20 @@ class YamahaYXC(SmartPlugin):
         bands = sorted(features['func_list'] & {'am', 'fm', 'dab'})
         for item in self._items_for(host, None, 'tuner_band_values'):
             item(bands, self.get_fullname())
+
+    def _update_tuner_preset_max_item(self, host):
+        """
+        push the device's tuner preset count to the registered 'tuner_preset_max' item
+
+        Called once per _update_features() run. Skips (leaves the item at its
+        last value) if the tuner or its preset count is unknown for this host.
+        """
+        features = self._yamaha_tuner_features.get(host)
+        count = features.get('preset_count') if features else None
+        if count is None:
+            return
+        for item in self._items_for(host, None, 'tuner_preset_max'):
+            item(count, self.get_fullname())
 
     def _update_zone_flags(self, host, zones):
         """
@@ -2418,8 +2450,15 @@ class YamahaYXC(SmartPlugin):
         """
         extract a tuner item's value from a getPlayInfo response
 
-        returns None for write-only cmds (preset recall/store/clear/switch,
-        seek) - they have nothing to read back, same convention as
+        tuner_freq/tuner_tuned only exist for am/fm (the dab block's own 'freq'
+        is a channel frequency that setFreq cannot take); tuner_station is the
+        RDS program service on fm, the service label on dab. The dab-only
+        tuner_ensemble/tuner_dls/tuner_dab_status read as '' and the scan
+        progress/station count as 0 on any other band. tuner_preset
+        reads the active band's current preset number (0: none).
+
+        returns None for write-only cmds (preset store/clear/switch, seek) -
+        they have nothing to read back, same convention as
         _yamaha_ignore_cmds_upd for the flat-dict cmds. Also returns None
         (by falling through) for tuner_band_values/tuner_freq_min/max/step -
         those are getFeatures-derived, not part of a getPlayInfo response,
@@ -2427,16 +2466,31 @@ class YamahaYXC(SmartPlugin):
         _push_tuner_freq_range() instead.
         """
         band = state.get('band')
-        band_data = state.get(band, {}) if band in ('am', 'fm') else {}
+        band_data = state.get(band, {}) if band in ('am', 'fm', 'dab') else {}
+        dab_data = band_data if band == 'dab' else {}
         if cmd == 'tuner_band':
             return band
+        elif cmd == 'tuner_preset':
+            return band_data.get('preset')
         elif cmd == 'tuner_freq':
-            return band_data.get('freq')
+            return None if band == 'dab' else band_data.get('freq')
         elif cmd == 'tuner_tuned':
-            return band_data.get('tuned')
+            return None if band == 'dab' else band_data.get('tuned')
         elif cmd == 'tuner_station':
+            if band == 'dab':
+                return dab_data.get('service_label', '').strip()
             rds = state.get('rds')
             return rds.get('program_service', '') if rds else ''
+        elif cmd == 'tuner_ensemble':
+            return dab_data.get('ensemble_label', '').strip()
+        elif cmd == 'tuner_dls':
+            return dab_data.get('dls', '').strip()
+        elif cmd == 'tuner_dab_status':
+            return dab_data.get('status', '')
+        elif cmd == 'tuner_dab_scan_progress':
+            return dab_data.get('initial_scan_progress', 0)
+        elif cmd == 'tuner_dab_station_count':
+            return dab_data.get('total_station_num', 0)
         return None
 
     def _update_link_state(self, yamaha_host, update_items=True):
@@ -3503,6 +3557,26 @@ class YamahaYXC(SmartPlugin):
         value is "next" or "previous"
         """
         cmd = 'v1/tuner/switchPreset?dir={}'.format(value)
+        return cmd
+
+    def _build_cmd_tuner_dab_service(self, value):
+        """
+        return cmd string for "select next/previous DAB service"
+
+        value is "next" or "previous"
+        """
+        cmd = 'v1/tuner/setDabService?dir={}'.format(value)
+        return cmd
+
+    def _build_cmd_tuner_dab_scan(self, value):
+        """
+        return cmd string for "start/cancel DAB initial scan", None for any other value
+
+        value is "start" or "cancel"
+        """
+        if value not in ('start', 'cancel'):
+            return None
+        cmd = 'v1/tuner/{}DabInitialScan'.format(value)
         return cmd
 
     def _build_cmd_get_link_state(self):

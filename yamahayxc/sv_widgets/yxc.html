@@ -213,16 +213,42 @@
 
 			{% if 'tuner' not in hidden %}
 			<div class="yxc-content yxc-panel-tuner" style="display:none">
-				<div data-role="controlgroup" data-type="horizontal">
-					{{ basic.stateswitch('', item_root~'.tuner.band', 'mini', ['fm', 'am'], '', ['FM', 'AM'], ['icon1', 'icon0']) }}
-				</div>
-				<div class="yxc-tuner-station">{{ basic.print('', item_root~'.tuner.station') }}</div>
-				<div data-role="controlgroup" data-type="horizontal">
-					{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'down', 'control_arrow_left.svg') }}
-					{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'up', 'control_arrow_right.svg') }}
-				</div>
-				<div class="yxc-tuner-preset">
-					{{ basic.input(uid~'-preset', item_root~'.tuner.preset', 'number', 1, 40, 1) }}
+				<div data-widget="yxc.tuner"
+				     data-item="{{ implode([item_root~'.tuner.band', item_root~'.tuner.preset.max', item_root~'.tuner.dab_status', item_root~'.tuner.dab_scan_progress', item_root~'.tuner.dab_station_count']) }}"
+				     data-item-scan="{{ item_root~'.tuner.dab_scan' }}"
+				     data-item-preset-store="{{ item_root~'.tuner.preset_store' }}"
+				     data-item-preset-clear="{{ item_root~'.tuner.preset_clear' }}">
+					<div class="yxc-tuner-band">
+						{{ basic.select(uid~'-band', item_root~'.tuner.band', 'menu', '', '', '', '', '', item_root~'.tuner.band.values') }}
+					</div>
+					<div class="yxc-tuner-station">{{ basic.print('', item_root~'.tuner.station') }}</div>
+					<div class="yxc-tuner-ensemble">{{ basic.print('', item_root~'.tuner.ensemble') }}</div>
+					<div class="yxc-tuner-dls">{{ basic.print('', item_root~'.tuner.dls') }}</div>
+					<div class="yxc-tuner-seek" data-role="controlgroup" data-type="horizontal">
+						{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'down', 'control_arrow_left.svg') }}
+						{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'up', 'control_arrow_right.svg') }}
+					</div>
+					<div class="yxc-tuner-dab-service" style="display:none">
+						<div data-role="controlgroup" data-type="horizontal">
+							{{ basic.stateswitch('', item_root~'.tuner.dab_service', '', 'previous', 'control_arrow_left.svg') }}
+							{{ basic.stateswitch('', item_root~'.tuner.dab_service', '', 'next', 'control_arrow_right.svg') }}
+						</div>
+						<div class="yxc-tuner-scan-info"></div>
+						<a href="#" class="yxc-tuner-scan-start ui-btn ui-mini ui-corner-all ui-btn-inline">Suchlauf</a>
+						<a href="#" class="yxc-tuner-scan-cancel ui-btn ui-mini ui-corner-all ui-btn-inline" style="display:none">Abbrechen</a>
+					</div>
+					<div class="yxc-tuner-preset-row" data-role="controlgroup" data-type="horizontal">
+						{{ basic.stateswitch('', item_root~'.tuner.preset_switch', '', 'previous', 'control_arrow_left.svg') }}
+						<div class="yxc-tuner-preset">
+							{{ basic.input(uid~'-preset', item_root~'.tuner.preset', 'number', 1, 40, 1) }}
+						</div>
+						{{ basic.stateswitch('', item_root~'.tuner.preset_switch', '', 'next', 'control_arrow_right.svg') }}
+					</div>
+					<div class="yxc-tuner-slot-row">
+						<input type="number" class="yxc-tuner-slot" min="1" max="40" step="1" placeholder="Preset">
+						<a href="#" class="yxc-tuner-preset-store ui-btn ui-mini ui-corner-all ui-btn-inline">Speichern</a>
+						<a href="#" class="yxc-tuner-preset-clear ui-btn ui-mini ui-corner-all ui-btn-inline">Löschen</a>
+					</div>
 				</div>
 			</div>
 			{% endif %}

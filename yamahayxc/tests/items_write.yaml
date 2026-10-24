@@ -25,3 +25,11 @@ yamaha:
             mute_num:
                 type: num
                 yamahayxc_cmd: mute
+
+            tuner_dab_service:
+                type: str
+                yamahayxc_cmd: tuner_dab_service
+
+            tuner_dab_scan:
+                type: str
+                yamahayxc_cmd: tuner_dab_scan

@@ -47,7 +47,7 @@ plugin:
                 - volume control,\n
                 - selection of favorites and presets (device dependent)\n
                 - setting and de-/activating the alarm clock (device dependent)\n
-                - tuner control (AM/FM): band, frequency, seek, presets\n
+                - tuner control (AM/FM/DAB): band, frequency, seek, DAB service, presets\n
                 - DSP/sound field (device dependent): sound program, 3D surround, direct/pure direct, enhancer, tone control, equalizer, balance\n
                 - Multi-room (MusicCast Link, device dependent, basic functions tested against real multi-device hardware): create/join/leave groups, add/remove clients\n
              \n
@@ -68,7 +68,7 @@ plugin:
     state: ready
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
-    version: 2.1.0                 # Plugin version
+    version: 2.2.0                 # Plugin version
     sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
@@ -681,16 +681,52 @@ item_structs:
                 visu_acl: ro
 
             station:
-                remark: Empfangener Sendername (RDS Program Service). Nur-Lese-Zugriff.
+                remark: Empfangener Sendername (bei FM der RDS Program Service, bei DAB das Service Label). Nur-Lese-Zugriff.
                 type: str
                 yamahayxc_cmd: tuner_station
                 visu_acl: ro
 
+            ensemble:
+                remark: DAB-Ensemble (Senderpaket) des empfangenen Senders, sonst leer. Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: tuner_ensemble
+                visu_acl: ro
+
+            dls:
+                remark: DAB-Zusatztext (Dynamic Label Segment) des empfangenen Senders, sonst leer. Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: tuner_dls
+                visu_acl: ro
+
+            dab_status:
+                remark: DAB-Status, "not_ready"/"initial_scan"/"tune_aid"/"ready", außerhalb von DAB leer. Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: tuner_dab_status
+                visu_acl: ro
+
+            dab_scan_progress:
+                remark: Fortschritt des DAB-Sendersuchlaufs in Prozent, außerhalb von DAB 0. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: tuner_dab_scan_progress
+                visu_acl: ro
+
+            dab_station_count:
+                remark: Anzahl der beim Suchlauf gefundenen DAB-Sender (0 = kein Suchlauf oder nichts gefunden). Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: tuner_dab_station_count
+                visu_acl: ro
+
             preset:
-                remark: Anwahl gespeicherter Tuner-Presets.
+                remark: Anwahl gespeicherter Tuner-Presets. Beim Lesen die aktuelle Preset-Nummer des gewählten Bands (0 = kein Preset).
                 type: num
                 yamahayxc_cmd: tuner_preset
                 enforce_updates: true
+
+                max:
+                    remark: Anzahl der Tuner-Presets des Geräts (höchste gültige Preset-Nummer). Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tuner_preset_max
+                    visu_acl: ro
 
             preset_store:
                 remark: Aktuellen Sender auf Preset-Nummer speichern.
@@ -708,6 +744,18 @@ item_structs:
                 remark: Zum nächsten/vorherigen Preset wechseln, gültige Werte "next"/"previous"
                 type: str
                 yamahayxc_cmd: tuner_preset_switch
+                enforce_updates: true
+
+            dab_service:
+                remark: Nächsten/vorherigen DAB-Sender des Ensembles wählen, gültige Werte "next"/"previous"
+                type: str
+                yamahayxc_cmd: tuner_dab_service
+                enforce_updates: true
+
+            dab_scan:
+                remark: DAB-Sendersuchlauf (Initial Scan) starten oder abbrechen, gültige Werte "start"/"cancel"
+                type: str
+                yamahayxc_cmd: tuner_dab_scan
                 enforce_updates: true
 
             update:
@@ -1322,7 +1370,7 @@ item_structs:
 
     isx-18:
         yamahayxc_zone: main
-        struct: [.amp, .link, .netusb, .alarm]
+        struct: [.amp, .link, .netusb, .tuner, .alarm]
 
     rx-v483:
         yamahayxc_zone: main
