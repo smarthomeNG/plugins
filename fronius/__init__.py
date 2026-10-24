@@ -53,6 +53,7 @@ class fronius(SmartPlugin):
         self._p_pv_day = 0
         self._cyclic_update_active = False
         self._cycle = self.get_parameter_value('poll_cycle')
+        self._timeout = self.get_parameter_value('timeout')
         self._ip_address = self.get_parameter_value('ip_address')
         self.itemsApi = Items.get_instance()
         self.scheduler_add('midnight', self._midnight, cron='55 23 * *', prio=3)
@@ -127,8 +128,9 @@ class fronius(SmartPlugin):
         self._cyclic_update_active = True
 
         # get the data
+        path = f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi'
         try:
-            response = requests.get(f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
+            response = requests.get(path, timeout=self._timeout)
         except Exception:
             self.logger.error(f'Fronius inverter at address {self._ip_address} did not answer')
             self._cyclic_update_active = False

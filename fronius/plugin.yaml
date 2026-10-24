@@ -32,6 +32,12 @@ parameters:
         description:
             de: 'IP Adresse des Wechselrichters'
             en: 'IP Address of inverter'
+    timeout:
+        type: int
+        default: 10
+        description:
+            de: 'Timeout Wert für http Anfragen an den Inverter'
+            en: 'Timeout for http requests to the inverter'
 
 item_attributes:
     fronius_data:
