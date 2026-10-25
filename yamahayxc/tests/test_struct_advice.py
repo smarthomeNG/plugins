@@ -49,5 +49,7 @@ def test_the_item_config_lists_the_recommended_structs_otherwise():
     assert config == (
         'device:\n'
         '    yamahayxc_host: rx-av\n'
-        '    struct: [yamahayxc.amp, yamahayxc.link, yamahayxc.netusb, yamahayxc.tuner, yamahayxc.dsp, yamahayxc.zone2]\n'
+        '    struct: [yamahayxc.amp, yamahayxc.link, yamahayxc.netusb, yamahayxc.tuner, yamahayxc.dsp]\n'
+        '    zone2:\n'
+        '        struct: yamahayxc.zone2\n'
     )

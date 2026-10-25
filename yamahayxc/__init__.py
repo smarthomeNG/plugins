@@ -847,6 +847,8 @@ class YamahaYXC(SmartPlugin):
         # the raw getFeatures/getDeviceInfo answers per host, for the web interface
         self._yamaha_features_raw = {}
         self._yamaha_device_info = {}
+        # input id -> name stored on the device (getNameText) per host
+        self._yamaha_name_texts = {}
 
         # reachability bookkeeping, updated at the _submit_payload() choke
         # point (every HTTP call - poll, write, on-demand refresh - counts
@@ -893,6 +895,7 @@ class YamahaYXC(SmartPlugin):
             self._yamaha_tuner_features,
             self._yamaha_features_raw,
             self._yamaha_device_info,
+            self._yamaha_name_texts,
             self._yamaha_reachable,
             self._yamaha_last_seen,
             self._yamaha_fail_count,
@@ -1057,6 +1060,12 @@ class YamahaYXC(SmartPlugin):
                 self.logger.info(
                     'Received netusb error {} from host {}'.format(netusb_data['play_error'], self._host_label(host))
                 )
+
+        # input names were edited on the device (e.g. in the MusicCast app): re-read and republish them
+        system_data = data.get('system')
+        if system_data and system_data.get('name_text_updated'):
+            self._update_name_texts(host)
+            self._update_list_items(host, self._yamaha_features.get(host, {}))
 
         # tuner push data only carries "something changed" flags, not
         # values directly (per spec) - re-poll getPlayInfo on change
@@ -2064,6 +2073,7 @@ class YamahaYXC(SmartPlugin):
 
         self._yamaha_features_raw[host] = data
         self._update_device_info(host)
+        self._update_name_texts(host)
 
         zones = {}
         for zone in data.get('zone', []):
@@ -2115,6 +2125,14 @@ class YamahaYXC(SmartPlugin):
         self._update_tuner_preset_max_item(host)
         self._update_tuner_auto_preset_available_item(host)
 
+    def _update_name_texts(self, host):
+        """store the input names set on host (getNameText) if the answer is a successful one"""
+        data = self._submit_payload(host, self._build_cmd_get_name_text())
+        if isinstance(data, dict) and data.get('response_code') == 0:
+            self._yamaha_name_texts[host] = {
+                entry['id']: str(entry.get('text', '')).strip() for entry in data.get('input_list', []) if 'id' in entry
+            }
+
     def _update_device_info(self, host):
         """store host's getDeviceInfo answer if it is a successful one"""
         info = self._submit_payload(host, self._build_cmd_get_device_info())
@@ -2164,8 +2182,10 @@ class YamahaYXC(SmartPlugin):
                     continue
                 for item in items:
                     if yamaha_cmd in ('input_sources', 'input_names'):
-                        shown = self._shown_inputs(item, feature_list, host, zone_id, log=yamaha_cmd == 'input_sources')
-                        value = [name.capitalize() for name in shown] if yamaha_cmd == 'input_names' else shown
+                        choices = self._input_choices(
+                            item, feature_list, host, zone_id, log=yamaha_cmd == 'input_sources'
+                        )
+                        value = [choice[1 if yamaha_cmd == 'input_names' else 0] for choice in choices]
                     else:
                         value = sorted(feature_list)
                     item(value, self.get_fullname())
@@ -2185,25 +2205,62 @@ class YamahaYXC(SmartPlugin):
             current = current.return_parent()
         return ''
 
-    def _shown_inputs(self, item, available, host, zone_id, log=False):
+    @staticmethod
+    def _parse_input_selection(configured):
         """
-        return the inputs item should offer, sorted: the zone's available inputs, narrowed to the
-        item's yamahayxc_inputs (inherited from the nearest ancestor that has it); all available
-        inputs if that names none of them. Names the device does not offer are logged if log is set
+        return {input id: configured name ('' if none)} from a yamahayxc_inputs value
+
+        The value is a list (or comma separated string) whose entries are an id, 'id=name' or a
+        single-key mapping {id: name}; item yaml can not hold a mapping as an attribute value, it
+        would become a child item. A dict is taken as {id: name} as well.
+        """
+        if isinstance(configured, dict):
+            pairs = list(configured.items())
+        else:
+            entries = configured.split(',') if isinstance(configured, str) else list(configured or [])
+            pairs = []
+            for entry in entries:
+                if isinstance(entry, dict):
+                    pairs.extend(entry.items())
+                else:
+                    input_id, _, name = str(entry).partition('=')
+                    pairs.append((input_id, name))
+        selection = {str(input_id).strip().lower(): str(name or '').strip() for input_id, name in pairs}
+        selection.pop('', None)
+        return selection
+
+    def _input_choices(self, item, available, host, zone_id, log=False):
+        """
+        return the (input id, display name) pairs item should offer, sorted by id
+
+        The inputs are the zone's available ones, narrowed to the item's yamahayxc_inputs (inherited
+        from the nearest ancestor that has it), see _parse_input_selection(); all available inputs if
+        that names none of them. Names the device does not offer
+        are logged if log is set. A display name is the configured one, else the name set on the
+        device, else the capitalized id; commas are replaced because smartVISU splits its labels there.
         """
         configured = self._inherited_attribute(item, 'yamahayxc_inputs')
-        if not configured:
-            return sorted(available)
-        names = configured.split(',') if isinstance(configured, str) else configured
-        wanted = {str(name).strip().lower() for name in names} - {''}
-        unknown = sorted(wanted - set(available))
+        overrides = self._parse_input_selection(configured)
+        unknown = sorted(set(overrides) - set(available))
         if unknown and log:
             self.logger.info(
                 'yamahayxc_inputs of {}: {} not offered by {}/{}, ignored'.format(
                     item.property.path, ', '.join(unknown), self._host_label(host), zone_id
                 )
             )
-        return sorted(wanted & set(available)) or sorted(available)
+        shown = sorted(set(overrides) & set(available)) or sorted(available)
+        device_names = self._yamaha_name_texts.get(host, {})
+        return [
+            (
+                input_id,
+                ' '.join(
+                    (overrides.get(input_id, '').strip() or device_names.get(input_id) or input_id.capitalize())
+                    .replace(',', ' ')
+                    .split()
+                ),
+            )
+            for input_id in shown
+        ]
 
     def _update_tuner_band_values_item(self, host):
         """
@@ -3522,6 +3579,10 @@ class YamahaYXC(SmartPlugin):
         """
         cmd = 'v1/netusb/setShuffle?mode={}'.format(value)
         return cmd
+
+    def _build_cmd_get_name_text(self):
+        """return cmd string for "get name texts" -> the names of zones, inputs and sound programs as set on the device"""
+        return 'v1/system/getNameText'
 
     def _build_cmd_get_device_info(self):
         """return cmd string for "get device info" -> model name, firmware and API versions"""

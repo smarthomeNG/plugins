@@ -1,5 +1,6 @@
 """yamahayxc_inputs shortens what input.values/input.names offer; writes are still checked against the device's list."""
 
+import json
 import logging
 
 from plugins.yamahayxc.tests.harness import FakeDevice, FakeNetwork, make_plugin
@@ -11,14 +12,22 @@ ZONES = [
 ]
 
 
-def make(initialize=True, items='items_inputs.yaml'):
-    network = FakeNetwork({'127.0.0.1': FakeDevice({'zone': ZONES})})
+def name_texts(**names):
+    """a getNameText answer naming the given inputs"""
+    return {'input_list': [{'id': input_id, 'text': text} for input_id, text in names.items()]}
+
+
+def make(initialize=True, items='items_inputs.yaml', names=None):
+    device = FakeDevice({'zone': ZONES})
+    if names is not None:
+        device.responses = {'v1/system/getNameText': names}
+    network = FakeNetwork({'127.0.0.1': device})
     plugin, sh = make_plugin(items, network, initialize=initialize)
     return plugin, sh, network
 
 
-def start(items='items_inputs.yaml'):
-    plugin, sh, network = make(items=items)
+def start(items='items_inputs.yaml', names=None):
+    plugin, sh, network = make(items=items, names=names)
     return plugin, sh, network.devices['127.0.0.1'], network
 
 
@@ -98,3 +107,50 @@ def test_an_input_hidden_from_the_list_can_still_be_selected_by_a_write():
         plugin.update_item(item, 'test')
 
     assert 'v1/main/setInput?input=av3' in device.paths()
+
+
+def test_input_names_are_the_names_stored_on_the_device():
+    names = name_texts(hdmi1='Blu-Ray', tuner='Radio', hdmi2='  TV  ')
+    plugin, sh, device, network = start('items_inputs_plain.yaml', names)
+
+    shown = dict(zip(value(sh, 'dev.main.input_values'), value(sh, 'dev.main.input_names')))
+
+    assert shown['hdmi1'] == 'Blu-Ray'
+    assert shown['tuner'] == 'Radio'
+    assert shown['hdmi2'] == 'TV'
+    assert shown['spotify'] == 'Spotify'
+
+
+def test_an_empty_device_name_falls_back_to_the_capitalized_input():
+    plugin, sh, device, network = start('items_inputs_plain.yaml', name_texts(hdmi1=''))
+
+    shown = dict(zip(value(sh, 'dev.main.input_values'), value(sh, 'dev.main.input_names')))
+
+    assert shown['hdmi1'] == 'Hdmi1'
+
+
+def test_an_entry_may_carry_a_name_as_id_equals_name_or_a_single_key_mapping_else_the_device_name():
+    names = name_texts(tuner='Radio', hdmi1='Blu-Ray')
+    plugin, sh, device, network = start('items_inputs_named.yaml', names)
+
+    assert value(sh, 'dev.main.input_values') == ['av3', 'hdmi1', 'tuner']
+    assert value(sh, 'dev.main.input_names') == ['A B', 'Fire TV', 'Radio']
+
+
+def test_a_comma_in_a_name_is_replaced_because_the_select_splits_its_labels_at_commas():
+    plugin, sh, device, network = start('items_inputs_plain.yaml', name_texts(hdmi2='Kodi, Wohnzimmer'))
+
+    shown = dict(zip(value(sh, 'dev.main.input_values'), value(sh, 'dev.main.input_names')))
+
+    assert shown['hdmi2'] == 'Kodi Wohnzimmer'
+
+
+def test_a_name_text_push_republishes_the_names():
+    plugin, sh, device, network = start('items_inputs_plain.yaml', name_texts(hdmi1='Blu-Ray'))
+    device.responses['v1/system/getNameText'] = name_texts(hdmi1='Apple TV')
+
+    with network.active():
+        plugin._process_notification(('127.0.0.1', 41100), json.dumps({'system': {'name_text_updated': True}}))
+
+    shown = dict(zip(value(sh, 'dev.main.input_values'), value(sh, 'dev.main.input_names')))
+    assert shown['hdmi1'] == 'Apple TV'

@@ -48,6 +48,7 @@ _BLOCKS = (
     _Block('zone4', 'zone4', _has_zone('zone4')),
     _Block('alarm', None, lambda features, main: 'alarm' in features.get('clock', {}).get('func_list', [])),
 )
+_ZONE_STRUCTS = ('zone2', 'zone3', 'zone4')
 _WIDGET_ORDER = ('dsp', 'netusb', 'link', 'tuner', 'zone2', 'zone3', 'zone4')
 
 
@@ -66,9 +67,17 @@ def ready_made(model_name: str, known_structs: set[str]) -> str | None:
 
 
 def render_config(host: str, advice: StructAdvice, device_struct: str | None) -> str:
-    """item yaml for a device: its ready-made struct if given, else the recommended building blocks"""
+    """
+    item yaml for a device: its ready-made struct if given, else the recommended building blocks
+
+    Extra zones are not part of the device item's struct list: their struct fills a child item named
+    after the zone, so each of them gets one.
+    """
     if device_struct:
-        struct = f'yamahayxc.{device_struct}'
-    else:
-        struct = '[' + ', '.join(f'yamahayxc.{name}' for name in advice.structs) + ']'
-    return f'device:\n    yamahayxc_host: {host}\n    struct: {struct}\n'
+        return f'device:\n    yamahayxc_host: {host}\n    struct: yamahayxc.{device_struct}\n'
+    blocks = [name for name in advice.structs if name not in _ZONE_STRUCTS]
+    struct = '[' + ', '.join(f'yamahayxc.{name}' for name in blocks) + ']'
+    zones = ''.join(
+        f'    {name}:\n        struct: yamahayxc.{name}\n' for name in advice.structs if name in _ZONE_STRUCTS
+    )
+    return f'device:\n    yamahayxc_host: {host}\n    struct: {struct}\n{zones}'

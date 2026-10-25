@@ -104,10 +104,10 @@ item_attributes:
             en: 'Command associated with the current item'
 
     yamahayxc_inputs:
-        type: list(str)
+        type: foo
         description:
-            de: 'Tonquellen, die input.values/input.names anbieten sollen (Rest des Geräts bleibt schaltbar). Gilt für alle untergeordneten Items, kann je Zone überschrieben werden. Ohne Angabe alle Tonquellen des Geräts.'
-            en: 'Inputs input.values/input.names should offer (the device`s other inputs stay selectable). Applies to all child items, can be overridden per zone. All inputs of the device if not set.'
+            de: 'Tonquellen, die input.values/input.names anbieten sollen (Rest des Geräts bleibt schaltbar), als Liste oder kommagetrennter Text. Ein Eintrag kann einen Anzeigenamen mitbringen: "id=Name" oder {id: Name}. Gilt für alle untergeordneten Items, kann je Zone überschrieben werden. Ohne Angabe alle Tonquellen des Geräts.'
+            en: 'Inputs input.values/input.names should offer (the device`s other inputs stay selectable), as a list or comma separated text. An entry can carry a display name: "id=name" or {id: name}. Applies to all child items, can be overridden per zone. All inputs of the device if not set.'
 
     yamahayxc_zone:
         type: str
@@ -204,7 +204,7 @@ item_structs:
                 visu_acl: ro
 
             names:
-                remark: Anzeigenamen zu .values (großgeschrieben, gleiche Reihenfolge), z.B. als Beschriftung einer Auswahl. Nur-Lese-Zugriff.
+                remark: Anzeigenamen zu .values in gleicher Reihenfolge, z.B. als Beschriftung einer Auswahl - aus yamahayxc_inputs, sonst der am Gerät eingestellte Name (z.B. in der MusicCast-App), sonst die großgeschriebene Quelle. Nur-Lese-Zugriff.
                 type: list
                 yamahayxc_cmd: input_names
                 visu_acl: ro
@@ -1443,17 +1443,22 @@ item_structs:
 
     isx-18:
         remark: Veraltet, wird mit dem nächsten Major-Release entfernt - stattdessen yamahayxc.isx-18d verwenden.
-        struct: .isx-18d
+        yamahayxc_zone: main
+        struct: [.amp, .link, .netusb, .tuner, .alarm]
 
     rx-v483:
         yamahayxc_zone: main
-        struct: [.amp, .link, .netusb, .tuner, .zones.zone2]
+        struct: [.amp, .link, .netusb, .tuner, .dsp]
 
-        dsp:
-            struct: .dsp_content
+        zone2:
+            struct: .zone2
 
     rx-s602d:
-        struct: .rx-v483
+        yamahayxc_zone: main
+        struct: [.amp, .link, .netusb, .tuner, .dsp]
+
+        zone2:
+            struct: .zone2
 
 
 

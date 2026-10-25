@@ -65,8 +65,8 @@ def test_every_widget_catalog_model_is_a_device_struct():
     assert [model for model in models if model not in structs] == []
 
 
-def test_deprecated_isx_18_struct_still_exists_as_an_alias_of_isx_18d():
+def test_deprecated_isx_18_struct_still_exists_and_says_so():
     structs = YAML_LOADER.load(PLUGIN_YAML.read_text())['item_structs']
 
-    assert structs['isx-18']['struct'] == '.isx-18d'
     assert 'Veraltet' in structs['isx-18']['remark']
+    assert 'isx-18d' in structs['isx-18']['remark']
