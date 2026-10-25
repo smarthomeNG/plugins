@@ -38,7 +38,7 @@ class TestPlainTimeEntries(TestUZSUBase):
         with common.force_os_tz('Pacific/Honolulu'):
             nxt, value, _ = self.plugin._get_time(entry, 'next', self.item, 0, 'test')
         self.assertEqual(nxt.hour, 7)
-        self.assertEqual(nxt.utcoffset(), datetime.timedelta(hours=2))  # CEST in June
+        self.assertEqual(nxt.utcoffset(), self.plugin._timezone.utcoffset(nxt.replace(tzinfo=None)))
 
 
 class TestSunBoundEntries(TestUZSUBase):
