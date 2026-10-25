@@ -9,6 +9,8 @@
 * comma-separated feature keys in the same vocabulary as yxc.device()'s
 * 'hide' parameter: dsp, netusb, tuner, link, zone2, zone3, zone4.
 *
+* 'isx-18' is a deprecated alias of 'isx-18d', removed with the next major release.
+*
 * Unknown/unlisted models return an empty string, and the widget falls back
 * to its hide-only default in that case. If a specific unit is wired
 * differently than its model normally would be (or the model isn't listed
@@ -19,9 +21,11 @@
 */
 {% macro features(model) %}
 	{%- set catalog = {
-		'wx-010':  'netusb,link',
-		'isx-18':  'netusb,link,tuner',
-		'rx-v483': 'dsp,netusb,link,tuner,zone2',
+		'wx-010':   'netusb,link',
+		'isx-18':   'netusb,link,tuner',
+		'isx-18d':  'netusb,link,tuner',
+		'rx-v483':  'dsp,netusb,link,tuner,zone2',
+		'rx-s602d': 'dsp,netusb,link,tuner,zone2',
 	} -%}
 	{{- catalog[model]|default('') -}}
 {% endmacro %}

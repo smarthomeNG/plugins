@@ -94,3 +94,27 @@ def test_dab_scan_items_are_empty_on_fm():
     assert item(sh, 'tuner_dab_status') == ''
     assert item(sh, 'tuner_dab_scan_progress') == 0
     assert item(sh, 'tuner_dab_station_count') == 0
+
+
+def test_dab_scan_item_is_true_while_the_device_runs_the_initial_scan():
+    plugin, sh, device = start(DAB_PLAY_INFO)
+
+    assert item(sh, 'tuner_dab_scan') is True
+
+
+def test_dab_scan_item_is_false_when_the_scan_is_not_running():
+    plugin, sh, device = start(FM_PLAY_INFO)
+
+    assert item(sh, 'tuner_dab_scan') is False
+
+
+def test_auto_preset_item_is_true_while_the_device_runs_the_auto_preset():
+    plugin, sh, device = start({**FM_PLAY_INFO, 'auto_preset': True})
+
+    assert item(sh, 'tuner_auto_preset') is True
+
+
+def test_auto_preset_item_is_false_when_no_auto_preset_runs():
+    plugin, sh, device = start(FM_PLAY_INFO)
+
+    assert item(sh, 'tuner_auto_preset') is False

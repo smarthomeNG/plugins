@@ -1,6 +1,7 @@
 """plugin.yaml (item structs) and the plugin's command table agree with each other."""
 
 import pathlib
+import re
 
 from ruamel.yaml import YAML
 
@@ -51,3 +52,19 @@ def test_available_items_are_wired_to_the_plugin():
     assert [
         path for path, item in available if item.get('yamahayxc_cmd') not in ('zone_present', 'dsp_available')
     ] == []
+
+
+def test_every_widget_catalog_model_is_a_device_struct():
+    catalog = (pathlib.Path(__file__).parent.parent / 'sv_widgets' / 'yxc_devices.html').read_text()
+    models = re.findall(r"^\s*'([a-z0-9-]+)':\s*'[a-z0-9,]*',?$", catalog, re.MULTILINE)
+    structs = YAML_LOADER.load(PLUGIN_YAML.read_text())['item_structs']
+
+    assert models
+    assert [model for model in models if model not in structs] == []
+
+
+def test_deprecated_isx_18_struct_still_exists_as_an_alias_of_isx_18d():
+    structs = YAML_LOADER.load(PLUGIN_YAML.read_text())['item_structs']
+
+    assert structs['isx-18']['struct'] == '.isx-18d'
+    assert 'Veraltet' in structs['isx-18']['remark']

@@ -187,6 +187,24 @@
     text-align: center;
 }
 
+.yxc-tuner-walk-info {
+    text-align: center;
+    font-size: 0.8em;
+}
+
+.yxc-tuner-list {
+    max-height: 14em;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.yxc-tuner-list a {
+    margin: 1px 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 .yxc-tuner-slot {
     display: inline-block;
     width: 70px;

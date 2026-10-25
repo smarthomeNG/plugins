@@ -28,10 +28,12 @@ import json
 import inspect
 import threading
 import time
+from dataclasses import dataclass, field
 from typing import Callable, NamedTuple
 from lib.model.smartplugin import SmartPlugin
 from lib.network import Udp_server
 
+from .dabstations import DabPlayInfo, Settle, StationCache, WalkState, YxcDabLink, tune, walk
 from .hostworkers import HostWorkers
 from .mediasearch import SearchReport, SearchStatus, YxcListCursor, run_search
 from .mediasearch.cds import CdsClient, CdsSearchFinder, MediaServerError, resolve_server, ssdp_locations
@@ -54,6 +56,14 @@ class _CmdSpec(NamedTuple):
     list_check: str | None = None
     clamp_range: str | None = None
     full_context: bool = False
+
+
+@dataclass(frozen=True)
+class _DabJob:
+    """a running DAB walk or tune job: its kind ('walk'/'tune') and the event that asks it to stop"""
+
+    kind: str
+    cancel: threading.Event = field(default_factory=threading.Event)
 
 
 # func_list values (per getFeatures) that indicate some DSP capability -
@@ -105,7 +115,7 @@ class YamahaYXC(SmartPlugin):
     This is the main plugin class YamahaYXC to control YXC-compatible devices.
     """
 
-    PLUGIN_VERSION = '2.2.0'
+    PLUGIN_VERSION = '2.3.0'
     ALLOW_MULTIINSTANCE = False
     # one instance manages many hosts: an item change must not stop them all
     STOP_ON_ITEM_CHANGE = False
@@ -173,9 +183,16 @@ class YamahaYXC(SmartPlugin):
             'tuner_preset_switch',
             'tuner_dab_service',
             'tuner_dab_scan',
+            'tuner_auto_preset',
             'tuner_dab_status',
             'tuner_dab_scan_progress',
             'tuner_dab_station_count',
+            'tuner_dab_walk',
+            'tuner_dab_tune',
+            'tuner_dab_services',
+            'tuner_dab_walk_state',
+            'tuner_dab_walk_progress',
+            'tuner_stations',
             'sound_program',
             'surround_3d',
             'direct',
@@ -561,9 +578,16 @@ class YamahaYXC(SmartPlugin):
             'tuner_preset_switch',
             'tuner_dab_service',
             'tuner_dab_scan',
+            'tuner_auto_preset',
             'tuner_dab_status',
             'tuner_dab_scan_progress',
             'tuner_dab_station_count',
+            'tuner_dab_walk',
+            'tuner_dab_tune',
+            'tuner_dab_services',
+            'tuner_dab_walk_state',
+            'tuner_dab_walk_progress',
+            'tuner_stations',
             'update_tuner',
             'tuner_band_values',
             'tuner_freq_min',
@@ -712,7 +736,10 @@ class YamahaYXC(SmartPlugin):
             'tuner_preset_clear': _CmdSpec(build=self._handle_tuner_preset_clear, full_context=True),
             'tuner_preset_switch': _CmdSpec(build=self._build_cmd_tuner_switch_preset),
             'tuner_dab_service': _CmdSpec(build=self._build_cmd_tuner_dab_service),
-            'tuner_dab_scan': _CmdSpec(build=self._build_cmd_tuner_dab_scan),
+            'tuner_dab_scan': _CmdSpec(build=self._handle_tuner_dab_scan, full_context=True),
+            'tuner_auto_preset': _CmdSpec(build=self._handle_tuner_auto_preset, full_context=True),
+            'tuner_dab_walk': _CmdSpec(build=self._handle_tuner_dab_walk, full_context=True),
+            'tuner_dab_tune': _CmdSpec(build=self._handle_tuner_dab_tune, full_context=True),
             # UPnP/USB/DLNA content browsing - see _yamaha_cmds' browse_*
             # comment. browse_page needs full_context (calls
             # _update_browse_state() itself, with getListInfo's own longer
@@ -832,6 +859,14 @@ class YamahaYXC(SmartPlugin):
         self._search_generation = {}
         # per host: serializes the device-global browse cursor between browse_* writes and search replays
         self._cursor_locks = {}
+        # DAB service walk/tune jobs: one worker and at most one running job per host, a name/list cache per host
+        self._tuner_workers = HostWorkers('yamahayxc-tuner')
+        self._dab_jobs = {}
+        self._dab_caches = {}
+        # band each host's tuner_stations list was last built for
+        self._stations_band = {}
+        self._dab_lock = threading.Lock()
+        self._dab_settle = Settle()
         # last total_time per host, the reference for play_time percent
         self._yamaha_total_time = {}
         # dropped together once a host's last item is gone, see _forget_unused_hosts()
@@ -848,6 +883,9 @@ class YamahaYXC(SmartPlugin):
             self._yamaha_total_time,
             self._search_generation,
             self._cursor_locks,
+            self._dab_jobs,
+            self._dab_caches,
+            self._stations_band,
         )
 
         self.srv_port = 41100
@@ -905,6 +943,8 @@ class YamahaYXC(SmartPlugin):
         self.scheduler_remove_all()
         self._notification_workers.stop()
         self._search_workers.stop()
+        self._cancel_all_dab_jobs()
+        self._tuner_workers.stop()
         if self.sock:
             self.sock.close()
             self.sock = None
@@ -1007,6 +1047,8 @@ class YamahaYXC(SmartPlugin):
         if tuner_data and self._cmd_items('tuner', host):
             if tuner_data.get('play_info_updated') or tuner_data.get('preset_info_updated'):
                 self._update_tuner_state(host)
+            if tuner_data.get('preset_info_updated'):
+                self._update_tuner_stations(host)
 
         # dist push data only carries a "something changed" flag - re-poll
         # getDistributionInfo on change (e.g. after group creation completes)
@@ -1460,6 +1502,151 @@ class YamahaYXC(SmartPlugin):
         """dispatch target for 'tuner_preset_clear' - band comes from _yamaha_tuner_band, not the item itself"""
         band = self._yamaha_tuner_band.get(host, 'fm')
         return self._build_cmd_tuner_clear_preset(self._tuner_preset_band(host, band), item())
+
+    def _handle_tuner_dab_walk(self, item, host, zone):
+        """dispatch target for 'tuner_dab_walk': a true value walks the DAB service list, false aborts the running job"""
+        if item():
+            self._start_dab_job(host, 'walk')
+        else:
+            self._cancel_dab_job(host)
+        return None
+
+    def _handle_tuner_dab_scan(self, item, host, zone):
+        """dispatch target for 'tuner_dab_scan': a true value starts the DAB initial scan (invalidating the service list), false cancels it"""
+        if not item():
+            return 'v1/tuner/cancelDabInitialScan'
+        self._dab_cache(host).invalidate()
+        self._push_dab_services(host)
+        return 'v1/tuner/startDabInitialScan'
+
+    def _handle_tuner_auto_preset(self, item, host, zone):
+        """dispatch target for 'tuner_auto_preset': a true value starts the FM auto preset, false cancels it"""
+        if not self._tuner_func_allowed(host, 'fm_auto_preset'):
+            self.logger.warning(f'FM auto preset not supported on {self._host_label(host)}, ignoring')
+            return None
+        return 'v1/tuner/{}AutoPreset?band=fm'.format('start' if item() else 'cancel')
+
+    def _handle_tuner_dab_tune(self, item, host, zone):
+        """dispatch target for 'tuner_dab_tune': an index into the walked service list tunes to it, -1 aborts the running job"""
+        index = int(item())
+        if index < 0:
+            self._cancel_dab_job(host)
+        elif not (index < len(self._dab_cache(host).services) and self._start_dab_job(host, 'tune', index)):
+            self.logger.warning(f'DAB tune to service {index} on {self._host_label(host)} not possible, ignoring')
+            self._push_dab(host, 'tuner_dab_tune', -1)
+        return None
+
+    def _update_tuner_stations(self, host):
+        """publish the current band's presets on host's 'tuner_stations' items: slot, band, number (kHz or DAB service id), name"""
+        items = self._items_for(host, None, 'tuner_stations')
+        band = self._yamaha_tuner_band.get(host)
+        if not items or band not in ('am', 'fm', 'dab'):
+            return
+        state = self._submit_payload(host, self._build_cmd_tuner_get_preset_info(self._tuner_preset_band(host, band)))
+        if not state:
+            return
+        cache = self._dab_cache(host)
+        stations = [
+            {
+                'slot': slot,
+                'band': preset['band'],
+                'number': preset['number'],
+                'name': preset.get('text', '').strip()
+                or (cache.name_of(preset['number']) if preset['band'] == 'dab' else ''),
+            }
+            for slot, preset in enumerate(state.get('preset_info', []), start=1)
+            if preset.get('band') != 'unknown'
+        ]
+        self._stations_band[host] = band
+        for item in items:
+            item(stations, self.get_fullname())
+
+    def _observe_dab(self, host, dab):
+        """feed the current DAB service from a getPlayInfo 'dab' block to host's cache, republishing the list if that emptied it"""
+        if 'id' not in dab:
+            return
+        cache = self._dab_cache(host)
+        had_services = bool(cache.services)
+        cache.observe(DabPlayInfo(dab['id'], dab.get('service_label', ''), dab.get('total_station_num', 0)))
+        if had_services and not cache.services:
+            self._push_dab_services(host)
+
+    def _dab_cache(self, host):
+        """return host's StationCache, created on first use"""
+        return self._dab_caches.setdefault(host, StationCache())
+
+    def _start_dab_job(self, host, kind, index=None):
+        """run a DAB 'walk' or 'tune' job for host on its tuner worker; False if one is already running or the plugin is stopping"""
+        job = _DabJob(kind)
+        with self._dab_lock:
+            if host in self._dab_jobs:
+                return False
+            self._dab_jobs[host] = job
+        try:
+            self._tuner_workers.submit(host, self._dab_job_worker, host, job, index)
+        except RuntimeError:
+            with self._dab_lock:
+                self._dab_jobs.pop(host, None)
+            return False
+        return True
+
+    def _cancel_dab_job(self, host):
+        """ask host's running DAB job, if any, to stop at its next step"""
+        with self._dab_lock:
+            job = self._dab_jobs.get(host)
+        if job:
+            job.cancel.set()
+
+    def _cancel_all_dab_jobs(self):
+        """ask every running DAB job to stop"""
+        with self._dab_lock:
+            jobs = list(self._dab_jobs.values())
+        for job in jobs:
+            job.cancel.set()
+
+    def _dab_job_worker(self, host, job, index):
+        """worker entry point: run one DAB job, publishing progress, the service list and the final state"""
+        cache = self._dab_cache(host)
+        link = YxcDabLink(self, host)
+        self._push_dab(host, 'tuner_dab_walk_state', WalkState.WALKING if job.kind == 'walk' else WalkState.TUNING)
+        self._push_dab(host, 'tuner_dab_walk_progress', 0)
+
+        def progress(percent):
+            self._push_dab(host, 'tuner_dab_walk_progress', percent)
+
+        try:
+            if job.kind == 'walk':
+                result = walk(link, job.cancel, progress, self._dab_settle)
+                state = result.state
+                if state is WalkState.DONE:
+                    cache.publish(result.services, result.total)
+                    self._push_dab_services(host)
+                    self._update_tuner_stations(host)
+            else:
+                state = tune(link, cache.services, index, job.cancel, progress, self._dab_settle)
+        except Exception as e:
+            self.logger.error(f'DAB {job.kind} on {self._host_label(host)} failed: {e}')
+            state = WalkState.ERROR
+        with self._dab_lock:
+            self._dab_jobs.pop(host, None)
+        if state is WalkState.DONE:
+            self._push_dab(host, 'tuner_dab_walk_progress', 100)
+        self._push_dab(host, 'tuner_dab_walk_state', state)
+        self._push_dab(host, 'tuner_dab_walk', False)
+        self._push_dab(host, 'tuner_dab_tune', -1)
+
+    def _push_dab(self, host, cmd, value):
+        """publish value on host's items for the DAB job cmd"""
+        for dab_item in self._items_for(host, None, cmd):
+            dab_item(value, self.get_fullname())
+
+    def _push_dab_services(self, host):
+        """publish host's walked DAB service list on its 'tuner_dab_services' items"""
+        services = [
+            {'index': index, 'id': service.id, 'name': service.name}
+            for index, service in enumerate(self._dab_cache(host).services)
+        ]
+        self._push_dab(host, 'tuner_dab_services', services)
 
     def _handle_link_leave(self, item, host, zone):
         """dispatch target for 'link_leave' - adapts _link_leave()'s (host, zone) signature to the uniform full_context call shape"""
@@ -2435,6 +2622,8 @@ class YamahaYXC(SmartPlugin):
         if band:
             self._yamaha_tuner_band[yamaha_host] = band
             self._push_tuner_freq_range(yamaha_host, band)
+        if band == 'dab':
+            self._observe_dab(yamaha_host, state.get('dab', {}))
 
         if update_items:
             tuner_items = self._cmd_items('tuner', yamaha_host)
@@ -2443,6 +2632,8 @@ class YamahaYXC(SmartPlugin):
                 if value is not None:
                     for item in items:
                         item(value, self.get_fullname())
+            if band in ('am', 'fm', 'dab') and self._stations_band.get(yamaha_host) != band:
+                self._update_tuner_stations(yamaha_host)
 
         return state
 
@@ -2487,6 +2678,10 @@ class YamahaYXC(SmartPlugin):
             return dab_data.get('dls', '').strip()
         elif cmd == 'tuner_dab_status':
             return dab_data.get('status', '')
+        elif cmd == 'tuner_auto_preset':
+            return bool(state.get('auto_preset'))
+        elif cmd == 'tuner_dab_scan':
+            return dab_data.get('status') == 'initial_scan'
         elif cmd == 'tuner_dab_scan_progress':
             return dab_data.get('initial_scan_progress', 0)
         elif cmd == 'tuner_dab_station_count':
@@ -3559,6 +3754,10 @@ class YamahaYXC(SmartPlugin):
         cmd = 'v1/tuner/switchPreset?dir={}'.format(value)
         return cmd
 
+    def _build_cmd_tuner_get_preset_info(self, band):
+        """return cmd string for "get the presets of band" ('common' on devices with one preset list for all bands)"""
+        return 'v1/tuner/getPresetInfo?band={}'.format(band)
+
     def _build_cmd_tuner_dab_service(self, value):
         """
         return cmd string for "select next/previous DAB service"
@@ -3566,17 +3765,6 @@ class YamahaYXC(SmartPlugin):
         value is "next" or "previous"
         """
         cmd = 'v1/tuner/setDabService?dir={}'.format(value)
-        return cmd
-
-    def _build_cmd_tuner_dab_scan(self, value):
-        """
-        return cmd string for "start/cancel DAB initial scan", None for any other value
-
-        value is "start" or "cancel"
-        """
-        if value not in ('start', 'cancel'):
-            return None
-        cmd = 'v1/tuner/{}DabInitialScan'.format(value)
         return cmd
 
     def _build_cmd_get_link_state(self):

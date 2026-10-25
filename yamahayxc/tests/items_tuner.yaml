@@ -41,3 +41,15 @@ yamaha:
             tuner_dab_station_count:
                 type: num
                 yamahayxc_cmd: tuner_dab_station_count
+
+            tuner_dab_scan:
+                type: bool
+                yamahayxc_cmd: tuner_dab_scan
+
+            tuner_auto_preset:
+                type: bool
+                yamahayxc_cmd: tuner_auto_preset
+
+            tuner_stations:
+                type: list
+                yamahayxc_cmd: tuner_stations

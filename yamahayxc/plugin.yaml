@@ -68,7 +68,7 @@ plugin:
     state: ready
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
-    version: 2.2.0                 # Plugin version
+    version: 2.3.0                 # Plugin version
     sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
@@ -753,9 +753,60 @@ item_structs:
                 enforce_updates: true
 
             dab_scan:
-                remark: DAB-Sendersuchlauf (Initial Scan) starten oder abbrechen, gültige Werte "start"/"cancel"
-                type: str
+                remark: DAB-Sendersuchlauf (Initial Scan). True startet ihn, False bricht ihn ab; der Wert folgt dem
+                    Gerätestatus (True, solange der Suchlauf läuft). Ein Suchlauf löscht die Preset- und Senderliste.
+                type: bool
                 yamahayxc_cmd: tuner_dab_scan
+                enforce_updates: true
+
+            dab_walk:
+                remark: DAB-Senderliste einlesen (alle Sender nacheinander anwählen, Gerät dabei stumm). True startet,
+                    False bricht ein laufendes Einlesen oder Anwählen ab; wird nach Ende vom Plugin auf False gesetzt.
+                    Dauert ca. 3 s pro Sender. Ergebnis in .dab_services
+                type: bool
+                yamahayxc_cmd: tuner_dab_walk
+                enforce_updates: true
+
+            dab_tune:
+                remark: Sender aus .dab_services anwählen (Wert = index). Das Gerät kennt nur "nächster/vorheriger", es
+                    wird also schrittweise gestellt (Gerät dabei stumm). -1 bricht ab; nach Ende vom Plugin auf -1 gesetzt.
+                type: num
+                initial_value: -1
+                yamahayxc_cmd: tuner_dab_tune
+                enforce_updates: true
+
+            dab_services:
+                remark: Eingelesene DAB-Senderliste in Gerätereihenfolge, je Eintrag index/id/name. Leer, solange nicht
+                    eingelesen oder nach einem neuen Suchlauf (Sender-IDs ändern sich dann). Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: tuner_dab_services
+                visu_acl: ro
+
+            dab_walk_state:
+                remark: Zustand von dab_walk/dab_tune ("idle"/"walking"/"tuning"/"done"/"aborted"/"error"). Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: tuner_dab_walk_state
+                visu_acl: ro
+
+            dab_walk_progress:
+                remark: Fortschritt von dab_walk/dab_tune in Prozent. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: tuner_dab_walk_progress
+                visu_acl: ro
+
+            stations:
+                remark: Presets des aktuellen Bandes, je Eintrag slot/band/number/name. number ist die Frequenz in kHz
+                    (AM/FM) oder die DAB-Sender-ID; name kommt vom Gerät, bei DAB sonst aus den bekannten Sendernamen
+                    (leer, wenn unbekannt). Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: tuner_stations
+                visu_acl: ro
+
+            auto_preset:
+                remark: FM-Sendersuchlauf in die Presets (Auto Preset). True startet, False bricht ab; der Wert folgt dem
+                    Gerätestatus. Überschreibt die FM-Presets.
+                type: bool
+                yamahayxc_cmd: tuner_auto_preset
                 enforce_updates: true
 
             update:
@@ -1368,9 +1419,13 @@ item_structs:
         yamahayxc_zone: main
         struct: [.amp, .link, .netusb]
 
-    isx-18:
+    isx-18d:
         yamahayxc_zone: main
         struct: [.amp, .link, .netusb, .tuner, .alarm]
+
+    isx-18:
+        remark: Veraltet, wird mit dem nächsten Major-Release entfernt - stattdessen yamahayxc.isx-18d verwenden.
+        struct: .isx-18d
 
     rx-v483:
         yamahayxc_zone: main
@@ -1378,6 +1433,9 @@ item_structs:
 
         dsp:
             struct: .dsp_content
+
+    rx-s602d:
+        struct: .rx-v483
 
 
 

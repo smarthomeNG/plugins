@@ -139,6 +139,7 @@ class FakeDevice:
         self.gate = None  # threading.Event: while set and unset-waiting, getStatus blocks until it is set
         self.calls = []
         self.responses = {}
+        self.handlers = []  # callables(path) -> body dict or None, asked before `responses`
         self.features = features if features is not None else {'zone': []}
 
     def handle(self, method, path, data):
@@ -152,6 +153,10 @@ class FakeDevice:
                 return {'response_code': 0, **body}
         if path.endswith('getFeatures'):
             return {'response_code': 0, **self.features}
+        for handler in self.handlers:
+            body = handler(path)
+            if body is not None:
+                return {'response_code': 0, **body}
         for suffix, body in self.responses.items():
             if path.endswith(suffix):
                 return {'response_code': 0, **body}

@@ -97,16 +97,34 @@ def test_dab_service_write_selects_the_next_or_previous_service():
 def test_dab_scan_write_starts_or_cancels_the_initial_scan():
     plugin, sh, device, network = make_running_plugin()
 
-    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', 'start')
-    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', 'cancel')
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', True)
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', False)
 
     assert 'v1/tuner/startDabInitialScan' in device.paths()
     assert 'v1/tuner/cancelDabInitialScan' in device.paths()
 
 
-def test_dab_scan_write_with_another_value_sends_nothing():
+def test_auto_preset_write_starts_or_cancels_the_fm_auto_preset():
     plugin, sh, device, network = make_running_plugin()
 
-    write(plugin, sh, network, 'yamaha.dev.main.tuner_dab_scan', 'stop')
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_auto_preset', True)
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_auto_preset', False)
 
-    assert not [path for path in device.paths() if 'Scan' in path]
+    assert 'v1/tuner/startAutoPreset?band=fm' in device.paths()
+    assert 'v1/tuner/cancelAutoPreset?band=fm' in device.paths()
+
+
+def test_auto_preset_write_is_ignored_on_a_tuner_without_fm_auto_preset():
+    device = FakeDevice(
+        {
+            'zone': [{'id': 'main', 'func_list': ['power'], 'input_list': [], 'range_step': []}],
+            'tuner': {'func_list': ['fm', 'dab'], 'preset': {'type': 'separate', 'num': 30}},
+        }
+    )
+    network = FakeNetwork({'127.0.0.1': device})
+    plugin, sh = make_plugin('items_write.yaml', network)
+    device.calls.clear()
+
+    write(plugin, sh, network, 'yamaha.dev.main.tuner_auto_preset', True)
+
+    assert not [path for path in device.paths() if 'AutoPreset' in path]

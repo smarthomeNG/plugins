@@ -1,0 +1,32 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+
+        main:
+            yamahayxc_zone: main
+
+            tuner_dab_walk:
+                type: bool
+                yamahayxc_cmd: tuner_dab_walk
+
+            tuner_dab_tune:
+                type: num
+                yamahayxc_cmd: tuner_dab_tune
+                value: -1
+
+            tuner_dab_services:
+                type: list
+                yamahayxc_cmd: tuner_dab_services
+
+            tuner_dab_walk_state:
+                type: str
+                yamahayxc_cmd: tuner_dab_walk_state
+
+            tuner_dab_walk_progress:
+                type: num
+                yamahayxc_cmd: tuner_dab_walk_progress
+
+            tuner_stations:
+                type: list
+                yamahayxc_cmd: tuner_stations

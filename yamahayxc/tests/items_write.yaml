@@ -31,5 +31,9 @@ yamaha:
                 yamahayxc_cmd: tuner_dab_service
 
             tuner_dab_scan:
-                type: str
+                type: bool
                 yamahayxc_cmd: tuner_dab_scan
+
+            tuner_auto_preset:
+                type: bool
+                yamahayxc_cmd: tuner_auto_preset
