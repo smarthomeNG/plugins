@@ -118,3 +118,15 @@ def test_auto_preset_item_is_false_when_no_auto_preset_runs():
     plugin, sh, device = start(FM_PLAY_INFO)
 
     assert item(sh, 'tuner_auto_preset') is False
+
+
+def test_auto_preset_is_available_when_the_tuner_lists_fm_auto_preset():
+    plugin, sh, device = start(FM_PLAY_INFO, {**TUNER_FEATURES, 'func_list': ['fm', 'fm_auto_preset']})
+
+    assert item(sh, 'tuner_auto_preset_available') is True
+
+
+def test_auto_preset_is_not_available_without_fm_auto_preset_in_the_tuner_func_list():
+    plugin, sh, device = start(FM_PLAY_INFO, TUNER_FEATURES)
+
+    assert item(sh, 'tuner_auto_preset_available') is False

@@ -53,3 +53,7 @@ yamaha:
             tuner_stations:
                 type: list
                 yamahayxc_cmd: tuner_stations
+
+            tuner_auto_preset_available:
+                type: bool
+                yamahayxc_cmd: tuner_auto_preset_available

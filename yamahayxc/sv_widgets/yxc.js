@@ -674,8 +674,10 @@ $.widget("sv.yxc_tuner", $.sv.widget, {
     },
 
     // one button per entry; names are set as text, never as markup
-    _fill: function($box, entries, label, pick) {
+    _fill: function($box, entries, label, pick, emptyText) {
         $box.empty();
+        if (!entries.length && emptyText)
+            $('<div class="yxc-tuner-empty"></div>').text(emptyText).appendTo($box);
         entries.forEach(function(entry) {
             $('<a href="#" class="ui-btn ui-mini ui-corner-all"></a>')
                 .text(label(entry))
@@ -699,6 +701,7 @@ $.widget("sv.yxc_tuner", $.sv.widget, {
         var walkState = String(response[7]);
         var walkProgress = Number(response[8]) || 0;
         var autoPreset = response[9] === true || Number(response[9]) === 1;
+        var autoAvailable = response[10] === true || Number(response[10]) === 1;
         var services = this._entries(response[6]);
 
         this.stationCount = Number(response[4]) || 0;
@@ -706,8 +709,8 @@ $.widget("sv.yxc_tuner", $.sv.widget, {
 
         this.element.find('.yxc-tuner-seek').toggle(!isDab);
         this.element.find('.yxc-tuner-dab-service').toggle(isDab);
-        this.$autoStart.toggle(!autoPreset);
-        this.$autoCancel.toggle(autoPreset);
+        this.$autoStart.toggle(autoAvailable && !autoPreset);
+        this.$autoCancel.toggle(autoAvailable && autoPreset);
         this.$scanStart.toggle(!scanning);
         this.$scanCancel.toggle(scanning);
         this.$scanInfo.text(scanning ? 'Suchlauf ' + progress + ' %' : this.stationCount + ' Sender');
@@ -723,7 +726,8 @@ $.widget("sv.yxc_tuner", $.sv.widget, {
 
         this._fill(this.$stations, this._entries(response[5]),
             function(entry) { return entry.slot + '  ' + self._label(entry); },
-            function(entry) { io.write(self.itemPreset, entry.slot); });
+            function(entry) { io.write(self.itemPreset, entry.slot); },
+            'Keine Presets');
         this._fill(this.$services, services,
             function(entry) { return (entry.index + 1) + '  ' + entry.name; },
             function(entry) {

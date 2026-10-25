@@ -809,6 +809,12 @@ item_structs:
                 yamahayxc_cmd: tuner_auto_preset
                 enforce_updates: true
 
+                available:
+                    remark: Bool-Indikator, ob das Gerät einen FM-Auto-Preset kann. Nur-Lese-Zugriff.
+                    type: bool
+                    yamahayxc_cmd: tuner_auto_preset_available
+                    visu_acl: ro
+
             update:
                 remark: Aktuelle Werte für Tuner neu lesen.
                 type: bool

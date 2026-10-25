@@ -172,8 +172,10 @@ class FakeNetwork:
 
     def __init__(self, devices):
         self.devices = devices
+        self.requests = []  # (url, headers) of every request made
 
     def request(self, method, url, headers=None, data=None, timeout=None):
+        self.requests.append((url, headers))
         parsed = urlparse(url)
         device = self.devices[parsed.hostname]
         if not device.up:

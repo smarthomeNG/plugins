@@ -214,7 +214,7 @@
 			{% if 'tuner' not in hidden %}
 			<div class="yxc-content yxc-panel-tuner" style="display:none">
 				<div data-widget="yxc.tuner"
-				     data-item="{{ implode([item_root~'.tuner.band', item_root~'.tuner.preset.max', item_root~'.tuner.dab_status', item_root~'.tuner.dab_scan_progress', item_root~'.tuner.dab_station_count', item_root~'.tuner.stations', item_root~'.tuner.dab_services', item_root~'.tuner.dab_walk_state', item_root~'.tuner.dab_walk_progress', item_root~'.tuner.auto_preset']) }}"
+				     data-item="{{ implode([item_root~'.tuner.band', item_root~'.tuner.preset.max', item_root~'.tuner.dab_status', item_root~'.tuner.dab_scan_progress', item_root~'.tuner.dab_station_count', item_root~'.tuner.stations', item_root~'.tuner.dab_services', item_root~'.tuner.dab_walk_state', item_root~'.tuner.dab_walk_progress', item_root~'.tuner.auto_preset', item_root~'.tuner.auto_preset.available']) }}"
 				     data-item-scan="{{ item_root~'.tuner.dab_scan' }}"
 				     data-item-walk="{{ item_root~'.tuner.dab_walk' }}"
 				     data-item-tune="{{ item_root~'.tuner.dab_tune' }}"
@@ -225,9 +225,9 @@
 					<div class="yxc-tuner-band">
 						{{ basic.select(uid~'-band', item_root~'.tuner.band', 'menu', '', '', '', '', '', item_root~'.tuner.band.values') }}
 					</div>
-					<div class="yxc-tuner-station">{{ basic.print('', item_root~'.tuner.station') }}</div>
-					<div class="yxc-tuner-ensemble">{{ basic.print('', item_root~'.tuner.ensemble') }}</div>
-					<div class="yxc-tuner-dls">{{ basic.print('', item_root~'.tuner.dls') }}</div>
+					<div class="yxc-tuner-station">{{ basic.print('', item_root~'.tuner.station', 'text') }}</div>
+					<div class="yxc-tuner-ensemble">{{ basic.print('', item_root~'.tuner.ensemble', 'text') }}</div>
+					<div class="yxc-tuner-dls">{{ basic.print('', item_root~'.tuner.dls', 'text') }}</div>
 					<div class="yxc-tuner-seek">
 						<div data-role="controlgroup" data-type="horizontal">
 							{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'down', 'control_arrow_left.svg') }}

@@ -198,6 +198,12 @@
     text-align: left;
 }
 
+.yxc-tuner-empty {
+    text-align: center;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
 .yxc-tuner-list a {
     margin: 1px 0;
     text-overflow: ellipsis;
@@ -211,9 +217,21 @@
     vertical-align: middle;
 }
 
+.yxc-tuner-preset-row .ui-controlgroup-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .yxc-tuner-preset {
     max-width: 90px;
-    margin: 0 auto;
+    margin: 0 4px;
+}
+
+.yxc-tuner-slot-row .ui-input-text {
+    display: inline-block;
+    width: 80px;
+    vertical-align: middle;
 }
 
 .yxc-bar {

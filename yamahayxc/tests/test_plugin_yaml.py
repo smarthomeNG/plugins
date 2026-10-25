@@ -50,7 +50,9 @@ def test_available_items_are_wired_to_the_plugin():
 
     assert available
     assert [
-        path for path, item in available if item.get('yamahayxc_cmd') not in ('zone_present', 'dsp_available')
+        path
+        for path, item in available
+        if item.get('yamahayxc_cmd') not in ('zone_present', 'dsp_available', 'tuner_auto_preset_available')
     ] == []
 
 

@@ -26,6 +26,7 @@ import secrets
 import socket
 import json
 import inspect
+import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -33,10 +34,16 @@ from typing import Callable, NamedTuple
 from lib.model.smartplugin import SmartPlugin
 from lib.network import Udp_server
 
+from .webif import WebInterface
+from .structadvice import ready_made, recommend, render_config
 from .dabstations import DabPlayInfo, Settle, StationCache, WalkState, YxcDabLink, tune, walk
 from .hostworkers import HostWorkers
 from .mediasearch import SearchReport, SearchStatus, YxcListCursor, run_search
 from .mediasearch.cds import CdsClient, CdsSearchFinder, MediaServerError, resolve_server, ssdp_locations
+
+
+# a bare host name or IP address, no port, path or scheme
+_HOST_NAME = re.compile(r'[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?')
 
 
 class _CmdSpec(NamedTuple):
@@ -184,6 +191,7 @@ class YamahaYXC(SmartPlugin):
             'tuner_dab_service',
             'tuner_dab_scan',
             'tuner_auto_preset',
+            'tuner_auto_preset_available',
             'tuner_dab_status',
             'tuner_dab_scan_progress',
             'tuner_dab_station_count',
@@ -579,6 +587,7 @@ class YamahaYXC(SmartPlugin):
             'tuner_dab_service',
             'tuner_dab_scan',
             'tuner_auto_preset',
+            'tuner_auto_preset_available',
             'tuner_dab_status',
             'tuner_dab_scan_progress',
             'tuner_dab_station_count',
@@ -833,6 +842,9 @@ class YamahaYXC(SmartPlugin):
         self._yamaha_features = {}
         # discovered tuner capabilities per host, see _update_features()
         self._yamaha_tuner_features = {}
+        # the raw getFeatures/getDeviceInfo answers per host, for the web interface
+        self._yamaha_features_raw = {}
+        self._yamaha_device_info = {}
 
         # reachability bookkeeping, updated at the _submit_payload() choke
         # point (every HTTP call - poll, write, on-demand refresh - counts
@@ -877,6 +889,8 @@ class YamahaYXC(SmartPlugin):
             self._yamaha_link_master,
             self._yamaha_features,
             self._yamaha_tuner_features,
+            self._yamaha_features_raw,
+            self._yamaha_device_info,
             self._yamaha_reachable,
             self._yamaha_last_seen,
             self._yamaha_fail_count,
@@ -906,6 +920,7 @@ class YamahaYXC(SmartPlugin):
         # would (a cloud-service playlist add can genuinely be slow).
         self._yamaha_manage_http_timeout = 60
         self.sock = None
+        self.init_webinterface(WebInterface)
 
     def run(self):
         """
@@ -1178,6 +1193,94 @@ class YamahaYXC(SmartPlugin):
     def _hosts(self):
         """return the set of all hosts with registered items"""
         return {m_host for (_scope, m_host, _zone, _cmd), _items in self._registered_mappings()}
+
+    def bound_items(self):
+        """return one dict per item bound to a device cmd: path, cmd, host, zone, value and last update/change times"""
+        entries = []
+        for (_scope, host, zone, cmd), items in self._registered_mappings():
+            for item in items:
+                entries.append(
+                    {
+                        'path': item.property.path,
+                        'cmd': cmd,
+                        'host': self._host_label(host),
+                        'zone': zone or '',
+                        'value': item(),
+                        'last_update': item.property.last_update.isoformat(),
+                        'last_change': item.property.last_change.isoformat(),
+                    }
+                )
+        return sorted(entries, key=lambda entry: entry['path'])
+
+    def devices_overview(self, known_structs):
+        """
+        return one dict per host with registered items, for the web interface
+
+        host/label/reachable/last_seen, the raw device_info and features the device
+        reported ({} if unknown) and the struct advice derived from the features
+        (known_structs: names of the plugin's item structs, to match the model name)
+        """
+        overview = []
+        for host in sorted(self._hosts()):
+            features = self._yamaha_features_raw.get(host, {})
+            info = self._yamaha_device_info.get(host, {})
+            overview.append(
+                {
+                    'host': host,
+                    'label': self._host_label(host),
+                    'reachable': self._yamaha_reachable.get(host),
+                    'last_seen': self._yamaha_last_seen.get(host),
+                    'device_info': info,
+                    'features': features,
+                    'advice': self._struct_advice(self._host_label(host), info, features, known_structs),
+                }
+            )
+        return overview
+
+    def query_device(self, host, known_structs):
+        """
+        ask a device that is not configured for its getDeviceInfo/getFeatures and derive its struct advice
+
+        Plain read-only GETs without the notification subscription headers
+        _submit_payload() adds, and only for a bare host name. Returns the
+        result dict (device_info/features/advice, see devices_overview()) or
+        {'error': message}.
+        """
+        host = host.strip()
+        if not _HOST_NAME.fullmatch(host):
+            return {'error': 'invalid host'}
+        try:
+            info = self._get_json(host, self._build_cmd_get_device_info())
+            features = self._get_json(host, self._build_cmd_get_features())
+        except Exception:
+            return {'error': f'no answer from {host}'}
+        if info.get('response_code') or features.get('response_code'):
+            return {'error': f'{host} refused the request'}
+        return {
+            'host': host,
+            'device_info': info,
+            'features': features,
+            'advice': self._struct_advice(host, info, features, known_structs),
+        }
+
+    @staticmethod
+    def _struct_advice(host, info, features, known_structs):
+        """return the struct advice for a device as a dict: structs, widget_features, ready_made struct and item config"""
+        advice = recommend(features)
+        matched = ready_made(info.get('model_name', ''), known_structs)
+        return {
+            'structs': list(advice.structs),
+            'widget_features': list(advice.widget_features),
+            'ready_made': matched,
+            'config': render_config(host, advice, matched),
+        }
+
+    def _get_json(self, host, path):
+        """GET path from host without any plugin headers and return the parsed JSON answer"""
+        response = requests.request(
+            'GET', 'http://{}/YamahaExtendedControl/{}'.format(host, path), timeout=self._yamaha_http_timeout
+        )
+        return json.loads(response.text)
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -1957,6 +2060,9 @@ class YamahaYXC(SmartPlugin):
             )
             return
 
+        self._yamaha_features_raw[host] = data
+        self._update_device_info(host)
+
         zones = {}
         for zone in data.get('zone', []):
             zone_id = zone.get('id')
@@ -2005,6 +2111,13 @@ class YamahaYXC(SmartPlugin):
             self._yamaha_tuner_features.pop(host, None)
         self._update_tuner_band_values_item(host)
         self._update_tuner_preset_max_item(host)
+        self._update_tuner_auto_preset_available_item(host)
+
+    def _update_device_info(self, host):
+        """store host's getDeviceInfo answer if it is a successful one"""
+        info = self._submit_payload(host, self._build_cmd_get_device_info())
+        if isinstance(info, dict) and info.get('response_code') == 0:
+            self._yamaha_device_info[host] = info
 
     def _update_range_items(self, host, zones):
         """
@@ -2069,6 +2182,19 @@ class YamahaYXC(SmartPlugin):
         bands = sorted(features['func_list'] & {'am', 'fm', 'dab'})
         for item in self._items_for(host, None, 'tuner_band_values'):
             item(bands, self.get_fullname())
+
+    def _update_tuner_auto_preset_available_item(self, host):
+        """
+        push whether the tuner can run an FM auto preset to the registered 'tuner_auto_preset_available' item
+
+        Called once per _update_features() run. Skips (leaves the item at its
+        last value) if the tuner capabilities are unknown for this host.
+        """
+        features = self._yamaha_tuner_features.get(host)
+        if features is None:
+            return
+        for item in self._items_for(host, None, 'tuner_auto_preset_available'):
+            item('fm_auto_preset' in features['func_list'], self.get_fullname())
 
     def _update_tuner_preset_max_item(self, host):
         """
@@ -3355,6 +3481,10 @@ class YamahaYXC(SmartPlugin):
         """
         cmd = 'v1/netusb/setShuffle?mode={}'.format(value)
         return cmd
+
+    def _build_cmd_get_device_info(self):
+        """return cmd string for "get device info" -> model name, firmware and API versions"""
+        return 'v1/system/getDeviceInfo'
 
     def _build_cmd_get_features(self):
         """

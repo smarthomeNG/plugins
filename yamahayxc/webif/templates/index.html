@@ -1,0 +1,154 @@
+{% extends "base_plugin.html" %}
+
+{% set tabcount = 3 %}
+{% set update_interval = 5000 %}
+
+{% block pluginstyles %}
+<style>
+  .yxc-value { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .yxc-device { margin-bottom: 1.5rem; }
+  .yxc-config { white-space: pre; }
+  .yxc-features { max-height: 24rem; overflow: auto; white-space: pre; }
+</style>
+{% endblock pluginstyles %}
+
+{% block pluginscripts %}
+<script>
+  function yxcCell(row, text, cls) {
+    var cell = document.createElement('td');
+    cell.textContent = text === null || text === undefined ? '' : String(text);
+    if (cls) cell.className = cls;
+    row.appendChild(cell);
+  }
+
+  function yxcBlock(parent, tag, text, cls) {
+    var element = document.createElement(tag);
+    element.textContent = text;
+    if (cls) element.className = cls;
+    parent.appendChild(element);
+    return element;
+  }
+
+  // one device block: facts, recommended item config, raw features
+  function yxcDevice(parent, device) {
+    var info = device.device_info || {};
+    var box = document.createElement('div');
+    box.className = 'yxc-device';
+    yxcBlock(box, 'h5', (device.label || device.host) + (info.model_name ? ' - ' + info.model_name : ''));
+    var facts = [
+      ['{{ _("Erreichbar") }}', device.reachable === null || device.reachable === undefined ? '?' : (device.reachable ? '{{ _("Ja") }}' : '{{ _("Nein") }}')],
+      ['{{ _("Systemversion") }}', info.system_version],
+      ['{{ _("API-Version") }}', info.api_version],
+      ['{{ _("Fertiges Struct") }}', device.advice.ready_made ? 'yamahayxc.' + device.advice.ready_made : '-'],
+      ['{{ _("Empfohlene Structs") }}', device.advice.structs.join(', ')],
+      ['{{ _("Widget-Features") }}', device.advice.widget_features.join(',')]
+    ];
+    var table = document.createElement('table');
+    table.className = 'table table-sm';
+    facts.forEach(function (fact) {
+      var row = document.createElement('tr');
+      yxcCell(row, fact[0], 'fw-bold');
+      yxcCell(row, fact[1]);
+      table.appendChild(row);
+    });
+    box.appendChild(table);
+    yxcBlock(box, 'pre', device.advice.config, 'yxc-config');
+    var details = document.createElement('details');
+    yxcBlock(details, 'summary', 'getFeatures');
+    yxcBlock(details, 'pre', JSON.stringify(device.features, null, 2), 'yxc-features');
+    box.appendChild(details);
+    parent.appendChild(box);
+  }
+
+  function handleUpdatedData(response, dataSet) {
+    var data = JSON.parse(response);
+    var body = document.getElementById('yxc-items-body');
+    body.textContent = '';
+    data.items.forEach(function (item) {
+      var row = document.createElement('tr');
+      yxcCell(row, item.path);
+      yxcCell(row, item.cmd);
+      yxcCell(row, item.host);
+      yxcCell(row, item.zone);
+      yxcCell(row, typeof item.value === 'object' ? JSON.stringify(item.value) : item.value, 'yxc-value');
+      yxcCell(row, item.last_update);
+      body.appendChild(row);
+    });
+    document.getElementById('yxc-item-count').textContent = data.items.length;
+    var devices = document.getElementById('yxc-devices');
+    devices.textContent = '';
+    data.devices.forEach(function (device) { yxcDevice(devices, device); });
+  }
+
+  function yxcQuery() {
+    var host = document.getElementById('yxc-query-host').value;
+    var result = document.getElementById('yxc-query-result');
+    result.textContent = '{{ _("Frage Gerät ab ...") }}';
+    $.post('query_device', {host: host}, function (response) {
+      var answer = typeof response === 'string' ? JSON.parse(response) : response;
+      result.textContent = '';
+      if (answer.error) {
+        yxcBlock(result, 'div', answer.error, 'text-danger');
+        return;
+      }
+      yxcDevice(result, {label: answer.host, device_info: answer.device_info, features: answer.features, advice: answer.advice});
+    }).fail(function () {
+      result.textContent = '{{ _("Abfrage fehlgeschlagen") }}';
+    });
+  }
+
+  $(document).ready(function () {
+    $.get('get_data_html', function (response) { handleUpdatedData(response, null); });
+  });
+</script>
+{% endblock pluginscripts %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>{{ _('Version') }}</strong></td>
+      <td class="py-1">{{ p.get_version() }}</td>
+    </tr>
+  </tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+{% endblock %}
+
+{% set tab1title = "<strong>" ~ _('Items') ~ "</strong> (<span id=yxc-item-count>0</span>)" %}
+{% block bodytab1 %}
+<div class="table-responsive">
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+      <tr>
+        <th>{{ _('Item') }}</th>
+        <th>{{ _('Kommando') }}</th>
+        <th>{{ _('Host') }}</th>
+        <th>{{ _('Zone') }}</th>
+        <th>{{ _('Wert') }}</th>
+        <th>{{ _('Letzte Aktualisierung') }}</th>
+      </tr>
+    </thead>
+    <tbody id="yxc-items-body"></tbody>
+  </table>
+</div>
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ _('Geräte') ~ "</strong>" %}
+{% block bodytab2 %}
+<div id="yxc-devices" class="p-2"></div>
+{% endblock bodytab2 %}
+
+{% set tab3title = "<strong>" ~ _('Gerät abfragen') ~ "</strong>" %}
+{% block bodytab3 %}
+<div class="p-2">
+  <p>{{ _('Fragt getDeviceInfo und getFeatures eines (nicht konfigurierten) Geräts ab und empfiehlt passende Structs. Es wird nur gelesen, das Gerät wird nicht für Benachrichtigungen angemeldet.') }}</p>
+  <div class="input-group mb-3" style="max-width: 32rem;">
+    <input id="yxc-query-host" type="text" class="form-control" placeholder="{{ _('Hostname oder IP-Adresse') }}">
+    <button class="btn btn-shng btn-sm" type="button" onclick="yxcQuery()">{{ _('Abfragen') }}</button>
+  </div>
+  <div id="yxc-query-result"></div>
+</div>
+{% endblock bodytab3 %}
