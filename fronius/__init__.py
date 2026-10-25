@@ -56,15 +56,15 @@ class fronius(SmartPlugin):
         self._timeout = self.get_parameter_value('timeout')
         self._ip_address = self.get_parameter_value('ip_address')
         self.itemsApi = Items.get_instance()
-        self.scheduler_add('midnight', self._midnight, cron='55 23 * *', prio=3)
         self.init_webinterface(WebInterface)
 
 #---------------------- run ---------------------------------------------------
     def run(self):
         self.logger.debug(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
 
-        # setup scheduler for device poll loop
+        # setup scheduler for device poll loop and midnight
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
+        self.scheduler_add('midnight', self._midnight, cron='55 23 * *', prio=3)
         self.alive = True
 
 #---------------------- stop --------------------------------------------------
