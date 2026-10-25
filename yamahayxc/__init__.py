@@ -122,7 +122,7 @@ class YamahaYXC(SmartPlugin):
     This is the main plugin class YamahaYXC to control YXC-compatible devices.
     """
 
-    PLUGIN_VERSION = '2.3.0'
+    PLUGIN_VERSION = '2.3.1'
     ALLOW_MULTIINSTANCE = False
     # one instance manages many hosts: an item change must not stop them all
     STOP_ON_ITEM_CHANGE = False
@@ -256,6 +256,7 @@ class YamahaYXC(SmartPlugin):
             'balance_step',
             'volume_percent',
             'input_sources',
+            'input_names',
             'sound_program_values',
             'tone_control_mode_values',
             'equalizer_mode_values',
@@ -371,6 +372,7 @@ class YamahaYXC(SmartPlugin):
         # implement the matching writable cmd at all yet.
         self._yamaha_list_cmds = {
             'input_sources': 'input_list',
+            'input_names': 'input_list',
             'sound_program_values': 'sound_program_list',
             'tone_control_mode_values': 'tone_control_mode_list',
             'equalizer_mode_values': 'equalizer_mode_list',
@@ -2160,9 +2162,48 @@ class YamahaYXC(SmartPlugin):
                 feature_list = features.get(feature_key) if features else None
                 if feature_list is None:
                     continue
-                value = sorted(feature_list)
                 for item in items:
+                    if yamaha_cmd in ('input_sources', 'input_names'):
+                        shown = self._shown_inputs(item, feature_list, host, zone_id, log=yamaha_cmd == 'input_sources')
+                        value = [name.capitalize() for name in shown] if yamaha_cmd == 'input_names' else shown
+                    else:
+                        value = sorted(feature_list)
                     item(value, self.get_fullname())
+
+    @staticmethod
+    def _inherited_attribute(item, attr):
+        """
+        return attr from item or its nearest ancestor that has it, '' if none does
+
+        Walks up by hand and stops at the item tree's root, which has no conf: Item.find_attribute()
+        can run past the top of the tree for an attribute that no ancestor carries.
+        """
+        current = item
+        while hasattr(current, 'conf'):
+            if attr in current.conf:
+                return current.conf[attr]
+            current = current.return_parent()
+        return ''
+
+    def _shown_inputs(self, item, available, host, zone_id, log=False):
+        """
+        return the inputs item should offer, sorted: the zone's available inputs, narrowed to the
+        item's yamahayxc_inputs (inherited from the nearest ancestor that has it); all available
+        inputs if that names none of them. Names the device does not offer are logged if log is set
+        """
+        configured = self._inherited_attribute(item, 'yamahayxc_inputs')
+        if not configured:
+            return sorted(available)
+        names = configured.split(',') if isinstance(configured, str) else configured
+        wanted = {str(name).strip().lower() for name in names} - {''}
+        unknown = sorted(wanted - set(available))
+        if unknown and log:
+            self.logger.info(
+                'yamahayxc_inputs of {}: {} not offered by {}/{}, ignored'.format(
+                    item.property.path, ', '.join(unknown), self._host_label(host), zone_id
+                )
+            )
+        return sorted(wanted & set(available)) or sorted(available)
 
     def _update_tuner_band_values_item(self, host):
         """

@@ -1,0 +1,12 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+        yamahayxc_inputs: 'nope, , Also_Nope'
+
+        main:
+            yamahayxc_zone: main
+
+            input_values:
+                type: list
+                yamahayxc_cmd: input_sources

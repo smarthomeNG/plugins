@@ -68,7 +68,7 @@ plugin:
     state: ready
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
-    version: 2.3.0                 # Plugin version
+    version: 2.3.1                 # Plugin version
     sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
@@ -102,6 +102,12 @@ item_attributes:
         description:
             de: 'Kommando, das dem aktuellen Item zugeordnet ist'
             en: 'Command associated with the current item'
+
+    yamahayxc_inputs:
+        type: list(str)
+        description:
+            de: 'Tonquellen, die input.values/input.names anbieten sollen (Rest des Geräts bleibt schaltbar). Gilt für alle untergeordneten Items, kann je Zone überschrieben werden. Ohne Angabe alle Tonquellen des Geräts.'
+            en: 'Inputs input.values/input.names should offer (the device`s other inputs stay selectable). Applies to all child items, can be overridden per zone. All inputs of the device if not set.'
 
     yamahayxc_zone:
         type: str
@@ -192,9 +198,15 @@ item_structs:
             enforce_updates: true
 
             values:
-                remark: Gültige Werte für Tonquelle. Nur-Lese-Zugriff.
+                remark: Tonquellen des Geräts, alphabetisch sortiert, ggf. eingeschränkt durch yamahayxc_inputs. Nur-Lese-Zugriff.
                 type: list
                 yamahayxc_cmd: input_sources
+                visu_acl: ro
+
+            names:
+                remark: Anzeigenamen zu .values (großgeschrieben, gleiche Reihenfolge), z.B. als Beschriftung einer Auswahl. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: input_names
                 visu_acl: ro
 
         update:

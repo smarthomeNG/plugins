@@ -1,0 +1,32 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+        yamahayxc_inputs: [tuner, 'Net_Radio', hdmi1, spotify, typo]
+
+        main:
+            yamahayxc_zone: main
+
+            input_values:
+                type: list
+                yamahayxc_cmd: input_sources
+
+            input_names:
+                type: list
+                yamahayxc_cmd: input_names
+
+            input:
+                type: str
+                yamahayxc_cmd: input
+
+        zone2:
+            yamahayxc_zone: zone2
+            yamahayxc_inputs: av3
+
+            input_values:
+                type: list
+                yamahayxc_cmd: input_sources
+
+            input_names:
+                type: list
+                yamahayxc_cmd: input_names
