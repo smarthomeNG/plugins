@@ -762,12 +762,12 @@ class Indego(SmartPlugin):
 
             if 'config_change' in states and 'config_change' in self.add_keys:
                 config_change = states['config_change']
-                self.get_sh().items.return_item(str(self.add_keys['config_change']), config_change)
+                self.add_keys['config_change'](config_change, 'indego_plugin')
                 self.logger.debug('config_change ' + str(config_change))
 
             if 'mow_trig' in states and 'mow_trig' in self.add_keys:
                 mow_trig = states['mow_trig']
-                self.get_sh().items.return_item(str(self.add_keys['mow_trig']), mow_trig)
+                self.add_keys['mow_trig'](mow_trig, 'indego_plugin')
                 self.logger.debug('mow_trig ' + str(mow_trig))
 
             # if 'map_update_available' in states and 'mow_trig' in self.add_keys:
