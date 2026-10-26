@@ -206,7 +206,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
 
     def test_db_mark_invalid_opens_gap_in_buffer(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
@@ -223,7 +223,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
 
     def test_db_mark_invalid_then_dump_persists_quality_flag(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         id = self.create_item(plugin, 'main.num')
 
         plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
@@ -242,7 +242,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
 
     def test_db_mark_valid_closes_open_gap(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         plugin._buffer_mgr.push_invalid(item, self.t(2000))
@@ -255,7 +255,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
 
     def test_db_mark_valid_is_a_noop_without_an_open_gap(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
@@ -267,7 +267,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
 
     def test_db_is_invalid_reflects_open_gap_state(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
@@ -286,7 +286,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
         overstate the gap's duration if connectivity was lost some time
         after that change, not at the exact same instant."""
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         # Item became 250.0 at t=1000 (already an open buffer entry).
@@ -328,7 +328,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
         db_mark_valid() call must be a no-op - not close the new valid
         entry using a stale notion of "still in a gap"."""
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         plugin._buffer_mgr.push(item, BufferEntry(time=self.t(1000), duration=None, value=250.0))
@@ -347,7 +347,7 @@ class TestQualityEndToEnd(TestDatabaseBase):
 
     def test_normal_update_unaffected_by_gap_detection(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
 
         item.set(250.0, 'test', prev_change=plugin._datetime(self.t(0)), last_change=plugin._datetime(self.t(1000)))

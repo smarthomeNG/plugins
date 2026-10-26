@@ -91,7 +91,7 @@ class MqttSelectTestBase(unittest.TestCase):
         self.module._on_mqtt_message(None, None, Message(topic, payload))
 
     def value(self, path):
-        return self.sh.return_item(path)()
+        return self.sh.items.return_item(path)()
 
 
 class TestMqttSelectIn(MqttSelectTestBase):
@@ -114,7 +114,7 @@ class TestMqttSelectIn(MqttSelectTestBase):
         self.assertEqual(self.value('dev.humidity'), 0)
 
     def test_select_without_topic_in_logs_a_warning(self):
-        item = self.sh.return_item('dev.orphan_select')
+        item = self.sh.items.return_item('dev.orphan_select')
 
         with self.assertLogs('plugins.mqtt', level='WARNING') as logs:
             self.plugin.parse_item(item)

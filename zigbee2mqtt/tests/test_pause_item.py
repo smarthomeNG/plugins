@@ -14,7 +14,7 @@ class TestPauseItem(Zigbee2MqttTestBase):
     def setUp(self):
         self.calls = []
         self.zigbee = self.plugin()
-        self.pause = self.sh.return_item('pause')
+        self.pause = self.sh.items.return_item('pause')
         self.zigbee.stop = self._record_stop
         self.zigbee.run = self._record_run
 

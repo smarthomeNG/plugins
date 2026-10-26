@@ -23,9 +23,9 @@ class Setup:
         self.plugin, self.sh = make_plugin(
             'items_search.yaml', self.network, parameters={'media_server': setting}, initialize=False
         )
-        self.search_item = self.sh.return_item('yamaha.dev.search')
-        self.status = self.sh.return_item('yamaha.dev.search.status')
-        self.result = self.sh.return_item('yamaha.dev.search.result')
+        self.search_item = self.sh.items.return_item('yamaha.dev.search')
+        self.status = self.sh.items.return_item('yamaha.dev.search.status')
+        self.result = self.sh.items.return_item('yamaha.dev.search.result')
 
     def __enter__(self):
         self._stack = ExitStack()
@@ -149,7 +149,7 @@ def test_unreachable_media_server_is_an_error():
 def test_browse_writes_wait_for_a_running_replay():
     with Setup() as setup:
         setup.device.gate = threading.Event()
-        browse_return = setup.sh.return_item('yamaha.dev.browse_return')
+        browse_return = setup.sh.items.return_item('yamaha.dev.browse_return')
         setup.write('album: abbey')
         assert wait_until(lambda: 'v1/main/getStatus' in setup.device.paths())
         browse_return(True, 'test')

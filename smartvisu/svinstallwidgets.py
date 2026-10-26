@@ -52,7 +52,7 @@ class SmartVisuInstallWidgets:
             self.outdir = os.path.join(self.smartvisu_dir, 'dropins/shwidgets')
 
         self.logger.debug(
-            "install_widgets: Installing from '{0}' to '{1}'".format(self._sh.base_dir, self.smartvisu_dir)
+            "install_widgets: Installing from '{0}' to '{1}'".format(self._sh.get_basedir(), self.smartvisu_dir)
         )
 
         self.install_widgets(self._sh)
@@ -131,7 +131,7 @@ class SmartVisuInstallWidgets:
     def copy_widgets(self, plgdir, root_contents='', iln_html='', iln_js='', iln_css=''):
         wdgdir = 'sv_widgets'
         # copy widgets from the sv_widget(s) subdir of a plugin
-        srcdir = self._sh.base_dir + '/' + plgdir + '/' + wdgdir
+        srcdir = self._sh.get_basedir() + '/' + plgdir + '/' + wdgdir
         if not os.path.isdir(srcdir):
             self.logger.debug('copy_widgets: Could not find source directory {} in {}'.format(wdgdir, plgdir))
             return

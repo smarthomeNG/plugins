@@ -550,7 +550,7 @@ class CLICommands:
         :param parameter: Parameters used to call the command
         :param source: Source
         """
-        handler.push('Runtime: {}\n'.format(self.sh.runtime()))
+        handler.push('Runtime: {}\n'.format(self.sh.shtime.runtime()))
 
     # noinspection PyUnusedLocal
     def _cli_if(self, handler, parameter, source):

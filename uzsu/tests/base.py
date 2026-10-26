@@ -44,7 +44,7 @@ class TestUZSUBase(unittest.TestCase):
             UZSU._parameters.update(parameters)
 
         plugin = UZSU(self.sh)
-        for item in self.sh.return_items():
+        for item in self.sh.items.return_items():
             callback = plugin.parse_item(item)
             if callback is not None:
                 plugin._items_callback = callback
@@ -60,7 +60,7 @@ class TestUZSUBase(unittest.TestCase):
         wired up in this mock setup) and writes the internal state the
         scheduling methods (_get_time, _schedule, ...) actually consume."""
         plugin = self.plugin(**plugin_kwargs)
-        item = self.sh.return_item(item_path)
+        item = self.sh.items.return_item(item_path)
         full_entry = {'active': True, 'rrule': rrule, **entry}
         plugin._items[item]['active'] = active
         plugin._items[item]['list'] = [full_entry]

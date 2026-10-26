@@ -90,12 +90,12 @@ else:
         
 # Derzeit unbenutzte Variablen
 
-trigger_item   = str(sh.return_item(trigger_source))
+trigger_item   = str(sh.items.return_item(trigger_source))
 trigger_dest   = trigger['dest']
 trigger_by     = trigger['by']
 
 # Logic nach xx sec erneut triggern und item.value manuell setzen als "merker"
-# logic.trigger(dt=sh.now() + datetime.timedelta(seconds=30), value='zweiter Versuch') 
+# logic.trigger(dt=sh.shtime.now() + datetime.timedelta(seconds=30), value='zweiter Versuch') 
 # denn time.sleep(xx) ist böse ;)
 
 

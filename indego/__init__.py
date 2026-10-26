@@ -223,7 +223,7 @@ class Indego(SmartPlugin):
     ###    # device_value = ...
     ###    #
     ###    # # find the item(s) to update:
-    ###    # for item in self.sh.find_items('...'):
+    ###    # for item in self.sh.items.find_items('...'):
     ###    #
     ###    #     # update the item
     ###    #     item(device_value, self.get_shortname())
@@ -267,7 +267,7 @@ class Indego(SmartPlugin):
         :param value:
         :return:
         """
-        item = self.get_sh().return_item(self.parent_item + '.' + itemname)
+        item = self.get_sh().items.return_item(self.parent_item + '.' + itemname)
         if item is not None:
             item(value, 'indego_plugin')
         else:
@@ -407,8 +407,8 @@ class Indego(SmartPlugin):
 
             self.logger.debug('Next time raw 2: ' + str(next_time))
             # next_time = next_time[:-6]
-            # next_time = datetime.datetime.strptime(next_time,'%Y-%m-%dT%H:%M:%S').replace(tzinfo=tz.gettz('UTC')).astimezone(self.get_sh().tzinfo())
-            # #datetime.datetime.strptime(next_time,'%Y-%m-%dT%H:%M:%S+02:00').replace(tzinfo=self.get_sh().tzinfo())
+            # next_time = datetime.datetime.strptime(next_time,'%Y-%m-%dT%H:%M:%S').replace(tzinfo=tz.gettz('UTC')).astimezone(self.get_sh().shtime.tzinfo())
+            # #datetime.datetime.strptime(next_time,'%Y-%m-%dT%H:%M:%S+02:00').replace(tzinfo=self.get_sh().shtime.tzinfo())
             next_time = next_time.replace(':', '')
             next_time = datetime.datetime.strptime(next_time, '%Y-%m-%dT%H%M%S%z')
             self.logger.debug('Next time final ' + str(next_time))
@@ -428,7 +428,9 @@ class Indego(SmartPlugin):
                 if wertpunkt == 'dateTime':
                     # wert = wert.replace('+00:00','+0000')
                     self.logger.debug('DATE__TIME ' + wert)
-                    wert = datetime.datetime.strptime(wert, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=self.get_sh().tzinfo())
+                    wert = datetime.datetime.strptime(wert, '%Y-%m-%dT%H:%M:%SZ').replace(
+                        tzinfo=self.get_sh().shtime.tzinfo()
+                    )
                 if wertpunkt == 'wwsymbol_mg2008':
                     self.logger.debug('WERTPUNKT ' + str(wertpunkt))
                     if wert == '110000' or wert == '111000' or wert == '211000' or wert == '210000':
@@ -485,7 +487,9 @@ class Indego(SmartPlugin):
                 wert_day = str(i[x])
                 self.logger.debug('ITEEEEEM DAY ' + 'indego.weather.day_' + position_day + '.' + wertpunkt_day)
                 if wertpunkt_day == 'date':
-                    wert_day = datetime.datetime.strptime(wert_day, '%Y-%m-%d').replace(tzinfo=self.get_sh().tzinfo())
+                    wert_day = datetime.datetime.strptime(wert_day, '%Y-%m-%d').replace(
+                        tzinfo=self.get_sh().shtime.tzinfo()
+                    )
                     days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
                     dayNumber = wert_day.weekday()
                     wochentag = days[dayNumber]
@@ -534,7 +538,7 @@ class Indego(SmartPlugin):
                 alert_date = (
                     datetime.datetime.strptime(alert_latest['date'], '%Y-%m-%dT%H:%M:%S.%fZ')
                     .replace(tzinfo=tz.gettz('UTC'))
-                    .astimezone(self.get_sh().tzinfo())
+                    .astimezone(self.get_sh().shtime.tzinfo())
                 )  # alert_date = datetime.datetime.strptime(alert_latest['date'],'%Y-%m-%dT%H:%M:%S.%fZ')
                 self.set_childitem('alert_date', alert_date)
                 self.logger.debug('alert_date ' + str(alert_date))
@@ -612,7 +616,7 @@ class Indego(SmartPlugin):
                 alm_firmware_version = device_data_response['alm_firmware_version']
                 if alm_firmware_version != self.get_sh().indego.alm_firmware_version():
                     self.set_childitem('alm_firmware_version.before', self.get_sh().indego.alm_firmware_version())
-                    self.set_childitem('alm_firmware_version.changed', self.get_sh().now())
+                    self.set_childitem('alm_firmware_version.changed', self.get_sh().shtime.now())
                     self.logger.info(
                         'indego updated firmware from '
                         + self.get_sh().indego.alm_firmware_version()
@@ -687,7 +691,7 @@ class Indego(SmartPlugin):
             if state__str[state_code][1] == 'moving':
                 self.logger.debug('indego moving')
                 self.alert_reset = True
-                self.set_childitem('mowedDate', self.get_sh().now())
+                self.set_childitem('mowedDate', self.get_sh().shtime.now())
                 self.set_childitem('docked', False)
                 self.set_childitem('moving', True)
                 self.set_childitem('pause', False)
@@ -758,17 +762,17 @@ class Indego(SmartPlugin):
 
             if 'config_change' in states and 'config_change' in self.add_keys:
                 config_change = states['config_change']
-                self.get_sh().return_item(str(self.add_keys['config_change']), config_change)
+                self.get_sh().items.return_item(str(self.add_keys['config_change']), config_change)
                 self.logger.debug('config_change ' + str(config_change))
 
             if 'mow_trig' in states and 'mow_trig' in self.add_keys:
                 mow_trig = states['mow_trig']
-                self.get_sh().return_item(str(self.add_keys['mow_trig']), mow_trig)
+                self.get_sh().items.return_item(str(self.add_keys['mow_trig']), mow_trig)
                 self.logger.debug('mow_trig ' + str(mow_trig))
 
             # if 'map_update_available' in states and 'mow_trig' in self.add_keys:
             # mow_trig = states['map_update_available']
-            # self.get_sh().return_item(str(self.add_keys['mow_trig']),mow_trig)
+            # self.get_sh().items.return_item(str(self.add_keys['mow_trig']),mow_trig)
             # self.logger.debug("mow_trig "+str(mow_trig))
 
             map_update = states['map_update_available']
@@ -783,7 +787,7 @@ class Indego(SmartPlugin):
                     with open(self.img_pfad, 'wb') as outfile:
                         outfile.write(garden)
                         self.logger.debug('You have a new MAP')
-                        self.set_childitem('mapSvgCacheDate', self.get_sh().now())
+                        self.set_childitem('mapSvgCacheDate', self.get_sh().shtime.now())
 
     def init_webinterface(self):
         """ "

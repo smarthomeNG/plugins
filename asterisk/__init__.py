@@ -342,7 +342,7 @@ class Asterisk(SmartPlugin):
                 else:
                     self._mailboxes[mb](0)
         elif event['Event'] == 'Cdr':
-            end = self.get_sh().now()
+            end = self.get_sh().shtime.now()
             start = end - datetime.timedelta(seconds=int(event['Duration']))
             duration = event['BillableSeconds']
             if len(event['Source']) <= 4:

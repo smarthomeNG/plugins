@@ -15,7 +15,7 @@ class HolidayCase(TestUZSUBase):
 
     def setUp(self):
         self.plugin = self.plugin_with_entry(ITEM_PATH, dict(self.ENTRY))
-        self.item = self.sh.return_item(ITEM_PATH)
+        self.item = self.sh.items.return_item(ITEM_PATH)
         self.entry = self.plugin._items[self.item]['list'][0]
         # Shtime is a singleton: start every test with an empty calendar
         self.sh.shtime.holidays = HolidayBase()

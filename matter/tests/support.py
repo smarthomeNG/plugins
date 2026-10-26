@@ -208,7 +208,7 @@ class PluginHarness:
                 items._construct_and_link(path, config)
 
     def item(self, path: str):
-        return self.sh.return_item(path)
+        return self.sh.items.return_item(path)
 
     def start_loop(self) -> None:
         self.plugin.start_asyncio(self.plugin.wait_for_asyncio_termination())

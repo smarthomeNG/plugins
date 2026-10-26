@@ -41,7 +41,7 @@ class TestGetTimeDstFallBack(TestUZSUBase):
 
     def setUp(self):
         self.plugin = self.plugin_with_entry('main.temp.uzsu', {'value': 21.5, 'time': '02:59'})
-        self.item = self.sh.return_item('main.temp.uzsu')
+        self.item = self.sh.items.return_item('main.temp.uzsu')
         self.berlin = self.plugin._timezone
 
     def test_todays_occurrence_past_the_fall_back_rolls_to_tomorrow(self):

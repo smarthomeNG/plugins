@@ -200,7 +200,7 @@ class TestKnxCacheRetry(unittest.TestCase):
         self.records = []
         self.plugin.logger.setLevel(logging.WARNING)
         self.plugin.logger.addHandler(RecordCollector(self.records))
-        for item in self.sh.return_items():
+        for item in self.sh.items.return_items():
             self.plugin.parse_item(item)
         self.plugin.run()
         self.addCleanup(self._shutdown_plugin)

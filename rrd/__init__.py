@@ -269,7 +269,7 @@ class RRD(SmartPlugin):
             'step': str(istep),
             'sid': sid,
         }  # changed by ghciv6
-        reply['update'] = self.get_sh().now() + datetime.timedelta(seconds=istep)
+        reply['update'] = self.get_sh().shtime.now() + datetime.timedelta(seconds=istep)
         # self.logger.warning(f"Returning series for {sid} from {iend} to {iend+istep} with {len(tuples)} values") # old
         self.logger.info(
             f'Returning series for {sid} from {istart} to {iend} with {len(tuples)} values'

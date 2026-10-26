@@ -16,9 +16,9 @@ def make_state_plugin():
 
 def test_removed_items_stop_receiving_pushes():
     plugin, sh, device, network = make_state_plugin()
-    volume = sh.return_item('yamaha.dev.main.volume')
+    volume = sh.items.return_item('yamaha.dev.main.volume')
 
-    power = sh.return_item('yamaha.dev.main.power')
+    power = sh.items.return_item('yamaha.dev.main.power')
     power(False, 'test')
 
     plugin.remove_item(volume)
@@ -31,10 +31,10 @@ def test_removed_items_stop_receiving_pushes():
 def test_readded_host_reports_reachable_on_first_contact():
     plugin, sh, device, network = make_state_plugin()
     plugin.alive = True
-    items = list(sh.return_items())
+    items = list(sh.items.return_items())
     for item in items:
         plugin.remove_item(item)
-    reachable = sh.return_item('yamaha.dev.main.reachable')
+    reachable = sh.items.return_item('yamaha.dev.main.reachable')
     reachable(False, 'test')
     for item in items:
         plugin.parse_item(item)
@@ -52,4 +52,4 @@ def test_deinit_unregisters_all_items():
     plugin._data_received(('127.0.0.1', 41100), json.dumps({'main': {'volume': 42}}))
 
     assert plugin.get_item_list() == []
-    assert sh.return_item('yamaha.dev.main.volume')() == 50
+    assert sh.items.return_item('yamaha.dev.main.volume')() == 50

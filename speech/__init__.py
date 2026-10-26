@@ -425,7 +425,7 @@ class ParseText:
         return False
 
     def get_item_value(self, status_item):
-        item = self._sh.return_item(status_item)
+        item = self._sh.items.return_item(status_item)
         if not item():
             self.errorMessage = dictError['status_error']
         return item()

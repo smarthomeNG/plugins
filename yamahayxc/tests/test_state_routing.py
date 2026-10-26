@@ -22,13 +22,13 @@ def test_initialize_pushes_each_scope_to_its_items():
     device = make_device()
     plugin, sh = make_plugin('items_state.yaml', FakeNetwork({'127.0.0.1': device}))
 
-    assert sh.return_item('yamaha.dev.main.power')() is True
-    assert sh.return_item('yamaha.dev.main.volume')() == 50
-    assert sh.return_item('yamaha.dev.main.track')() == 'Song'
-    assert sh.return_item('yamaha.dev.main.tuner_band')() == 'fm'
-    assert sh.return_item('yamaha.dev.main.link_group_id')() == 'ABC'
-    assert sh.return_item('yamaha.dev.main.reachable')() is True
-    assert sh.return_item('yamaha.dev.main.available')() is True
+    assert sh.items.return_item('yamaha.dev.main.power')() is True
+    assert sh.items.return_item('yamaha.dev.main.volume')() == 50
+    assert sh.items.return_item('yamaha.dev.main.track')() == 'Song'
+    assert sh.items.return_item('yamaha.dev.main.tuner_band')() == 'fm'
+    assert sh.items.return_item('yamaha.dev.main.link_group_id')() == 'ABC'
+    assert sh.items.return_item('yamaha.dev.main.reachable')() is True
+    assert sh.items.return_item('yamaha.dev.main.available')() is True
 
 
 def test_push_notification_updates_zone_item():
@@ -37,7 +37,7 @@ def test_push_notification_updates_zone_item():
 
     plugin._data_received(('127.0.0.1', 41100), json.dumps({'main': {'volume': 42}}))
 
-    assert wait_until(lambda: sh.return_item('yamaha.dev.main.volume')() == 42)
+    assert wait_until(lambda: sh.items.return_item('yamaha.dev.main.volume')() == 42)
 
 
 def test_push_from_unknown_host_is_ignored():
@@ -46,4 +46,4 @@ def test_push_from_unknown_host_is_ignored():
 
     plugin._data_received(('10.9.9.9', 41100), json.dumps({'main': {'volume': 7}}))
 
-    assert sh.return_item('yamaha.dev.main.volume')() == 50
+    assert sh.items.return_item('yamaha.dev.main.volume')() == 50

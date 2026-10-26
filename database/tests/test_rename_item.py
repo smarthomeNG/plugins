@@ -14,7 +14,7 @@ from plugins.database.tests.base import TestDatabaseBase
 class TestDatabaseRenameItem(TestDatabaseBase):
     def test_rename_item_rekeys_webdata(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
 
         plugin.rename_item(item, 'main.num', 'main.renamed')
 
@@ -23,7 +23,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
 
     def test_rename_item_refreshes_db_and_series_partials(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
 
         plugin.rename_item(item, 'main.num', 'main.renamed')
 
@@ -32,7 +32,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
 
     def test_rename_item_returns_false_if_item_not_tracked(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.nodb')
+        item = self.sh.items.return_item('main.nodb')
 
         result = plugin.rename_item(item, 'main.nodb', 'main.renamed')
 
@@ -45,7 +45,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         # here too, same as test_remove_item.py calls plugin.remove_item()
         # directly rather than through Items.remove_item().
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         old_id = self.create_item(plugin, 'main.num')
 
         item._path = 'main.renamed'
@@ -63,7 +63,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         # has zero log entries, so that statement's while loop body never
         # actually runs there.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_log(plugin, 'main.num', [(0, 1, 1.0), (1, None, 2.0)])
         plugin._db.commit()  # reassign_orphaned_id() uses the separate _db_maint
         # connection — its writes would otherwise block on this connection's
@@ -89,7 +89,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         # convergence across chunk boundaries too.
         plugin = self.plugin()
         plugin.max_reassign_logentries = 3
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_log(plugin, 'main.num', [(i, i + 1, float(i)) for i in range(10)])
         plugin._db.commit()
 
@@ -107,7 +107,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         # self._db_maint.cursor() with no lock() call anywhere - no
         # serialization at all against this connection's other users.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         old_id = self.create_item(plugin, 'main.num')
 
         calls = []

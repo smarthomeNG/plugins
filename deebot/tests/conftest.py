@@ -54,6 +54,6 @@ def sh(tmp_path):
 @pytest.fixture
 def plugin(sh):
     plugin = make_plugin(sh)
-    for item in sh.return_items():
+    for item in sh.items.return_items():
         plugin.parse_item(item)
     return plugin

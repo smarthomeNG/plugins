@@ -24,17 +24,17 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_maxage_action_resolves_item_attribute(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         self.assertEqual('sum', plugin._maxage_action_for(item))
 
     def test_maxage_action_duty_cycle_resolves_for_bool_item(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_duty_cycle')
+        item = self.sh.items.return_item('main.maxage_duty_cycle')
         self.assertEqual('duty_cycle', plugin._maxage_action_for(item))
 
     def test_maxage_action_falls_back_to_plugin_default_when_unset(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_no_action')
+        item = self.sh.items.return_item('main.maxage_no_action')
         self.assertEqual('delete', plugin._maxage_action_for(item))
 
         plugin._default_maxage_action = 'avg'
@@ -46,7 +46,7 @@ class TestMaxageAction(TestDatabaseBase):
         # value ('0.37'), replacing real string history with stringified
         # numbers. str items use first/last instead.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_first_str')  # type str
+        item = self.sh.items.return_item('main.maxage_first_str')  # type str
         with mock.patch.object(plugin, 'get_iattr_value', return_value='duty_cycle'):
             with mock.patch.object(plugin, 'has_iattr', return_value=True):
                 self.assertEqual('delete', plugin._maxage_action_for(item))
@@ -56,7 +56,7 @@ class TestMaxageAction(TestDatabaseBase):
         # YAML bool True, breaking the config) - still accepted and must
         # resolve identically, including the same type check.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_first_str')  # type str
+        item = self.sh.items.return_item('main.maxage_first_str')  # type str
         with mock.patch.object(plugin, 'get_iattr_value', return_value='on'):
             with mock.patch.object(plugin, 'has_iattr', return_value=True):
                 self.assertEqual('delete', plugin._maxage_action_for(item))
@@ -65,7 +65,7 @@ class TestMaxageAction(TestDatabaseBase):
         # main.maxage_invalid_type is type str with database_maxage_action: sum -
         # sum reads val_num, which is always NULL for str items (utils.encode_value).
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_invalid_type')
+        item = self.sh.items.return_item('main.maxage_invalid_type')
         self.assertEqual('delete', plugin._maxage_action_for(item))
 
     # -- malformed database_maxage --
@@ -77,13 +77,13 @@ class TestMaxageAction(TestDatabaseBase):
         # unguarded on this (ValueError: could not convert string to
         # float: '').
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_empty')
+        item = self.sh.items.return_item('main.maxage_empty')
         self.assertIsNotNone(item, 'item creation must not have crashed')
         self.assertNotIn(item, plugin._items_with_maxage)
 
     def test_get_maxage_ts_returns_none_for_empty_maxage(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_empty')
+        item = self.sh.items.return_item('main.maxage_empty')
         self.assertIsNone(plugin.get_maxage_ts(item))
 
     # -- scheduler registration -----------------------------------------------
@@ -123,7 +123,7 @@ class TestMaxageAction(TestDatabaseBase):
         # (e.g. default_maxage > 0, or a future caller), remove_older_than_maxage
         # must not crash trying to use a None time_end.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_empty')
+        item = self.sh.items.return_item('main.maxage_empty')
         plugin._maxage_worklist = [item]
         plugin.remove_older_than_maxage()  # must not raise
 
@@ -142,7 +142,7 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_maxage_interval_seconds_for_parses_hours(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         self.assertEqual(3600, plugin._maxage_interval_seconds_for(item))
 
     def test_maxage_interval_seconds_for_falls_back_on_invalid_string(self):
@@ -152,7 +152,7 @@ class TestMaxageAction(TestDatabaseBase):
         # handler (including assertLogs') ever sees them; that's a test
         # environment property, not something specific to this code path.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item.conf['database_maxage_interval'] = 'not-a-duration'
         seconds = plugin._maxage_interval_seconds_for(item)
         self.assertEqual(86400, seconds)
@@ -161,7 +161,7 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_compact_maxage_sum_replaces_raw_rows_with_one_aggregate(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000
@@ -183,7 +183,7 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_compact_maxage_avg_computes_duration_weighted_average(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
 
         interval_ms = 3600 * 1000
@@ -211,7 +211,7 @@ class TestMaxageAction(TestDatabaseBase):
         # interval #1). Four hours of raw data, all past cutoff, must
         # become four distinct aggregate rows in one call, not one.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000
@@ -230,7 +230,7 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_compact_maxage_second_call_does_not_retouch_already_compacted_row(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000
@@ -252,14 +252,14 @@ class TestMaxageAction(TestDatabaseBase):
         # actually stored, so they're the only meaningful compaction option
         # for str-typed items.
         plugin = self.plugin()
-        first_item = self.sh.return_item('main.maxage_first_str')
-        last_item = self.sh.return_item('main.maxage_last_str')
+        first_item = self.sh.items.return_item('main.maxage_first_str')
+        last_item = self.sh.items.return_item('main.maxage_last_str')
         self.assertEqual('first', plugin._maxage_action_for(first_item))
         self.assertEqual('last', plugin._maxage_action_for(last_item))
 
     def test_compact_maxage_first_keeps_oldest_raw_value(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_first_str')
+        item = self.sh.items.return_item('main.maxage_first_str')
         item_id = self.create_item(plugin, 'main.maxage_first_str')
 
         interval_ms = 3600 * 1000
@@ -281,7 +281,7 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_compact_maxage_last_keeps_newest_raw_value(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_last_str')
+        item = self.sh.items.return_item('main.maxage_last_str')
         item_id = self.create_item(plugin, 'main.maxage_last_str')
 
         interval_ms = 3600 * 1000
@@ -310,7 +310,7 @@ class TestMaxageAction(TestDatabaseBase):
         # the gap first (so it's picked as "first") and a real value right
         # after it, in the same interval.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_first_str')
+        item = self.sh.items.return_item('main.maxage_first_str')
         item_id = self.create_item(plugin, 'main.maxage_first_str')
 
         interval_ms = 3600 * 1000
@@ -334,7 +334,7 @@ class TestMaxageAction(TestDatabaseBase):
         # must mean "leave the interval untouched" here - deleting the raw
         # rows while inserting nothing would silently destroy real values.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
 
         interval_ms = 3600 * 1000
@@ -357,7 +357,7 @@ class TestMaxageAction(TestDatabaseBase):
         # aggregate instead of stalling, and survive re-anchored to
         # interval_end - not deleted, not left behind at its old time.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
 
         interval_ms = 3600 * 1000
@@ -388,7 +388,7 @@ class TestMaxageAction(TestDatabaseBase):
         # compaction, not silently deleted along with the closed one - even
         # though its value never contributed to the computed aggregate.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
 
         interval_ms = 3600 * 1000
@@ -419,7 +419,7 @@ class TestMaxageAction(TestDatabaseBase):
         # through to the existing stall-and-warn behavior, not fabricate
         # a duration for a row nothing confirms is still current.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
 
         interval_ms = 3600 * 1000
@@ -442,7 +442,7 @@ class TestMaxageAction(TestDatabaseBase):
         # gap rows has nothing to preserve - value None with zero valid rows
         # must still delete the gap rows (they are real rows to clean up).
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
 
         interval_ms = 3600 * 1000
@@ -462,7 +462,7 @@ class TestMaxageAction(TestDatabaseBase):
         # num/bool items they mean "the value at the start/end of the
         # interval" rather than a statistic over it.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')  # type num
+        item = self.sh.items.return_item('main.maxage_sum')  # type num
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000
@@ -482,7 +482,7 @@ class TestMaxageAction(TestDatabaseBase):
         # a row from "now" must survive untouched - only data older than the
         # maxage cutoff may be compacted.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         now_ms = int(time.time() * 1000)
@@ -505,7 +505,7 @@ class TestMaxageAction(TestDatabaseBase):
         # oldest_time()) without duplicating or losing data.
         plugin = self.plugin()
         plugin.max_aggregate_intervals = 1
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000
@@ -546,7 +546,7 @@ class TestMaxageAction(TestDatabaseBase):
         # per-item isolation: one item's failure must not crash the whole
         # scheduled cycle.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000
@@ -577,7 +577,7 @@ class TestMaxageAction(TestDatabaseBase):
         # an item with database_maxage but no database_maxage_action must
         # still be plain-deleted through the full scheduler entrypoint.
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage')
+        item = self.sh.items.return_item('main.maxage')
         item_id = self.create_item(plugin, 'main.maxage')
 
         now_ms = int(time.time() * 1000)
@@ -607,7 +607,7 @@ class TestMaxageAction(TestDatabaseBase):
         # itself.
         plugin = self.plugin()
         plugin.max_delete_logentries = 1
-        item = self.sh.return_item('main.maxage')
+        item = self.sh.items.return_item('main.maxage')
         item_id = self.create_item(plugin, 'main.maxage')
 
         now_ms = int(time.time() * 1000)
@@ -654,7 +654,7 @@ class TestMaxageAction(TestDatabaseBase):
         plugin.insertLog(item_id, time=old_ms + 2000, duration=1000, val=30.0, it='num')
         plugin._db.commit()
 
-        plugin._maxage_worklist = [self.sh.return_item('main.maxage')]
+        plugin._maxage_worklist = [self.sh.items.return_item('main.maxage')]
         plugin.remove_older_than_maxage()
 
         remaining = sorted(row[COL_LOG_VAL_NUM] for row in plugin.readLogs(item_id))
@@ -666,7 +666,7 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_remove_older_than_maxage_dispatches_to_compaction(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage_sum')
+        item = self.sh.items.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
 
         interval_ms = 3600 * 1000

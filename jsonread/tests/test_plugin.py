@@ -32,31 +32,31 @@ class TestPluginEndToEnd(JsonreadTestBase, unittest.TestCase):
 
         JSONREAD._parameters = {'url': f'file://{FIXTURES_DIR}/fronius.json', 'cycle': 30, 'jq_syntax': True}
         self.plg = JSONREAD(self.sh)
-        for item in self.sh.return_items():
+        for item in self.sh.items.return_items():
             self.plg.parse_item(item)
 
     def test_poll_device_fills_simple_numeric_item(self):
         self.plg.poll_device()
 
-        item = self.sh.return_item('fronius_smartmeter.current_phase_1')
+        item = self.sh.items.return_item('fronius_smartmeter.current_phase_1')
         self.assertEqual(item(), 0.455)
 
     def test_poll_device_fills_nested_string_item(self):
         self.plg.poll_device()
 
-        item = self.sh.return_item('fronius_smartmeter.manufacturer')
+        item = self.sh.items.return_item('fronius_smartmeter.manufacturer')
         self.assertEqual(item(), 'Fronius')
 
     def test_poll_device_fills_second_array_element(self):
         self.plg.poll_device()
 
-        item = self.sh.return_item('fronius_smartmeter.second_reading_current')
+        item = self.sh.items.return_item('fronius_smartmeter.second_reading_current')
         self.assertEqual(item(), 0.073)
 
     def test_poll_device_leaves_unmatched_filter_at_default(self):
         self.plg.poll_device()
 
-        item = self.sh.return_item('fronius_smartmeter.unmatched')
+        item = self.sh.items.return_item('fronius_smartmeter.unmatched')
         # str-type default is '' — item(None) on a str item casts via
         # cast_str, confirming "no match" doesn't raise and doesn't
         # silently leave stale data from a previous poll either.
@@ -65,7 +65,7 @@ class TestPluginEndToEnd(JsonreadTestBase, unittest.TestCase):
     def test_remove_item_stops_it_being_polled(self):
         # After remove_item() the item must no longer receive updates on
         # the next poll — confirms _plg_item_dict wiring, not private dict.
-        item = self.sh.return_item('fronius_smartmeter.current_phase_1')
+        item = self.sh.items.return_item('fronius_smartmeter.current_phase_1')
         self.plg.poll_device()
         self.assertEqual(item(), 0.455)
 

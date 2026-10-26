@@ -18,8 +18,8 @@ def test_reconnect_refreshes_input_sources():
     plugin, sh = make_plugin('test_items.yaml', network)
     plugin.alive = True
 
-    input_sources_item = sh.return_item('yamaha.dev.main.input_sources')
-    reachable_item = sh.return_item('yamaha.dev.reachable')
+    input_sources_item = sh.items.return_item('yamaha.dev.main.input_sources')
+    reachable_item = sh.items.return_item('yamaha.dev.reachable')
 
     assert list(input_sources_item()) == sorted(['hdmi1', 'hdmi2'])
     assert reachable_item() is True

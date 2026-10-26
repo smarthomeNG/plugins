@@ -33,7 +33,7 @@ def start(play_info, tuner_features=None):
 
 
 def item(sh, name):
-    return sh.return_item('yamaha.dev.main.' + name)()
+    return sh.items.return_item('yamaha.dev.main.' + name)()
 
 
 def test_station_on_fm_is_the_rds_program_service():

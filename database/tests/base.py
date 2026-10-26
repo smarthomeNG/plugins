@@ -71,7 +71,7 @@ class TestDatabaseBase(unittest.TestCase):
         # schedulers/threads that a unit test doesn't want, so tests get
         # the "plugin is running" flag directly instead.
         plugin.alive = True
-        for item in self.sh.return_items():
+        for item in self.sh.items.return_items():
             plugin.parse_item(item)
         # lib.db.Database connects lazily on first query, so most tests
         # leave a real sqlite3 connection open with nothing to close it -
@@ -100,7 +100,7 @@ class TestDatabaseBase(unittest.TestCase):
         return content
 
     def create_item(self, plugin, name):
-        return plugin.id(self.sh.return_item(name), True)
+        return plugin.id(self.sh.items.return_item(name), True)
 
     def create_log(self, plugin, name, tuples):
         """Create log in database (pass list of tuples: start, end, value)"""
@@ -113,13 +113,14 @@ class TestDatabaseBase(unittest.TestCase):
             plugin.insertLog(id, time=self.t(t[0]), duration=duration, val=t[2], it='num')
 
     def dump_item(self, plugin, name):
-        value = plugin.readItem(plugin.id(self.sh.return_item(name)))
+        value = plugin.readItem(plugin.id(self.sh.items.return_item(name)))
         values = [(value[0], value[2], value[4])]
         self.log_dump(values)
 
     def dump_log(self, plugin, name):
         values = [
-            (value[0], value[2], value[4]) for value in plugin.readLogs(plugin.id(self.sh.return_item(name), False))
+            (value[0], value[2], value[4])
+            for value in plugin.readLogs(plugin.id(self.sh.items.return_item(name), False))
         ]
         self.log_dump(values)
 

@@ -68,7 +68,7 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
         self.plugininstance = plugin
         self._sh = self.plugininstance.get_sh()
-        self._sh_dir = self._sh.base_dir
+        self._sh_dir = self._sh.get_basedir()
         self._section_prefix = self.plugininstance._parameters.get('section_prefix', '')
         self.logger.debug('WebInterface: section_prefix = {}'.format(self._section_prefix))
         self.logicname = ''
@@ -175,7 +175,7 @@ class WebInterface(SmartPluginWebIf):
     def _build_tree(self):
         # Get top level items
         toplevelitems = []
-        allitems = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        allitems = sorted(self._sh.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in allitems:
             if item._path.find('.') == -1:
                 if item._path not in ['env_daily', 'env_init', 'env_loc', 'env_stat']:

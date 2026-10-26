@@ -23,7 +23,7 @@ class TestPlainTimeEntries(TestUZSUBase):
 
     def setUp(self):
         self.plugin = self.plugin_with_entry('main.temp.uzsu', {'value': 21.5, 'time': '07:00'})
-        self.item = self.sh.return_item('main.temp.uzsu')
+        self.item = self.sh.items.return_item('main.temp.uzsu')
 
     def test_next_time_is_aware_in_configured_tz(self):
         entry = self.plugin._items[self.item]['list'][0]
@@ -47,7 +47,7 @@ class TestSunBoundEntries(TestUZSUBase):
 
     def setUp(self):
         self.plugin = self.plugin_with_entry('main.temp.uzsu', {'value': 18.0, 'time': 'sunset'})
-        self.item = self.sh.return_item('main.temp.uzsu')
+        self.item = self.sh.items.return_item('main.temp.uzsu')
 
     def test_sunset_entry_returns_aware_datetime_in_configured_tz(self):
         entry = self.plugin._items[self.item]['list'][0]
@@ -70,7 +70,7 @@ class TestSunBoundEntries(TestUZSUBase):
 class TestInterpolation(TestUZSUBase):
     def test_interpolation_set_and_get(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.temp.uzsu')
+        item = self.sh.items.return_item('main.temp.uzsu')
         result = plugin.interpolation('linear', interval=10, item=item)
         self.assertEqual(result['type'], 'linear')
         self.assertEqual(result['interval'], 10)
@@ -78,7 +78,7 @@ class TestInterpolation(TestUZSUBase):
 
     def test_invalid_interpolation_type_rejected(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.temp.uzsu')
+        item = self.sh.items.return_item('main.temp.uzsu')
         before = plugin.interpolation(item=item)
         result = plugin.interpolation('exponential', item=item)
         self.assertEqual(result, before)
@@ -89,7 +89,7 @@ class TestOneShotAlarm(TestUZSUBase):
 
     def setUp(self):
         self.plugin = self.plugin_with_entry('main.temp.uzsu', {'value': 21.5, 'time': '07:00', 'once': True})
-        self.item = self.sh.return_item('main.temp.uzsu')
+        self.item = self.sh.items.return_item('main.temp.uzsu')
         self.entry = self.plugin._items[self.item]['list'][0]
 
     def test_is_scheduled_until_it_has_fired(self):

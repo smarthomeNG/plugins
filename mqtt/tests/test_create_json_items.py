@@ -54,7 +54,7 @@ class JsonItemsTestBase(MqttSelectTestBase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.source = self.sh.return_item('dev.whole_state')
+        self.source = self.sh.items.return_item('dev.whole_state')
         self.source({'temp': 21.5, 'state': {'on': True}, 'sensors': [{'v': 1}, {'v': 2}]}, 'test')
 
     def generated_file(self, name=GENERATED_ITEMS_FILE):
@@ -121,16 +121,16 @@ class TestCreateJsonItems(JsonItemsTestBase):
             self.plugin.create_json_items(self.source)
 
         self.assertIn('dev.whole_state.state', str(raised.exception))
-        self.assertIsNone(self.sh.return_item('dev.whole_state.temp'))
+        self.assertIsNone(self.sh.items.return_item('dev.whole_state.temp'))
         self.assertEqual(os.listdir(self.items_dir), [])
 
     def test_refuses_item_without_json_value(self):
         with self.assertRaises(ValueError):
-            self.plugin.create_json_items(self.sh.return_item('dev.temperature'))
+            self.plugin.create_json_items(self.sh.items.return_item('dev.temperature'))
         self.assertEqual(os.listdir(self.items_dir), [])
 
     def test_refuses_item_without_topic_in(self):
-        item = self.sh.return_item('dev.orphan_select')
+        item = self.sh.items.return_item('dev.orphan_select')
         item._value = {'a': 1}
 
         with self.assertRaises(ValueError) as raised:
@@ -148,7 +148,7 @@ class TestCreateItemsEndpoint(JsonItemsTestBase):
         self.webif = WebInterface.__new__(WebInterface)
         self.webif.plugin = self.plugin
         self.webif.logger = self.plugin.logger
-        self.webif.items = self.sh
+        self.webif.items = self.sh.items
 
     def test_reports_the_number_of_created_items_and_the_file(self):
         result = json.loads(self.webif.create_items('dev.whole_state'))
@@ -175,9 +175,9 @@ class TestItemsSurviveRestart(MqttSelectTestBase):
         super().setUp()
         self.sh._items_dir = items_dir + os.sep
         self.plugin._parameters['generated_items_file'] = GENERATED_ITEMS_FILE
-        self.sh.return_item('dev.whole_state')({'temp': 21.5, 'state': {'on': True}}, 'test')
+        self.sh.items.return_item('dev.whole_state')({'temp': 21.5, 'state': {'on': True}}, 'test')
         with mock.patch('lib.item.item.Plugins.get_instance', return_value=self._plugins_serving(self.plugin)):
-            self.plugin.create_json_items(self.sh.return_item('dev.whole_state'))
+            self.plugin.create_json_items(self.sh.items.return_item('dev.whole_state'))
 
         merged = lib.config.parse(
             os.path.join(items_dir, GENERATED_ITEMS_FILE), lib.config.parse(self.ITEMS_FILE, None)

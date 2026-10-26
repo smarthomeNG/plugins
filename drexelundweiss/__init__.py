@@ -60,61 +60,64 @@ class DuW(SmartPlugin):
 
             self.devl[1] = {
                 'device': 'aerosilent primus',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_primus.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_primus.txt',
             }
             self.devl[2] = {
                 'device': 'aerosilent topo',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_topo.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_topo.txt',
             }
             self.devl[3] = {
                 'device': 'aerosilent micro',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_micro.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_micro.txt',
             }
             self.devl[4] = {
                 'device': 'aerosmart s',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosmart_s.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosmart_s.txt',
             }
             self.devl[5] = {
                 'device': 'aerosmart m',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosmart_m.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosmart_m.txt',
             }
             self.devl[6] = {
                 'device': 'aerosmart l',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosmart_l.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosmart_l.txt',
             }
             self.devl[7] = {
                 'device': 'aerosmart xls',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosmart_xls.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosmart_xls.txt',
             }
             self.devl[8] = {
                 'device': 'aerosilent centro',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_centro.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_centro.txt',
             }
             self.devl[9] = {
                 'device': 'termosmart sc',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/termosmart_sc.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/termosmart_sc.txt',
             }
-            self.devl[10] = {'device': 'x2', 'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/x2.txt'}
+            self.devl[10] = {'device': 'x2', 'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/x2.txt'}
             self.devl[11] = {
                 'device': 'aerosmart mono',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosmart_mono.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosmart_mono.txt',
             }
             self.devl[13] = {
                 'device': 'aerosilent bianco',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_bianco.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_bianco.txt',
             }
-            self.devl[14] = {'device': 'x2 plus', 'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/x2_plus.txt'}
+            self.devl[14] = {
+                'device': 'x2 plus',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/x2_plus.txt',
+            }
             self.devl[15] = {
                 'device': 'aerosilent business',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_business.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_business.txt',
             }
             self.devl[17] = {
                 'device': 'aerosilent stratos',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_stratos.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_stratos.txt',
             }
             self.devl[25] = {
                 'device': 'aerosilent exos',
-                'cmdpath': smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_exos.txt',
+                'cmdpath': smarthome.get_basedir() + '/plugins/drexelundweiss/aerosilent_exos.txt',
             }
         except Exception as err:
             self.logger.error('Error on init {}.'.format(err))

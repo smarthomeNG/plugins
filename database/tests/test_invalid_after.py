@@ -15,18 +15,18 @@ from plugins.database.tests.base import TestDatabaseBase
 class TestInvalidAfterRegistration(TestDatabaseBase):
     def test_registers_item_with_valid_config(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.assertIn(item, plugin._items_with_invalid_after)
         self.assertEqual(300, plugin._items_with_invalid_after[item])
 
     def test_rejects_ro_acl(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_ro')
+        item = self.sh.items.return_item('main.invalid_after_ro')
         self.assertNotIn(item, plugin._items_with_invalid_after)
 
     def test_rejects_unparseable_value(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_bad_value')
+        item = self.sh.items.return_item('main.invalid_after_bad_value')
         self.assertNotIn(item, plugin._items_with_invalid_after)
 
     def test_still_registers_without_enforce_updates(self):
@@ -34,7 +34,7 @@ class TestInvalidAfterRegistration(TestDatabaseBase):
         # recoveries only (see _register_invalid_after's warning) - it must
         # not block registration outright.
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_no_enforce')
+        item = self.sh.items.return_item('main.invalid_after_no_enforce')
         self.assertIn(item, plugin._items_with_invalid_after)
 
 
@@ -78,7 +78,7 @@ class TestInvalidAfterReactive(TestDatabaseBase):
 
     def test_detects_gap_on_recovery_with_different_value_and_provable_boundary(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         self._seed(plugin, item, 10.0, 0)
 
@@ -102,7 +102,7 @@ class TestInvalidAfterReactive(TestDatabaseBase):
 
     def test_no_gap_within_threshold(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         self._seed(plugin, item, 10.0, 0)
 
@@ -115,7 +115,7 @@ class TestInvalidAfterReactive(TestDatabaseBase):
 
     def test_does_not_double_open_gap_when_already_open(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         self._seed(plugin, item, 10.0, 0)
         # Simulates an earlier scan tick having already marked it invalid.
@@ -130,7 +130,7 @@ class TestInvalidAfterReactive(TestDatabaseBase):
 
     def test_ignored_for_items_without_database_invalid_after(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, 'main.num')
         self._seed(plugin, item, 10.0, 0)
 
@@ -157,7 +157,7 @@ class TestInvalidAfterScan(TestDatabaseBase):
 
     def test_marks_silent_item_invalid_with_provable_boundary(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         plugin._plugin_start_ts = self.t(0)
         self._seed(plugin, item, 10.0, 0)
@@ -173,7 +173,7 @@ class TestInvalidAfterScan(TestDatabaseBase):
 
     def test_respects_startup_grace_period(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         plugin._plugin_start_ts = self.t(0)
         self._seed(plugin, item, 10.0, 0)
@@ -190,7 +190,7 @@ class TestInvalidAfterScan(TestDatabaseBase):
 
     def test_skips_item_within_threshold(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         plugin._plugin_start_ts = self.t(0) - 1000 * 1000  # long past startup, grace irrelevant
         self._seed(plugin, item, 10.0, 0)
@@ -203,7 +203,7 @@ class TestInvalidAfterScan(TestDatabaseBase):
 
     def test_skips_item_already_in_gap(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.invalid_after_num')
+        item = self.sh.items.return_item('main.invalid_after_num')
         self.create_item(plugin, 'main.invalid_after_num')
         plugin._plugin_start_ts = self.t(0) - 1000 * 1000
         self._seed(plugin, item, 10.0, 0)

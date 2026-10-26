@@ -212,7 +212,7 @@ def make_plugin(items_file, network, initialize=True, parameters=None):
     plugin = YamahaYXC.__new__(YamahaYXC)
     plugin._set_sh(sh)
     plugin.__init__(sh)
-    for item in sh.return_items():
+    for item in sh.items.return_items():
         plugin.parse_item(item)
 
     if initialize:
