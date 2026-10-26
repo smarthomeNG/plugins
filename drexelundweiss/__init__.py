@@ -33,7 +33,7 @@ import serial
 
 class DuW(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.4'
+    PLUGIN_VERSION = '1.5.5'
 
     def __init__(self, smarthome):
         super().__init__()

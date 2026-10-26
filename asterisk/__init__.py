@@ -30,7 +30,7 @@ from lib.network import Tcp_client
 
 
 class Asterisk(SmartPlugin):
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     DB = 'ast_db'
     DEV = 'ast_dev'

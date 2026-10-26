@@ -127,7 +127,7 @@ class Speech_Parser(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
     listeners = {}
     socket_warning = 10
     socket_warning = 2
