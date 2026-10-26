@@ -26,6 +26,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from lib.model.smartplugin import SmartPlugin
+from lib.network import Http
 
 __ETA_PU__ = 'eta_pu'
 __ETA_ERROR__ = 'eta_pu_error'
@@ -261,7 +262,7 @@ class ETA_PU(SmartPlugin):
 
     def fetch_xml(self, uri):
         url = 'http://{0}:{1}{2}'.format(self._request.address, self._request.port, uri)
-        xml = self.get_sh().tools.fetch_url(url, timeout=2)
+        xml = Http().get_binary(url, timeout=2, require_ok=True)
         try:
             return ET.fromstring(xml)
         except Exception:

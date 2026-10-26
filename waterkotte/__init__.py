@@ -22,6 +22,7 @@
 
 import logging
 from lib.model.smartplugin import SmartPlugin
+from lib.network import Http
 import time
 import re
 import base64
@@ -131,9 +132,15 @@ class Waterkotte(SmartPlugin):
         start = time.time()
         try:
             # log in to web interface, retrieve Cookie
-            token = self._sh.tools.fetch_url(
-                'http://' + self.ip + '/cgi/login?username=' + self.user + '&password=' + self.passwd, timeout=10
-            ).decode()
+            token = (
+                Http()
+                .get_binary(
+                    'http://' + self.ip + '/cgi/login?username=' + self.user + '&password=' + self.passwd,
+                    timeout=10,
+                    require_ok=True,
+                )
+                .decode()
+            )
             token = re.search('IDALToken=\w*', token)
             token = token.group(0)
 
@@ -175,7 +182,7 @@ class Waterkotte(SmartPlugin):
         self.cycletime = cycletime
         logger.debug('cycle takes {0} seconds'.format(cycletime))
 
-    # this is fetch_url from lib/tools.py, extended to use the Cookie 'token' in the http request
+    # fetches a url with the Cookie 'token' in the http request
     def fetch_url_cookie(self, url, token, username=None, password=None, timeout=10):
         headers = {'Accept': 'text/plain'}
         headers['Cookie'] = token

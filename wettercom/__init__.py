@@ -24,7 +24,7 @@ import threading
 import xml.etree.cElementTree
 from lib.model.smartplugin import SmartPlugin
 from bin.smarthome import VERSION
-from lib.tools import Tools
+from lib.network import Http
 
 
 class wettercom(SmartPlugin):
@@ -38,7 +38,6 @@ class wettercom(SmartPlugin):
             self.logger = logging.getLogger(__name__)
         self._project = self.get_parameter_value('project')
         self._apikey = self.get_parameter_value('apikey')
-        self._tools = Tools()
         self.lock = threading.Lock()
 
     def search(self, location):
@@ -56,7 +55,7 @@ class wettercom(SmartPlugin):
         self.logger.debug('Search URL: {}'.format(searchURL))
 
         try:
-            content = self._tools.fetch_url(searchURL)
+            content = Http().get_binary(searchURL, timeout=2, require_ok=True)
         except Exception:
             content = None
 
@@ -92,7 +91,7 @@ class wettercom(SmartPlugin):
         self.logger.debug('Forecast URL: {}'.format(forecastURL))
 
         try:
-            content = self._tools.fetch_url(forecastURL)
+            content = Http().get_binary(forecastURL, timeout=2, require_ok=True)
         except Exception:
             content = None
 

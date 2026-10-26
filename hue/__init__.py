@@ -47,12 +47,12 @@ import http.client
 import time
 import threading
 
-from lib.tools import Tools
+import requests
+
 from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
 
 XY = namedtuple('XY', ['x', 'y'])
-client = Tools()
 
 
 class HUE(SmartPlugin):
@@ -738,9 +738,28 @@ class HUE(SmartPlugin):
                 item.return_parent()(int(item.return_parent()() + 1), 'HUE_FADE')
                 item.return_parent()(int(item.return_parent()() - 1), 'HUE_FADE')
 
+    def _fetch_url(self, url, method='GET', body=None, errorItem=None):
+        """
+        Send a request to a bridge and return the content of the answer
+
+        :param errorItem: item that is set to True if the bridge cannot be reached
+        :return: content (bytes) of a successful (status 200) answer, False otherwise
+        """
+        try:
+            reply = requests.request(method, url, data=body, headers={'Accept': 'text/plain'}, timeout=2)
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            if errorItem is not None:
+                errorItem(True, '_fetch_url')
+            return False
+        except Exception:
+            return False
+        if reply.status_code != 200:
+            self.logger.warning('Problem fetching {0}: {1} {2}'.format(url, reply.status_code, reply.reason))
+            return False
+        return reply.content
+
     def _get_web_content(self, hueBridgeId='0', path='', method='GET', body=None):
         # in dieser routine erfolgt der umbau und die speziellen themen zur auswertung der verbindung, die speziell für das plugin ist
-        # der rest sollte standard in der routine fetch_url() enthalten sein. leider fehlt dort aber die auswertung der fehllerconditions
         # erst einmal die komplette url
         url = 'http://' + self._hue_ip[int(hueBridgeId)] + '/api/' + self._hue_user[int(hueBridgeId)] + path
         # setzen des fehlerstatus items
@@ -749,11 +768,7 @@ class HUE(SmartPlugin):
         else:
             errorItem = None
             self.logger.info('_get_web_content ' + hueBridgeId)
-        # dann der aufruf kompatibel, aber inhaltlich nicht identisch fetch_url aus lib.tools, daher erst eimal das fehlerobjekt nicht mehr da
-        try:
-            response = client.fetch_url(url, None, None, 2, 0, method, body, errorItem)
-        except Exception:
-            response = False
+        response = self._fetch_url(url, method, body, errorItem)
         if response:
             # und jetzt der anteil der decodierung, der nicht in der fetch_url drin ist
             # lesen, decodieren nach utf-8 (ist pflicht nach der api definition philips) und in ein python objekt umwandeln

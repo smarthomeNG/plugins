@@ -26,6 +26,7 @@
 
 from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
+from lib.network import Http
 import re
 import logging
 
@@ -361,7 +362,7 @@ class SolarLog(SmartPlugin):
 
     def _read(self, filename):
         url = self.host + filename
-        return self._sh.tools.fetch_url(url).decode(encoding='latin_1')
+        return Http().get_binary(url, timeout=2, require_ok=True).decode(encoding='latin_1')
 
     def poll_deviceV3(self):
         """

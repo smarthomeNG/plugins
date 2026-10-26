@@ -30,7 +30,7 @@ import datetime
 
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-from lib.network import Tcp_client
+from lib.network import Http, Tcp_client
 
 from .webif import WebInterface
 
@@ -582,8 +582,8 @@ class MPD(SmartPlugin):
         ext = ext.lower()
         play = []
         if ext in ('m3u', 'pls'):
-            content = self.get_sh().tools.fetch_url(url, timeout=4)
-            if content is False:
+            content = Http().get_binary(url, timeout=4, require_ok=True)
+            if content is None:
                 return play
             content = content.decode()
             if ext == 'pls':
