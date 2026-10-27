@@ -24,9 +24,14 @@
 #  Skender Haxhimolla
 #########################################################################
 
-import logging
 import asyncio
-import slixmpp
+import functools
+import logging
+
+try:
+    import slixmpp
+except ImportError:
+    slixmpp = None
 
 from lib.plugin import Plugins
 from lib.model.smartplugin import SmartPlugin
@@ -39,56 +44,80 @@ class XMPP(SmartPlugin):
     def __init__(self, smarthome, jid, password, logic='XMPP'):
         super().__init__()
         self.logger = logging.getLogger(__name__)
+        if slixmpp is None:
+            self.logger.error("Unable to import Python package 'slixmpp'")
+            self._init_complete = False
+            return
         server = self.get_parameter_value('server')
-        plugins = self.get_parameter_value('plugins')
-        joins = self.get_parameter_value('join')
 
         # Check server parameter and default to port 5222
         if server is None:
-            self._server = None
+            address = None
         elif ':' in server:
             parts = server.split(':')
-            self._server = (parts[0].strip(), parts[1].strip())
+            address = (parts[0].strip(), int(parts[1].strip()))
         else:
-            self._server = (server, 5222)
+            address = (server, 5222)
+
+        self._setup(jid, password, address, self.get_parameter_value('plugins'), self.get_parameter_value('join'))
+        self.xmpp.use_ipv6 = self.get_parameter_value('use_ipv6')
+        self._logic = logic
+        self._sh = smarthome
+
+    def _setup(self, jid, password, server, plugins, joins):
+        """
+        Create the slixmpp client on an event loop of its own, which run() drives in the plugin thread
+
+        :param server: (host, port) to connect to, None for a DNS SRV lookup of the JID's domain
+        :param plugins: names of the slixmpp plugins (XEPs) to register
+        :param joins: chat rooms to join; registers xep_0045 if needed
+        """
+        self._server = server
+        self._join = joins
+        self._connected = 0
+        self.alive = False
 
         # Enable MUC in case account should join channels
         if len(joins) and 'xep_0045' not in plugins:
             plugins.append('xep_0045')
 
-        self.xmpp = slixmpp.ClientXMPP(jid, password)
+        self._loop = asyncio.new_event_loop()
+        self.set_asyncio_executor_names(self._loop)
+        self.xmpp = slixmpp.ClientXMPP(jid, password, loop=self._loop)
         for plugin in plugins:
             self.xmpp.register_plugin(plugin)
-        self.xmpp.use_ipv6 = self.get_parameter_value('use_ipv6')
         self.xmpp.add_event_handler('session_start', self.handleXMPPConnected)
         self.xmpp.add_event_handler('session_end', self.handleXMPPDisconnected)
         self.xmpp.add_event_handler('message', self.handleIncomingMessage)
-        self._logic = logic
-        self._sh = smarthome
-        self._join = joins
-        self._connected = 0
-        self._loop = asyncio.get_event_loop()
-        self.set_asyncio_executor_names(self._loop)
 
     def run(self):
+        """Connect and run the plugin's event loop until stop(); reconnect after a lost connection."""
         self.alive = True
+        asyncio.set_event_loop(self._loop)
         while self.alive:
-            if self._connected == 0:
-                self.xmpp.loop = self._loop
-                self._connected = 1
-                if self._server is not None:
-                    self.xmpp.connect(address=self._server)
-                else:
-                    self.xmpp.connect()
-            self.xmpp.process(timeout=1)
+            self._connected = 1
+            if self._server is not None:
+                self.xmpp.connect(*self._server)
+            else:
+                self.xmpp.connect()
+            self._loop.run_until_complete(self.xmpp.disconnected)
+            self._connected = 0
+            if self.alive:
+                self._loop.run_until_complete(asyncio.sleep(5))
+        self._loop.close()
 
     def stop(self):
         self.alive = False
-        self._connected = 0
-        for chat in self._join:
-            self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
         self.logger.info('Shutting Down XMPP Client')
-        self.xmpp.disconnect(wait=True)
+        if self._loop.is_running():
+            self._loop.call_soon_threadsafe(self._disconnect)
+
+    def _disconnect(self):
+        """Leave the chat rooms and close the connection; runs in the plugin's event loop."""
+        if self._connected > 1:
+            for chat in self._join:
+                self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
+        self.xmpp.disconnect()
 
     def parse_item(self, item):
         return None
@@ -116,7 +145,7 @@ class XMPP(SmartPlugin):
             self.xmpp.send_presence(pstatus='Send me a message')
             self.xmpp.get_roster()
             for chat in self._join:
-                self.xmpp.plugin['xep_0045'].join_muc(chat, self.xmpp.boundjid.bare, wait=True)
+                self.xmpp.plugin['xep_0045'].join_muc(chat, self.xmpp.boundjid.bare)
         except Exception as e:
             self.logger.error('XMPP: Reconnecting, because can not set/get presence/roster: {}'.format(e))
             self.xmpp.reconnect()
@@ -153,7 +182,7 @@ class XMPP(SmartPlugin):
                  mt->mtype = message type, could be 'chat' or 'groupchat'
         """
         self.logger.info('Sending message via XMPP. To: {0}\t Message: {1}'.format(to, msgsend))
-        self.xmpp.send_message(mto=to, mbody=str(msgsend), mtype=mt)
+        self._loop.call_soon_threadsafe(functools.partial(self.xmpp.send_message, mto=to, mbody=str(msgsend), mtype=mt))
 
 
 class XMPPLogHandler(logging.Handler):
