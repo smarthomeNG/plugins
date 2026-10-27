@@ -442,7 +442,7 @@ class AppleTV(SmartPlugin):
             self._update_items('power', False)
 
     def connection_lost(self, exception):
-        self.logger.warning('Lost connection:', str(exception))
+        self.logger.warning(f'Lost connection: {exception}')
 
     def connection_closed(self):
         self.logger.warning('Connection closed!')

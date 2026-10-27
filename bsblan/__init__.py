@@ -67,7 +67,7 @@ class Bsblan(SmartPlugin):
                     item(json_obj[str(item.conf['bsb_lan'])]['value'])
                     item.descr.property.value = json_obj[str(item.conf['bsb_lan'])]['desc']
             except Exception as exc:
-                self.logger.error('Error getting Data from BSBLAN-Adapter: ', exc)
+                self.logger.error(f'Error getting Data from BSBLAN-Adapter: {exc}')
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """

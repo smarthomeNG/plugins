@@ -118,7 +118,7 @@ class Waterkotte(SmartPlugin):
                 self._items.append([item, waterkotte_key])
                 return self.update_item
             else:
-                logger.warn('invalid key {0} configured', waterkotte_key)
+                logger.warning(f'invalid key {waterkotte_key} configured')
         return None
 
     def parse_logic(self, logic):
