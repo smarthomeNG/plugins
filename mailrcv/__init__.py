@@ -27,7 +27,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()

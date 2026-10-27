@@ -34,7 +34,7 @@ logger = logging.getLogger('')
 class Waterkotte(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '2.0.0'
 
     _key2tag = {
         'temp_aussen': 'A1',

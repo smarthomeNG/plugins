@@ -37,7 +37,7 @@ class Snmp(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     _flip = {0: '1', 1: '0', '0': True, '1': False}
 

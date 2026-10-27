@@ -42,7 +42,7 @@ class Russound(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.3'
+    PLUGIN_VERSION = '1.7.4'
 
     def __init__(self, sh, *args, **kwargs):
         """

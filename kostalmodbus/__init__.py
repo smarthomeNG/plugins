@@ -29,7 +29,7 @@ from .inverter import Inverter
 
 
 class Kostalmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.4'
     inverter = 'None'
     _items = []
 

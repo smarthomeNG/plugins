@@ -30,7 +30,7 @@ class Join(SmartPlugin):
     SEND_URL = URL_PREFIX + 'messaging/v1/sendPush?apikey='
     LIST_URL = URL_PREFIX + 'registration/v1/listDevices?apikey='
 
-    PLUGIN_VERSION = '1.4.4'
+    PLUGIN_VERSION = '1.4.5'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)

@@ -56,7 +56,7 @@ XY = namedtuple('XY', ['x', 'y'])
 
 
 class HUE(SmartPlugin):
-    PLUGIN_VERSION = '1.4.6'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(
         self,

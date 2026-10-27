@@ -69,7 +69,7 @@ MESSAGE_TAG_DEST = '[DEST]'
 
 
 class Telegram(SmartPlugin):
-    PLUGIN_VERSION = '2.0.3'
+    PLUGIN_VERSION = '3.0.0'
 
     _items = []  # all items using attribute ``telegram_message``
     _items_info = {}  # dict used whith the info-command: key = attribute_value, val= item_list telegram_info

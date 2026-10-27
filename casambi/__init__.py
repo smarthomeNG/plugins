@@ -42,7 +42,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.6'  # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.7'  # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """

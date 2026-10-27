@@ -40,7 +40,7 @@ class Prowl(SmartPlugin):
     more control, maybe use a logic to call `notify()` with all relevant parameters.
     """
 
-    PLUGIN_VERSION = '1.3.3'
+    PLUGIN_VERSION = '1.3.4'
 
     _host = 'api.prowlapp.com'
     _api = '/publicapi/add'

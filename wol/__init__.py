@@ -42,7 +42,7 @@ class WakeOnLan(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.2.0'
+    PLUGIN_VERSION = '1.2.1'
 
     def __init__(self, sh, *args, **kwargs):
         # Call init code of parent class (SmartPlugin)

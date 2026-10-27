@@ -12,7 +12,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/indego/README.htm
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/96661 2-indego-connect
 
-    version: 1.6.1                  # Plugin version
+    version: 1.6.2                  # Plugin version
     sh_minversion: '1.4'              # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance

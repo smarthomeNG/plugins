@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '2.0.0'
 
     _flip = {0: '1', 1: '0', '0': True, '1': False}
 

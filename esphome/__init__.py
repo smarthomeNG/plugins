@@ -55,7 +55,7 @@ class EspHome(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '0.0.2'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '0.0.3'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):

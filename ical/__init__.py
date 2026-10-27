@@ -31,7 +31,7 @@ from lib.network import Http, Network
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
     ALLOW_MULTIINSTANCE = False
     DAYS = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
     FREQ = ('YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', 'HOURLY', 'MINUTELY', 'SECONDLY')

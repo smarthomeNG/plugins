@@ -48,7 +48,7 @@ HANDLE_ATTR = 'attr_'
 class Zigbee2Mqtt(MqttPlugin):
     """Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items"""
 
-    PLUGIN_VERSION = '2.0.2'
+    PLUGIN_VERSION = '3.0.0'
 
     def __init__(self, sh, **kwargs):
         """Initializes the plugin."""

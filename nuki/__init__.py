@@ -41,7 +41,7 @@ paired_nukis = []
 
 
 class Nuki(MqttPlugin):
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()

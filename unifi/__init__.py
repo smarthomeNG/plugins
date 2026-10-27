@@ -295,7 +295,7 @@ class UniFiControllerClient(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
 
     def __init__(self, sh, *args, **kwargs):
         """

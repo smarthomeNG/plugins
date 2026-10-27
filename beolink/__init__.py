@@ -42,7 +42,7 @@ class BeoNetlink(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.8.1'
+    PLUGIN_VERSION = '0.8.2'
 
     def __init__(self, sh):
         """

@@ -72,7 +72,7 @@ from .webif import WebInterface
 
 
 class KNX(SmartPlugin):
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '2.0.0'
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes

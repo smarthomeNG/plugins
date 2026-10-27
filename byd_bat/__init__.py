@@ -529,7 +529,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.1.3'
+    PLUGIN_VERSION = '0.2.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):

@@ -39,7 +39,7 @@ class BoseSoundtouch(SmartPlugin):
     """
 
     # Plugin parameters
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '1.0.2'
     PLUGIN_PARAMETER_IP = None
     PLUGIN_PARAMETER_PORT = None
 

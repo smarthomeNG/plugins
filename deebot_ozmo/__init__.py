@@ -44,7 +44,7 @@ class DeebotOzmo(SmartPlugin):
     """
 
     # (must match the version specified in plugin.yaml)
-    PLUGIN_VERSION = '1.7.2'
+    PLUGIN_VERSION = '2.0.0'
 
     # ----------------------------------------------------
     #    SmartHomeNG plugin methods

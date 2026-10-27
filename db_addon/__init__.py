@@ -60,7 +60,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.11'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh):
         """

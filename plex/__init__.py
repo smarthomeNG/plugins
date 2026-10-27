@@ -26,7 +26,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Plex(SmartPlugin):
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '1.0.2'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):

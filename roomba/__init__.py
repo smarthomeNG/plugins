@@ -61,7 +61,7 @@ class Roomba(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.7.0'
     _items = []
 
     def __init__(self, sh, *args, **kwargs):

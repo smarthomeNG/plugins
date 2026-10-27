@@ -39,7 +39,7 @@ class Kathrein(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.7.0'
 
     def __init__(self, sh):
         """

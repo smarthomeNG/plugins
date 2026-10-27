@@ -61,7 +61,7 @@ class THZ(SmartPlugin):
     Class THZ implements main control instance
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """

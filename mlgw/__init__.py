@@ -751,7 +751,7 @@ class mlgwlistener(threading.Thread):
 #
 class Mlgw(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.1.2'
+    PLUGIN_VERSION = '1.1.3'
 
     ## The constructor: Initialize plugin
     #

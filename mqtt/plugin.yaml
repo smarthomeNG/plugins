@@ -11,7 +11,7 @@ plugin:
     keywords: iot
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 2.1.0                 # Plugin version
+    version: 3.0.0                 # Plugin version
     sh_minversion: '2.0.0-dev.2'        # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # since the plugin connects to the mqtt module, multi instance makes no sense

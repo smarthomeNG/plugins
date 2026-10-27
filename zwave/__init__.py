@@ -50,7 +50,7 @@ class ZWave(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     def __init__(self, sh):
         """

@@ -35,7 +35,7 @@ from .webif import WebInterface
 
 
 class MPD(SmartPlugin):
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '2.0.0'
     STATUS = 'mpd_status'
     SONGINFO = 'mpd_songinfo'
     STATISTIC = 'mpd_statistic'

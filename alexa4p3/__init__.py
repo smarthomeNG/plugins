@@ -66,7 +66,7 @@ class protocoll(object):
 
 
 class Alexa4P3(SmartPlugin):
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):

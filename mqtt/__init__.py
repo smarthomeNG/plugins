@@ -40,7 +40,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.1.0'
+    PLUGIN_VERSION = '3.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """

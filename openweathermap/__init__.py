@@ -47,7 +47,7 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = '1.8.8'
+    PLUGIN_VERSION = '1.8.9'
 
     _base_url = 'https://api.openweathermap.org/'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'

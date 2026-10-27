@@ -45,7 +45,7 @@ class RTR(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '2.0.0'
 
     HVACMode_Auto = 0
     HVACMode_Comfort = 1

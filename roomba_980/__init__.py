@@ -26,7 +26,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class ROOMBA_980(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '1.0.3'
 
     myroomba = None
 

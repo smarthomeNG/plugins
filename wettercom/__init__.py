@@ -27,7 +27,7 @@ from lib.network import Http
 
 class wettercom(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.4.0'
+    PLUGIN_VERSION = '2.0.0'
     _server = 'api.wetter.com'
 
     def __init__(self, smarthome):

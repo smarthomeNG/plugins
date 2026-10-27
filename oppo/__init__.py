@@ -58,7 +58,7 @@ class oppo(SmartDevicePlugin):
     The know-how is in the commands.py (and some DT_ classes...)
     """
 
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '2.0.0'
 
     TRANSPORTS = (
         TransportRule(CONN_NET_TCP_CLI, requires='host'),

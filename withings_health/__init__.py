@@ -39,7 +39,7 @@ from .webif import WebInterface
 
 
 class WithingsHealth(SmartPlugin):
-    PLUGIN_VERSION = '1.8.4'
+    PLUGIN_VERSION = '1.8.5'
 
     def __init__(self, sh):
         super().__init__()

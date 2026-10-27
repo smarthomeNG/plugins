@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/2040103
 
-    version: 1.6.0                      # Plugin version (must match the version specified in __init__.py)
+    version: 1.6.1                      # Plugin version (must match the version specified in __init__.py)
     sh_minversion: '1.8'                # minimum shNG version to use this plugin
     # sh_maxversion:                    # maximum shNG version to use this plugin (leave empty if latest)
 #   py_minversion:                # minimum Python version to use for this plugin

@@ -38,7 +38,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 
 
 class Pluggit(SmartPlugin):
-    PLUGIN_VERSION = '2.0.6'
+    PLUGIN_VERSION = '2.0.7'
 
     _itemReadDictionary = {}
     _itemWriteDictionary = {}

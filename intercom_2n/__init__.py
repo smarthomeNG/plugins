@@ -32,7 +32,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 class Intercom2n(SmartPlugin):
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '1.4.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):

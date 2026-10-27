@@ -195,7 +195,7 @@ class Network(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     generic_listeners = {}
     special_listeners = {}

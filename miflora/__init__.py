@@ -28,7 +28,7 @@ from lib.model.smartplugin import Modules, SmartPlugin, SmartPluginWebIf
 
 
 class Miflora(SmartPlugin):
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     def __init__(self, sh, *args, **kwargs):
         """

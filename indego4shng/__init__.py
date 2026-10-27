@@ -67,7 +67,7 @@ class Indego4shNG(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '4.0.1'
+    PLUGIN_VERSION = '4.0.2'
 
     def __init__(self, sh, *args, **kwargs):
         """

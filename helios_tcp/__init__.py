@@ -240,7 +240,7 @@ VARLIST = {
 
 
 class HeliosTCP(SmartPlugin):
-    PLUGIN_VERSION = '1.0.3'
+    PLUGIN_VERSION = '1.0.4'
     MODBUS_SLAVE = 180
     PORT = 502
     START_REGISTER = 1

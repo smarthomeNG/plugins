@@ -56,7 +56,7 @@ from lib.model.sdp.command import SDPCommandParseStr
 class pioneer(SmartDevicePlugin):
     """Device class for Pioneer AV function."""
 
-    PLUGIN_VERSION = '1.0.3'
+    PLUGIN_VERSION = '2.0.0'
 
     TRANSPORTS = (
         TransportRule(CONN_NET_TCP_CLI, requires='host'),

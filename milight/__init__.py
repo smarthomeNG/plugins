@@ -47,7 +47,7 @@ class Milight(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     # tags this plugin handles
     ITEM_TAGS = [

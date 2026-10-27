@@ -35,7 +35,7 @@ from lib.item import Items
 
 
 class LOGO(SmartPlugin):
-    PLUGIN_VERSION = '1.2.4'
+    PLUGIN_VERSION = '1.2.5'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)

@@ -30,7 +30,7 @@ ITEM_TAG = ['apcups']
 
 
 class APCUPS(SmartPlugin):
-    PLUGIN_VERSION = '1.4.0'
+    PLUGIN_VERSION = '1.4.1'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)

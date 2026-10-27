@@ -29,7 +29,7 @@ import json
 
 
 class Pushover(SmartPlugin):
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     _url = 'https://api.pushover.net/1/messages.json'
 

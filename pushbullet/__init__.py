@@ -32,7 +32,7 @@ class Pushbullet(SmartPlugin):
     _apiurl = 'https://api.pushbullet.com/v2/pushes'
     _upload_apiurl = 'https://api.pushbullet.com/v2/upload-request'
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()

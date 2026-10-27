@@ -56,7 +56,7 @@ from lib.item import Items
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.2.4'
+    PLUGIN_VERSION = '1.2.5'
 
     def __init__(self, smarthome):
         super().__init__()

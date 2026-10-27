@@ -41,7 +41,7 @@ class GarminConnect(SmartPlugin):
     Retrieves Garmin Connect Stats and Heart Rates.
     """
 
-    PLUGIN_VERSION = '1.2.0'
+    PLUGIN_VERSION = '1.2.1'
 
     def __init__(self, sh, *args, **kwargs):
         # Call init code of parent class (SmartPlugin or MqttPlugin)

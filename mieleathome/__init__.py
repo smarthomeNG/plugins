@@ -49,7 +49,7 @@ class mieleathome(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '1.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '2.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):

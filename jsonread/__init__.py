@@ -37,7 +37,7 @@ from .webif import WebInterface
 # PATCH: Move jq engine into JSONREAD class without breaking behavior
 # Drop-in replacement for previous global jq_* functions
 class JSONREAD(SmartPlugin):
-    PLUGIN_VERSION = '2.1.0'
+    PLUGIN_VERSION = '3.0.0'
 
     # remove_item cleans up all item references, this is simple
     STOP_ON_ITEM_CHANGE = False

@@ -93,7 +93,7 @@ class Sml2(SmartPlugin):
             self.smlx.logger.error('Connection so serial device was closed')
             self.smlx.connected = False
 
-    PLUGIN_VERSION = '2.0.1'
+    PLUGIN_VERSION = '3.0.0'
 
     def __init__(self, sh):
         """

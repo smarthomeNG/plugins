@@ -31,7 +31,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Squeezebox(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.4.0'
+    PLUGIN_VERSION = '1.4.1'
 
     def __init__(self, smarthome):
         super().__init__()

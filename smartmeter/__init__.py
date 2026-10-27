@@ -101,7 +101,7 @@ class Smartmeter(SmartPlugin, Conversion):
     """
 
     # move to 1.0.0 as soon as DLMS asyncio is tested
-    PLUGIN_VERSION = '0.9.0'
+    PLUGIN_VERSION = '0.10.0'
 
     def __init__(self, sh):
         """

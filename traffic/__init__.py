@@ -28,7 +28,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Traffic(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
     _base_url = 'https://maps.googleapis.com/maps/api/directions/json'
 
     def __init__(self, sh, *args, **kwargs):

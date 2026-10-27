@@ -72,7 +72,7 @@ class AppleTV(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh):
         """

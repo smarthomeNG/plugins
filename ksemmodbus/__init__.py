@@ -30,7 +30,7 @@ from .ksem import Ksem
 
 
 class Ksemmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.4'
     ksem = 'None'
     _items = []
 

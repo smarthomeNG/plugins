@@ -33,7 +33,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class XMPP(SmartPlugin):
-    PLUGIN_VERSION = '1.4.1'
+    PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, jid, password, logic='XMPP'):

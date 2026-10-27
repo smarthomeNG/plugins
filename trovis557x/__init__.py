@@ -47,7 +47,7 @@ except Exception:
 
 class trovis557x(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '2.0.1'
 
     # Starten
     def __init__(self, sh, *args, **kwargs):
