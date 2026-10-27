@@ -143,7 +143,7 @@ class IMAP(SmartPlugin):
                 else:
                     rsp, data = imap.uid('copy', uid, self._trashfolder)
                     if rsp == 'OK':
-                        typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
+                        typ, data = imap.uid('store', uid, '+FLAGS', r'(\Deleted)')
                         self.logger.debug('Moving mail to trash. {0} => {1}: {2}'.format(fo, to, subject))
                     else:
                         self.logger.warning('Could not move mail to trash. {0} => {1}: {2}'.format(fo, to, subject))

@@ -18,7 +18,7 @@ commands = {
         'write_cmd': 'PWR {VALUE}',
         'item_type': 'bool',
         'dev_datatype': 'onoff',
-        'reply_pattern': ['^(?:\:+)?\s?PWR=0(0|1)', '^:+WR=0(0|1)'],
+        'reply_pattern': [r'^(?:\:+)?\s?PWR=0(0|1)', '^:+WR=0(0|1)'],
         'item_attrs': {'cycle': '60', 'initial': True},
     },
     'source': {

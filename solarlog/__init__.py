@@ -260,7 +260,7 @@ class SolarLog(SmartPlugin):
         pattern = r'ye\[yx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
 
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<out_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<out_{0}>[0-9]*)'.format(x)
 
         pattern += '"'
         re_entry = re.compile(pattern)
@@ -278,7 +278,7 @@ class SolarLog(SmartPlugin):
         pattern = r'mo\[mx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
 
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<out_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<out_{0}>[0-9]*)'.format(x)
 
         pattern += '"'
         re_entry = re.compile(pattern)
@@ -296,7 +296,7 @@ class SolarLog(SmartPlugin):
         pattern = r'da\[dx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
 
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<out_{0}>[0-9]*);(?P<pac_max_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<out_{0}>[0-9]*);(?P<pac_max_{0}>[0-9]*)'.format(x)
 
         pattern += '"'
         re_entry = re.compile(pattern)
@@ -319,7 +319,7 @@ class SolarLog(SmartPlugin):
         # TODO: add a pattern that matches sensor boxes
         # ATM only inverters and strings supported
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<pac_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<pac_{0}>[0-9]*)'.format(x)
 
             for y in range(0, self._count_strings[x]):
                 pattern += ';(?P<pdc_{0}_{1}>[0-9]*)'.format(x, y)

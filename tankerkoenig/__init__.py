@@ -468,7 +468,7 @@ class TankerKoenig(SmartPlugin):
             return {}
 
     def _request_station_detail(self, station_id: str) -> dict:
-        """
+        r"""
         Returns detail information for a petrol station id
         Should not be used extensively, due to performance issues on tankerkoenig side.
         https://creativecommons.tankerkoenig.de/#techInfo
@@ -544,7 +544,7 @@ class TankerKoenig(SmartPlugin):
             return {}
 
     def _request_station_prices(self, station_ids: list):
-        """
+        r"""
         Returns a json object with prices for an array of petrol station ids
 
         Recommended to be used by tankerkoenig team due to performance issues!!!

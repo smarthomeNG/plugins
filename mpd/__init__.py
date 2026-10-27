@@ -461,7 +461,7 @@ class MPD(SmartPlugin):
                 if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seek':
                     val = item()
                     if val:
-                        pattern = re.compile('^\d+[ ]\d+$')
+                        pattern = re.compile(r'^\d+[ ]\d+$')
                         if pattern.match(val):
                             self._send('seek {}'.format(val))
                             return
@@ -470,7 +470,7 @@ class MPD(SmartPlugin):
                 if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekid':
                     val = item()
                     if val:
-                        pattern = re.compile('^\d+[ ]\d+$')
+                        pattern = re.compile(r'^\d+[ ]\d+$')
                         if pattern.match(val):
                             self._send('seekid {}'.format(val))
                             return
@@ -479,7 +479,7 @@ class MPD(SmartPlugin):
                 if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekcur':
                     val = item()
                     if val:
-                        pattern = re.compile('^[+-]?\d+$')
+                        pattern = re.compile(r'^[+-]?\d+$')
                         if pattern.match(val):
                             self._send('seekcur {}'.format(val))
                             return

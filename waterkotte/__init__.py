@@ -141,12 +141,12 @@ class Waterkotte(SmartPlugin):
                 )
                 .decode()
             )
-            token = re.search('IDALToken=\w*', token)
+            token = re.search(r'IDALToken=\w*', token)
             token = token.group(0)
 
             # first of all check and if required set D634 to show total consumption instead of annual
             data2 = self.fetch_url_cookie('http://' + self.ip + '/cgi/readTags?&n=1&t1=D634', token).decode()
-            data2 = re.sub('#\w*\tS_OK\n\w*\t', '', data2)
+            data2 = re.sub('#\\w*\tS_OK\n\\w*\t', '', data2)
             data2 = re.sub('\n', '', data2)
             # if D634 is not set, set it and skip this cycle --- note: updated readings may take 30s or longer!
             if int(data2) == 0:
@@ -160,7 +160,7 @@ class Waterkotte(SmartPlugin):
                 data2 = self.fetch_url_cookie(
                     'http://' + self.ip + '/cgi/readTags?&n=1&t1=' + self._key2tag[waterkotte_key], token
                 ).decode()
-                data2 = re.sub('#\w*\tS_OK\n\w*\t', '', data2)
+                data2 = re.sub('#\\w*\tS_OK\n\\w*\t', '', data2)
                 data2 = re.sub('\n', '', data2)
 
                 # do not convert values that are tagged as "noconv"
