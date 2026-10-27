@@ -1,3 +1,2 @@
-pymodbus >= 2.2.0
+pymodbus>=3.9,<3.10
 pyserial
-

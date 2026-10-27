@@ -32,17 +32,8 @@ from datetime import datetime
 from . import _coils
 from . import _listen
 from . import _register
-from pymodbus import version as pymodbusversion
-
-try:  # Modbus rtu/serial, for pymodbus3+ or pymodbus2.x
-    from pymodbus.client import ModbusSerialClient
-except Exception:
-    from pymodbus.client.sync import ModbusSerialClient
-
-try:  # Modbus tcp, for pymodbus3+ or pymodbus2.x
-    from pymodbus.client.tcp import ModbusTcpClient
-except Exception:
-    from pymodbus.client.sync import ModbusTcpClient
+from pymodbus import FramerType
+from pymodbus.client import ModbusSerialClient, ModbusTcpClient
 
 
 class trovis557x(SmartPlugin):
@@ -195,16 +186,14 @@ class trovis557x(SmartPlugin):
 
         self._trovis_itemlist = {}
 
-        self._pymodbus_major = pymodbusversion.version.short()[0]
-
     # Schnittstelle initialisieren (wird von __init__ und bei jedem Poll aufgerufen)
     def connect_trovis(self):
         try:
             # self._modbus_debug = False  #ToDo
             if self._modbus_mode == 'rtu':
                 connection = ModbusSerialClient(
-                    method=self._modbus_mode,
                     port=self._modbus_port,
+                    framer=FramerType.RTU,
                     timeout=self._modbus_timeout,
                     baudrate=self._modbus_speed,
                 )
@@ -224,36 +213,24 @@ class trovis557x(SmartPlugin):
     # Trovis auslesen
     def leseTrovis(self, _bereich, _datentyp):
 
-        # self.logger.info('Version: ' + self._pymodbus_major)
-
         try:
             _ids_mit_werten = []
             werte = []
             id_aktuell = _bereich[0]
             if _datentyp == 'register':  # register lesen
                 self.logger.debug('Lese Registerbereich ' + str(_bereich[0]) + ' - ' + str(_bereich[1]))
-                if self._pymodbus_major == '2':
-                    werte = self._modbus.read_holding_registers(
-                        _bereich[0], _bereich[1] - _bereich[0] + 1, unit=self._modbus_trovis_address
-                    )
-                else:
-                    werte = self._modbus.read_holding_registers(
-                        _bereich[0], _bereich[1] - _bereich[0] + 1, slave=self._modbus_trovis_address
-                    )
+                werte = self._modbus.read_holding_registers(
+                    _bereich[0], count=_bereich[1] - _bereich[0] + 1, slave=self._modbus_trovis_address
+                )
                 for wert in werte.registers:
                     if self.getKeyFromID(id_aktuell, 'register') != -1:
                         _ids_mit_werten.append([id_aktuell, wert])
                     id_aktuell += 1
             else:  # coils lesen
                 self.logger.debug('Lese Coilsbereich ' + str(_bereich[0]) + ' - ' + str(_bereich[1]))
-                if self._pymodbus_major == '2':
-                    werte = self._modbus.read_coils(
-                        _bereich[0], _bereich[1] - _bereich[0] + 1, unit=self._modbus_trovis_address
-                    )
-                else:
-                    werte = self._modbus.read_coils(
-                        _bereich[0], _bereich[1] - _bereich[0] + 1, slave=self._modbus_trovis_address
-                    )
+                werte = self._modbus.read_coils(
+                    _bereich[0], count=_bereich[1] - _bereich[0] + 1, slave=self._modbus_trovis_address
+                )
                 for wert in werte.bits:
                     if self.getKeyFromID(id_aktuell, 'coil') != -1:
                         _ids_mit_werten.append([id_aktuell, int(wert)])
