@@ -989,7 +989,7 @@ class SMA(SmartPlugin):
             local_time
             + local_time
             + local_time
-            + round((datetime.now() - self.shtime.utcnow()).total_seconds()).to_bytes(4, byteorder='little')
+            + int(self.shtime.now().utcoffset().total_seconds()).to_bytes(4, byteorder='little', signed=True)
             + local_time
             + bytes([0x01, 0x00, 0x00, 0x00])
         )
