@@ -74,10 +74,6 @@ class Milight(SmartPlugin):
 
         """
         super().__init__()
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         #   self.param1 = self.get_parameter_value('param1')

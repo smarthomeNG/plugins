@@ -53,11 +53,6 @@ class Casambi(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
         self.session = requests.Session()
         self.exit_event = threading.Event()
         self._rx_items = {}

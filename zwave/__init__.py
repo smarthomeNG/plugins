@@ -25,7 +25,6 @@
 
 from lib.model.smartplugin import SmartPlugin
 
-import logging
 import os
 import time
 
@@ -38,7 +37,6 @@ try:
 except Exception:
     REQUIRED_PACKAGE_IMPORTED = False
 
-from bin.smarthome import VERSION
 
 ITEMS = 'items'
 ITEM = 'item'
@@ -73,9 +71,6 @@ class ZWave(SmartPlugin):
         """
 
         super().__init__()
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         try:
             self._sh = sh

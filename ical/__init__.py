@@ -19,7 +19,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import datetime
 import os
 import errno
@@ -29,7 +28,6 @@ import dateutil.relativedelta
 from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
 from lib.network import Http, Network
-from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
@@ -41,8 +39,6 @@ class iCal(SmartPlugin):
 
     def __init__(self, smarthome):
         super().__init__()
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         try:
             self.shtime = Shtime.get_instance()
             self.handle_login = self.get_parameter_value('handle_login')

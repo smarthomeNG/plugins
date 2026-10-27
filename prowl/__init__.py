@@ -22,7 +22,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 from collections import OrderedDict
 import urllib.parse
 import http.client
@@ -51,11 +50,6 @@ class Prowl(SmartPlugin):
         super().__init__()
 
         self._prowl_items = {}
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._apikey = self.get_parameter_value('apikey')
 

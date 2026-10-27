@@ -83,10 +83,6 @@ class DLMS(SmartPlugin, conversion.Conversion):
         Initializes the DLMS plugin
         The parameters are retrieved from get_parameter_value(parameter_name)
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.debug(f'init {__name__}')
         self._init_complete = False

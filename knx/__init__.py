@@ -95,11 +95,6 @@ class KNX(SmartPlugin):
         self.port = self.get_parameter_value('port')
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
 
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
         name = 'plugins.' + self.get_fullname()
         self._client = Tcp_client(
             name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30

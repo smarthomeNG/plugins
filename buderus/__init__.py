@@ -19,7 +19,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import base64
 import json
 import binascii
@@ -48,11 +47,6 @@ class Buderus(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.info('Init Buderus')
         # Exit if the required package(s) could not be imported

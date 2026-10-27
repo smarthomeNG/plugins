@@ -23,7 +23,6 @@
 #
 #########################################################################
 
-import logging
 from lib.model.smartplugin import SmartPlugin
 
 from pymodbus.client import ModbusTcpClient
@@ -250,10 +249,6 @@ class HeliosTCP(SmartPlugin):
 
     def __init__(self, sh):
         super().__init__()
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._helios_ip = self.get_parameter_value('helios_ip')
         self._client = ModbusTcpClient(self._helios_ip)

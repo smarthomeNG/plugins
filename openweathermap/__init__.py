@@ -22,7 +22,6 @@
 #
 #########################################################################
 
-import logging
 import requests
 import json
 import math
@@ -33,7 +32,6 @@ from pprint import pformat
 
 from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
-from bin.smarthome import VERSION
 
 from .webif import WebInterface
 
@@ -106,8 +104,6 @@ class OpenWeatherMap(SmartPlugin):
 
         self.shtime = Shtime.get_instance()
 
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
         if (
             self.get_parameter_value('latitude') != ''

@@ -31,7 +31,6 @@ from .webif import WebInterface
 from lib.item import Items
 
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
 
 REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
 

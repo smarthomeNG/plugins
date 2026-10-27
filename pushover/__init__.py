@@ -35,10 +35,6 @@ class Pushover(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         self._apiKey = self.get_parameter_value('apiKey')
         self._userKey = self.get_parameter_value('userKey')
         self._device = self.get_parameter_value('device')

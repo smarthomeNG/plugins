@@ -22,7 +22,6 @@
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf, Modules
 
-from bin.smarthome import VERSION
 
 import threading
 import logging
@@ -56,9 +55,6 @@ class Snmp(SmartPlugin):
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
         super().__init__()
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.debug('init {}'.format(__name__))
 

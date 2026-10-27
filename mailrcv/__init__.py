@@ -19,12 +19,10 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import imaplib
 import email
 
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
 
 
 class IMAP(SmartPlugin):
@@ -43,9 +41,6 @@ class IMAP(SmartPlugin):
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = None
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
     def _connect(self):
         if self._tls:

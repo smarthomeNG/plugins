@@ -22,7 +22,6 @@
 #
 #########################################################################
 
-import logging
 import urllib.request
 import json
 import requests
@@ -31,7 +30,6 @@ import time
 from lib.model.mqttplugin import MqttPlugin, threading
 from .webif import NukiWebServiceInterface, WebInterface
 from lib.item import Items
-from bin.smarthome import VERSION
 from lib.utils import Utils
 from lib.module import Modules
 
@@ -53,9 +51,6 @@ class Nuki(MqttPlugin):
         global nuki_action_items
         global nuki_door_items
         global nuki_battery_items
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._mode = self.get_parameter_value('mode')
         self._base_url = (

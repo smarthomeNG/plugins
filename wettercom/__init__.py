@@ -18,12 +18,10 @@
 #
 
 import hashlib
-import logging
 import datetime
 import threading
 import xml.etree.cElementTree
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
 from lib.network import Http
 
 
@@ -34,8 +32,6 @@ class wettercom(SmartPlugin):
 
     def __init__(self, smarthome):
         super().__init__()
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         self._project = self.get_parameter_value('project')
         self._apikey = self.get_parameter_value('apikey')
         self.lock = threading.Lock()

@@ -22,7 +22,6 @@
 #  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
 #
 #
-import logging
 import threading
 import struct
 import binascii
@@ -53,7 +52,6 @@ from miio.discovery import Discovery
 from lib.model.smartplugin import SmartPlugin
 from lib.module import Modules
 from lib.item import Items
-from bin.smarthome import VERSION
 
 
 class Robvac(SmartPlugin):
@@ -66,8 +64,6 @@ class Robvac(SmartPlugin):
         self._token = self.get_parameter_value('token')
         self._cycle = self.get_parameter_value('read_cycle')
         self._discovererror = 0
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.messages = {}
         self.found = False

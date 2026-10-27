@@ -48,10 +48,6 @@ class Russound(SmartPlugin):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         super().__init__()
         self.host = self.get_parameter_value('host')

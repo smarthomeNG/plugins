@@ -27,7 +27,6 @@
 import ctypes
 import os
 import time
-import logging
 import threading
 
 from lib.module import Modules
@@ -41,11 +40,6 @@ class LOGO(SmartPlugin):
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')

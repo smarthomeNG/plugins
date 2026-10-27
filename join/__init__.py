@@ -21,7 +21,6 @@
 #
 #########################################################################
 
-import logging
 import requests
 from lib.model.smartplugin import SmartPlugin
 
@@ -36,11 +35,6 @@ class Join(SmartPlugin):
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._api_key = self.get_parameter_value('api_key')
         self._device_id = self.get_parameter_value('device_id')
