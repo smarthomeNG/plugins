@@ -34,7 +34,9 @@ import logging
 from collections import defaultdict
 from typing import Any, TypedDict
 
-import ruamel.yaml as yaml
+import io
+
+from ruamel.yaml import YAML
 
 from ..clusters import attribute_info, cluster_name, cluster_struct, decode_value, device_type_name
 
@@ -150,18 +152,17 @@ def _clusters_by_endpoint(node: MatterNode) -> dict[int, set[int]]:
     return clusters
 
 
-class _OrderPreservingSafeDumper(yaml.SafeDumper):
-    """SafeDumper that keeps dict insertion order - ruamel's SafeDumper sorts plain dict keys by default."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.sort_base_mapping_type_on_output = False
-
-
 def _dump_yaml(data: dict[str, Any]) -> str:
-    return yaml.dump(
-        data, Dumper=_OrderPreservingSafeDumper, indent=4, width=768, allow_unicode=True, default_flow_style=False
-    )
+    """Dump *data* as block style YAML in dict insertion order (ruamel's safe dumper sorts keys by default)."""
+    yaml = YAML(typ='safe', pure=True)
+    yaml.sort_base_mapping_type_on_output = False
+    yaml.indent(mapping=4, sequence=4, offset=0)
+    yaml.width = 768
+    yaml.allow_unicode = True
+    yaml.default_flow_style = False
+    stream = io.StringIO()
+    yaml.dump(data, stream)
+    return stream.getvalue()
 
 
 def _instance_attr(attr: str, instance: str) -> str:

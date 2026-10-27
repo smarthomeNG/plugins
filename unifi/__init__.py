@@ -23,6 +23,7 @@
 #########################################################################
 
 from typing import Pattern, Dict, Union
+import io
 import re
 from jinja2 import Environment, FileSystemLoader
 import cherrypy
@@ -32,7 +33,7 @@ from .webif import WebInterface
 from lib.utils import Utils
 from plugins.unifi.ubiquiti.unifi import API as UniFiAPI
 from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
-import ruamel.yaml as yaml
+from ruamel.yaml import YAML
 from requests.exceptions import ConnectionError
 import json
 import traceback
@@ -267,9 +268,14 @@ class UniFiControllerClientModel:
                 child_data = self._get_device_node_item(dev)
                 model['unifi_network']['devices'][child_data[0]] = child_data[1]
 
-            return yaml.dump(
-                model, Dumper=yaml.SafeDumper, indent=4, width=768, allow_unicode=True, default_flow_style=False
-            )
+            dumper = YAML(typ='safe', pure=True)
+            dumper.indent(mapping=4, sequence=4, offset=0)
+            dumper.width = 768
+            dumper.allow_unicode = True
+            dumper.default_flow_style = False
+            stream = io.StringIO()
+            dumper.dump(model, stream)
+            return stream.getvalue()
         except Exception:
             return '{}\n\nRaw data:\n{}'.format(traceback.format_exc(), json.dumps(hr, indent=4))
 
