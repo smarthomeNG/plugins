@@ -64,20 +64,18 @@ class WithingsHealth(SmartPlugin):
         self.alive = False
 
     def _store_tokens(self, credentials2):
+        token_expiry = int(self.shtime.utcnow().timestamp()) + int(credentials2.expires_in)
         self.logger.debug(
             'Updating tokens to items: access_token: {} token_expires_in: {} token_expiry: {} token_type: {} refresh_token: {}'.format(
                 credentials2.access_token,
                 credentials2.expires_in,
-                int((self.shtime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
-                + int(credentials2.expires_in),
+                token_expiry,
                 credentials2.token_type,
                 credentials2.refresh_token,
             )
         )
         self.get_item('access_token')(credentials2.access_token)
-        self.get_item('token_expiry')(
-            int((self.shtime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(credentials2.expires_in)
-        )
+        self.get_item('token_expiry')(token_expiry)
         self.get_item('token_type')(credentials2.token_type)
         self.get_item('refresh_token')(credentials2.refresh_token)
 
