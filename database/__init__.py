@@ -1804,15 +1804,16 @@ class Database(SmartPlugin):
 
     def adminui_url_root(self):
         """
-        Base URL of the shngadmin frontend, for building links from the web interface
-        into shngadmin - reuses the admin module's own url_root rather than a
-        separate plugin parameter, since that module already resolves it from the
-        http module's ip/port and the admin module's suburl.
+        Path of the shngadmin frontend on this server, for links from the web interface into shngadmin
 
-        :return: base URL (no trailing slash), or '' if the admin module isn't loaded
+        The web interface and shngadmin are served by the same http module, so a server-relative link keeps
+        the host name or address the web interface was opened with.
+
+        :return: path without trailing slash ('' if shngadmin is served at the root), or None if the admin
+                 module isn't loaded
         """
         mod_admin = Modules.get_instance().get_module('admin')
-        return mod_admin.url_root if mod_admin else ''
+        return mod_admin.url_path if mod_admin else None
 
     def cleanup(self):
         """See MaintenanceManager.cleanup() (maintenance.py)."""
