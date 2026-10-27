@@ -11,7 +11,7 @@ plugin:
     keywords: iot device logitechmediaserver lms sdp av
     version: '2.0.0'
     sh_minversion: '1.9.5'
-    py_minversion: '3.7'
+#   py_minversion:
     sdp_minversion: '2.0.0'
     multi_instance: false
     restartable: true

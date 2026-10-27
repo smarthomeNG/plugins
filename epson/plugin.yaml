@@ -9,7 +9,7 @@ plugin:
     version: 1.0.0
     sh_minversion: '1.9.5'
     sdp_minversion: '2.0.0'
-    py_minversion: '3.7'
+#   py_minversion:
     multi_instance: false
     restartable: true
     classname: epson

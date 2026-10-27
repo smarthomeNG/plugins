@@ -20,7 +20,6 @@
 #########################################################################
 
 import logging
-import sys
 import json
 import requests
 import magic
@@ -103,27 +102,14 @@ class Pushbullet(SmartPlugin):
             if apikey is None:
                 apikey = self._apikey
 
-            if sys.version_info < (3, 5):
-                upload_request_response = requests.post(
-                    self._upload_apiurl,
-                    data=json.dumps(
-                        {
-                            'file_name': os.path.basename(filepath),
-                            'file_type': magic.from_file(filepath, mime=True).decode('UTF-8'),
-                        }
-                    ),
-                    headers=headers,
-                    auth=(apikey, ''),
-                )
-            else:
-                upload_request_response = requests.post(
-                    self._upload_apiurl,
-                    data=json.dumps(
-                        {'file_name': os.path.basename(filepath), 'file_type': magic.from_file(filepath, mime=True)}
-                    ),
-                    headers=headers,
-                    auth=(apikey, ''),
-                )
+            upload_request_response = requests.post(
+                self._upload_apiurl,
+                data=json.dumps(
+                    {'file_name': os.path.basename(filepath), 'file_type': magic.from_file(filepath, mime=True)}
+                ),
+                headers=headers,
+                auth=(apikey, ''),
+            )
 
             if self._is_response_ok(upload_request_response):
                 data = upload_request_response.json()

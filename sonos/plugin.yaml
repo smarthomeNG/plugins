@@ -14,7 +14,7 @@ plugin:
 
   version: 1.8.11                 # Plugin version
   sh_minversion: '1.10.0.3'      # minimum shNG version to use this plugin
-  py_minversion: '3.8'           # minimum Python version to use for this plugin
+# py_minversion:           # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
   restartable: yes
   classname: Sonos               # class containing the plugin
