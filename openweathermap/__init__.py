@@ -886,7 +886,7 @@ class OpenWeatherMap(SmartPlugin):
                 if owm_raw == ds_key:
                     self._raw_items[item.property.path] = (ds_key, item)
                     return
-            self.logger.warn(f"Unmatched owm_raw_file name '{owm_raw}'")
+            self.logger.warning(f"Unmatched owm_raw_file name '{owm_raw}'")
             return
 
         owm_pfx = self.get_iattr_value(item.conf, 'owm_match_prefix')

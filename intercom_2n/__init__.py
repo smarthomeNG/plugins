@@ -74,7 +74,7 @@ class Intercom2n(SmartPlugin):
         ]
         self.registered_events = {}
         self.get_event_thread = threading.Thread(target=self.get_events)
-        self.get_event_thread.setDaemon(True)
+        self.get_event_thread.daemon = True
 
     def get_events(self):
 

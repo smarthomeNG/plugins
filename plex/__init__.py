@@ -60,7 +60,7 @@ class Plex(SmartPlugin):
 
     def notify(self, title, message, image='info'):
         if image not in self._images:
-            self.logger.warn('Plex image must be: {}'.format(', '.join(self._images)))
+            self.logger.warning('Plex image must be: {}'.format(', '.join(self._images)))
         else:
             data = {
                 'jsonrpc': '2.0',

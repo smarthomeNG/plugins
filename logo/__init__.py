@@ -172,7 +172,7 @@ class LOGO(SmartPlugin):
         self.close()
 
     def _write_read_loop(self):
-        threading.currentThread().name = self.get_instance_name() + 'cycle'  #'logo_cycle'
+        threading.current_thread().name = self.get_instance_name() + 'cycle'  #'logo_cycle'
         self.logger.debug('{0}: Starting write-read cycle'.format(self.get_instance_name()))
         while self.alive:
             start = time.time()

@@ -148,7 +148,7 @@ class Kostal(SmartPlugin):
         if self.has_iattr(item.conf, 'kostal'):
             setting = self.get_iattr_value(item.conf, 'kostal')
             if setting in self._deprecated:
-                self.logger.warn(
+                self.logger.warning(
                     'Kostal: Using deprecated setting {}, please change to {}'.format(
                         setting, self._deprecated[setting]
                     )

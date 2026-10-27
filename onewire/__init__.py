@@ -265,7 +265,7 @@ class OneWire(SmartPlugin):
         Will be triggered once by scheduler
         This runs endless until the plugin stops
         """
-        threading.currentThread().name = 'onewire-io'
+        threading.current_thread().name = 'onewire-io'
         self.logger.debug('Starting I/O detection')
         while self.alive:
             if self.log_counter_io_loop_time == -1 or self.log_counter_io_loop_time > 0:
@@ -353,7 +353,7 @@ class OneWire(SmartPlugin):
         """
         This is once called after detection of a iButton busmaster and runs endless until plugin stops
         """
-        threading.currentThread().name = 'onewire-ibutton'
+        threading.current_thread().name = 'onewire-ibutton'
         self.logger.debug('Starting iButton detection')
         while self.alive:
             self._ibutton_cycle()

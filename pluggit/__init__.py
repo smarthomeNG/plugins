@@ -23,7 +23,7 @@
 #
 #########################################################################
 
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import threading
 import logging
@@ -486,13 +486,13 @@ class Pluggit(SmartPlugin):
             conversionValue = not bool(value)
 
         if conversionType == 'ToDateTime':
-            conversionValue = datetime.utcfromtimestamp(value)
+            conversionValue = datetime.fromtimestamp(value, timezone.utc).replace(tzinfo=None)
 
         if conversionType == 'ToDate':
-            conversionValue = datetime.utcfromtimestamp(value).date()
+            conversionValue = datetime.fromtimestamp(value, timezone.utc).replace(tzinfo=None).date()
 
         if conversionType == 'ToTime':
-            conversionValue = datetime.utcfromtimestamp(value).time()
+            conversionValue = datetime.fromtimestamp(value, timezone.utc).replace(tzinfo=None).time()
 
         if conversionType == 'ToString':
             if pluggitKey == 'prmCurrentBLState':
@@ -606,7 +606,7 @@ class Pluggit(SmartPlugin):
                             else:
                                 self.logger.warning('Fehler bei der Umwandlung von Item {}.'.format(item))
                         else:
-                            self.logger.warn(
+                            self.logger.warning(
                                 'Umwandlung von {} zu {} bei Item {} nicht zulässig.'.format(
                                     pluggit_paramList[self.DICT_VALUE_TYPE], convType, item
                                 )

@@ -242,7 +242,7 @@ class SubscriptionHandler(object):
                 try:
                     self._event.auto_renew_fail = renew_error_callback
                     self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
-                    self._thread.setDaemon(True)
+                    self._thread.daemon = True
                     self._thread.start()
                     self.logger.debug('start subscribe finished successfully')
                     if not self._thread.is_alive():

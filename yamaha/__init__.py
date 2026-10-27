@@ -110,7 +110,7 @@ class Yamaha(SmartPlugin):
             # self.logger.debug("Received '{}' from {}".format(notification,addr))
             if self.mcast_service in notification:
                 if host not in list(self._yamaha_rxv.keys()):
-                    self.logger.warn('Yamaha received notify from unknown host {}'.format(host))
+                    self.logger.warning('Yamaha received notify from unknown host {}'.format(host))
                 else:
                     self.logger.info('Yamaha multicast received {} bytes from {}'.format(len(data), host))
                     self.logger.debug(data)
@@ -129,7 +129,7 @@ class Yamaha(SmartPlugin):
                                 elif event.lower() in self._yamaha_ignore_cmds:
                                     self.logger.debug('Yamaha ignoring command {}.'.format(event))
                                 else:
-                                    self.logger.warn('Yamaha unsupported notify command.')
+                                    self.logger.warning('Yamaha unsupported notify command.')
                 self.logger.debug('Yamaha sending ack to {}:{}'.format(host, port))
                 self.sock.sendto(b'ack', addr)
         else:
@@ -371,12 +371,12 @@ class Yamaha(SmartPlugin):
             response = res.text
             del res
             if response == '':
-                self.logger.warn('No response received.')
+                self.logger.warning('No response received.')
             else:
                 self.logger.debug("Response received: '{}'".format(response))
             return response
         else:
-            self.logger.warn('No payload given')
+            self.logger.warning('No payload given')
             return None
 
     def _lookup_host(self, item):
