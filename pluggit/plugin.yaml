@@ -7,7 +7,7 @@ plugin:
         en: ''
     maintainer: 'Cannon'
 #    tester:                        # Who tests this plugin?
-#    state:
+    state: develop
     keywords: modbus
 #    documentation:
 #    support:

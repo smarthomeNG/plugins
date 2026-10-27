@@ -9,7 +9,7 @@ plugin:
 
     maintainer: pfischi
     tester: pfischi
-    state: ready
+    state: defunct
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/harmony/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1046500-harmony-hub-plugin
 

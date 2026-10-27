@@ -16,7 +16,7 @@ plugin:
     sh_minversion: '1.6'              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
-    restartable: yes
+    restartable: true
     classname: Indego4shNG          # class containing the plugin
 
 

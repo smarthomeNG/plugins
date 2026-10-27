@@ -16,7 +16,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.11             # minimum python version for this plugin  
     multi_instance: False           # plugin supports multi instance
-    restartable: yes
+    restartable: true
     classname: Casambi_bt           # class containing the plugin
 
 parameters:
