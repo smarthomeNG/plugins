@@ -10,7 +10,7 @@ plugin:
     state: develop
     keywords: iot device logitechmediaserver lms sdp av
     version: '2.0.0'
-    sh_minversion: '1.9.5'
+    sh_minversion: '2.0.0-dev.2'
 #   py_minversion:
     sdp_minversion: '2.0.0'
     multi_instance: false

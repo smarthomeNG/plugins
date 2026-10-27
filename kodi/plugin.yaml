@@ -7,7 +7,7 @@ plugin:
     state: ready
     keywords: iot device mediacenter kodi xmbc sdp
     version: 1.7.3
-    sh_minversion: '1.9.5'
+    sh_minversion: '2.0.0-dev.2'
 #   py_minversion:
     sdp_minversion: '2.0.0'
     multi_instance: true

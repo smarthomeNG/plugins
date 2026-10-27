@@ -7,7 +7,7 @@ plugin:
     state: develop
     keywords: iot device av epson sdp
     version: 1.0.0
-    sh_minversion: '1.9.5'
+    sh_minversion: '2.0.0-dev.2'
     sdp_minversion: '2.0.0'
 #   py_minversion:
     multi_instance: false
