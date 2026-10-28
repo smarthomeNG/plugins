@@ -457,6 +457,7 @@ class Database(SmartPlugin):
         self._dump(True)
         self._db.close()
         self._db_maint.close()
+        self.last_maint_connect_time = 0  # a deliberate close is no failed connection to throttle
 
     def parse_item(self, item):
         """
@@ -680,7 +681,12 @@ class Database(SmartPlugin):
         # before calling this hook), so pass the item, not the string.
         new_id = self.id(item, create=True)
         if old_id is not None and old_id != new_id:
-            self.reassign_orphaned_id(old_id, new_id)
+            failure = self.reassign_orphaned_id(old_id, new_id)
+            if isinstance(failure, Exception):
+                self.logger.error(
+                    f"rename_item: the history of '{old_path}' (id {old_id}) was not moved to '{new_path}' "
+                    f'(id {new_id}) and stays orphaned: {failure!r}'
+                )
 
         return True
 

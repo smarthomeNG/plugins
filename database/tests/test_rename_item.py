@@ -8,6 +8,8 @@ self.plugin() (the test fixture) already calls parse_item() on every item
 in test_items.yaml during setup.
 """
 
+from unittest import mock
+
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -101,6 +103,35 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         values = sorted(v[4] for v in plugin.readLogs(new_id))
         self.assertEqual(values, [float(i) for i in range(10)], 'all 10 rows across 4 chunks must be reassigned')
         self.assertIsNone(old_id, 'orphaned id must be fully drained and removed, not left with leftover rows')
+
+    def test_rename_right_after_a_stop_run_cycle_still_moves_the_history(self):
+        # Items.rename_item() brackets a rename with stop()/run(); a second rename soon after the first must not lose the history
+        plugin = self.plugin()
+        item = self.sh.items.return_item('main.num')
+        self.create_log(plugin, 'main.num', [(0, 1, 1.0), (1, None, 2.0)])
+        plugin._db.commit()
+        plugin.stop()
+        plugin.run()
+        plugin.stop()
+
+        item._path = 'main.renamed'
+        plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        new_id = plugin.id('main.renamed', create=False)
+        self.assertLessEqual({1.0, 2.0}, {v[4] for v in plugin.readLogs(new_id)})
+
+    def test_rename_logs_an_error_when_the_history_cannot_be_moved(self):
+        plugin = self.plugin()
+        item = self.sh.items.return_item('main.num')
+        self.create_item(plugin, 'main.num')
+
+        item._path = 'main.renamed'
+        with mock.patch.object(plugin, '_ensure_db_maint', return_value=False):
+            with self.assertLogs(plugin.logger, level='ERROR') as logs:
+                plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        self.assertIn('main.num', logs.output[0])
+        self.assertIn('main.renamed', logs.output[0])
 
     def test_reassign_orphaned_id_uses_transaction(self):
         # Regression: reassign_orphaned_id() used to open a raw cursor via
