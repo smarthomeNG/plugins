@@ -121,9 +121,6 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         item._path = 'main.renamed'
         plugin.rename_item(item, 'main.num', 'main.renamed')
 
-        # >=1, not ==1: reassign_orphaned_id() also calls build_orphanlist()
-        # at the end to refresh the list, which itself goes through
-        # self._db_maint.transaction() too - both calls are expected.
         self.assertGreaterEqual(len(calls), 1, 'reassign_orphaned_id() must go through self._db_maint.transaction()')
         self.assertIsNone(plugin.id('main.num', create=False), 'sanity: reassignment must still have happened')
         self.assertNotEqual(old_id, plugin.id('main.renamed', create=False))
