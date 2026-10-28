@@ -1,5 +1,6 @@
 from unittest import mock
 
+from plugins.database.constants import COL_ITEM_NAME
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -133,8 +134,7 @@ class TestDatabaseOrphans(TestDatabaseBase):
             return orig_transaction(*a, **kw)
 
         with mock.patch.object(plugin._db_maint, 'transaction', side_effect=spy_transaction):
-            with mock.patch.object(plugin, 'build_orphanlist'):
-                plugin.reassign_orphaned_id(orphan_id, new_id)
+            plugin.reassign_orphaned_id(orphan_id, new_id)
 
         self.assertEqual(rows, plugin.readLogCount(new_id))
         self.assertEqual(0, plugin.readLogCount(orphan_id))
@@ -142,3 +142,46 @@ class TestDatabaseOrphans(TestDatabaseBase):
         self.assertGreaterEqual(
             len(calls), 4, 'each UPDATE chunk and the final item delete must run as separate transactions'
         )
+
+    def test_reassign_orphaned_id_does_not_rescan_the_item_table(self):
+        # a subtree rename reassigns once per renamed item: a rebuild each time costs items x orphans
+        plugin = self.plugin()
+        orphan_id = plugin.insertItem('old.path')
+        new_id = self.create_item(plugin, 'main.num')
+        plugin.insertItem('stale.one')
+        plugin.build_orphanlist()
+
+        with mock.patch.object(plugin, 'readItems', wraps=plugin.readItems) as read_items:
+            plugin.reassign_orphaned_id(orphan_id, new_id)
+
+        read_items.assert_not_called()
+
+    def test_reassign_orphaned_id_keeps_unrelated_orphans_listed(self):
+        plugin = self.plugin()
+        orphan_id = plugin.insertItem('old.path')
+        new_id = self.create_item(plugin, 'main.num')
+        stale_id = plugin.insertItem('stale.one')
+        plugin.build_orphanlist()
+        self.assertCountEqual(['old.path', 'stale.one'], plugin.orphanlist)
+
+        plugin.reassign_orphaned_id(orphan_id, new_id)
+
+        self.assertEqual(['stale.one'], plugin.orphanlist)
+        self.assertEqual(['stale.one'], [row[COL_ITEM_NAME] for row in plugin.orphanitemlist])
+        self.assertIn(stale_id, plugin._orphan_logcount)
+        self.assertNotIn(orphan_id, plugin._orphan_logcount)
+
+    def test_rename_into_a_leftover_orphan_row_unlists_it(self):
+        # the leftover row is listed as orphan until the rename gives it a live item
+        plugin = self.plugin()
+        item = self.sh.items.return_item('main.num')
+        self.create_item(plugin, 'main.num')
+        plugin.insertItem('main.renamed')
+        plugin.build_orphanlist()
+        self.assertEqual(['main.renamed'], plugin.orphanlist)
+
+        item._path = 'main.renamed'
+        plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        self.assertEqual([], plugin.orphanlist)
+        self.assertEqual([], plugin.orphanitemlist)

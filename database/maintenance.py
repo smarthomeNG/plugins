@@ -22,7 +22,7 @@ import datetime
 import threading
 import time
 
-from .constants import COL_ITEM_NAME, BufferEntry, QUALITY_VALID
+from .constants import COL_ITEM_ID, COL_ITEM_NAME, BufferEntry, QUALITY_VALID
 
 
 class MaintenanceManager:
@@ -170,11 +170,25 @@ class MaintenanceManager:
                 )
             plugin._evict_item_caches(id=orphan_id)
             log_info(f'reassigned orphaned id {orphan_id} to new id {to}')
-            log_debug('rebuilding orphan list')
-            plugin.build_orphanlist()
+            self._unlist_orphans(orphan_id, to)
         except Exception as e:
             plugin._log_db_exception(e, f'error on reassigning id {orphan_id} to {to}: {e}', db=plugin._db_maint)
             return e
+
+    def _unlist_orphans(self, *item_ids):
+        """
+        Drop the given item ids from the orphan bookkeeping (orphanitemlist, orphanlist, _orphan_logcount).
+
+        Cheaper than build_orphanlist() (a full item-table read plus a log count per orphan) when the
+        affected ids are known; an id that is not listed is ignored.
+        """
+        plugin = self._plugin
+        ids = set(item_ids)
+        names = {row[COL_ITEM_NAME] for row in plugin.orphanitemlist if row[COL_ITEM_ID] in ids}
+        plugin.orphanitemlist[:] = [row for row in plugin.orphanitemlist if row[COL_ITEM_ID] not in ids]
+        plugin.orphanlist[:] = [name for name in plugin.orphanlist if name not in names]
+        for item_id in ids:
+            plugin._orphan_logcount.pop(item_id, None)
 
     def delete_orphan(self, item_path):
         """

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from lib.db import NO_CURSOR
 from plugins.database.store import ItemStore, LogStore
-from plugins.database.constants import BufferEntry, QUALITY_VALID, QUALITY_NO_DATA, QUALITY_INVALID
+from plugins.database.constants import COL_ITEM_ID, BufferEntry, QUALITY_VALID, QUALITY_NO_DATA, QUALITY_INVALID
 from plugins.database.utils import to_timestamp
 
 
@@ -321,6 +321,44 @@ class TestItemStoreInsertOnPsycopg(unittest.TestCase):
 
         self.assertIsNone(self.store.find('gone'))
         self.assertEqual(0, log_store.count(item_id), 'delete() must remove the log rows too, not just the item row')
+
+    def test_rename_changes_the_name_and_keeps_id_and_logs(self):
+        item_id = self.store.insert('old')
+        log_store = LogStore(self.db, TABLE_NAMES)
+        log_store.insert(item_id, BufferEntry(time=0, duration=None, value=1.0, quality=QUALITY_VALID), 'num', 0)
+
+        self.assertTrue(self.store.rename(item_id, 'new'))
+
+        self.assertIsNone(self.store.find('old'))
+        self.assertEqual(item_id, self.store.find('new')[COL_ITEM_ID])
+        self.assertEqual(1, log_store.count(item_id))
+
+    def test_rename_leaves_everything_as_it_is_if_the_name_belongs_to_another_row(self):
+        item_id = self.store.insert('old')
+        other_id = self.store.insert('taken')
+
+        self.assertFalse(self.store.rename(item_id, 'taken'))
+
+        self.assertEqual(item_id, self.store.find('old')[COL_ITEM_ID])
+        self.assertEqual(other_id, self.store.find('taken')[COL_ITEM_ID])
+
+    def test_rename_to_the_own_name_succeeds(self):
+        item_id = self.store.insert('same')
+
+        self.assertTrue(self.store.rename(item_id, 'same'))
+
+    def test_rename_own_cur_path_uses_transaction(self):
+        item_id = self.store.insert('old')
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.store.rename(item_id, 'new')
+        self.assertEqual(1, len(calls), 'rename() without cur= must go through self._db.transaction()')
 
     def test_delete_own_cur_path_uses_transaction(self):
         # delete() must go through the same self._db.transaction()

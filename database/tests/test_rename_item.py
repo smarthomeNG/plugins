@@ -8,6 +8,9 @@ self.plugin() (the test fixture) already calls parse_item() on every item
 in test_items.yaml during setup.
 """
 
+from unittest import mock
+
+from plugins.database.constants import BufferEntry
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -47,6 +50,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
         old_id = self.create_item(plugin, 'main.num')
+        plugin.insertItem('main.renamed')
 
         item._path = 'main.renamed'
         plugin.rename_item(item, 'main.num', 'main.renamed')
@@ -65,6 +69,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
         self.create_log(plugin, 'main.num', [(0, 1, 1.0), (1, None, 2.0)])
+        plugin.insertItem('main.renamed')
         plugin._db.commit()  # reassign_orphaned_id() uses the separate _db_maint
         # connection — its writes would otherwise block on this connection's
         # uncommitted insert (SQLite allows only one writer at a time).
@@ -91,6 +96,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         plugin.max_reassign_logentries = 3
         item = self.sh.return_item('main.num')
         self.create_log(plugin, 'main.num', [(i, i + 1, float(i)) for i in range(10)])
+        plugin.insertItem('main.renamed')
         plugin._db.commit()
 
         item._path = 'main.renamed'
@@ -102,6 +108,36 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         self.assertEqual(values, [float(i) for i in range(10)], 'all 10 rows across 4 chunks must be reassigned')
         self.assertIsNone(old_id, 'orphaned id must be fully drained and removed, not left with leftover rows')
 
+    def test_rename_right_after_a_stop_run_cycle_still_moves_the_history(self):
+        # Items.rename_item() brackets a rename with stop()/run(); a second rename soon after the first must not lose the history
+        plugin = self.plugin()
+        item = self.sh.items.return_item('main.num')
+        self.create_log(plugin, 'main.num', [(0, 1, 1.0), (1, None, 2.0)])
+        plugin._db.commit()
+        plugin.stop()
+        plugin.run()
+        plugin.stop()
+
+        item._path = 'main.renamed'
+        plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        new_id = plugin.id('main.renamed', create=False)
+        self.assertLessEqual({1.0, 2.0}, {v[4] for v in plugin.readLogs(new_id)})
+
+    def test_rename_logs_an_error_when_the_history_cannot_be_moved(self):
+        plugin = self.plugin()
+        item = self.sh.items.return_item('main.num')
+        self.create_item(plugin, 'main.num')
+        plugin.insertItem('main.renamed')
+
+        item._path = 'main.renamed'
+        with mock.patch.object(plugin, '_ensure_db_maint', return_value=False):
+            with self.assertLogs(plugin.logger, level='ERROR') as logs:
+                plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        self.assertIn('main.num', logs.output[0])
+        self.assertIn('main.renamed', logs.output[0])
+
     def test_reassign_orphaned_id_uses_transaction(self):
         # Regression: reassign_orphaned_id() used to open a raw cursor via
         # self._db_maint.cursor() with no lock() call anywhere - no
@@ -109,6 +145,7 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
         old_id = self.create_item(plugin, 'main.num')
+        plugin.insertItem('main.renamed')
 
         calls = []
         orig_transaction = plugin._db_maint.transaction
@@ -121,9 +158,71 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         item._path = 'main.renamed'
         plugin.rename_item(item, 'main.num', 'main.renamed')
 
-        # >=1, not ==1: reassign_orphaned_id() also calls build_orphanlist()
-        # at the end to refresh the list, which itself goes through
-        # self._db_maint.transaction() too - both calls are expected.
         self.assertGreaterEqual(len(calls), 1, 'reassign_orphaned_id() must go through self._db_maint.transaction()')
         self.assertIsNone(plugin.id('main.num', create=False), 'sanity: reassignment must still have happened')
         self.assertNotEqual(old_id, plugin.id('main.renamed', create=False))
+
+
+class TestRenameKeepsTheDatabaseId(TestDatabaseBase):
+    """With no database row under the new name, a rename only changes the name of the item row: id and log rows stay."""
+
+    def _rename(self, plugin, old, new):
+        item = self.sh.items.return_item(old)
+        item._path = new
+        return item, plugin.rename_item(item, old, new)
+
+    def test_the_item_keeps_its_id_under_the_new_name(self):
+        plugin = self.plugin()
+        old_id = self.create_item(plugin, 'main.num')
+
+        self._rename(plugin, 'main.num', 'main.renamed')
+
+        self.assertEqual(old_id, plugin.id('main.renamed', create=False))
+        self.assertEqual('main.renamed', plugin.readItem(old_id)[1])  # COL_ITEM_NAME
+        self.assertIsNone(plugin.id('main.num', create=False))
+
+    def test_a_row_already_under_the_new_name_receives_the_history(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [(0, 1, 1.0)])
+        leftover_id = plugin.insertItem('main.renamed')
+        plugin.insertLog(leftover_id, time=self.t(5), duration=None, val=9.0, it='num')
+        plugin._db.commit()
+
+        self._rename(plugin, 'main.num', 'main.renamed')
+
+        self.assertEqual(leftover_id, plugin.id('main.renamed', create=False))
+        self.assertEqual([1.0, 9.0], sorted(v[4] for v in plugin.readLogs(leftover_id)))
+        self.assertEqual(1, [row[1] for row in plugin.readItems()].count('main.renamed'))
+        self.assertIsNone(plugin.id('main.num', create=False))
+
+    def test_the_log_history_is_readable_under_the_new_name_without_being_moved(self):
+        plugin = self.plugin()
+        old_id = self.create_item(plugin, 'main.num')
+        self.create_log(plugin, 'main.num', [(i, i + 1, float(i)) for i in range(5)])
+
+        self._rename(plugin, 'main.num', 'main.renamed')
+
+        self.assertEqual(5, plugin.readLogCount(old_id))
+        self.assertEqual([float(i) for i in range(5)], sorted(v[4] for v in plugin.readLogs(plugin.id('main.renamed'))))
+
+    def test_entries_buffered_before_the_rename_are_written_under_the_same_id(self):
+        plugin = self.plugin()
+        old_id = self.create_item(plugin, 'main.num')
+        item, _ = self._rename(plugin, 'main.num', 'main.renamed')
+        plugin._buffer_mgr.push(item, BufferEntry(time=1000, duration=None, value=5))
+
+        plugin._dump(finalize=True)
+
+        self.assertIn(5, [v[4] for v in plugin.readLogs(old_id)])
+
+    def test_a_failing_name_change_falls_back_to_moving_the_history(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [(0, 1, 1.0), (1, None, 2.0)])
+        plugin._db.commit()
+
+        with mock.patch.object(plugin._item_store, 'rename', side_effect=RuntimeError('db gone')):
+            self._rename(plugin, 'main.num', 'main.renamed')
+
+        new_id = plugin.id('main.renamed', create=False)
+        self.assertEqual([1.0, 2.0], sorted(v[4] for v in plugin.readLogs(new_id)))
+        self.assertIsNone(plugin.id('main.num', create=False))
