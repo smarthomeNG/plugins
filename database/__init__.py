@@ -652,11 +652,13 @@ class Database(SmartPlugin):
         functools.partial objects that capture the path as a frozen
         keyword argument at parse_item() time (see parse_item() above);
         they're refreshed here so calling them after a rename queries
-        under the new path, not a stale, now-meaningless old one. The old
-        path's database row is an "orphan" (no in-memory item points at
-        it any more) the moment _webdata is re-keyed — reassign_orphaned_id()
-        merges its log history into the new path's row and deletes it,
-        rather than leaving it to be discovered later by build_orphanlist().
+        under the new path, not a stale, now-meaningless old one.
+
+        The item's database row keeps its id and gets the new name, so its
+        log history stays where it is. If another row already carries the
+        new name (history left over from earlier use of that path), the
+        old row's log history is merged into it by reassign_orphaned_id()
+        and the old row is deleted.
 
         :param item: The renamed item (same object, unchanged identity)
         :param old_path: The item's path before the rename
@@ -675,6 +677,8 @@ class Database(SmartPlugin):
         item.db = functools.partial(self._single, item=new_path)
 
         old_id = self.id(old_path, create=False)
+        if old_id is not None and self._rename_item_row(old_id, old_path, new_path):
+            return True
         # id()'s create=True path always inserts via item.property.path,
         # not the string it was passed — item.property.path already
         # equals new_path here (Items.rename_item() mutates the path
@@ -688,6 +692,23 @@ class Database(SmartPlugin):
                     f'(id {new_id}) and stays orphaned: {failure!r}'
                 )
 
+        return True
+
+    def _rename_item_row(self, item_id, old_path, new_path):
+        """
+        Give the item row *item_id* the name *new_path*, so its log history stays attached to it.
+
+        :return: False if the row was not renamed - the new name belongs to another row, or the change failed
+        :rtype: bool
+        """
+        try:
+            if not self._item_store.rename(item_id, new_path):
+                return False
+        except Exception as e:
+            self._log_db_exception(e, f"could not rename the item row '{old_path}' to '{new_path}': {e}")
+            return False
+        self._item_id_cache.pop(old_path, None)
+        self._item_id_cache[new_path] = item_id
         return True
 
     def parse_logic(self, logic):

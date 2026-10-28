@@ -26,7 +26,7 @@ import contextlib
 import logging
 
 from lib.db import NO_CURSOR
-from .constants import BufferEntry, LogHead, QUALITY_VALID
+from .constants import COL_ITEM_ID, BufferEntry, LogHead, QUALITY_VALID
 from .utils import encode_value, apply_table_names, build_where_clause
 
 
@@ -193,6 +193,29 @@ class ItemStore:
             return
         with _self_healing_transaction(self._db) as tcur:
             self._execute(stmt, params, cur=tcur)
+
+    def rename(self, item_id: int, new_name: str, cur=NO_CURSOR) -> bool:
+        """Change the name of the item row *item_id*; its log rows stay attached to it.
+
+        Nothing is changed if another row already carries *new_name*.
+
+        :param item_id:  Database item ID.
+        :param new_name: The new item path.
+        :param cur:      Optional cursor for transaction batching.
+        :returns:        True if the row was renamed, False if *new_name* belongs to another row.
+        """
+
+        def _rename(c):
+            existing = self.find(new_name, cur=c)
+            if existing is not None and existing[COL_ITEM_ID] != item_id:
+                return False
+            self._execute('UPDATE {item} SET name=:name WHERE id=:id;', {'id': item_id, 'name': new_name}, cur=c)
+            return True
+
+        if cur is not NO_CURSOR:
+            return _rename(cur)
+        with _self_healing_transaction(self._db) as tcur:
+            return _rename(tcur)
 
     def delete(self, item_id: int, cur=NO_CURSOR) -> None:
         """Delete the item row *and* all its log rows, as one atomic unit.
