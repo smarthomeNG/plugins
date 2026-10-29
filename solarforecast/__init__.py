@@ -37,7 +37,7 @@ DUMMY = {}
 
 
 class Solarforecast(SmartPlugin):
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '1.9.6'
 
     def __init__(self, sh):
         """
@@ -100,6 +100,14 @@ class Solarforecast(SmartPlugin):
             # add_item automatically adds to self._plg_item_dict and self._item_lookup_dict
             # the last one is equal to old self._items, but supports (later) item removal
             self.add_item(item, mapping=self.get_iattr_value(item.conf, 'solarforecast_attribute'))
+
+    def get_items(self):
+        """
+        Return the items of the plugin by their solarforecast_attribute.
+
+        :return: dict of solarforecast_attribute -> list of items
+        """
+        return self._item_lookup_dict
 
     def _get_json(self, url):
 
