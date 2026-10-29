@@ -70,8 +70,7 @@ class WebInterface(SmartPluginWebIf):
             p=self.plugin,
             webif_pagelength=pagelength,
             update_interval=self.plugin._cycle * 1000,
-            items=self.plugin._items,
-            item_count=0,
+            items=self.plugin.get_item_list(),
         )
 
     @cherrypy.expose
@@ -88,7 +87,7 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {'items': {}, 'laststr': '', 'lastjq': ''}
 
-            for item in self.plugin._items.keys():
+            for item in self.plugin.get_item_list():
                 data['items'][item.property.path] = item.property.value
             data['laststr'] = self.plugin._lastresultstr
             data['lastjq'] = self.plugin._lastresultjq

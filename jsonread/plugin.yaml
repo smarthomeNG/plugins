@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/jsonread.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/2077534-supportthread-f%C3%BCr-das-jsronread-plugin
 
-    version: 2.1.0                 # Plugin version
+    version: 2.1.1                 # Plugin version
 
     py_minversion: 3.9            # minimum Python version to use for this plugin
     sh_minversion: '1.12'             # minimum shNG version to use this plugin
