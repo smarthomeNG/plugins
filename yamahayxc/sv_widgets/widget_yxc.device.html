@@ -107,7 +107,9 @@
     io.write("dg.bad.wxbad.dsp.equalizer.high", 0)
 </script>
     /** get docu text from widgets docstring */
-    {{- widgetlist[widget].docu|replace({'*':'', '\r\n*\r\n': '\n\n', '\r\n': ' '})|nl2br -}}
+    {% if widgetlist[widget].docu is not empty %}
+        {{- widgetlist[widget].docu|replace({'*':'', '\r\n*\r\n': '\n\n', '\r\n': ' '})|nl2br -}}
+    {% endif %}
     <br>
 	<h5>Example</h5>
      
