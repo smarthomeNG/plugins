@@ -75,7 +75,7 @@
 
 {% set tabcount = 3 %}
 
-{% set item_count = p._items|length %}
+{% set item_count = items|length %}
 {% if item_count==0 %}
 	{% set start_tab = 1 %}
 {% else %}
@@ -102,7 +102,7 @@
 
 		<table id="itemtable" class="dataTableAdditional">
 			<tbody>
-			{% for item in p._items %}
+			{% for item in items %}
 				<tr><td></td>
 					<td class="py-1" id="{{ item }}_path">{{ item._path }}</td>
 					<td class="py-1" id="{{ item }}_filter">{{ p.get_iattr_value(item.conf, 'jsonread_filter') }}</td>
