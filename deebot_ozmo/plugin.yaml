@@ -8,12 +8,12 @@ plugin:
         fr: 'Extension pour Deebot Ozmo 920 / 950 / 960'
     maintainer: Foxi352
     tester: Foxi352                 # Who tests this plugin?
-    state: deprecated                  # change to ready when done with development
+    state: defunct                     # change to ready when done with development
     keywords: iot vacuum robot clean
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.0.1                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: '2.0.0-dev.2'              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
