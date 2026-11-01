@@ -104,3 +104,6 @@ Das Plugin stellt ein WebIF zur Verfügung, in dem alle mit dem Plugin verknüpf
 Items gelistet sind. Die Plugin Parameter IP Adresse der Abfragezyklus werden
 ebenfalls angezeigt. Angabe für Model steht im Quelltext des plugins. Der
 Inverter gibt leider keinen Modellnamen oder Typ über das REST-API aus.
+
+Das WEB Interface enthält einen Midnight Button. Dieser das Midnight Event 
+aus und dient nur zu Testzwecken.
