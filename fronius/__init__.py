@@ -152,29 +152,32 @@ class fronius(SmartPlugin):
             p_pv = 0
 
         # Put the date into the items
-        for key, item in self._plg_item_dict.items():
-            if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'soc':
-                item['item'](soc, self.get_fullname())
-            if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_grid':
-                item['item'](p_grid, self.get_fullname())
-            if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_accu':
-                item['item'](p_accu, self.get_fullname())
-            if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_load':
-                item['item'](p_load, self.get_fullname())
-            if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_pv':
-                item['item'](p_pv, self.get_fullname())
+        try:
+            for key, item in self._plg_item_dict.items():
+                if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'soc':
+                    item['item'](soc, self.get_fullname())
+                if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_grid':
+                    item['item'](p_grid, self.get_fullname())
+                if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_accu':
+                    item['item'](p_accu, self.get_fullname())
+                if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_load':
+                    item['item'](p_load, self.get_fullname())
+                if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_pv':
+                    item['item'](p_pv, self.get_fullname())
 
-                # Calculate the day engery using db plugin. Check if p_pv item is in database.
-                last_midnight = int(datetime.combine(datetime.today(), time.min).timestamp() * 1000)
-                try:
-                    self._p_pv_day = item['item'].db('integrate',last_midnight) / 3600000
-                except Exception:
-                    self.logger.error(f'Item {item} is not in database. Please add database: yes to the item file.')
-            if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_pv_day':
-                item['item'](self._p_pv_day, self.get_fullname())
+                    # Calculate the day engery using db plugin. Check if p_pv item is in database.
+                    last_midnight = int(datetime.combine(datetime.today(), time.min).timestamp() * 1000)
+                    try:
+                        self._p_pv_day = item['item'].db('integrate',last_midnight) / 3600000
+                    except Exception:
+                        self.logger.error(f'Item {item} is not in database. Please add database: yes to the item file.')
+                if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_pv_day':
+                    item['item'](self._p_pv_day, self.get_fullname())
+        except Exception:
+            self.logger.error(f'Error writing data to items')
+        finally:
+            self._cyclic_update_active = False
 
-        # release lock
-        self._cyclic_update_active = False
 
 # ------------------------------ _midnight --------------------------------
 # Called by the scheduler at midnight. Store the daily engergy sum
