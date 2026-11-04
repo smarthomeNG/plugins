@@ -174,7 +174,7 @@ class fronius(SmartPlugin):
                 if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'p_pv_day':
                     item['item'](self._p_pv_day, self.get_fullname())
         except Exception:
-            self.logger.error(f'Error writing data to items')
+            self.logger.error('Error writing data to items')
         finally:
             self._cyclic_update_active = False
 
