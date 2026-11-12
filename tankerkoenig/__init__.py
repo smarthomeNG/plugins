@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = '2.0.6'
+    PLUGIN_VERSION = '2.0.7'
 
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -88,13 +88,13 @@ class TankerKoenig(SmartPlugin):
         self.logger.debug('Run method called')
 
         # create scheduler for price data updates
-        self.scheduler_add('update_status_data', self.update_status_data, cycle=self.price_update_cycle)
+        if self.price_update_cycle > 0:
+            self.scheduler_add('update_status_data', self.update_status_data, cycle=self.price_update_cycle)
 
         # create scheduler for detailed data updates
-        _cycle = {'daily': 24 * 60 * 60, 'weekly': 7 * 24 * 60 * 60, 'monthly': 30.5 * 24 * 60 * 60}[
-            self.details_update_cycle
-        ]
-        self.scheduler_add('update_detail_data', self.update_detail_data, cron='init+30', cycle=_cycle)
+        if not self.details_update_cycle == 'disabled': 
+            _cycle = {'daily': 24 * 60 * 60, 'weekly': 7 * 24 * 60 * 60, 'monthly': 30.5 * 24 * 60 * 60}[self.details_update_cycle]
+            self.scheduler_add('update_detail_data', self.update_detail_data, cron='init+30', cycle=_cycle)
 
         self.alive = True
 
@@ -104,7 +104,11 @@ class TankerKoenig(SmartPlugin):
         """
 
         self.logger.debug('Stop method called')
-        self.scheduler_remove('update_status_data')
+        if self.price_update_cycle > 0:
+            self.scheduler_remove('update_status_data')
+        if not self.details_update_cycle == 'disabled': 
+            self.scheduler_remove('update_detail_data')
+
         self.alive = False
 
     def parse_item(self, item):
