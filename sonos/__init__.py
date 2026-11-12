@@ -455,7 +455,14 @@ class Speaker(object):
         if self._soco != value:
             self._soco = value
             self._is_coordinator = self._soco.is_coordinator
-            self.coordinator = self.soco.group.coordinator.uid.lower()
+            try:
+                coordinator_uid = self.soco.group.coordinator.uid.lower()
+            except Exception as e:
+                self.logger.error(f"soco setter exception occurred: {e}, value {value}")
+                coordinator_uid = None
+            finally: 
+                self.coordinator = coordinator_uid
+
             self.uid = self.soco.uid.lower()
             self.household_id = self.soco.household_id
 
