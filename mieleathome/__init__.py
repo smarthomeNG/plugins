@@ -34,7 +34,7 @@ import requests
 import json
 import time
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import sys
 
@@ -49,7 +49,7 @@ class mieleathome(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '1.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '1.1.3'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):
@@ -68,6 +68,7 @@ class mieleathome(SmartPlugin):
         self.sh = self.get_sh()
         self.items = Items.get_instance()
         self.auth = False
+        self.req_timeout = 10.0
         self.AccessToken = ''
         self.RefreshToken = ''
         self.Expiration = 0
@@ -108,18 +109,9 @@ class mieleathome(SmartPlugin):
         self.event_server = None
         self.auth = self._auth()
 
-        # Initialization code goes here
-
-        # On initialization error use:
-        #   self._init_complete = False
-        #   return
-
         # if plugin should start even without web interface
         self.init_webinterface(WebInterface)
-        # if plugin should not start without web interface
-        # if not self.init_webinterface():
-        #     self._init_complete = False
-
+        
         return
 
     def run(self):
@@ -258,15 +250,21 @@ class mieleathome(SmartPlugin):
                 myItemName = myItemParent + '.visu.allowed_actions.' + myActions[i - 1]
                 myItem = self.items.return_item(myItemName)
                 if i in myAllowedValues:
-                    myItem(True, self.get_shortname())
+                    try:
+                        myItem(True, self.get_shortname())
+                    except:
+                        pass
                 else:
-                    myItem(False, self.get_shortname())
+                    try:
+                        myItem(False, self.get_shortname())
+                    except:
+                        pass
 
     def _getalldevices(self):
         myHeaders = {'Authorization': 'Bearer {}'.format(self.AccessToken)}
 
         myUrl = self.Url + '/devices?language={}'.format(self.country[0:2])
-        myResult = requests.get(myUrl, headers=myHeaders, timeout=5.0)
+        myResult = requests.get(myUrl, headers=myHeaders, timeout=self.req_timeout)
         try:
             if myResult.status_code == 200:
                 self.all_devices = json.loads(myResult.content.decode())
@@ -340,7 +338,7 @@ class mieleathome(SmartPlugin):
         myHeaders = {'Authorization': 'Bearer {}'.format(self.AccessToken)}
 
         myUrl = self.Url + '/devices/{}/actions'.format(deviceId)
-        myResult = requests.get(myUrl, headers=myHeaders, timeout=5.0)
+        myResult = requests.get(myUrl, headers=myHeaders, timeout=self.req_timeout)
         try:
             if myResult.status_code == 200:
                 myActions = json.loads(myResult.content.decode())
@@ -354,19 +352,30 @@ class mieleathome(SmartPlugin):
             myHeaders = {'Authorization': 'Bearer {}'.format(self.AccessToken)}
 
             myUrl = self.Url + '/devices/{}/actions'.format(deviceID)
-            myResult = requests.put(myUrl, headers=myHeaders, json=myPayload, timeout=10.0)
-        except Exception as err:
+            myResult = requests.put(myUrl, headers=myHeaders, json=myPayload, timeout=12.0)
+
+        except requests.exceptions.RequestException as err:
             self.logger.warning(
-                'Error while sending Command : {} to device {} using URL : {}- Error : {}'.format(
+                'Error while sending Command : {} to device {} using URL : {} - Error : {}'.format(
                     myPayload, deviceID, myUrl, err
                 )
             )
-            pass
+            return False
+
+        except Exception as err:
+            self.logger.warning(
+                'Unexpected error while sending Command : {} to device {} using URL : {}'.format(
+                    myPayload, deviceID, myUrl, err
+                )
+            )
+            return False
+
         self.logger.debug(
             'Result : {} sending command : {} to device {} using URL : {}'.format(
                 myResult.status_code, myPayload, deviceID, myUrl
             )
         )
+        return myResult.ok
 
     def parse_item(self, item):
         """
@@ -387,7 +396,7 @@ class mieleathome(SmartPlugin):
             self.miele_devices_by_item[item.property.path] = item.conf['miele_deviceid']
             if item not in self.miele_items:
                 self.miele_items.append(item)
-            return self.update_item
+            # return self.update_item
 
         if self.has_iattr(item.conf, 'miele_command'):
             self.logger.debug('parse item: {}'.format(item))
@@ -401,18 +410,13 @@ class mieleathome(SmartPlugin):
             self.miele_parsed_item[item.property.path] = ''
             if item not in self.miele_items:
                 self.miele_items.append(item)
-            return self.update_item
-        # todo
-        # if interesting item for sending values:
-        #   return self.update_item
+            # return self.update_item
 
     def parse_logic(self, logic):
         """
         Default plugin parse_logic method
         """
-        if 'xxx' in logic.conf:
-            # self.function(logic['name'])
-            pass
+        pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -442,9 +446,11 @@ class mieleathome(SmartPlugin):
             if self.has_iattr(item.conf, 'miele_command') and item():
                 deviceId = self.miele_device_by_action[item.property.path]
                 myPayload = json.loads(item.conf['miele_command'])
-                self.putCommand2Device(deviceId, myPayload)
-                myPayload = self._getActions4Device(deviceId)
-                self._parseAction4Device(myPayload, deviceId)
+                
+                if self.putCommand2Device(deviceId, myPayload):
+                    myPayload = self._getActions4Device(deviceId)
+                    if myPayload is not None:
+                        self._parseAction4Device(myPayload, deviceId)
 
             if self.has_iattr(item.conf, 'miele_command') and 'targetTemperature' in item.conf['miele_command']:
                 deviceId = self.miele_device_by_action[item.property.path]
@@ -521,7 +527,7 @@ class mieleathome(SmartPlugin):
             except Exception as err:
                 self.logger.warning('mieleathome - error during _getalldevices in poll_device - {}'.format(err))
                 pass
-            if self.last_ping_timestamp < self.shtime.add_seconds(self.shtime.now(), -5 * 60).replace(tzinfo=None):
+            if self.last_ping_timestamp < datetime.now() - timedelta(minutes=5):
                 self.logger.debug('mieleathome - no ping since 5 minutes - retry to get new Event-Connection')
                 try:
                     self.event_server.reconnect()
@@ -632,11 +638,11 @@ class miele_event(threading.Thread):
                 # Happens when Internet-Connection was disconnted
                 if self.alive:
                     self.logger.warning(
-                        'mieleathome - connection canceled - waiting 30sec - retry to get new Event-Connection -  reason : {}'.format(
+                        'mieleathome - connection canceled - waiting 60sec - retry to get new Event-Connection -  reason : {}'.format(
                             err
                         )
                     )
-                    time.sleep(30)
+                    time.sleep(60)
                     self.last_event = ''
                     pass
 

@@ -12,8 +12,8 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1512798-miele-home-mit-mqtt
 
-    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
-    sh_minversion: '1.12.2.2'              # minimum shNG version to use this plugin
+    version: 1.1.3                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: '1.5'            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
@@ -452,7 +452,235 @@ item_structs:
                       visu_acl: rw
                   range_description:
                       type: list
-                      visu_acl: rw                                                                    
+                      visu_acl: rw        
+
+
+    dishwasher:
+        name: Vorlage Struktur Miele Geschirrspueler
+        ident:
+            device_type:
+                value_raw:
+                   type: num
+                   cache: 'on'
+                value_localized:
+                    type: str
+                    cache: 'on'
+            deviceName:
+                type: str
+                cache: 'on'
+            deviceIdentLabel:
+                fabNumber:
+                    type: str
+                    cache: 'on'
+                fabIndex:
+                    type: str
+                    cache: 'on'
+                techType:
+                    type: str
+                    cache: 'on'
+                matNumber:
+                    type: str
+                    cache: 'on'                   
+            xkmIdentLabel:
+                techType:
+                    type: str
+                    cache: 'on'
+                releaseVersion:
+                    type: str
+                    cache: 'on'
+        state:
+            ProgramID:
+                value_localized:
+                    type: str
+                    cache: 'on'
+            status:
+                value_localized:
+                    type: str
+                    cache: 'on'
+                    enforce_updates: yes                    
+                value_raw:
+                    type: num
+                    cache: 'on'                
+                    enforce_updates: yes                    
+            programType:
+                value_localized:
+                    type: str
+                    cache: 'on'
+            programPhase:
+                value_localized:
+                    type: str
+                    cache: 'on'                                                                                
+            remainingTime:
+                type: list
+                cache: 'on'
+                enforce_updates: yes                
+            startTime:
+                type: list
+                cache: 'on'
+                enforce_updates: yes                 
+            targetTemperature:
+                type: list
+                cache: 'on'          
+                miele_parse_item: true
+                enforce_updates: yes
+            temperature:
+                type: list
+                cache: 'on'          
+                miele_parse_item: true                
+            signalInfo:
+                type: bool
+                cache: 'on'
+                enforce_updates: yes                
+            signalFailure:
+                type: bool
+                cache: 'on'
+                enforce_updates: yes                
+            signalDoor:
+                type: bool
+                cache: 'on'
+                enforce_updates: yes                
+            dryingStep:
+                value_localized:
+                    type: str
+                    cache: 'on'   
+                    enforce_updates: yes                              
+                value_raw:
+                    type: num
+                    cache: 'on'                                            
+                    enforce_updates: yes                    
+            elapsedTime:
+                type: list
+                cache: 'on'                          
+                enforce_updates: yes                
+            ecoFeedback:
+                currentWaterConsumption:
+                    unit:
+                        type: str
+                        cache: 'on'
+                    value:
+                        type: num
+                        cache: 'on'
+                currentEnergyConsumption:
+                    unit:
+                        type: str
+                        cache: 'on'
+                    value:
+                        type: num
+                        cache: 'on'
+                waterForecast:
+                    type: num
+                    cache: 'on'
+                energyForecast:
+                    type: num
+                    cache: 'on'                    
+
+        actions:
+            processAction:
+                type: list
+                cache: 'on'
+            programId:
+                type: list
+                cache: 'on'                            
+            targetTemperature:
+                type: list
+                cache: 'on'
+                miele_parse_item: true
+                enforce_updates: yes                
+            startTime:
+                type: list
+                cache: 'on'
+            powerOn:
+                type: bool
+                cache: 'on'            
+            powerOff:
+                type: bool
+                cache: 'on'            
+            modes:
+                type: list             
+                cache: 'on'                                               
+            
+                    
+        visu:
+            times:
+                scheduled_startTime:
+                    visu_acl: rw                
+                    type: str
+                    eval_trigger: ....state.startTime
+                    eval: str("%0.2d"%sh.....state.startTime()[0])+":"+str("%0.2d"%sh.....state.startTime()[1])
+                    miele_parse_item: true                    
+                startTime:
+                    visu_acl: rw                
+                    type: str
+                    initial_value: "00:00:00"
+                    miele_parse_item: true                    
+                stopTime:
+                    visu_acl: rw                
+                    type: str
+                    initial_value: "00:00:00"                    
+                    miele_parse_item: true                                        
+                elapsedTime:
+                    type: str
+                    eval_trigger: ....state.elapsedTime
+                    eval: str("%0.2d"%sh.....state.elapsedTime()[0])+":"+str("%0.2d"%sh.....state.elapsedTime()[1]) if len(sh.....state.elapsedTime()) >0 else '00:00'
+                remainingTime:
+                    type: str
+                    eval_trigger: ....state.remainingTime
+                    eval: str("%0.2d"%sh.....state.remainingTime()[0])+":"+str("%0.2d"%sh.....state.remainingTime()[1]) if len(sh.....state.remainingTime()) >0 else '00:00'
+ 
+            allowed_actions:
+                start:
+                    type: bool
+                    visu_acl: rw
+
+                stop:
+                    type: bool
+                    visu_acl: rw
+
+                pause:
+                    type: bool
+                    visu_acl: rw                    
+
+                powerOn:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....actions.powerOn
+                    eval: sh.....actions.powerOn()                                        
+                powerOff:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....actions.powerOff
+                    eval: sh.....actions.powerOff()
+
+            action_buttons:
+                start:
+                    type: bool
+                    visu_acl: rw
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 1}'
+                    enforce_updates: yes                    
+                stop:
+                    type: bool
+                    visu_acl: rw
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 2}'
+                    enforce_updates: yes                    
+                pause:
+                    type: bool
+                    visu_acl: rw                    
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 3}'
+                    enforce_updates: yes                    
+                powerOn:
+                    type: bool
+                    visu_acl: rw
+                    miele_command: '{"powerOn":true}'
+                    enforce_updates: yes                    
+                powerOff:
+                    type: bool
+                    visu_acl: rw
+                    miele_command: '{"powerOff":true}'
+                    enforce_updates: yes                    
+                                                       
 
 #item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
