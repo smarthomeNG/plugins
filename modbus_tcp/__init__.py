@@ -1013,7 +1013,7 @@ class modbus_tcp(SmartPlugin):
     @staticmethod
     def _normalize_value_for_datatype(value, dataType: str):
         if dataType in ('uint', 'int'):
-            return int(value)
+            return round(value)
         if dataType == 'float':
             return float(value)
         if dataType == 'string':

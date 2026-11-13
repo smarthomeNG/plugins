@@ -387,3 +387,28 @@ async def cancel_tasks(tasks):
     for task in tasks:
         task.cancel()
     await asyncio.gather(*tasks, return_exceptions=True)
+
+
+def test_factor_writes_are_rounded_not_truncated(tmp_path, simulator):
+    rig = rig_for(
+        tmp_path,
+        simulator,
+        cycle=0,
+        items="""
+dev:
+    value:
+        type: num
+        modBusAddress: 0
+        modBusFactor: 0.01
+        modBusDirection: write
+""",
+    )
+    plugin = rig.plugin
+    try:
+        plugin.run()
+        wait_until(lambda: plugin.connected)
+        rig.item('dev.value')(0.29, 'test')
+        wait_until(lambda: simulator.registers[0] != 1234)
+        assert simulator.registers[0] == 29
+    finally:
+        plugin.stop()
