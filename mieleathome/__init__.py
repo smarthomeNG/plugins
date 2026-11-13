@@ -252,12 +252,12 @@ class mieleathome(SmartPlugin):
                 if i in myAllowedValues:
                     try:
                         myItem(True, self.get_shortname())
-                    except:
+                    except Exception:
                         pass
                 else:
                     try:
                         myItem(False, self.get_shortname())
-                    except:
+                    except Exception:
                         pass
 
     def _getalldevices(self):
@@ -364,7 +364,7 @@ class mieleathome(SmartPlugin):
 
         except Exception as err:
             self.logger.warning(
-                'Unexpected error while sending Command : {} to device {} using URL : {}'.format(
+                'Unexpected error while sending Command : {} to device {} using URL : {} - Error: {}'.format(
                     myPayload, deviceID, myUrl, err
                 )
             )
