@@ -8,10 +8,19 @@ Without this, pytest's default discovery also tries to import any stray *_test.p
 test_*.py-named file anywhere in a plugin (e.g. internal dev scripts like
 smartmeter/dlms_test.py), which can fail to import if its dependencies aren't installed,
 even though it was never meant to run under pytest.
+
+Also provides fixtures shared by several plugins' tests (``modbus_server``).
 """
 
+import asyncio
 import functools
 import pathlib
+import socket
+import threading
+from dataclasses import dataclass
+from typing import Any
+
+import pytest
 
 PLUGINS_DIR = pathlib.Path(__file__).resolve().parent
 
@@ -91,3 +100,83 @@ def pytest_ignore_collect(collection_path, config):
         return True
 
     return None
+
+
+@dataclass
+class ModbusTestServer:
+    """A running loopback Modbus TCP server started by the ``modbus_server`` fixture."""
+
+    host: str
+    port: int
+    unit: int
+    context: Any
+
+    def holding(self, address: int, count: int = 1) -> list[int]:
+        """Current values of ``count`` holding registers from 0-based ``address``."""
+        return list(self.context[self.unit].getValues(3, address, count))
+
+
+@pytest.fixture
+def modbus_server():
+    """
+    Start real pymodbus TCP servers on loopback; stopped at teardown.
+
+    Returns a factory ``start(unit, holding, block=None)``: ``holding`` maps a 0-based register
+    address to the register values stored from there on (all other holding registers read 0),
+    ``unit`` is the device id the server answers as. ``block`` replaces the holding register
+    block, for devices that react to writes; it is addressed like the context addresses it
+    (request address + 1).
+    The factory returns a ``ModbusTestServer``. pymodbus is imported lazily, so plugins without
+    it are unaffected.
+    """
+    from pymodbus.datastore import ModbusSequentialDataBlock, ModbusServerContext
+    from pymodbus.server import ModbusTcpServer
+
+    try:
+        from pymodbus.datastore import ModbusDeviceContext as _DeviceContext
+    except ImportError:
+        from pymodbus.datastore import ModbusSlaveContext as _DeviceContext
+
+    loop = asyncio.new_event_loop()
+    thread = threading.Thread(target=loop.run_forever, daemon=True)
+    thread.start()
+    servers = []
+
+    def start(unit: int, holding: dict[int, list[int]], block: Any = None) -> ModbusTestServer:
+        if block is None:
+            registers = [0] * 65536
+            for addr, regs in holding.items():
+                registers[addr : addr + len(regs)] = regs
+            # the device context adds 1 to every request address before reading the block
+            block = ModbusSequentialDataBlock(1, registers)
+        # pymodbus 3.9 ignores co/ir/hr unless di is passed as well
+        device = _DeviceContext(
+            di=ModbusSequentialDataBlock.create(),
+            co=ModbusSequentialDataBlock.create(),
+            ir=ModbusSequentialDataBlock.create(),
+            hr=block,
+        )
+        context = ModbusServerContext({unit: device}, single=False)
+        with socket.socket() as probe:
+            probe.bind(('127.0.0.1', 0))
+            port = probe.getsockname()[1]
+
+        async def create() -> ModbusTcpServer:
+            return ModbusTcpServer(context, address=('127.0.0.1', port))
+
+        server = asyncio.run_coroutine_threadsafe(create(), loop).result(timeout=5)
+        asyncio.run_coroutine_threadsafe(server.serve_forever(), loop)
+        servers.append(server)
+        for _ in range(100):
+            with socket.socket() as client:
+                if client.connect_ex(('127.0.0.1', port)) == 0:
+                    break
+            threading.Event().wait(0.02)
+        return ModbusTestServer('127.0.0.1', port, unit, context)
+
+    yield start
+
+    for server in servers:
+        asyncio.run_coroutine_threadsafe(server.shutdown(), loop).result(timeout=5)
+    loop.call_soon_threadsafe(loop.stop)
+    thread.join(timeout=5)

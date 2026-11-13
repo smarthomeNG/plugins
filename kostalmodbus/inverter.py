@@ -50,51 +50,51 @@ class Inverter:
         return self.registers
 
     def __read_float(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 2, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=2, slave=71)
         float_value = BinaryPayloadDecoder.fromRegisters(
             result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE
         )
         return round(float_value.decode_32bit_float(), 2)
 
     def __read_u16(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 1, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=1, slave=71)
 
         u16_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE)
         return u16_value.decode_16bit_uint()
 
     def __read_u16_2(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 2, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=2, slave=71)
         u16_2_value = BinaryPayloadDecoder.fromRegisters(
             result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE
         )
         return u16_2_value.decode_16bit_uint()
 
     def __read_u32(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 2, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=2, slave=71)
         u32_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE)
         return u32_value.decode_32bit_uint()
 
     def __read_s16(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 1, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=1, slave=71)
         s16_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE)
-        return s16_value.decode_16bit_uint()
+        return s16_value.decode_16bit_int()
 
     def __read_str08(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 8, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=8, slave=71)
         str08_value = BinaryPayloadDecoder.fromRegisters(
             result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE
         )
         return str08_value.decode_string(size=16).rstrip(b'\0').decode('utf-8')
 
     def __read_str16(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 16, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=16, slave=71)
         str08_value = BinaryPayloadDecoder.fromRegisters(
             result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE
         )
         return str08_value.decode_string(size=24).rstrip(b'\0').decode('utf-8')
 
     def __read_str32(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 32, slave=71)
+        result = self.client.read_holding_registers(adr_dec, count=32, slave=71)
         str08_value = BinaryPayloadDecoder.fromRegisters(
             result.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE
         )

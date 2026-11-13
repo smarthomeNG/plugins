@@ -38,7 +38,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 
 
 class Pluggit(SmartPlugin):
-    PLUGIN_VERSION = '2.0.7'
+    PLUGIN_VERSION = '2.0.8'
 
     _itemReadDictionary = {}
     _itemWriteDictionary = {}
@@ -287,7 +287,7 @@ class Pluggit(SmartPlugin):
         self._lock.acquire()
         try:
             self.logger.info('Pluggit: connecting to {0}:{1}'.format(self._host, self._port))
-            self._Pluggit = ModbusTcpClient(self._host, self._port)
+            self._Pluggit = ModbusTcpClient(self._host, port=self._port)
         except Exception as e:
             self.logger.error('Pluggit: could not connect to {0}:{1}: {2}'.format(self._host, self._port, e))
             return
@@ -429,7 +429,7 @@ class Pluggit(SmartPlugin):
                 if unitstate != -1:
                     pluggit_paramList = self._modbusRegisterDictionary['prmRamIdxUnitMode']
                     registerValue = self._Pluggit.read_holding_registers(
-                        pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY]
+                        pluggit_paramList[self.DICT_READ_ADDRESS], count=pluggit_paramList[self.DICT_ADDRESS_QUANTITY]
                     )
                     vdecoder = BinaryPayloadDecoder.fromRegisters(
                         registerValue.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE
@@ -442,7 +442,7 @@ class Pluggit(SmartPlugin):
                     # time.sleep(0.5)
                     # write value to registers
                     self.logger.debug('SetUnitMode(): Mode "{}".'.format(modekey))
-                    self._Pluggit.write_registers(pluggit_paramList[self.DICT_WRITE_ADDRESS], unitstate)
+                    self._Pluggit.write_registers(pluggit_paramList[self.DICT_WRITE_ADDRESS], [unitstate])
                     time.sleep(0.5)
             else:
                 self.logger.warning('SetUnitMode(): Illegal mode "{}".'.format(modekey))
@@ -525,7 +525,7 @@ class Pluggit(SmartPlugin):
                     registerValue = readCacheDictionary[pluggit_key]
                 else:
                     registerValue = self._Pluggit.read_holding_registers(
-                        pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY]
+                        pluggit_paramList[self.DICT_READ_ADDRESS], count=pluggit_paramList[self.DICT_ADDRESS_QUANTITY]
                     )
                     # TODO: auswerten, wenn Reigister nicht auslesbar
                     readCacheDictionary[pluggit_key] = registerValue

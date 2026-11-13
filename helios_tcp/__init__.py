@@ -240,7 +240,7 @@ VARLIST = {
 
 
 class HeliosTCP(SmartPlugin):
-    PLUGIN_VERSION = '1.0.4'
+    PLUGIN_VERSION = '1.0.5'
     MODBUS_SLAVE = 180
     PORT = 502
     START_REGISTER = 1
@@ -251,7 +251,7 @@ class HeliosTCP(SmartPlugin):
         super().__init__()
 
         self._helios_ip = self.get_parameter_value('helios_ip')
-        self._client = ModbusTcpClient(self._helios_ip)
+        self._client = ModbusTcpClient(self._helios_ip, port=self.PORT)
         self.alive = False
         self._is_connected = False
         self._update_cycle = self.get_parameter_value('update_cycle')
@@ -308,13 +308,15 @@ class HeliosTCP(SmartPlugin):
 
         # At first we write the variable name to read into the input registers:
         payload = self._string_to_registers(varprop['var'])
-        request = self._client.write_registers(self.START_REGISTER, payload, unit=self.MODBUS_SLAVE)
+        request = self._client.write_registers(self.START_REGISTER, payload, slave=self.MODBUS_SLAVE)
         if request is None:
             self.logger.warning("Helios TCP: Failed to send read request for variable '{0}'".format(var))
             return
 
         # Now we may read the holding registers:
-        response = self._client.read_holding_registers(self.START_REGISTER, varprop['length'], unit=self.MODBUS_SLAVE)
+        response = self._client.read_holding_registers(
+            self.START_REGISTER, count=varprop['length'], slave=self.MODBUS_SLAVE
+        )
         if response is None:
             self.logger.warning("Helios TCP: Failed to send read response for variable '{0}'".format(var))
             return
@@ -392,7 +394,7 @@ class HeliosTCP(SmartPlugin):
                 return
 
             payload = self._string_to_registers(payload_string)
-            request = self._client.write_registers(self.START_REGISTER, payload, unit=self.MODBUS_SLAVE)
+            request = self._client.write_registers(self.START_REGISTER, payload, slave=self.MODBUS_SLAVE)
             if request is None:
                 self.logger.warning("Helios TCP: Failed to send write request for variable '{0}'".format(var))
                 return

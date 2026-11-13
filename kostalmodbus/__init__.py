@@ -28,8 +28,13 @@ from lib.model.smartplugin import SmartPlugin
 from .inverter import Inverter
 
 
+def attribute_name(address: int) -> str:
+    """Item attribute selecting the register at ``address``, e.g. ``kostal_06``."""
+    return f'kostal_{address:02d}'
+
+
 class Kostalmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
     inverter = 'None'
     _items = []
 
@@ -50,7 +55,7 @@ class Kostalmodbus(SmartPlugin):
 
     def parse_item(self, item):
         for i in self.inverter.decRow:
-            s = 'kostal_' + str(i)
+            s = attribute_name(i)
             if self.has_iattr(item.conf, s):
                 self._items.append(item)
 
@@ -58,6 +63,6 @@ class Kostalmodbus(SmartPlugin):
         inverter_data = self.inverter.get_data()
         for item in self._items:
             for i in range(0, len(inverter_data)):
-                s = 'kostal_' + str(inverter_data[i].adrDec)
+                s = attribute_name(inverter_data[i].adrDec)
                 if self.has_iattr(item.conf, s):
                     item(self.inverter.registers[i].value)
