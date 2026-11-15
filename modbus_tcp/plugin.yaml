@@ -173,14 +173,14 @@ item_structs:
                     type: num
                     modBusAddress@instance: 40388
                     modBusDataType@instance: uint32
-                    modBusFactor@instance: 0.01
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 reactive_power:
                     type: num
                     modBusAddress@instance: 40390
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 0.01
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
             storage:
@@ -188,7 +188,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 40392
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 0.01
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 soc:
@@ -257,14 +257,14 @@ item_structs:
                         type: num
                         modBusAddress@instance: 32278
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 0.01
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
-                    power_factor:
+                    factor:
                         type: num
                         modBusAddress@instance: 32284
-                        modBusDataType@instance: int16
-                        modBusFactor@instance: 0.01
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                 energy:
@@ -289,14 +289,14 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37498
                     modBusDataType@instance: uint32
-                    modBusFactor@instance: 0.010
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 load_power:
                     type: num
                     modBusAddress@instance: 37500
                     modBusDataType@instance: uint32
-                    modBusFactor@instance: 0.010
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 grid_power:
@@ -304,7 +304,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37502
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 0.010
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 battery_power:
@@ -312,14 +312,14 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37504
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 0.010
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 active_power:
                     type: num
                     modBusAddress@instance: 37516
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 0.010
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
         meter:
@@ -419,7 +419,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37113
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 reactive:
@@ -427,15 +427,15 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37115
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 factor:
                     description: PF
                     type: num
                     modBusAddress@instance: 37117
-                    modBusDataType@instance: int16
-                    modBusFactor@instance: 0.01
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 phase_a:
@@ -443,7 +443,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37132
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 phase_b:
@@ -451,7 +451,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37134
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 phase_c:
@@ -459,7 +459,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37136
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
             energy:
@@ -718,34 +718,34 @@ item_structs:
 
             power:
                 input:
-                    description: W
+                    description: kW
                     type: num
                     modBusAddress@instance: 32064
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 active:
-                    description: W
+                    description: kW
                     type: num
                     modBusAddress@instance: 32080
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 reactive:
-                    description: W
+                    description: kVar
                     type: num
                     modBusAddress@instance: 32082
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 factor:
                     type: num
                     modBusAddress@instance: 32084
-                    modBusDataType@instance: int16
-                    modBusFactor@instance: 0.01
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
         storage:
@@ -753,70 +753,70 @@ item_structs:
             power:
                 charge:
                     max:
-                        description: W
+                        description: kW
                         type: num
                         modBusAddress@instance: 37046
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     max_set:
-                        description: W
+                        description: kW
                         type: num
                         modBusAddress@instance: 47075
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read_write
 
                     forced:
                         charge:
-                            description: W
+                            description: kW
                             type: num
                             modBusAddress@instance: 47247
                             modBusDataType@instance: uint32
-                            modBusFactor@instance: 1
+                            modBusFactor@instance: 0.001
                             modBusDirection@instance: read_write
 
                         discharge:
-                            description: W
+                            description: kW
                             type: num
                             modBusAddress@instance: 47249
                             modBusDataType@instance: uint32
-                            modBusFactor@instance: 1
+                            modBusFactor@instance: 0.001
                             modBusDirection@instance: read_write
 
                 discharge:
                     max:
-                        description: W
+                        description: kW
                         type: num
                         modBusAddress@instance: 37048
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     max_set:
-                        description: W
+                        description: kW
                         type: num
                         modBusAddress@instance: 47077
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read_write
 
                 grid_charge:
                     current:
-                        description: W
+                        description: kW
                         type: num
                         modBusAddress@instance: 47242
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read_write
 
                     max:
-                        description: W
+                        description: kW
                         type: num
                         modBusAddress@instance: 47244
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read_write
 
             capacity:
@@ -825,7 +825,7 @@ item_structs:
                     type: num
                     modBusAddress@instance: 37758
                     modBusDataType@instance: uint32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 state_of_charge:
@@ -947,11 +947,11 @@ item_structs:
                     modBusDirection@instance: read_write
 
                 power_limit_grid:
-                    description: W
+                    description: kW
                     type: num
                     modBusAddress@instance: 47079
                     modBusDataType@instance: int32
-                    modBusFactor@instance: 1
+                    modBusFactor@instance: 0.001
                     modBusDirection@instance: read
 
                 working_mode_a:
@@ -997,21 +997,6 @@ item_structs:
                     modBusDataType@instance: uint16
                     modBusFactor@instance: 1
                     modBusDirection@instance: read
-
-                luna_price_periods:
-                    type: num
-                    modBusAddress@instance: 47255
-                    modBusDirection@instance: read_write
-
-                lg_resu_price_periods:
-                    type: num
-                    modBusAddress@instance: 47028
-                    modBusDirection@instance: read_write
-
-                fixed_charging_and_discharging_periods:
-                    type: num
-                    modBusAddress@instance: 47200
-                    modBusDirection@instance: read_write
 
                 lcoe:
                     description: c/kWh
@@ -1064,7 +1049,7 @@ item_structs:
                         modBusAddress@instance: 40490
                         modBusDataType@instance: uint16
                         modBusFactor@instance: 1
-                        modBusDirection@instance: read_write
+                        modBusDirection@instance: read
 
                 energy:
 
@@ -1230,7 +1215,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30354
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     load:
@@ -1238,7 +1223,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30356
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     feed_in:
@@ -1246,7 +1231,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30358
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     inverter:
@@ -1255,7 +1240,7 @@ item_structs:
                             type: num
                             modBusAddress@instance: 30364
                             modBusDataType@instance: int32
-                            modBusFactor@instance: 1
+                            modBusFactor@instance: 0.001
                             modBusDirection@instance: read
 
                         rated:
@@ -1263,7 +1248,7 @@ item_structs:
                             type: num
                             modBusAddress@instance: 30362
                             modBusDataType@instance: uint32
-                            modBusFactor@instance: 1
+                            modBusFactor@instance: 0.001
                             modBusDirection@instance: read
 
                 configuration:
@@ -1290,7 +1275,7 @@ item_structs:
                             initial_value: "{0: 'unlimited', 5: 'grid connection with zero power', 6: 'limited feed-in', 7: 'power-limited grid connected', 10: 'undefined'}"
                         config_reverse:
                             type: dict
-                            initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7}"
+                            initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7, 'undefined': 10}"
                         register:
                             type: num
                             modBusAddress@instance: 40100
@@ -1337,7 +1322,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 40002
                         modBusDataType@instance: uint32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read_write
 
                     limitation_mode:
@@ -1352,7 +1337,7 @@ item_structs:
                         description: W
                         type: num
                         modBusAddress@instance: 40107
-                        modBusDataType@instance: int32
+                        modBusDataType@instance: uint32
                         modBusFactor@instance: 1
                         modBusDirection@instance: read_write
 
@@ -1495,7 +1480,7 @@ item_structs:
 
                     config_reverse:
                         type: dict
-                        initial_value: "{'reserved': 1, 'max self-consumption': 2, 'reserved': 3, 'fully fed to grid': 4, '3rd party dispatch': 5}"
+                        initial_value: "{'reserved': 1, 'max self-consumption': 2, 'fully fed to grid': 4, '3rd party dispatch': 5}"
 
                     register:
                         type: num
@@ -1589,14 +1574,14 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31657
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     factor:
                         type: num
                         modBusAddress@instance: 31661
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 0.010
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     apparent:
@@ -1604,7 +1589,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31663
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_a:
@@ -1612,7 +1597,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31665
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_b:
@@ -1620,7 +1605,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31667
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_c:
@@ -1628,7 +1613,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31669
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                 energy:
@@ -1738,14 +1723,14 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31913
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     factor:
                         type: num
                         modBusAddress@instance: 31917
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 0.010
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     apparent:
@@ -1753,7 +1738,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31919
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_a:
@@ -1761,7 +1746,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31921
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_b:
@@ -1769,7 +1754,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31923
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_c:
@@ -1777,7 +1762,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 31925
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                 energy:
@@ -1894,7 +1879,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30520
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     apparent:
@@ -1902,14 +1887,14 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30526
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     factor:
                         type: num
                         modBusAddress@instance: 30524
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 0.01
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_a:
@@ -1917,7 +1902,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30528
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_b:
@@ -1925,7 +1910,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30530
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                     phase_c:
@@ -1933,7 +1918,7 @@ item_structs:
                         type: num
                         modBusAddress@instance: 30532
                         modBusDataType@instance: int32
-                        modBusFactor@instance: 1
+                        modBusFactor@instance: 0.001
                         modBusDirection@instance: read
 
                 energy:

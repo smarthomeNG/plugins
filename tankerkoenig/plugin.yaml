@@ -34,7 +34,7 @@ parameters:
         type: int
         mandatory: False
         default: 900
-        valid_min: 60
+        valid_min: 0
         description:
             de: '(optional) Zeit zwischen zwei Preisaktualisierungen.'
             en: '(optional) Time period between two price update cycles.'
@@ -50,6 +50,7 @@ parameters:
             - daily
             - weekly
             - monthly
+            - disabled
 
 
 item_attributes:
