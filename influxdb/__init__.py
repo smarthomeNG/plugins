@@ -169,21 +169,26 @@ class InfluxDB(SmartPlugin):
             self.logger.debug('InfluxDB: sent HTTP datagram [{}] to {}:{}'.format(data, self.host, self.http_port))
 
     def create_line(self, name, tags, fields):
-        # https://docs.influxdata.com/influxdb/v1.0/guides/writing_data/
 
-        # build name & tags
-        kvs = [name]
-        for tag_key in sorted(tags.keys()):
-            kvs.append('{k}={v}'.format(k=tag_key, v=tags[tag_key]))
-        lineproto_name_tags = ','.join(kvs)
+        def _esc(s):
+            return str(s).replace(',', r'\,').replace('=', r'\=').replace(' ', r'\ ')
 
-        # replace ":ga=" with ",ga=" to avoid "invalid tag format" error
-        lineproto_name_tags = lineproto_name_tags.replace(':ga=', ',ga=')
+        # build name and tags
+        tags = dict(tags)  # Dict des Aufrufers nicht verändern
+        src = tags.get('source')
+        if isinstance(src, str) and ':ga=' in src:
+            tags['source'], tags['ga'] = src.split(':ga=', 1)
+
+        kvs = [_esc(name)]
+        for k in sorted(tags):
+            v = tags[k]
+            if v is None or v == '':
+                continue  # InfluxDB lehnt Tags ohne Wert ab
+            kvs.append(_esc(k) + '=' + _esc(v))
+        line_tags = ','.join(kvs)
 
         # build fields (which include the actual value)
-        kvs = []
-        for field_key in sorted(fields.keys()):
-            kvs.append('{k}={v}'.format(k=field_key, v=fields[field_key]))
-        lineproto_fields = ','.join(kvs)
+        lineproto_fields = ','.join(f'{k}={fields[k]}' for k in sorted(fields))
 
-        return lineproto_name_tags + ' ' + lineproto_fields
+        return line_tags + ' ' + lineproto_fields
+    
