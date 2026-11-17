@@ -27,7 +27,7 @@ import requests
 
 
 class InfluxDB(SmartPlugin):
-    PLUGIN_VERSION = '1.0.3'
+    PLUGIN_VERSION = '1.0.4'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome):
@@ -191,4 +191,3 @@ class InfluxDB(SmartPlugin):
         lineproto_fields = ','.join(f'{k}={fields[k]}' for k in sorted(fields))
 
         return line_tags + ' ' + lineproto_fields
-    
