@@ -30,7 +30,7 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.9'
+    PLUGIN_VERSION = '1.6.10'
     robot = 'None'
 
     def __init__(self, sh):
@@ -69,6 +69,9 @@ class Neato(SmartPlugin):
 
     def setClientIDHash(self, hash):
         return self.robot.setClientIDHash(hash)
+
+    def getSecretKeyValid(self):
+        return self.robot.getSecretKeyValid()
 
     def run(self):
         self.logger.debug('Run method called')
