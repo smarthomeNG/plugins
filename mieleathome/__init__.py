@@ -531,7 +531,7 @@ class mieleathome(SmartPlugin):
         """
         if self.auth:
             ret = self._getalldevices()
-            if ret == True:
+            if ret:
                 for device in self.miele_devices_by_deviceID:
                     myPayload = self._getActions4Device(device)
                     if myPayload:
