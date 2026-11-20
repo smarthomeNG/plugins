@@ -125,34 +125,34 @@ class fronius(SmartPlugin):
             self.logger.debug('Triggering cyclic poll_device')
 
         # set lock
-        self._cyclic_update_active = True
-
-        # get the data
-        path = f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi'
         try:
-            response = requests.get(path, timeout=self._timeout)
-        except Exception:
-            self.logger.error(f'Fronius inverter at address {self._ip_address} did not answer')
-            self._cyclic_update_active = False
-            return
-        try:
-            response = response.json()
-            soc = float(response['Body']['Data']['Inverters']['1']['SOC'])
-            p_pv = float(response['Body']['Data']['Site']['P_PV'])
-            p_grid = float(response['Body']['Data']['Site']['P_Grid'])
-            p_accu = float(response['Body']['Data']['Site']['P_Akku'])
-            p_load = float(response['Body']['Data']['Site']['P_Load'])
-        except Exception:
-            self.logger.error(f'Fronius inverter at address {self._ip_address} returned invalid data')
-            self._cyclic_update_active = False
-            return
+            self._cyclic_update_active = True
 
-        # Remove noise
-        if p_pv < 2:
-            p_pv = 0
+            # get the data
+            path = f'http://{self._ip_address}/solar_api/v1/GetPowerFlowRealtimeData.fcgi'
+            try:
+                response = requests.get(path, timeout=self._timeout)
+            except Exception:
+                self.logger.error(f'Fronius inverter at address {self._ip_address} did not answer')
+                self._cyclic_update_active = False
+                return
+            try:
+                response = response.json()
+                soc = float(response['Body']['Data']['Inverters']['1']['SOC'])
+                p_pv = float(response['Body']['Data']['Site']['P_PV'])
+                p_grid = float(response['Body']['Data']['Site']['P_Grid'])
+                p_accu = float(response['Body']['Data']['Site']['P_Akku'])
+                p_load = float(response['Body']['Data']['Site']['P_Load'])
+            except Exception:
+                self.logger.error(f'Fronius inverter at address {self._ip_address} returned invalid data')
+                self._cyclic_update_active = False
+                return
 
-        # Put the date into the items
-        try:
+            # Remove noise
+            if p_pv < 2:
+                p_pv = 0
+
+            # Put the date into the items
             for key, item in self._plg_item_dict.items():
                 if self.get_iattr_value(item['item'].conf, 'fronius_data') == 'soc':
                     item['item'](soc, self.get_fullname())
