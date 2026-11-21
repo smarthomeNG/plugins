@@ -6,7 +6,7 @@ plugin:
         de: Lesen und Schreiben von Werten einer Viessmann Heizung
         en: Read and write data from/to a Viessmann heating system
     maintainer: Morg
-    state: develop
+    state: ready
     keywords: iot device sdp
     version: '3.0.0'
     sh_minversion: '2.0.0-dev.2'

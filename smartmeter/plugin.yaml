@@ -2,7 +2,7 @@
 ---
 plugin:
     classname: Smartmeter
-    version: '0.10.0'                 # Plugin version
+    version: '1.0.0'                 # Plugin version
     sh_minversion: '2.0.0-dev.2'             # minimum shNG version to use this plugin
 #   py_minversion:             # minimum Python version to use for this plugin, due to f-strings
     type: interface                  # plugin type (gateway, interface, protocol, system, web)
@@ -11,7 +11,7 @@ plugin:
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) or SML (Smart Message Language) and delivering OBIS codes'
     maintainer: Morg
     tester: bmxp, onkelandy, sisamiwe
-    state: develop
+    state: ready
     keywords: smartmeter ehz dlms sml obis smartmeter
     multi_instance: true           # plugin supports multi instance
     restartable: true

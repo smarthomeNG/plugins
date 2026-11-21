@@ -45,7 +45,7 @@ class Deebot(SmartPlugin):
     from the device; item writes are sent as commands.
     """
 
-    PLUGIN_VERSION = '0.4.0'  # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         super().__init__()
