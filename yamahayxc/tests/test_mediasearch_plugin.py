@@ -1,5 +1,6 @@
 """Media search through the plugin: search item, status/result items, public method, worker and cursor lock."""
 
+import logging
 import threading
 import time
 from contextlib import ExitStack
@@ -178,3 +179,20 @@ def test_status_is_disabled_after_startup_without_a_server():
         setup.plugin._initialize()
 
         assert setup.status() == 'disabled'
+
+
+def test_outcome_is_logged_with_query_and_hit():
+    messages = []
+
+    class Collector(logging.Handler):
+        def emit(self, record):
+            messages.append(record.getMessage())
+
+    with Setup() as setup:
+        setup.plugin.logger.addHandler(Collector())
+        setup.plugin.logger.setLevel(logging.INFO)
+
+        setup.write('album: abbey')
+        assert setup.settle('ok')
+
+    assert any("'album: abbey'" in m and 'ok' in m and "'Abbey Road'" in m for m in messages)

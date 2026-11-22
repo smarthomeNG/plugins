@@ -1833,6 +1833,8 @@ class YamahaYXC(SmartPlugin):
             self.logger.error(f'media search failed: {e}')
             report = SearchReport(SearchStatus.ERROR, None)
         if not superseded():
+            played = f' ({report.hit.kind} {report.hit.title!r})' if report.hit else ''
+            self.logger.info(f'media search {query!r} on {self._host_label(host)}: {report.status}{played}')
             self._push_search(host, report)
 
     def _search_and_play(self, host, query, superseded):
