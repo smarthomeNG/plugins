@@ -1,7 +1,10 @@
 import os
+import threading
+import time
 
 import pytest
 
+from lib.item.helpers import fadejob
 from plugins.mcp.tools import ItemTools
 from plugins.mcp.types import Entitlement, ToolFailure
 from tests.mock.core import MockSmartHome
@@ -74,6 +77,26 @@ class TestSetItem:
             tools.set_item('rwnum', 'not a number')
         assert failure.value.code == 'invalid_value'
         assert item_of(items, 'rwnum')() == 1
+
+    def test_value_the_item_drops_is_rejected(self):
+        tools, items = make_tools()
+        item = item_of(items, 'rwnum')
+        item.fade(10, step=1, delta=5, stop_fade=['admin'])
+        fader = threading.Thread(target=fadejob, args=(item,), daemon=True)
+        fader.start()
+        try:
+            deadline = time.monotonic() + 2
+            while item() != 2 and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert item() == 2, 'fade did not take its first step'
+            with pytest.raises(ToolFailure) as failure:
+                tools.set_item('rwnum', 7)
+            assert failure.value.code == 'invalid_value'
+            assert 'fading' in failure.value.message
+            assert item() == 2
+        finally:
+            item(0, caller='admin')
+            fader.join(2)
 
 
 class TestWriteRateLimit:

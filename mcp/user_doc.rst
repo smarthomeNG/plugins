@@ -311,7 +311,9 @@ Hinweise:
   der Seite fort und wiederholt das Zeitfenster. Ein Item ohne Verlauf liefert ``not_found``, ein Item, das der
   Client nicht sehen darf, dasselbe. Der Dienst gehört zur Gruppe ``history`` aus ``expose``.
 - ``set_item`` wandelt den Wert zuerst in den Item-Typ um. Passt er nicht, kommt ``invalid_value`` und es
-  wird nichts geschrieben. ``null`` kann nicht geschrieben werden. Der zurückgegebene ``value`` kann vom
+  wird nichts geschrieben; das Schreiblimit wird dabei nicht verbraucht. Verwirft das Item den Wert selbst (zum
+  Beispiel während es per ``fade()`` überblendet wird), kommt ebenfalls ``invalid_value``. ``null`` kann nicht
+  geschrieben werden. Der zurückgegebene ``value`` kann vom
   geschriebenen abweichen (zum Beispiel durch ``eval``, Hysterese oder gleichzeitige Schreiber);
   ``changed: false`` ist kein Fehler.
 - ``get_plugin_info`` meldet als ``item_count`` die Items, die das Plugin selbst mit ``mcp_access`` gesetzt haben;
@@ -343,7 +345,7 @@ Code             Bedeutung
 ================ ======================================================================================
 not_found        Pfad oder Plugin existiert nicht oder ist für diese Verbindung unsichtbar
 forbidden        Schreibzugriff auf ein Item, das nur gelesen werden darf
-invalid_value    Wert ist ``null`` oder passt nicht zum Item-Typ
+invalid_value    Wert ist ``null``, passt nicht zum Item-Typ oder wird vom Item verworfen
 rate_limited     Schreiblimit erreicht; ``retry_after`` nennt die Sekunden bis zum nächsten Versuch
 not_exposed      Die Diagnosegruppe ist in ``expose`` nicht freigegeben
 bad_request      ungültiges ``limit``, ``cursor``, ``detail`` oder ``timeout``

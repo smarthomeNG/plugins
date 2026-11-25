@@ -228,7 +228,7 @@ def create_mcp_server(
 
     @server.tool(
         description='Write a value to an item with rw access. The value is cast to the item type; null cannot be '
-        'written. The result reports the previous value, the value read back right after the write (it can '
+        'written, and a value the item drops (wrong type, item fading) fails with invalid_value. The result reports the previous value, the value read back right after the write (it can '
         'differ, for example through an eval) and whether the item changed.'
     )
     @_as_tool_error

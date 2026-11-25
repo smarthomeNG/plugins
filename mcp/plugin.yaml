@@ -10,7 +10,7 @@ plugin:
     keywords: mcp, ai, agent, llm, gateway
 
     version: 0.1.0                  # Plugin version
-    sh_minversion: '2.0.0'          # minimum shNG version to use this plugin
+    sh_minversion: '2.1.0-dev.1'    # minimum shNG version to use this plugin
     py_minversion: '3.11'           # minimum Python version to use this plugin
     restartable: true
     multi_instance: false           # plugin supports multi instance

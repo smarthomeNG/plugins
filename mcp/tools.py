@@ -7,6 +7,8 @@ from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Literal, overload
 
+from lib.item.errors import ItemWriteRejected
+
 from .access import AccessResolver
 from .logs import LogReader
 from .paging import decode_cursor, encode_cursor, page_size, paginate
@@ -163,13 +165,13 @@ class ItemTools:
         """
         Write a value to an item the entitlement may write.
 
-        The value is cast to the item type first, so a mismatch is reported instead of being dropped by the
-        item. The returned ``value`` is read back right after the write; ``eval``, hysteresis, fades or a
+        The value is cast to the item type first, so a mismatch is refused before it uses up write budget; a value
+        the item itself drops (e.g. while it fades) is reported as well. The returned ``value`` is read back right after the write; ``eval``, hysteresis, fades or a
         concurrent writer can make it differ from the written value, and ``changed`` is False when the item
         kept its value.
 
         :raises ToolFailure: ``not_found`` for a missing or invisible item, ``forbidden`` for a read-only item,
-            ``invalid_value`` if the value is null or does not fit the item type
+            ``invalid_value`` if the value is null, does not fit the item type or is dropped by the item
         """
         item, access = self._visible_item(path)
         if access != 'rw':
@@ -242,8 +244,15 @@ class ItemTools:
             raise ToolFailure('rate_limited', 'write rate limit reached', retry_after)
 
     def _write_item(self, item: ReadableItem, value: object) -> None:
-        """Write through the item's regular update path, attributed to this plugin and token."""
-        item(value, caller=WRITE_CALLER, source=self._token_id)
+        """
+        Write through the item's regular update path, attributed to this plugin and token.
+
+        :raises ToolFailure: ``invalid_value`` if the item drops the value (wrong type, item fading)
+        """
+        try:
+            item(value, caller=WRITE_CALLER, source=self._token_id, strict=True)
+        except ItemWriteRejected as e:
+            raise ToolFailure('invalid_value', f'item rejected the value ({e.reason.value})') from e
 
     def _summary(self, item: ReadableItem) -> ItemSummary | None:
         """Return the item's summary, None if the entitlement cannot see it."""
