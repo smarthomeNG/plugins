@@ -1,0 +1,7 @@
+dev1:
+    z2m_topic: dev1
+    temp:
+        type: num
+        z2m_attr: temperature
+pause:
+    type: bool

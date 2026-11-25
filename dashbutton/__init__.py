@@ -18,10 +18,11 @@ start_time = time.time()
 
 
 class Dashbutton(SmartPlugin):
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '1.3.2'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self._dashbuttons = {}
         self._logger = logging.getLogger(__name__)
         self._scapy_thread = threading.Thread(target=self.listen)

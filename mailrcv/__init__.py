@@ -19,17 +19,15 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import imaplib
 import email
 
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
 
 
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()
@@ -43,9 +41,6 @@ class IMAP(SmartPlugin):
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = None
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
     def _connect(self):
         if self._tls:
@@ -148,7 +143,7 @@ class IMAP(SmartPlugin):
                 else:
                     rsp, data = imap.uid('copy', uid, self._trashfolder)
                     if rsp == 'OK':
-                        typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
+                        typ, data = imap.uid('store', uid, '+FLAGS', r'(\Deleted)')
                         self.logger.debug('Moving mail to trash. {0} => {1}: {2}'.format(fo, to, subject))
                     else:
                         self.logger.warning('Could not move mail to trash. {0} => {1}: {2}'.format(fo, to, subject))

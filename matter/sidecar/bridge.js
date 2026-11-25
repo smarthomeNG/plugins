@@ -1,0 +1,457 @@
+#!/usr/bin/env node
+/**
+ * Matter bridge role: a long-running @matter/node application that hosts
+ * shng items as bridged Matter accessories for other Matter controllers
+ * (Apple Home, Google Home, ...). Endpoints are added/removed live, driven
+ * by bridge/client.py over a local control WebSocket - not matter-server,
+ * which plays no part in this role.
+ *
+ * Control protocol (Python <-> Node, one JSON message per WebSocket frame):
+ *   Python -> Node request:  {"id": <int>, "command": <str>, "args": {...}}
+ *   Node -> Python response: {"id": <int>, "result": {...}}
+ *                          or {"id": <int>, "error": <str>}
+ *   Node -> Python event:    {"event": <str>, "data": {...}}
+ *
+ * Commands:
+ *   add_endpoint {item_path, expose_type, name} -> {endpoint_id}
+ *     endpoint_id is stable per item_path across bridge restarts (see
+ *     persistedEndpointIds below). Idempotent: an item_path that already has
+ *     an endpoint of the same expose_type gets that endpoint back (renamed if
+ *     name changed); a changed expose_type replaces the endpoint.
+ *   remove_endpoint {endpoint_id} -> {}
+ *   set_attribute {endpoint_id, value} -> {}
+ *     (v1 expose_types each have exactly one state attribute - see
+ *     EXPOSE_TYPES below - so the command carries a bare value, not a
+ *     cluster/attribute pair; revisit only if a type with more than one
+ *     attribute is ever added)
+ *   get_status {} -> {passcode, discriminator, manual_pairing_code,
+ *     qr_pairing_code, commissioned, fabric_count, commissioning_window_open,
+ *     commissioning_window_closes_in_seconds}
+ *     The window fields are tracked here, not read back from matter.js -
+ *     DeviceCommissioner's own #windowStatus is private with no public
+ *     getter, and the AdministratorCommissioning cluster's own WindowStatus
+ *     attribute is only updated by that cluster's OWN command handlers
+ *     (openBasicCommissioningWindow/openCommissioningWindow), which this
+ *     script deliberately bypasses (see open_commissioning_window below) -
+ *     so that attribute would never reflect either of the two window-opens
+ *     this script actually performs. Tracked instead as a plain
+ *     windowOpenUntilMs timestamp, set at the two points this script
+ *     controls (initial boot when uncommissioned - mirrors the exact gate
+ *     CommissioningServer.enterCommissionableMode() itself uses - and every
+ *     open_commissioning_window call), cleared early the instant a fabric is
+ *     actually added (a real controller can finish pairing well before the
+ *     window's own timeout, closing it early - STANDARD_COMMISSIONING_TIMEOUT
+ *     alone would overstate how long it's still open).
+ *   open_commissioning_window {} -> {}
+ *     Reopens the BASIC commissioning window using the bridge's existing
+ *     static passcode/discriminator (agent.commissioning.enterCommissionableMode() -
+ *     NOT allowBasicCommissioning(), which CommissioningServer never exposes
+ *     under that name, only calls internally; enterCommissionableMode() is
+ *     the real public entry point, see handleOpenCommissioningWindow() below
+ *     for the full story), works even with fabrics already present - no
+ *     guard against that in enterCommissionableMode() itself. Deliberately
+ *     not the ENHANCED window
+ *     (AdministratorCommissioning.openCommissioningWindow, random passcode) -
+ *     reusing the one static code already shown in the UI is simpler and
+ *     sufficient until that's proven insufficient for something real.
+ *   get_fabrics {} -> {fabrics: [{fabric_index, vendor_id, fabric_label, fabric_id}]}
+ *   remove_fabric {fabric_index} -> {}
+ *     Both fabric commands go through FabricManager directly
+ *     (server.env.get(FabricManager)), NOT the OperationalCredentials
+ *     cluster's own removeFabric() - that one asserts an authenticated
+ *     REMOTE session (AccessControl.js's assertRemoteActor), meant for a
+ *     real controller invoking RemoveFabric on itself over the wire, and
+ *     throws if called locally like this. FabricManager is the same
+ *     lower-level primitive the cluster handler itself uses internally
+ *     (fabric.leave()) - the correct layer for a local/administrative
+ *     removal, not a simulated remote command.
+ *
+ * Events:
+ *   command_received {endpoint_id, value}
+ *     Fired only for expose_type "switch", only from the device's own
+ *     on()/off() command handlers (see SwitchOnOffServer below) - never
+ *     from this script's own set_attribute() calls, which use state
+ *     writes that do not route through those handlers. The onOff$Changed
+ *     attribute event would also fire on our own writes, creating a
+ *     write-back loop through shng.
+ */
+
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { WebSocketServer } from 'ws';
+import { Endpoint, Environment, RuntimeService, ServerNode, VendorId } from '@matter/main';
+import { FabricManager } from '@matter/protocol';
+// Spec basic commissioning window (15 min), the value DeviceCommissioner enforces.
+import { STANDARD_COMMISSIONING_TIMEOUT } from '@matter/types';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
+import { OnOffServer } from '@matter/main/behaviors/on-off';
+import { OnOffPlugInUnitDevice } from '@matter/main/devices/on-off-plug-in-unit';
+import { ContactSensorDevice } from '@matter/main/devices/contact-sensor';
+import { TemperatureSensorDevice } from '@matter/main/devices/temperature-sensor';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+
+function argValue(name, fallback) {
+    const i = process.argv.indexOf(`--${name}`);
+    return i >= 0 && i + 1 < process.argv.length ? process.argv[i + 1] : fallback;
+}
+
+/**
+ * Value of a --name=value argument. --storage-path uses that form because matter.js maps only it
+ * to its storage.path config; this script reads it too, for endpoint_ids.json.
+ */
+function argEqualsValue(name, fallback) {
+    const prefix = `--${name}=`;
+    const arg = process.argv.find(a => a.startsWith(prefix));
+    return arg ? arg.slice(prefix.length) : fallback;
+}
+
+const MATTER_PORT = parseInt(argValue('matter-port', '5560'), 10);
+const CONTROL_PORT = parseInt(argValue('control-port', '5561'), 10);
+const STORAGE_PATH = argEqualsValue('storage-path', null);
+const PASSCODE = parseInt(argValue('passcode', '20202021'), 10);
+const DISCRIMINATOR = parseInt(argValue('discriminator', '3840'), 10);
+const VENDOR_ID = parseInt(argValue('vendor-id', '65521'), 10);
+// BasicInformation UniqueID/SerialNumber (max 32 chars) - distinct per plugin instance.
+const UNIQUE_ID = argValue('unique-id', 'shng-matter-bridge-0001');
+const PRIMARY_INTERFACE = argValue('primary-interface', null);
+
+// Same mechanism as matter-server's --primary-interface; must be set before ServerNode.create().
+if (PRIMARY_INTERFACE) {
+    Environment.default.vars.set('mdns.networkInterface', PRIMARY_INTERFACE);
+}
+
+/**
+ * expose_type -> device construction recipe. Each entry names the base
+ * @matter/node device type, whether it accepts commands from controllers
+ * (only "switch" does in v1), and how to translate this plugin's own
+ * set_attribute(value) into that device's state.
+ */
+const EXPOSE_TYPES = {
+    switch: {
+        deviceType: OnOffPlugInUnitDevice,
+        commandable: true,
+        applyValue: (endpoint, value) => endpoint.set({ onOff: { onOff: !!value } }),
+    },
+    contact: {
+        deviceType: ContactSensorDevice,
+        commandable: false,
+        applyValue: (endpoint, value) => endpoint.set({ booleanState: { stateValue: !!value } }),
+    },
+    temperature_sensor: {
+        deviceType: TemperatureSensorDevice,
+        commandable: false,
+        // Matter temperature is int16 hundredths of a degree C (Core Spec 7.19.2.9); items carry degrees C.
+        applyValue: (endpoint, value) => {
+            if (typeof value !== 'number' || !Number.isFinite(value)) {
+                throw new Error(`temperature must be a finite number, got ${JSON.stringify(value)}`);
+            }
+            return endpoint.set({ temperatureMeasurement: { measuredValue: Math.round(value * 100) } });
+        },
+    },
+};
+
+/**
+ * OnOffServer override for bridged switches: reports every actually-invoked
+ * on()/off() command back to Python as a command_received event, in
+ * addition to performing the normal state change. Not reused for toggle()
+ * since OnOffBaseServer's own default toggle() implementation already
+ * calls this.on()/this.off() internally (see OnOffServer.ts) - overriding
+ * it too would double-report.
+ */
+function makeSwitchOnOffServer(onCommand) {
+    return class SwitchOnOffServer extends OnOffServer {
+        async on() {
+            await super.on();
+            onCommand(true);
+        }
+
+        async off() {
+            await super.off();
+            onCommand(false);
+        }
+    };
+}
+
+const server = await ServerNode.create({
+    id: 'shng-bridge',
+    network: { port: MATTER_PORT },
+    commissioning: { passcode: PASSCODE, discriminator: DISCRIMINATOR },
+    productDescription: {
+        name: 'SmartHomeNG',
+        deviceType: AggregatorEndpoint.deviceType,
+    },
+    basicInformation: {
+        vendorName: 'SmartHomeNG',
+        vendorId: VendorId(VENDOR_ID),
+        nodeLabel: 'SmartHomeNG',
+        productName: 'SmartHomeNG Bridge',
+        productLabel: 'SmartHomeNG Bridge',
+        productId: 0x8006,
+        serialNumber: UNIQUE_ID,
+        uniqueId: UNIQUE_ID,
+    },
+});
+
+const aggregator = new Endpoint(AggregatorEndpoint, { id: 'aggregator' });
+await server.add(aggregator);
+
+// endpoint_id (the Matter-assigned endpoint number) -> {endpoint, exposeType, itemPath}
+const endpoints = new Map();
+// item_path -> endpoint_id of the endpoints currently added
+const endpointByItemPath = new Map();
+let wsClient = null; // the one control connection expected (bridge/client.py)
+
+/**
+ * item_path -> endpoint number, persisted to disk so the same shng item keeps the same Matter
+ * endpoint number across bridge restarts - matter.js's Aggregator.add() numbers endpoints
+ * sequentially per session. Controllers (matter-server, Apple/Google Home) cache a bridged
+ * accessory by its endpoint number and expect it to survive a bridge restart.
+ *
+ * Stored flat at <storage_path>/endpoint_ids.json, not inside matter.js's own
+ * <storage_path>/shng-bridge/ subdirectory - no collision with anything matter.js manages there.
+ * Entries are never removed on remove_endpoint - re-exposing the same item_path later gets its
+ * old number back, not a new one.
+ */
+const ENDPOINT_IDS_FILE = STORAGE_PATH ? join(STORAGE_PATH, 'endpoint_ids.json') : null;
+
+function loadPersistedEndpointIds() {
+    if (!ENDPOINT_IDS_FILE || !existsSync(ENDPOINT_IDS_FILE)) {
+        return new Map();
+    }
+    try {
+        return new Map(Object.entries(JSON.parse(readFileSync(ENDPOINT_IDS_FILE, 'utf8'))));
+    } catch (ex) {
+        console.warn(`[bridge] could not read ${ENDPOINT_IDS_FILE} (${ex.message}), starting with no persisted endpoint IDs`);
+        return new Map();
+    }
+}
+
+function savePersistedEndpointIds() {
+    if (!ENDPOINT_IDS_FILE) {
+        return;
+    }
+    try {
+        writeFileSync(ENDPOINT_IDS_FILE, JSON.stringify(Object.fromEntries(persistedEndpointIds), null, 2));
+    } catch (ex) {
+        console.warn(`[bridge] could not write ${ENDPOINT_IDS_FILE} (${ex.message}) - endpoint numbers won't survive a restart`);
+    }
+}
+
+const persistedEndpointIds = loadPersistedEndpointIds();
+
+/**
+ * Lowest number not currently in use AND not already reserved for some other item_path that
+ * hasn't been (re-)added yet this session - add_endpoint calls arrive one at a time in whatever
+ * order Python's item dict iterates, not "known items first". Without also excluding
+ * not-yet-arrived persisted numbers, an early brand-new item could get auto-assigned a number a
+ * later, already-known item is about to request explicitly, which then fails outright
+ * (Endpoint.ts's own allocation guard throws "number N is allocated to another endpoint", not a
+ * silent reassignment).
+ */
+function nextFreeEndpointNumber() {
+    const reserved = new Set([0, 1, ...endpoints.keys(), ...persistedEndpointIds.values()]);
+    let candidate = 2;
+    while (reserved.has(candidate)) {
+        candidate += 1;
+    }
+    return candidate;
+}
+
+// Epoch ms the basic commissioning window closes at, 0 if closed (see get_status in the module comment).
+let windowOpenUntilMs = 0;
+
+// A completed pairing closes the window before its timeout.
+server.env.get(FabricManager).events.added.on(() => {
+    windowOpenUntilMs = 0;
+});
+
+function sendEvent(name, data) {
+    if (wsClient && wsClient.readyState === wsClient.OPEN) {
+        wsClient.send(JSON.stringify({ event: name, data }));
+    }
+}
+
+/**
+ * BridgedDeviceBasicInformation's SerialNumber is spec-capped at 32 chars (Core Spec, Basic
+ * Information cluster) and quality:F (fixed once set) - a raw `shng-${itemPath}` blew past that
+ * for any item path over ~27 chars, failing the whole endpoint's construction with a matter.js
+ * ConstraintError. Unlike matter_expose_name (validated in Python's parse_item(), since that one
+ * IS user-visible), item path length isn't something a user should have to think about just to
+ * bridge an item - so this is unconditionally hash-derived rather than truncated: deterministic
+ * (same item -> same serial across restarts, required by quality:F), collision-safe, and always
+ * well under the cap.
+ */
+function serialNumberFor(itemPath) {
+    return 'shng-' + createHash('sha256').update(itemPath).digest('hex').slice(0, 24);
+}
+
+async function handleAddEndpoint(args) {
+    const spec = EXPOSE_TYPES[args.expose_type];
+    if (!spec) {
+        throw new Error(`unknown expose_type ${args.expose_type}`);
+    }
+
+    const existingNumber = endpointByItemPath.get(args.item_path);
+    if (existingNumber !== undefined) {
+        const existing = endpoints.get(existingNumber);
+        if (existing.exposeType === args.expose_type) {
+            await existing.endpoint.set({ bridgedDeviceBasicInformation: { nodeLabel: args.name } });
+            return { endpoint_id: existingNumber };
+        }
+        await handleRemoveEndpoint({ endpoint_id: existingNumber });
+    }
+
+    const behaviors = spec.commandable
+        ? [
+              BridgedDeviceBasicInformationServer,
+              // endpoint.number is read when a command arrives, after aggregator.add() assigned it.
+              makeSwitchOnOffServer(value => sendEvent('command_received', { endpoint_id: endpoint.number, value })),
+          ]
+        : [BridgedDeviceBasicInformationServer];
+
+    let number = persistedEndpointIds.get(args.item_path);
+    if (number === undefined) {
+        number = nextFreeEndpointNumber();
+        persistedEndpointIds.set(args.item_path, number);
+        savePersistedEndpointIds();
+    }
+
+    const endpoint = new Endpoint(spec.deviceType.with(...behaviors), {
+        // Endpoint ids reject "."; the id is matter.js-internal, Python only uses the endpoint number.
+        id: args.item_path.replace(/\./g, '_'),
+        number,
+        bridgedDeviceBasicInformation: {
+            nodeLabel: args.name,
+            productName: args.name,
+            productLabel: args.name,
+            serialNumber: serialNumberFor(args.item_path),
+            reachable: true,
+        },
+    });
+    await aggregator.add(endpoint);
+
+    endpoints.set(endpoint.number, { endpoint, exposeType: args.expose_type, itemPath: args.item_path });
+    endpointByItemPath.set(args.item_path, endpoint.number);
+    return { endpoint_id: endpoint.number };
+}
+
+async function handleRemoveEndpoint(args) {
+    const entry = endpoints.get(args.endpoint_id);
+    if (!entry) {
+        throw new Error(`no endpoint ${args.endpoint_id}`);
+    }
+    await entry.endpoint.delete();
+    endpoints.delete(args.endpoint_id);
+    endpointByItemPath.delete(entry.itemPath);
+    return {};
+}
+
+async function handleSetAttribute(args) {
+    const entry = endpoints.get(args.endpoint_id);
+    if (!entry) {
+        throw new Error(`no endpoint ${args.endpoint_id}`);
+    }
+    await EXPOSE_TYPES[entry.exposeType].applyValue(entry.endpoint, args.value);
+    return {};
+}
+
+async function handleGetStatus() {
+    const status = await server.act(agent => {
+        const state = agent.commissioning.state;
+        return {
+            passcode: state.passcode,
+            discriminator: state.discriminator,
+            manual_pairing_code: state.pairingCodes.manualPairingCode,
+            qr_pairing_code: state.pairingCodes.qrPairingCode,
+            commissioned: state.commissioned,
+        };
+    });
+    status.fabric_count = server.env.get(FabricManager).fabrics.length;
+    status.commissioning_window_open = Date.now() < windowOpenUntilMs;
+    status.commissioning_window_closes_in_seconds = status.commissioning_window_open
+        ? Math.round((windowOpenUntilMs - Date.now()) / 1000)
+        : 0;
+    return status;
+}
+
+async function handleOpenCommissioningWindow() {
+    // Public entry point, also works with fabrics present - see open_commissioning_window in the module comment.
+    await server.act(agent => agent.commissioning.enterCommissionableMode());
+    windowOpenUntilMs = Date.now() + STANDARD_COMMISSIONING_TIMEOUT;
+    return {};
+}
+
+async function handleGetFabrics() {
+    const fabrics = [...server.env.get(FabricManager)].map(fabric => ({
+        fabric_index: fabric.fabricIndex,
+        vendor_id: fabric.rootVendorId,
+        fabric_label: fabric.label,
+        // 64-bit bigint - JSON.stringify() throws on it.
+        fabric_id: String(fabric.fabricId),
+    }));
+    return { fabrics };
+}
+
+async function handleRemoveFabric(args) {
+    const fabric = server.env.get(FabricManager).maybeFor(args.fabric_index);
+    if (!fabric) {
+        throw new Error(`no fabric ${args.fabric_index}`);
+    }
+    await fabric.leave();
+    return {};
+}
+
+const COMMANDS = {
+    add_endpoint: handleAddEndpoint,
+    remove_endpoint: handleRemoveEndpoint,
+    set_attribute: handleSetAttribute,
+    get_status: handleGetStatus,
+    open_commissioning_window: handleOpenCommissioningWindow,
+    get_fabrics: handleGetFabrics,
+    remove_fabric: handleRemoveFabric,
+};
+
+const wss = new WebSocketServer({ port: CONTROL_PORT, host: '127.0.0.1' });
+// matter.js stops its runtime on SIGTERM/SIGINT; the control socket would otherwise keep the process alive.
+server.env.get(RuntimeService).stopped.on(() => {
+    for (const client of wss.clients) {
+        client.terminate();
+    }
+    wss.close();
+});
+wss.on('connection', ws => {
+    wsClient = ws;
+    ws.on('message', async raw => {
+        let message;
+        try {
+            message = JSON.parse(raw.toString());
+        } catch {
+            return;
+        }
+        const handler = COMMANDS[message.command];
+        if (!handler) {
+            ws.send(JSON.stringify({ id: message.id, error: `unknown command ${message.command}` }));
+            return;
+        }
+        try {
+            const result = await handler(message.args || {});
+            ws.send(JSON.stringify({ id: message.id, result }));
+        } catch (ex) {
+            ws.send(JSON.stringify({ id: message.id, error: String(ex && ex.message ? ex.message : ex) }));
+        }
+    });
+    ws.on('close', () => {
+        if (wsClient === ws) {
+            wsClient = null;
+        }
+    });
+});
+
+console.log(`[bridge] control WS listening on 127.0.0.1:${CONTROL_PORT}`);
+await server.start();
+// An uncommissioned node opened its basic commissioning window in server.start() - record it.
+if (server.env.get(FabricManager).fabrics.length === 0) {
+    windowOpenUntilMs = Date.now() + STANDARD_COMMISSIONING_TIMEOUT;
+}
+console.log(`[bridge] Matter node started on port ${MATTER_PORT}`);

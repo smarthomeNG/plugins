@@ -58,6 +58,7 @@ class LuxBase(SmartPlugin):
     # ATTENTION: This is NOT the SmartPlugin class of the plugin!!!
 
     def __init__(self, host, port=8888, **kwargs):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.host = host
         self.port = int(port)
@@ -246,7 +247,7 @@ class LuxBase(SmartPlugin):
 
 class Luxtronic2(LuxBase):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.3'
+    PLUGIN_VERSION = '1.3.4'
 
     _parameter = {}
     _attribute = {}

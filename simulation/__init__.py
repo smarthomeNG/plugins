@@ -48,9 +48,10 @@ from lib.scheduler import Scheduler
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Simulation release %s' % self.PLUGIN_VERSION)
         self.shtime = Shtime.get_instance()

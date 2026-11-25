@@ -46,11 +46,6 @@ from datetime import date
 import urllib.parse
 
 
-# sys.path.append('/home/smarthome/.p2/pool/plugins/org.python.pydev.core_6.5.0.201809011628/pysrc')
-sys.path.append('/devtools/eclipse/plugins/org.python.pydev.core_8.0.0.202009061309/pysrc/')
-import pydevd
-
-
 # If a package is needed, which might be not installed in the Python environment,
 # import it like this:
 #
@@ -67,7 +62,7 @@ class Indego4shNG(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '4.0.1'
+    PLUGIN_VERSION = '4.0.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -86,10 +81,7 @@ class Indego4shNG(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         #   self.param1 = self.get_parameter_value('param1')
@@ -2758,8 +2750,6 @@ class Indego4shNG(SmartPlugin):
             self.logger.error('Not initializing the web interface')
             return False
 
-        import sys
-
         if 'SmartPluginWebIf' not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning('Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface')
             return False
@@ -2905,7 +2895,6 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def set_location_html(self, longitude=None, latitude=None):
-        pydevd.settrace('192.168.178.37', port=5678)
         self.plugin._set_childitem('webif.location_longitude', float(longitude))
         self.plugin._set_childitem('webif.location_latitude', float(latitude))
         myLocation = {'latitude': str(latitude), 'longitude': str(longitude), 'timezone': 'Europe/Berlin'}

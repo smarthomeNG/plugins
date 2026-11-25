@@ -19,7 +19,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import base64
 import json
 import binascii
@@ -38,9 +37,9 @@ except Exception:
 
 
 class Buderus(SmartPlugin):
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '1.0.3'
 
-    BS = AES.block_size
+    BS = 16  # AES block size; Crypto may be missing when the class is defined
     INTERRUPT = '\u0001'
     PAD = '\u0000'
 
@@ -49,15 +48,13 @@ class Buderus(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
         self.logger.info('Init Buderus')
         # Exit if the required package(s) could not be imported
         if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'Crypto.Cipher'".format(self.get_fullname()))
+            self.logger.error(
+                "{}: Unable to import Python package 'Crypto.Cipher' (pycryptodome)".format(self.get_fullname())
+            )
+            self._init_complete = False
             return
 
         self.__ua = 'TeleHeater/2.2.3'
@@ -86,7 +83,7 @@ class Buderus(SmartPlugin):
         return data
 
     def _encrypt(self, plain):
-        plain = plain + (AES.block_size - len(plain) % self.BS) * self.PAD
+        plain = plain + (self.BS - len(plain) % self.BS) * self.PAD
         encobj = AES.new(self._key, AES.MODE_ECB)
         data = encobj.encrypt(plain)
         self.logger.debug('Buderus encrypted data: {} -- Base64 encoded: {}'.format(data, base64.b64encode(data)))

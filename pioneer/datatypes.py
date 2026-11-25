@@ -41,7 +41,7 @@ class DT_PioStandby(DT.Datatype):
             return '0600'
 
     def get_shng_data(self, data, type=None, **kwargs):
-        return int(data)
+        return int(data) / 10
 
 
 class DT_PioStandby2(DT.Datatype):
@@ -72,6 +72,8 @@ class DT_PioStandby2(DT.Datatype):
             return 6
         elif data == '0091':
             return 9
+        else:
+            raise ValueError(f'unrecognized standby value {data!r}')
 
 
 class DT_PioInitVol(DT.Datatype):
@@ -92,9 +94,9 @@ class DT_PioInitVol(DT.Datatype):
         elif data == '000':
             _returnvalue = -81
         elif int(data) >= 161:
-            _returnvalue = ((data - 161) / (185 - 161)) * 12
+            _returnvalue = ((int(data) - 161) / (185 - 161)) * 12
         elif int(data) < 161:
-            _returnvalue = ((data - 161) / 160) * 80
+            _returnvalue = ((int(data) - 161) / 160) * 80
         return _returnvalue
 
 

@@ -40,7 +40,7 @@ class Timmy(SmartPlugin):
     """
 
     # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.8.1'
+    PLUGIN_VERSION = '1.8.2'
 
     def __init__(self, sh):
         """

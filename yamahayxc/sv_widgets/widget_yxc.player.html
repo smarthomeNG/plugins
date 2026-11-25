@@ -1,0 +1,32 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Sebastian Helms
+* @copyright   2026
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+	<h5>Example</h5>
+     
+    	<div class="twig">
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+			{{ yxc.player('', 'bath.music.play', 'bath.music.pos', 'bath.music.vol', 'bath.music.mute', 'bath.music.title', 'bath.music.artist', '', 'bath.music.input', 'bath.music.power', 'bath.music.update') }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+    <br>
+	<div class="html">
+		<div class="block">
+			<div class="set-1" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+				<div data-role="collapsible" data-collapsed="false">
+					<h3>Yamaha RX-V483</h3>
+					{{ yxc.player('', 'bath.music.play', 'bath.music.pos', 'bath.music.vol', 'bath.music.mute', 'bath.music.title', 'bath.music.artist', '', 'bath.music.input', 'bath.music.power', 'bath.music.update') }}
+				</div>
+			</div>
+		</div>
+    </div>
+    
+{% endblock %}

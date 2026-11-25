@@ -24,7 +24,6 @@
 #
 #########################################################################
 
-import datetime
 import os
 import json
 
@@ -46,7 +45,7 @@ class Rtr2(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '2.2.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '3.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     _rtr = {}  # dict containing data of the rtrs. Key is the attribute rtr2_id
@@ -96,7 +95,7 @@ class Rtr2(SmartPlugin):
         #   return
 
         # set path to cache directory for plugins
-        self.cache_path = os.path.join(self.get_sh().get_basedir(), 'var', 'plugins_cache')
+        self.cache_path = os.path.join(self.get_sh().get_vardir(), 'plugins_cache')
         if not os.path.isdir(self.cache_path):
             # create plugins_cache dir if it does not already exist
             self.logger.warning(f'Createing cache directory {self.cache_path}')
@@ -283,7 +282,7 @@ class Rtr2(SmartPlugin):
                 self.logger.info(f'- rtr {r}: Valve protection is disabled')
 
         shtime = Shtime.get_instance()
-        close_time = shtime.now() + datetime.timedelta(minutes=5)
+        close_time = shtime.add_seconds(shtime.now(), 5 * 60)
         # add scheduler to turn protection off after 5 minutes
         self.scheduler_add('valve_protection_close', self.valve_protection_close, next=close_time)
 

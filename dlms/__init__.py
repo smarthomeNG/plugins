@@ -68,7 +68,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
     the tag ``dlms_obis_readout`` will receive the last readout from smartmeter
     """
 
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '1.9.6'
 
     # tags this plugin handles
     DLMS_OBIS_CODE = 'dlms_obis_code'  # a single code in form of '1-1:1.8.1'
@@ -83,10 +83,6 @@ class DLMS(SmartPlugin, conversion.Conversion):
         Initializes the DLMS plugin
         The parameters are retrieved from get_parameter_value(parameter_name)
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.debug(f'init {__name__}')
         self._init_complete = False

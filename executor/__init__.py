@@ -40,7 +40,7 @@ class Executor(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.1'
+    PLUGIN_VERSION = '1.2.2'
 
     def __init__(self, sh):
         """

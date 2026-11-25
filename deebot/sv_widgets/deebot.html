@@ -1,0 +1,65 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+/**
+* Panel for a vacuum of the SmartHomeNG plugin deebot: state, battery, buttons (start/pause/resume, stop, dock, locate),
+* fan speed, water amount, last cleaning, wear parts and selection of rooms to clean.
+*
+* All items are taken from the item struct deebot.all below the base item.
+*
+* @param {id} unique id for this widget
+* @param {item} base item of the vacuum, i.e. the item that uses 'struct: deebot.all'
+* @param {list=} wear parts to show, names as in the items lifespan_<part>; default brush, side_brush, filter, round_mop
+* @param {text=} smartVISU page with the map widget, empty for no map link
+* @param {bool=} true to add a button that opens the map in a popup; the map item is then subscribed as long as the page is open
+*/
+{% macro panel(id, base, parts, map_page, map_popup) %}
+	{% import "@widgets/basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+	{% set parts = parts|default(['brush', 'side_brush', 'filter', 'round_mop']) %}
+
+	<div id="{{ uid }}" class="deebot-panel" data-widget="deebot.panel"
+	     data-parts="{% for part in parts %}{{ part }}{% if not loop.last %},{% endif %}{% endfor %}"
+	     data-mappage="{{ map_page|default('') }}"
+	     data-item-cmd-start="{{ base~'.control.cmd_start' }}"
+	     data-item-cmd-pause="{{ base~'.control.cmd_pause' }}"
+	     data-item-cmd-resume="{{ base~'.control.cmd_resume' }}"
+	     data-item-cmd-stop="{{ base~'.control.cmd_stop' }}"
+	     data-item-cmd-dock="{{ base~'.control.cmd_dock' }}"
+	     data-item-cmd-locate="{{ base~'.control.cmd_locate' }}"
+	     data-item-cmd-clean-rooms="{{ base~'.control.cmd_clean_rooms' }}"
+	     data-item="{{ implode([base~'.status.state', base~'.status.active', base~'.status.battery', base~'.status.available', base~'.status.error_code', base~'.status.error_text', base~'.status.station_state', base~'.statistics.clean_area', base~'.statistics.clean_time', base~'.map.rooms']) }}{% for part in parts %}, {{ base~'.lifespan.lifespan_'~part }}{% endfor %}">
+		<div class="deebot-settings">
+			<label>Saugstufe {{ basic.select(uid~'-fan', base~'.settings.fan_speed', 'menu', ['quiet', 'normal', 'max', 'max_plus'], '', ['leise', 'normal', 'stark', 'max']) }}</label>
+			<label>Wasser {{ basic.select(uid~'-water', base~'.settings.water_amount', 'menu', ['low', 'medium', 'high'], '', ['wenig', 'mittel', 'viel']) }}</label>
+		</div>
+		{% if map_popup %}
+		<a href="#{{ uid }}-map-popup" data-rel="popup" class="ui-btn ui-mini ui-btn-inline ui-corner-all deebot-btn deebot-map-open">Karte</a>
+		{% endif %}
+	</div>
+	{% if map_popup %}
+	<div id="{{ uid }}-map-popup" data-role="popup" class="ui-content deebot-map-popup" data-overlay-theme="a" data-position-to="window">
+		<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+		<div id="{{ uid }}-map" class="deebot-map-widget" data-widget="deebot.map" data-item="{{ base~'.map.map_svg' }}">
+		</div>
+	</div>
+	{% endif %}
+{% endmacro %}
+
+/**
+* Map of a vacuum of the SmartHomeNG plugin deebot. The item map_svg is large and changes every few seconds while the
+* vacuum cleans: put this widget on a page of its own so it is only subscribed while that page is open.
+*
+* @param {id} unique id for this widget
+* @param {item} base item of the vacuum, i.e. the item that uses 'struct: deebot.all'
+*/
+{% macro map(id, base) %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}" class="deebot-map-widget" data-widget="deebot.map" data-item="{{ base~'.map.map_svg' }}">
+	</div>
+{% endmacro %}

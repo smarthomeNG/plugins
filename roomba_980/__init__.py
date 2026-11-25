@@ -26,11 +26,12 @@ from lib.model.smartplugin import SmartPlugin
 
 class ROOMBA_980(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '1.0.3'
 
     myroomba = None
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self._address = self.get_parameter_value('adress')
         self._blid = self.get_parameter_value('blid')
         self._roombaPassword = self.get_parameter_value('roombaPassword')

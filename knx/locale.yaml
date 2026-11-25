@@ -68,6 +68,31 @@ plugin_translations:
         en: '='
         fr: ''
 
+    "retrying knxd cache read for ga: {}":
+        de: "Wiederhole das Lesen des knxd cache für Gruppenadresse(n) {}"
+        en: '='
+        fr: ''
+
+    "no knxd cache value for group addresses {} after all retries":
+        de: "Nach allen Wiederholungen kein Wert im knxd cache für Gruppenadresse(n) {}"
+        en: '='
+        fr: ''
+
+    "knxd answered {} of {} cache reads":
+        de: "knxd hat {} von {} Cache-Anfragen beantwortet"
+        en: '='
+        fr: ''
+
+    "knxd cache read connection failed: {}":
+        de: "Verbindung zum knxd für Cache-Anfragen fehlgeschlagen: {}"
+        en: '='
+        fr: ''
+
+    "knxd rejected a request and has answered no knx_cache read, it probably has no group cache (knxd.ini: cache = <section> in [main])":
+        de: "knxd hat eine Anfrage abgelehnt und noch keine knx_cache-Anfrage beantwortet, vermutlich fehlt ein Group Cache (knxd.ini: cache = <Abschnitt> in [main])"
+        en: '='
+        fr: ''
+
     "reading knxd cache":
         de: "Lese Knxd Cache"
         en: '='

@@ -51,7 +51,7 @@ class RRD(SmartPlugin):
     Documentation can be found at `<https://pythonhosted.org/rrdtool/>`_
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
 
     def __init__(self, sh):
         """
@@ -64,7 +64,7 @@ class RRD(SmartPlugin):
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         rrd_dir = self.get_parameter_value('rrd_dir')
         if not rrd_dir:
-            rrd_dir = os.path.join(self.get_sh().base_dir, 'var', 'rrd')
+            rrd_dir = os.path.join(self.get_sh().get_vardir(), 'rrd')
         if not rrd_dir.endswith(os.sep):
             rrd_dir += os.sep
         self._rrd_dir = rrd_dir
@@ -269,7 +269,7 @@ class RRD(SmartPlugin):
             'step': str(istep),
             'sid': sid,
         }  # changed by ghciv6
-        reply['update'] = self.get_sh().now() + datetime.timedelta(seconds=istep)
+        reply['update'] = self.get_sh().shtime.now() + datetime.timedelta(seconds=istep)
         # self.logger.warning(f"Returning series for {sid} from {iend} to {iend+istep} with {len(tuples)} values") # old
         self.logger.info(
             f'Returning series for {sid} from {istart} to {iend} with {len(tuples)} values'

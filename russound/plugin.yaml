@@ -12,7 +12,7 @@ plugin:
     documentation: https://www.smarthomeng.de/developer/plugins/russound/user_doc.html        # url of documentation (wiki) page
     support:       https://knx-user-forum.de/forum/supportforen/smarthome-py/1800440-support-thread-für-das-russound-plugin
 
-    version: 1.7.3                  # Plugin version
+    version: 1.7.4                  # Plugin version
     sh_minversion: '1.10.0'            # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance

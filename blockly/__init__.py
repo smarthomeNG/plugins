@@ -45,7 +45,7 @@ class Blockly(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.1'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -54,6 +54,7 @@ class Blockly(SmartPlugin):
         :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! Use the method self.get_sh() instead
         """
         #        self.logger = SmartPluginLogger(__name__, self)
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Blockly.__init__')
 

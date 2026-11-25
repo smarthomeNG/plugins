@@ -1,0 +1,2636 @@
+{
+ "jobs_after_run": [
+  "read_initial_values"
+ ],
+ "initial_sends": [
+  {
+   "payload": "#SVM 2\r",
+   "data": 2,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QVR\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QPL\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QDT\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QTK\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QAT\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QHD\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "#QPW\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  }
+ ],
+ "initial_dispatched": [],
+ "writes": [
+  {
+   "item": "dev.control.audio",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#AUD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.audio": true
+   }
+  },
+  {
+   "item": "dev.control.chapter",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "#SRH C001\r",
+     "data": 1,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.chapter": 1
+   }
+  },
+  {
+   "item": "dev.control.eject",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#EJT\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.eject": true
+   }
+  },
+  {
+   "item": "dev.control.forward",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#FWD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.forward": true
+   }
+  },
+  {
+   "item": "dev.control.input",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "#SRC\r#NU1\r",
+     "data": 1,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.input": 1
+   }
+  },
+  {
+   "item": "dev.control.next",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#NXT\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.next": true
+   }
+  },
+  {
+   "item": "dev.control.playpause",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#PLA\r",
+     "data": "#PLA",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.playpause": true
+   }
+  },
+  {
+   "item": "dev.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#PON\r",
+     "data": "ON",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.power": true
+   }
+  },
+  {
+   "item": "dev.control.previous",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#PRE\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.previous": true
+   }
+  },
+  {
+   "item": "dev.control.pureaudio",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#PUR\r",
+     "data": "ON",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.pureaudio": true
+   }
+  },
+  {
+   "item": "dev.control.repeat",
+   "value": "OFF",
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.control.reverse",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#REV\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.reverse": true
+   }
+  },
+  {
+   "item": "dev.control.stop",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#STP\r",
+     "data": "STOP",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.stop": true
+   }
+  },
+  {
+   "item": "dev.control.subtitle",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#SUB\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.subtitle": true
+   }
+  },
+  {
+   "item": "dev.control.title",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "#SRH T001\r",
+     "data": 1,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.control.title": 1
+   }
+  },
+  {
+   "item": "dev.general.hdmiresolution",
+   "value": "480I",
+   "sent": [
+    {
+     "payload": "#SHD 480I\r",
+     "data": "480I",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.hdmiresolution": "480I"
+   }
+  },
+  {
+   "item": "dev.general.verbose",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "#SVM 1\r",
+     "data": 1,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.general.verbose": 1
+   }
+  },
+  {
+   "item": "dev.info.displaytype",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "#STC X\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.info.displaytype": "x"
+   }
+  },
+  {
+   "item": "dev.menu.back",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#RET\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.back": true
+   }
+  },
+  {
+   "item": "dev.menu.blue",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#BLU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.blue": true
+   }
+  },
+  {
+   "item": "dev.menu.down",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#NDN\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.down": true
+   }
+  },
+  {
+   "item": "dev.menu.green",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#GRN\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.green": true
+   }
+  },
+  {
+   "item": "dev.menu.home",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#HOM\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.home": true
+   }
+  },
+  {
+   "item": "dev.menu.info",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#INH\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.info": true
+   }
+  },
+  {
+   "item": "dev.menu.left",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#NLT\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.left": true
+   }
+  },
+  {
+   "item": "dev.menu.option",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#OPT\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.option": true
+   }
+  },
+  {
+   "item": "dev.menu.osd",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#OSD\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.osd": true
+   }
+  },
+  {
+   "item": "dev.menu.pagedown",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#PDN\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.pagedown": true
+   }
+  },
+  {
+   "item": "dev.menu.pageup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#PUP\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.pageup": true
+   }
+  },
+  {
+   "item": "dev.menu.popup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#MNU\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.popup": true
+   }
+  },
+  {
+   "item": "dev.menu.red",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#RED\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.red": true
+   }
+  },
+  {
+   "item": "dev.menu.right",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#NRT\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.right": true
+   }
+  },
+  {
+   "item": "dev.menu.select",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#SEL\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.select": true
+   }
+  },
+  {
+   "item": "dev.menu.setup",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#SET\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.setup": true
+   }
+  },
+  {
+   "item": "dev.menu.top",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#TTL\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.top": true
+   }
+  },
+  {
+   "item": "dev.menu.up",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#NUP\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.up": true
+   }
+  },
+  {
+   "item": "dev.menu.yellow",
+   "value": true,
+   "sent": [
+    {
+     "payload": "#YLW\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.menu.yellow": true
+   }
+  }
+ ],
+ "reads": [
+  {
+   "command": "control.audio",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.chapter",
+   "sent": [
+    {
+     "payload": "#QCH\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.eject",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.forward",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.input",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.next",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.playpause",
+   "sent": [
+    {
+     "payload": "#QPL\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.power",
+   "sent": [
+    {
+     "payload": "#QPW\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.previous",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.pureaudio",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.repeat",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.reverse",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.stop",
+   "sent": [
+    {
+     "payload": "#QPL\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.subtitle",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "control.title",
+   "sent": [
+    {
+     "payload": "#QTK\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.hdmiresolution",
+   "sent": [
+    {
+     "payload": "#QHD\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "general.verbose",
+   "sent": [
+    {
+     "payload": "#QVM\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.U3D",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.aspectratio",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.audio.available",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.audio.current",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.audio.language",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.audiotype",
+   "sent": [
+    {
+     "payload": "#QAT\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.channels",
+   "sent": [
+    {
+     "payload": "#QAT\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.disctype",
+   "sent": [
+    {
+     "payload": "#QDT\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.displaytype",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.firmware",
+   "sent": [
+    {
+     "payload": "#QVR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.inputresolution",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.outputresolution",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.status",
+   "sent": [
+    {
+     "payload": "#QPL\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.subtitle.available",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.subtitle.current",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.subtitle.language",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.time.chapterelapsed",
+   "sent": [
+    {
+     "payload": "#QCE\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.time.chapterremaining",
+   "sent": [
+    {
+     "payload": "#QCR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.time.titleelapsed",
+   "sent": [
+    {
+     "payload": "#QTE\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.time.titleremaining",
+   "sent": [
+    {
+     "payload": "#QTR\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.time.totalelapsed",
+   "sent": [
+    {
+     "payload": "#QEL\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.time.totalremaining",
+   "sent": [
+    {
+     "payload": "#QRE\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.totaltracks",
+   "sent": [
+    {
+     "payload": "#QTK\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "info.trackinfo",
+   "sent": [
+    {
+     "payload": "#QTK\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.back",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.blue",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.down",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.green",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.home",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.info",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.left",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.option",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.osd",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.pagedown",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.pageup",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.popup",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.red",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.right",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.select",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.setup",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.top",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.up",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "menu.yellow",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  }
+ ],
+ "replies": [
+  {
+   "reply_to": "control.audio",
+   "data": "@AUD a",
+   "command": null,
+   "dispatched": [
+    [
+     "control.audio",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.chapter",
+   "data": "@SRH OK",
+   "command": null,
+   "dispatched": [
+    [
+     "control.chapter",
+     "OK"
+    ],
+    [
+     "control.title",
+     "OK"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.chapter",
+   "data": "@QCH OK 11/11",
+   "command": null,
+   "dispatched": [
+    [
+     "control.chapter",
+     "11"
+    ]
+   ],
+   "changed": {
+    "dev.control.chapter": 11
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.eject",
+   "data": "@UPL OPEN",
+   "command": null,
+   "dispatched": [
+    [
+     "info.status",
+     "Tray Open"
+    ],
+    [
+     "control.eject",
+     true
+    ]
+   ],
+   "changed": {
+    "dev.info.status": "Tray Open"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.eject",
+   "data": "@EJT OK OPEN",
+   "command": null,
+   "dispatched": [
+    [
+     "control.eject",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.forward",
+   "data": "@FWD a 1x",
+   "command": null,
+   "dispatched": [
+    [
+     "control.forward",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.input",
+   "data": "@SRC a",
+   "command": null,
+   "dispatched": [
+    [
+     "control.input",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.next",
+   "data": "@NXT a",
+   "command": null,
+   "dispatched": [
+    [
+     "control.next",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.playpause",
+   "data": "@PLA OK PLAY",
+   "command": null,
+   "dispatched": [
+    [
+     "control.playpause",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.playpause",
+   "data": "@PAU OK PLAY",
+   "command": null,
+   "dispatched": [
+    [
+     "control.playpause",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.power",
+   "data": "@POFF OK OFF",
+   "command": null,
+   "dispatched": [
+    [
+     "control.power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.control.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.power",
+   "data": "@PON OK ON",
+   "command": null,
+   "dispatched": [
+    [
+     "control.power",
+     true
+    ]
+   ],
+   "changed": {
+    "dev.control.power": true
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.power",
+   "data": "@QPW OK ON",
+   "command": null,
+   "dispatched": [
+    [
+     "control.power",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.power",
+   "data": "@UPW 0",
+   "command": null,
+   "dispatched": [
+    [
+     "control.power",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.control.power": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.previous",
+   "data": "@PRE a",
+   "command": null,
+   "dispatched": [
+    [
+     "control.previous",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.pureaudio",
+   "data": "@PUR OK ON",
+   "command": null,
+   "dispatched": [
+    [
+     "control.pureaudio",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.repeat",
+   "data": "@RPT OK 0",
+   "command": null,
+   "dispatched": [
+    [
+     "control.repeat",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.reverse",
+   "data": "@REV a 1x",
+   "command": null,
+   "dispatched": [
+    [
+     "control.reverse",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.stop",
+   "data": "@STP OK FULL PLAY",
+   "command": null,
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.subtitle",
+   "data": "@SUB a",
+   "command": null,
+   "dispatched": [
+    [
+     "control.subtitle",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.title",
+   "data": "@QTK OK 11/11",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "control.title",
+     "11"
+    ]
+   ],
+   "changed": {
+    "dev.control.title": 11,
+    "dev.info.totaltracks": 11
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.title",
+   "data": "@SRH OK",
+   "command": null,
+   "dispatched": [
+    [
+     "control.chapter",
+     "OK"
+    ],
+    [
+     "control.title",
+     "OK"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "control.title",
+   "data": "@UAT AA 11/11 AAA 000",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "info.channels",
+     "000"
+    ],
+    [
+     "info.audio.current",
+     "11"
+    ],
+    [
+     "info.audio.available",
+     "11"
+    ],
+    [
+     "info.audio.language",
+     "AAA"
+    ],
+    [
+     "control.title",
+     "11"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 11,
+    "dev.info.audio.current": 11,
+    "dev.info.audio.language": "AAA",
+    "dev.info.channels": "000"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.hdmiresolution",
+   "data": "@SHD OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "general.hdmiresolution",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.general.hdmiresolution": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.hdmiresolution",
+   "data": "@QHD OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "general.hdmiresolution",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.verbose",
+   "data": "@QVM OK 0",
+   "command": null,
+   "dispatched": [
+    [
+     "general.verbose",
+     "0"
+    ]
+   ],
+   "changed": {
+    "dev.general.verbose": 0
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "general.verbose",
+   "data": "@SVM OK 0",
+   "command": null,
+   "dispatched": [
+    [
+     "general.verbose",
+     "0"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.U3D",
+   "data": "@U3D 2D",
+   "command": null,
+   "dispatched": [
+    [
+     "info.U3D",
+     "2D"
+    ]
+   ],
+   "changed": {
+    "dev.info.U3D": "2D"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.aspectratio",
+   "data": "@UAR 16WW",
+   "command": null,
+   "dispatched": [
+    [
+     "info.aspectratio",
+     "16:9 Wide"
+    ]
+   ],
+   "changed": {
+    "dev.info.aspectratio": "16:9 Wide"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audio.available",
+   "data": "@QAT OK A 1/1 A",
+   "command": null,
+   "dispatched": [
+    [
+     "info.audio.current",
+     "1"
+    ],
+    [
+     "info.audio.available",
+     "1"
+    ],
+    [
+     "info.audio.language",
+     "A"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 1,
+    "dev.info.audio.current": 1,
+    "dev.info.audio.language": "A"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audio.available",
+   "data": "@UAT AA 11/11 AAA 0",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "info.audio.current",
+     "11"
+    ],
+    [
+     "info.audio.available",
+     "11"
+    ],
+    [
+     "info.audio.language",
+     "AAA"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 11,
+    "dev.info.audio.current": 11,
+    "dev.info.audio.language": "AAA"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audio.current",
+   "data": "@QAT OK A 1/1 A",
+   "command": null,
+   "dispatched": [
+    [
+     "info.audio.current",
+     "1"
+    ],
+    [
+     "info.audio.available",
+     "1"
+    ],
+    [
+     "info.audio.language",
+     "A"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 1,
+    "dev.info.audio.current": 1,
+    "dev.info.audio.language": "A"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audio.current",
+   "data": "@UAT AA 11/11 AAA 0",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "info.audio.current",
+     "11"
+    ],
+    [
+     "info.audio.available",
+     "11"
+    ],
+    [
+     "info.audio.language",
+     "AAA"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 11,
+    "dev.info.audio.current": 11,
+    "dev.info.audio.language": "AAA"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audio.language",
+   "data": "@QAT OK A 1/1 A",
+   "command": null,
+   "dispatched": [
+    [
+     "info.audio.current",
+     "1"
+    ],
+    [
+     "info.audio.available",
+     "1"
+    ],
+    [
+     "info.audio.language",
+     "A"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 1,
+    "dev.info.audio.current": 1,
+    "dev.info.audio.language": "A"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audio.language",
+   "data": "@UAT AA 11/11 AAA 0",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "info.audio.current",
+     "11"
+    ],
+    [
+     "info.audio.available",
+     "11"
+    ],
+    [
+     "info.audio.language",
+     "AAA"
+    ]
+   ],
+   "changed": {
+    "dev.info.audio.available": 11,
+    "dev.info.audio.current": 11,
+    "dev.info.audio.language": "AAA"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audiotype",
+   "data": "@QAT OK PCM 44.1/16",
+   "command": null,
+   "dispatched": [
+    [
+     "info.audiotype",
+     "PCM 44.1/16"
+    ]
+   ],
+   "changed": {
+    "dev.info.audiotype": "PCM 44.1/16"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.audiotype",
+   "data": "@UAT PCM 44.1/16 11/11 AAA 0",
+   "command": null,
+   "dispatched": [
+    [
+     "info.audiotype",
+     "PCM 44.1/16"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.channels",
+   "data": "@UAT AA 11/11 AAA 000",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "info.channels",
+     "000"
+    ],
+    [
+     "info.audio.current",
+     "11"
+    ],
+    [
+     "info.audio.available",
+     "11"
+    ],
+    [
+     "info.audio.language",
+     "AAA"
+    ],
+    [
+     "control.title",
+     "11"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.disctype",
+   "data": "@QDT OK UHBD",
+   "command": null,
+   "dispatched": [
+    [
+     "info.disctype",
+     "Ultra HD Blu-ray Disc"
+    ]
+   ],
+   "changed": {
+    "dev.info.disctype": "Ultra HD Blu-ray Disc"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.disctype",
+   "data": "@UDT UHBD",
+   "command": null,
+   "dispatched": [
+    [
+     "info.disctype",
+     "Ultra HD Blu-ray Disc"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.disctype",
+   "data": "@OK UHBD",
+   "command": null,
+   "dispatched": [
+    [
+     "info.disctype",
+     "Ultra HD Blu-ray Disc"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.displaytype",
+   "data": "@STC OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.displaytype",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.displaytype": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.firmware",
+   "data": "@QVR OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.firmware",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.firmware": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.inputresolution",
+   "data": "@UVO _a_ _a_",
+   "command": null,
+   "dispatched": [
+    [
+     "info.inputresolution",
+     "a"
+    ],
+    [
+     "info.outputresolution",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.inputresolution": "a",
+    "dev.info.outputresolution": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.outputresolution",
+   "data": "@UVO _a_ _a_",
+   "command": null,
+   "dispatched": [
+    [
+     "info.inputresolution",
+     "a"
+    ],
+    [
+     "info.outputresolution",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.status",
+   "data": "@QPL OK PLAY",
+   "command": null,
+   "dispatched": [
+    [
+     "info.status",
+     "PLAY"
+    ],
+    [
+     "control.playpause",
+     true
+    ],
+    [
+     "control.stop",
+     false
+    ]
+   ],
+   "changed": {
+    "dev.control.stop": false,
+    "dev.info.status": "PLAY"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.status",
+   "data": "@UPL PLAY",
+   "command": null,
+   "dispatched": [
+    [
+     "info.status",
+     "PLAY"
+    ],
+    [
+     "control.playpause",
+     true
+    ],
+    [
+     "control.stop",
+     false
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.status",
+   "data": "@OK PLAY",
+   "command": null,
+   "dispatched": [
+    [
+     "info.status",
+     "PLAY"
+    ],
+    [
+     "control.playpause",
+     true
+    ],
+    [
+     "control.stop",
+     false
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.subtitle.available",
+   "data": "@UST 11/11 AAA",
+   "command": null,
+   "dispatched": [
+    [
+     "info.subtitle.current",
+     "11"
+    ],
+    [
+     "info.subtitle.available",
+     "11"
+    ],
+    [
+     "info.subtitle.language",
+     "AAA"
+    ]
+   ],
+   "changed": {
+    "dev.info.subtitle.available": 11,
+    "dev.info.subtitle.current": 11,
+    "dev.info.subtitle.language": "AAA"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.subtitle.current",
+   "data": "@UST 11/11 AAA",
+   "command": null,
+   "dispatched": [
+    [
+     "info.subtitle.current",
+     "11"
+    ],
+    [
+     "info.subtitle.available",
+     "11"
+    ],
+    [
+     "info.subtitle.language",
+     "AAA"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.subtitle.language",
+   "data": "@UST 11/11 AAA",
+   "command": null,
+   "dispatched": [
+    [
+     "info.subtitle.current",
+     "11"
+    ],
+    [
+     "info.subtitle.available",
+     "11"
+    ],
+    [
+     "info.subtitle.language",
+     "AAA"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.time.chapterelapsed",
+   "data": "@QCE OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.time.chapterelapsed",
+     "a"
+    ],
+    [
+     "info.time.chapterremaining",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.time.chapterelapsed": "a",
+    "dev.info.time.chapterremaining": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.time.chapterremaining",
+   "data": "@QCE OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.time.chapterelapsed",
+     "a"
+    ],
+    [
+     "info.time.chapterremaining",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.time.titleelapsed",
+   "data": "@QTE OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.time.titleelapsed",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.time.titleelapsed": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.time.titleremaining",
+   "data": "@QTR OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.time.titleremaining",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.time.titleremaining": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.time.totalelapsed",
+   "data": "@QEL OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.time.totalelapsed",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.time.totalelapsed": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.time.totalremaining",
+   "data": "@QRE OK a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.time.totalremaining",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.info.time.totalremaining": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.totaltracks",
+   "data": "@QTK OK 11/11",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "control.title",
+     "11"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.totaltracks",
+   "data": "@OK 11/11",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.totaltracks",
+   "data": "@UAT AA 11/11 AAA 0",
+   "command": null,
+   "dispatched": [
+    [
+     "info.totaltracks",
+     "11"
+    ],
+    [
+     "info.audio.current",
+     "11"
+    ],
+    [
+     "info.audio.available",
+     "11"
+    ],
+    [
+     "info.audio.language",
+     "AAA"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "info.trackinfo",
+   "data": "@UTC a",
+   "command": null,
+   "dispatched": [
+    [
+     "info.trackinfo",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.back",
+   "data": "@RET a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.back",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.blue",
+   "data": "@BLU a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.blue",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.down",
+   "data": "@NDN a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.down",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.green",
+   "data": "@GRN a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.green",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.home",
+   "data": "@HOM a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.home",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.info",
+   "data": "@INH a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.info",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.left",
+   "data": "@NLT a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.left",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.option",
+   "data": "@OPT a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.option",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.osd",
+   "data": "@OSD a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.osd",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.pagedown",
+   "data": "@PDN a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.pagedown",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.pageup",
+   "data": "@PUP a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.pageup",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.popup",
+   "data": "@MNU a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.popup",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.red",
+   "data": "@RED a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.red",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.right",
+   "data": "@NRT a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.right",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.select",
+   "data": "@SEL a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.select",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.setup",
+   "data": "@SET a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.setup",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.top",
+   "data": "@TTL a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.top",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.up",
+   "data": "@NUP a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.up",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "menu.yellow",
+   "data": "@YLW a",
+   "command": null,
+   "dispatched": [
+    [
+     "menu.yellow",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  }
+ ]
+}

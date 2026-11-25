@@ -27,10 +27,11 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Systemair(SmartPlugin):
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.instrument = None
         self.serialport = self.get_parameter_value('serialport')
         self.slave_address = self.get_parameter_value('slave_address')

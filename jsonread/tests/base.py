@@ -16,9 +16,13 @@ class JsonreadTestBase:
 
     FIXTURES_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
-    def plugin(self, url=None, cycle=30):
+    def plugin(self, url=None, cycle=30, jq_syntax=True):
         self.sh = MockSmartHome()
-        JSONREAD._parameters = {'url': url or f'file://{self.FIXTURES_DIR}/fronius.json', 'cycle': cycle}
+        JSONREAD._parameters = {
+            'url': url or f'file://{self.FIXTURES_DIR}/fronius.json',
+            'cycle': cycle,
+            'jq_syntax': jq_syntax,
+        }
         return JSONREAD(self.sh)
 
     def fixture_path(self, name):

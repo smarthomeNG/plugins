@@ -22,7 +22,6 @@
 #
 #########################################################################
 
-import logging
 import requests
 import json
 import math
@@ -33,7 +32,6 @@ from pprint import pformat
 
 from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
-from bin.smarthome import VERSION
 
 from .webif import WebInterface
 
@@ -49,7 +47,7 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = '1.8.8'
+    PLUGIN_VERSION = '1.8.9'
 
     _base_url = 'https://api.openweathermap.org/'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -106,8 +104,6 @@ class OpenWeatherMap(SmartPlugin):
 
         self.shtime = Shtime.get_instance()
 
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
         if (
             self.get_parameter_value('latitude') != ''
@@ -890,7 +886,7 @@ class OpenWeatherMap(SmartPlugin):
                 if owm_raw == ds_key:
                     self._raw_items[item.property.path] = (ds_key, item)
                     return
-            self.logger.warn(f"Unmatched owm_raw_file name '{owm_raw}'")
+            self.logger.warning(f"Unmatched owm_raw_file name '{owm_raw}'")
             return
 
         owm_pfx = self.get_iattr_value(item.conf, 'owm_match_prefix')

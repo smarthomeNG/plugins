@@ -9,7 +9,7 @@
 # lib/) are not resolved by ruff, so coupling is linting-only, not semantic.
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 120
 exclude = [
     "*/_pv_*",                   # old/superseded plugin versions kept for reference

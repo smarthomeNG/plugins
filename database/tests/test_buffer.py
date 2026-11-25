@@ -112,6 +112,47 @@ class TestBufferManagerCloseOpen(unittest.TestCase):
         self.assertFalse(self.mgr.has_open_entry(self.item))
 
 
+class TestBufferManagerSetLastDuration(unittest.TestCase):
+    def setUp(self):
+        self.mgr = BufferManager()
+        self.item = _Item('test.item')
+        self.mgr.register(self.item)
+
+    def test_set_last_duration_replaces_open_entry_duration(self):
+        # Used for update_item()'s normal (non-gap) step: the duration is an
+        # explicit end-start computed from the item's own change tracking,
+        # not derived from the buffered entry's own timestamp.
+        self.mgr.push(self.item, BufferEntry(time=1000, duration=None, value=5.0))
+        self.mgr.set_last_duration(self.item, 999)
+        last = self.mgr.last_entry(self.item)
+        self.assertEqual(last.duration, 999)
+        self.assertEqual(last.time, 1000)
+        self.assertEqual(last.value, 5.0)
+
+    def test_set_last_duration_does_nothing_if_already_closed(self):
+        self.mgr.push(self.item, BufferEntry(time=1000, duration=200, value=5.0))
+        self.mgr.set_last_duration(self.item, 999)
+        self.assertEqual(self.mgr.last_entry(self.item).duration, 200)
+
+    def test_set_last_duration_does_nothing_on_empty_buffer(self):
+        self.mgr.set_last_duration(self.item, 999)  # must not raise
+
+
+class TestBufferManagerDeregister(unittest.TestCase):
+    def setUp(self):
+        self.mgr = BufferManager()
+        self.item = _Item('test.item')
+
+    def test_deregister_removes_item(self):
+        self.mgr.register(self.item)
+        self.mgr.push(self.item, BufferEntry(time=1000, duration=None, value=1.0))
+        self.mgr.deregister(self.item)
+        self.assertNotIn(self.item, self.mgr.items())
+
+    def test_deregister_unknown_item_is_a_noop(self):
+        self.mgr.deregister(self.item)  # must not raise
+
+
 class TestBufferManagerQuality(unittest.TestCase):
     def setUp(self):
         self.mgr = BufferManager()

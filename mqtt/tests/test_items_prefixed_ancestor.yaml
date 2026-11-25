@@ -1,0 +1,8 @@
+prefixed:
+    state:
+        type: dict
+        mqtt_topic_prefix: home
+        mqtt_topic_in: ems/boiler
+        power:
+            type: num
+            mqtt_select_in: hppower

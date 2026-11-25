@@ -1,0 +1,779 @@
+#!/usr/bin/env python3
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+"""
+Tests for the server role (plugins/matter/server/role.py) on a real
+Matter plugin instance: real Items (writes reach update_item through the
+item's own method trigger), the plugin's real asyncio loop, and a WsPeer
+standing in for matter-server.
+"""
+
+import asyncio
+import http.server
+import os
+import sys
+import textwrap
+import threading
+import time
+import unittest
+from unittest.mock import MagicMock, patch
+
+import psutil
+
+from plugins.matter.role import RoleState
+from plugins.matter.server import CommissionState, MatterServerSidecar, ServerSidecarSettings
+from plugins.matter.tests.support import PluginHarness, WsPeer, connect_client, wait_for
+
+ITEMS = """
+matter:
+    aliases:
+        kitchen:
+            type: num
+            value: 3
+
+dev:
+    matter_node: 3
+    matter_endpoint: 1
+    sw:
+        type: bool
+        matter_cluster: 6
+        matter_switch: true
+    power:
+        type: num
+        matter_cluster: 144
+        matter_attribute: 8
+    toggle:
+        type: bool
+        matter_cluster: 6
+        matter_command: toggle
+    available:
+        type: bool
+        matter_available: true
+
+aliased:
+    matter_alias: kitchen
+    matter_endpoint: 1
+    sw:
+        type: bool
+        matter_cluster: 6
+        matter_switch: true
+
+ghost:
+    matter_alias: ghost
+    matter_endpoint: 1
+    sw:
+        type: bool
+        matter_cluster: 6
+        matter_switch: true
+
+broken:
+    matter_node: 3
+    sw:
+        type: bool
+        matter_cluster: 6
+        matter_switch: true
+
+icd_dev:
+    matter_node: 8
+    matter_endpoint: 1
+    temp:
+        type: num
+        matter_cluster: 1026
+        matter_attribute: 0
+    temp_custom_factor:
+        type: num
+        matter_cluster: 1026
+        matter_attribute: 0
+        matter_icd_invalid_factor: 1.0
+"""
+
+NODE_3 = {
+    'node_id': 3,
+    'available': True,
+    'attributes': {
+        '0/40/1': 'Shelly',
+        '0/40/3': 'Plug',
+        '0/29/0': [{'0': 22, '1': 1}],
+        '1/29/0': [{'0': 266, '1': 1}],
+        '1/6/0': True,
+        '1/144/8': 1500,
+    },
+}
+
+# Real values from a commissioned IKEA Timmerflotte: IdleModeDuration (0/70/0) = 300s (5 min).
+NODE_8 = {
+    'node_id': 8,
+    'available': True,
+    'attributes': {'0/40/3': 'TIMMERFLOTTE temp/hmd sensor', '0/70/0': 300, '1/1026/0': 2150},
+}
+
+
+class MatterServerPeer(WsPeer):
+    """WsPeer answering the matter-server commands the server role uses."""
+
+    def __init__(self):
+        super().__init__('message_id', responder=self.answer, greeting={'thread_credentials_set': False})
+        self.nodes = [NODE_3]
+        self.delay = 0.0
+        self.error_for: set[str] = set()
+        self.silent_for: set[str] = set()
+
+    async def answer(self, request):
+        command = request['command']
+        if self.delay:
+            await asyncio.sleep(self.delay)
+        if command in self.silent_for:
+            return None
+        if command in self.error_for:
+            return {'error_code': 1, 'details': f'{command} rejected'}
+        if command in ('get_nodes', 'start_listening'):
+            return {'result': self.nodes}
+        if command == 'commission_with_code':
+            return {'result': {'node_id': 9}}
+        return {'result': None}
+
+
+class _ServerRoleTest(unittest.TestCase):
+    def setUp(self):
+        self.harness = PluginHarness(ITEMS)
+        self.addCleanup(self.harness.close)
+        self.server = self.harness.plugin.server
+        self.peer = MatterServerPeer().start()
+        self.addCleanup(self.peer.stop)
+
+    def connect(self):
+        self.harness.start_loop()
+        connect_client(self.harness, self.server, self.peer.url + '/ws')
+
+    def item(self, path):
+        return self.harness.item(path)
+
+
+class TestParsing(_ServerRoleTest):
+    def test_inherited_addressing_is_resolved_and_marked(self):
+        self.assertEqual(
+            self.harness.plugin.describe_item(self.item('dev.power')), 'node=3*, endpoint=1*, cluster=144, attribute=8'
+        )
+
+    def test_alias_item_resolves_through_the_alias(self):
+        self.assertEqual(
+            self.harness.plugin.describe_item(self.item('aliased.sw')),
+            'alias=kitchen*, node=3, endpoint=1*, cluster=6, attribute=0, command=on, command_false=off',
+        )
+
+    def test_item_missing_endpoint_is_not_mapped(self):
+        self.assertNotIn(self.item('broken.sw'), self.harness.plugin.mapped_items())
+
+    def test_prepare_reports_unknown_alias_references(self):
+        with self.assertLogs(self.harness.plugin.logger, 'ERROR') as logs:
+            self.server.prepare()
+
+        self.assertTrue(any("matter_alias 'ghost'" in line for line in logs.output))
+
+    def test_prepare_warns_when_matter_icd_invalid_factor_has_no_database_logging(self):
+        with self.assertLogs(self.harness.plugin.logger, 'WARNING') as logs:
+            self.server.prepare()
+
+        self.assertTrue(
+            any('icd_dev.temp_custom_factor' in line and 'matter_icd_invalid_factor' in line for line in logs.output)
+        )
+
+    def test_prepare_does_not_warn_once_the_item_is_database_logged(self):
+        self.item('icd_dev.temp_custom_factor').db_mark_invalid = MagicMock()
+
+        with self.assertLogs(self.harness.plugin.logger, 'WARNING') as logs:
+            self.server.prepare()  # ghost's alias error still fires - only asserting our own warning stays quiet
+
+        self.assertFalse(any('matter_icd_invalid_factor' in line for line in logs.output))
+
+
+class TestReports(_ServerRoleTest):
+    def test_connect_seeds_cached_values_into_direct_and_alias_items(self):
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+
+        self.assertIs(self.item('dev.sw')(), True)
+        self.assertIs(self.item('aliased.sw')(), True)
+        self.assertEqual(self.item('dev.power')(), 1.5)  # raw 1500 mW / divisor 1000 (ElectricalPowerMeasurement)
+        self.assertIs(self.item('dev.available')(), True)
+
+    def test_pushed_attribute_update_reaches_items(self):
+        self.connect()
+
+        self.peer.push({'event': 'attribute_updated', 'data': [3, '1/144/8', 42]})
+
+        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 0.042))
+
+    def test_pushed_attribute_update_is_decoded_by_the_clusters_divisor(self):
+        self.peer.nodes = [NODE_3, NODE_8]
+        self.connect()
+
+        self.peer.push({'event': 'attribute_updated', 'data': [8, '1/1026/0', 2150]})
+
+        self.assertTrue(wait_for(lambda: self.item('icd_dev.temp')() == 21.5))
+
+    def test_pushed_availability_reaches_items(self):
+        self.connect()
+        self.item('dev.available')(True, 'test')
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: self.item('dev.available')() is False))
+
+    def test_node_unavailable_marks_mirrored_items_invalid_but_not_the_availability_item(self):
+        self.connect()
+        power, sw, available = self.item('dev.power'), self.item('dev.sw'), self.item('dev.available')
+        power.db_mark_invalid = MagicMock()
+        sw.db_mark_invalid = MagicMock()
+        available.db_mark_invalid = MagicMock()
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: power.db_mark_invalid.called))
+        self.assertTrue(sw.db_mark_invalid.called)
+        self.assertFalse(available.db_mark_invalid.called)
+
+    def test_node_unavailable_marks_items_reached_only_through_an_alias(self):
+        self.connect()
+        aliased_sw = self.item('aliased.sw')
+        aliased_sw.db_mark_invalid = MagicMock()
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: aliased_sw.db_mark_invalid.called))
+
+    def test_node_available_again_triggers_interview_and_reseeds_its_items(self):
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+        self.item('dev.power')(0, self.server.own_caller())
+        self.item('dev.sw')(False, self.server.own_caller())
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+
+        self.assertTrue(wait_for(lambda: len(self.peer.commands('interview_node')) == 1))
+        self.assertEqual(self.peer.commands('interview_node')[0]['args'], {'node_id': 3})
+        self.assertTrue(wait_for(lambda: self.item('dev.power')() == 1.5))
+        self.assertTrue(wait_for(lambda: self.item('dev.sw')() is True))
+
+    def test_failed_interview_is_logged_and_does_not_reseed(self):
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+        self.item('dev.power')(0, self.server.own_caller())
+        self.peer.error_for.add('interview_node')
+
+        with self.assertLogs(self.harness.plugin.logger, 'WARNING') as logs:
+            self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+            self.assertTrue(wait_for(lambda: any('resync' in line for line in logs.output)))
+
+        time.sleep(0.2)
+        self.assertEqual(self.item('dev.power')(), 0)
+
+    def test_decommissioned_node_resync_is_logged_at_info_and_does_not_crash(self):
+        self.connect()
+        self.peer.nodes = []
+
+        with self.assertLogs(self.harness.plugin.logger, 'INFO') as logs:
+            self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+            self.assertTrue(wait_for(lambda: any('no longer known' in line for line in logs.output)))
+
+    def test_rapid_recovery_events_do_not_leak_resync_tasks(self):
+        self.connect()
+        self.peer.delay = 0.2
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+
+        self.assertTrue(wait_for(lambda: not self.server._resync_tasks, timeout=2))
+
+    def test_node_going_unavailable_again_cancels_an_in_flight_resync(self):
+        self.connect()
+        self.peer.delay = 0.3
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+        self.assertTrue(wait_for(lambda: 3 in self.server._resync_tasks))
+        task = self.server._resync_tasks[3]
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': False}})
+
+        self.assertTrue(wait_for(lambda: task.cancelled() or task.done()))
+
+    def test_cleanup_cancels_in_flight_resync_tasks(self):
+        self.connect()
+        self.peer.delay = 1.0
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 3, 'available': True}})
+        self.assertTrue(wait_for(lambda: 3 in self.server._resync_tasks))
+        task = self.server._resync_tasks[3]
+
+        self.harness.run(self.server.cleanup())
+
+        self.assertTrue(task.cancelled())
+        self.assertEqual(self.server._resync_tasks, {})
+
+
+class TestIcdStaleness(_ServerRoleTest):
+    def connect_with_icd_node(self):
+        self.peer.nodes = [NODE_3, NODE_8]
+        self.connect()
+        self.harness.run(self.server._on_connected(self.server.client))
+
+    def test_icd_node_unavailable_does_not_mark_invalid_or_resync(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 8, 'available': False}})
+        self.peer.push({'event': 'node_updated', 'data': {'node_id': 8, 'available': True}})
+        time.sleep(0.2)
+
+        self.assertFalse(temp.db_mark_invalid.called)
+        self.assertEqual(self.peer.commands('interview_node'), [])
+
+    def test_stale_icd_item_gets_marked_invalid(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+        temp.db_is_invalid = MagicMock(return_value=False)
+
+        with patch.object(temp, 'update_age', return_value=300 * 2.5 + 1):
+            self.server._check_icd_items()
+
+        temp.db_mark_invalid.assert_called_once()
+
+    def test_icd_item_not_yet_stale_is_left_alone(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+        temp.db_is_invalid = MagicMock(return_value=False)
+
+        with patch.object(temp, 'update_age', return_value=300 * 2.5 - 1):
+            self.server._check_icd_items()
+
+        self.assertFalse(temp.db_mark_invalid.called)
+
+    def test_already_invalid_icd_item_is_not_marked_again(self):
+        self.connect_with_icd_node()
+        temp = self.item('icd_dev.temp')
+        temp.db_mark_invalid = MagicMock()
+        temp.db_is_invalid = MagicMock(return_value=True)
+
+        with patch.object(temp, 'update_age', return_value=300 * 2.5 + 1):
+            self.server._check_icd_items()
+
+        self.assertFalse(temp.db_mark_invalid.called)
+
+    def test_matter_icd_invalid_factor_overrides_the_default(self):
+        self.connect_with_icd_node()
+        default_factor_item = self.item('icd_dev.temp')
+        custom_factor_item = self.item('icd_dev.temp_custom_factor')
+        for item in (default_factor_item, custom_factor_item):
+            item.db_mark_invalid = MagicMock()
+            item.db_is_invalid = MagicMock(return_value=False)
+
+        # Same age for both - between the custom factor's threshold (300) and the default's (750).
+        with (
+            patch.object(default_factor_item, 'update_age', return_value=500),
+            patch.object(custom_factor_item, 'update_age', return_value=500),
+        ):
+            self.server._check_icd_items()
+
+        self.assertFalse(default_factor_item.db_mark_invalid.called)
+        custom_factor_item.db_mark_invalid.assert_called_once()
+
+    def test_icd_item_without_database_logging_does_not_raise(self):
+        self.connect_with_icd_node()
+
+        with patch.object(self.item('icd_dev.temp'), 'update_age', return_value=999999):
+            self.server._check_icd_items()  # must not raise - db_mark_invalid was never injected
+
+    def test_icd_watchdog_ticks_periodically_and_stops_on_cancel(self):
+        self.harness.start_loop()
+        self.server.settings = type(self.server.settings)(icd_check_cycle=0.05)
+
+        with patch.object(self.server, '_check_icd_items') as check:
+            future = asyncio.run_coroutine_threadsafe(self.server._icd_watchdog(), self.harness.plugin._asyncio_loop)
+            self.assertTrue(wait_for(lambda: check.call_count >= 2, timeout=1))
+
+            future.cancel()
+            time.sleep(0.1)
+            count_after_cancel = check.call_count
+            time.sleep(0.15)
+            self.assertEqual(check.call_count, count_after_cancel)
+
+
+class TestWrites(_ServerRoleTest):
+    def test_switch_write_sends_on_and_off(self):
+        self.connect()
+
+        self.item('dev.sw')(True, 'test')
+        self.assertTrue(wait_for(lambda: len(self.peer.commands('device_command')) == 1))
+        self.item('dev.sw')(False, 'test')
+        self.assertTrue(wait_for(lambda: len(self.peer.commands('device_command')) == 2))
+
+        first, second = (command['args'] for command in self.peer.commands('device_command'))
+        self.assertEqual((first['node_id'], first['endpoint_id'], first['cluster_id']), (3, 1, 6))
+        self.assertEqual((first['command_name'], second['command_name']), ('on', 'off'))
+
+    def test_attribute_write_sends_write_attribute(self):
+        self.connect()
+
+        self.item('dev.power')(7, 'test')  # 7 W - encoded back to raw mW (cluster 144 attr 8, divisor 1000)
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('write_attribute')))
+        self.assertEqual(
+            self.peer.commands('write_attribute')[0]['args'], {'node_id': 3, 'attribute_path': '1/144/8', 'value': 7000}
+        )
+
+    def test_attribute_write_rounds_to_the_nearest_raw_unit(self):
+        self.connect()
+
+        self.item('dev.power')(7.0034, 'test')  # 7.0034 * 1000 = 7003.4 - not a whole raw unit
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('write_attribute')))
+        self.assertEqual(self.peer.commands('write_attribute')[0]['args']['value'], 7003)
+
+    def test_falsy_write_to_value_independent_command_does_not_fire(self):
+        self.connect()
+
+        self.item('dev.toggle')(True, 'test')
+        self.item('dev.toggle')(False, 'test')
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('device_command')))
+        time.sleep(0.2)
+        self.assertEqual(len(self.peer.commands('device_command')), 1)
+
+    def test_write_does_not_block_the_writing_thread(self):
+        self.connect()
+        self.peer.delay = 1.0
+
+        started = time.monotonic()
+        self.item('dev.sw')(True, 'test')
+        elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 0.5)
+        self.assertTrue(wait_for(lambda: self.peer.commands('device_command')))
+
+    def test_rejected_write_is_logged_with_the_item_path(self):
+        self.connect()
+        self.peer.error_for.add('device_command')
+
+        with self.assertLogs(self.harness.plugin.logger, 'ERROR') as logs:
+            self.item('dev.sw')(True, 'test')
+            wait_for(lambda: any('dev.sw' in line for line in logs.output))
+
+        self.assertTrue(any('writing dev.sw to Matter failed' in line for line in logs.output))
+
+    def test_own_report_is_not_written_back(self):
+        self.connect()
+
+        self.peer.push({'event': 'attribute_updated', 'data': [3, '1/6/0', False]})
+        self.assertTrue(wait_for(lambda: self.item('dev.sw')() is False))
+        time.sleep(0.2)
+
+        self.assertEqual(self.peer.commands('device_command'), [])
+
+    def test_write_via_undefined_alias_is_dropped_not_sent_to_a_placeholder_node(self):
+        self.connect()
+
+        with self.assertLogs(self.harness.plugin.logger, 'ERROR') as logs:
+            self.item('ghost.sw')(True, 'test')
+
+        time.sleep(0.2)
+        self.assertEqual(self.peer.commands('device_command'), [])
+        self.assertTrue(any("'ghost' is not defined" in line for line in logs.output))
+
+
+class TestAliases(_ServerRoleTest):
+    def test_repoint_redirects_writes_and_reports_immediately_and_persists(self):
+        self.connect()
+
+        self.server.repoint_alias('kitchen', 4)
+        self.item('aliased.sw')(True, 'test')
+        self.assertTrue(wait_for(lambda: self.peer.commands('device_command')))
+        self.peer.push({'event': 'attribute_updated', 'data': [4, '1/6/0', False]})
+
+        self.assertEqual(self.peer.commands('device_command')[0]['args']['node_id'], 4)
+        self.assertTrue(wait_for(lambda: self.item('aliased.sw')() is False))
+        self.assertEqual(self.server.aliases.snapshot()['kitchen'], 4)
+        with open(os.path.join(self.harness.sh._items_dir, 'test_items.yaml')) as f:
+            self.assertIn('value: 4', f.read())
+
+    def test_create_and_remove_alias_go_through_real_items(self):
+        self.server.create_alias('ghost', 5)
+
+        self.assertEqual(self.server.aliases.snapshot()['ghost'], 5)
+        self.assertEqual(self.harness.plugin.describe_item(self.item('matter.aliases.ghost')), 'alias definition ghost')
+
+        self.server.remove_alias('ghost')
+
+        self.assertNotIn('ghost', self.server.aliases.snapshot())
+
+    def test_alias_item_write_repoints(self):
+        self.item('matter.aliases.kitchen')(6, 'test')
+
+        self.assertEqual(self.server.aliases.snapshot()['kitchen'], 6)
+
+    def test_invalid_alias_item_write_keeps_the_old_target(self):
+        with self.assertLogs(self.harness.plugin.logger, 'ERROR'):
+            self.item('matter.aliases.kitchen')(-1, 'test')
+
+        self.assertEqual(self.server.aliases.snapshot()['kitchen'], 3)
+
+
+class TestCommissioning(_ServerRoleTest):
+    def test_commission_returns_at_once_and_completes_in_the_background(self):
+        self.connect()
+        self.peer.delay = 0.5
+
+        started = time.monotonic()
+        job = self.server.start_commission('MT:ABC')
+
+        self.assertLess(time.monotonic() - started, 0.3)
+        self.assertEqual(job.state, CommissionState.PENDING)
+        self.assertTrue(wait_for(lambda: job.state is CommissionState.SUCCEEDED))
+        self.assertEqual(job.detail, 'node_id=9')
+        self.assertEqual(self.server.commission_jobs()[-1]['state'], 'succeeded')
+
+    def test_commission_defaults_to_allowing_ble_alongside_on_network_discovery(self):
+        self.connect()
+
+        self.server.start_commission('MT:ABC')
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('commission_with_code')))
+        self.assertEqual(self.peer.commands('commission_with_code')[0]['args']['network_only'], False)
+
+    def test_commission_network_only_is_passed_through_for_an_already_networked_device(self):
+        self.connect()
+
+        self.server.start_commission('MT:ABC', network_only=True)
+
+        self.assertTrue(wait_for(lambda: self.peer.commands('commission_with_code')))
+        self.assertEqual(self.peer.commands('commission_with_code')[0]['args']['network_only'], True)
+
+    def test_commission_waits_for_the_configured_timeout_not_a_fixed_one(self):
+        self.connect()
+        self.peer.silent_for.add('commission_with_code')
+        self.server.settings = type(self.server.settings)(commission_timeout=0.3)
+
+        job = self.server.start_commission('MT:ABC')
+
+        self.assertTrue(wait_for(lambda: job.state is CommissionState.FAILED))
+        self.assertIn('timed out', job.detail)
+
+    def test_commission_without_connection_raises(self):
+        with self.assertRaises(ConnectionError):
+            self.server.start_commission('MT:ABC')
+
+    def test_clear_finished_commission_jobs_drops_succeeded_and_failed(self):
+        self.connect()
+        succeeded = self.server.start_commission('MT:ABC')
+        self.assertTrue(wait_for(lambda: succeeded.state is CommissionState.SUCCEEDED))
+        self.peer.silent_for.add('commission_with_code')
+        self.server.settings = type(self.server.settings)(commission_timeout=0.1)
+        failed = self.server.start_commission('MT:DEF')
+        self.assertTrue(wait_for(lambda: failed.state is CommissionState.FAILED))
+
+        self.server.clear_finished_commission_jobs()
+
+        self.assertEqual(self.server.commission_jobs(), [])
+
+    def test_clear_finished_commission_jobs_keeps_a_still_pending_job(self):
+        self.connect()
+        self.peer.silent_for.add('commission_with_code')
+        pending = self.server.start_commission('MT:ABC')
+
+        self.server.clear_finished_commission_jobs()
+
+        self.assertEqual(pending.state, CommissionState.PENDING)
+        self.assertEqual(len(self.server.commission_jobs()), 1)
+
+
+class TestWebifQueries(_ServerRoleTest):
+    def test_nodes_snapshot_degrades_to_an_error_when_not_connected(self):
+        snapshot = self.server.nodes_snapshot()
+
+        self.assertEqual(snapshot.nodes, ())
+        self.assertIn('not connected', snapshot.error)
+
+    def test_nodes_snapshot_skips_malformed_nodes(self):
+        self.connect()
+        self.peer.nodes = [NODE_3, {'node_id': 'x'}]
+
+        snapshot = self.server.nodes_snapshot()
+
+        self.assertEqual([node['node_id'] for node in snapshot.nodes], [3])
+
+    def test_create_suggested_items_creates_working_items(self):
+        self.connect()
+
+        paths = self.server.create_suggested_items(3)
+
+        self.assertEqual(paths, ['matter_devices.matter_node_3'])
+        created = self.item('matter_devices.matter_node_3')
+        self.assertIn(created, self.harness.plugin.mapped_items())
+        self.assertIn('node=3', self.harness.plugin.describe_item(created))
+        with self.assertRaises(ValueError):
+            self.server.create_suggested_items(3)
+
+    def test_created_items_start_with_the_cached_device_values(self):
+        self.connect()
+
+        self.server.create_suggested_items(3)
+
+        self.assertIs(self.item('matter_devices.matter_node_3')(), True)
+        self.assertEqual(self.item('matter_devices.matter_node_3.power')(), 1.5)
+
+
+class _OtbrHandler(http.server.BaseHTTPRequestHandler):
+    body = b''
+
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(self.body)
+
+    def log_message(self, *args):
+        pass
+
+
+class TestThreadDataset(_ServerRoleTest):
+    def start_otbr(self, body: bytes) -> str:
+        handler = type('Handler', (_OtbrHandler,), {'body': body})
+        httpd = http.server.HTTPServer(('127.0.0.1', 0), handler)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        self.addCleanup(httpd.server_close)
+        self.addCleanup(httpd.shutdown)
+        return f'http://127.0.0.1:{httpd.server_address[1]}'
+
+    def with_otbr_url(self, url: str) -> None:
+        settings = self.server.settings
+        self.server.settings = type(settings)(**{**settings.__dict__, 'otbr_rest_url': url})
+
+    def test_fetch_registers_the_dataset_with_matter_server(self):
+        self.connect()
+        self.with_otbr_url(self.start_otbr(b'0e0800\n'))
+
+        self.assertEqual(self.server.fetch_thread_dataset_from_otbr(), '0e0800')
+
+        self.assertEqual(self.peer.commands('set_thread_dataset')[0]['args'], {'dataset': '0e0800'})
+        self.assertTrue(self.server.thread_dataset_is_set())
+
+    def test_empty_dataset_is_an_error(self):
+        self.connect()
+        self.with_otbr_url(self.start_otbr(b''))
+
+        with self.assertRaises(ValueError):
+            self.server.fetch_thread_dataset_from_otbr()
+
+    def test_unreachable_border_router_is_an_error(self):
+        self.with_otbr_url('http://127.0.0.1:1')
+
+        with self.assertRaises(ValueError):
+            self.server.fetch_thread_dataset_from_otbr()
+
+    def test_unconfigured_url_is_an_error(self):
+        self.with_otbr_url('')
+
+        with self.assertRaises(ValueError):
+            self.server.fetch_thread_dataset_from_otbr()
+
+
+INSTANCE_ITEMS = """
+matter:
+    aliases:
+        kitchen:
+            type: num
+            value: 3
+
+mine:
+    matter_node@two: 3
+    matter_endpoint@two: 1
+    sw:
+        type: bool
+        matter_cluster@two: 6
+        matter_switch@two: true
+
+other_instance:
+    matter_node: 3
+    matter_endpoint: 1
+    sw:
+        type: bool
+        matter_cluster: 6
+        matter_switch: true
+"""
+
+
+class TestInstanceAddressing(unittest.TestCase):
+    def test_named_instance_maps_only_its_own_attributes(self):
+        harness = PluginHarness(INSTANCE_ITEMS, instance='two')
+        self.addCleanup(harness.close)
+        mapped = harness.plugin.mapped_items()
+
+        self.assertIn(harness.item('mine.sw'), mapped)
+        self.assertNotIn(harness.item('other_instance.sw'), mapped)
+        self.assertEqual(harness.plugin.server.own_caller(), 'matter_two:server')
+
+
+class TestAliasBaseItem(unittest.TestCase):
+    def test_missing_remark_is_set_once(self):
+        harness = PluginHarness(ITEMS)
+        self.addCleanup(harness.close)
+        base = harness.item('matter.aliases')
+
+        harness.plugin.server.prepare()
+
+        self.assertEqual(
+            base.property.remark, 'matter alias base item, child items are alias definitions, do not change'
+        )
+        self.assertEqual(harness.plugin.server.aliases.snapshot(), {'kitchen': 3})
+
+
+FAKE_MATTER_SERVER = textwrap.dedent(
+    """
+    import time
+    print('Webserver listening on test', flush=True)
+    time.sleep(120)
+    """
+)
+
+
+class TestLifecycle(unittest.TestCase):
+    """run() with a real child process standing in for matter-server and a WsPeer as its API."""
+
+    def test_run_connects_reconnects_and_cleanup_stops_everything(self):
+        harness = PluginHarness(ITEMS)
+        self.addCleanup(harness.close)
+        peer = MatterServerPeer().start()
+        self.addCleanup(peer.stop)
+        entry = os.path.join(harness.tmp_dir, 'fake_matter_server.py')
+        with open(entry, 'w') as f:
+            f.write(FAKE_MATTER_SERVER)
+        server = harness.plugin.server
+        server.sidecar = MatterServerSidecar(
+            sys.executable, entry, os.path.join(harness.tmp_dir, 'storage'), ServerSidecarSettings(port=0)
+        )
+        server.url = peer.url + '/ws'
+        harness.start_loop()
+
+        run = asyncio.run_coroutine_threadsafe(server.run(), harness.plugin._asyncio_loop)
+        self.assertTrue(wait_for(lambda: server.status.state is RoleState.CONNECTED))
+        self.assertIs(harness.item('dev.sw')(), True)
+        pid = server.sidecar._process.pid
+
+        # Widens the RECONNECTING window past the 10ms poll below - a local loopback reconnect can otherwise be faster.
+        peer.delay = 0.1
+        peer.drop_connections()
+        self.assertTrue(wait_for(lambda: server.status.state is RoleState.RECONNECTING, timeout=2))
+        peer.delay = 0.0
+        self.assertTrue(wait_for(lambda: server.status.state is RoleState.CONNECTED, timeout=5))
+
+        run.cancel()
+        harness.run(server.cleanup())
+
+        self.assertFalse(server.sidecar.running)
+        self.assertFalse(server.connected)
+        self.assertTrue(
+            wait_for(lambda: not psutil.pid_exists(pid) or psutil.Process(pid).status() == psutil.STATUS_ZOMBIE)
+        )
+
+
+if __name__ == '__main__':
+    unittest.main()

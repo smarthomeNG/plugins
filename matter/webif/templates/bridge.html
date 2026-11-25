@@ -1,0 +1,203 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set update_interval = 0 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Bridge') }}</strong></td>
+			<td class="py-1">{% if bridge is none %}{{ _('deaktiviert') }}{% else %}{{ bridge.status.state.value }}{% if bridge.status.detail %} ({{ bridge.status.detail }}){% endif %}{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Kommissioniert') }}</strong></td>
+			<td class="py-1">{% if bridge_status.available %}{% if bridge_status.commissioned %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% else %}?{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Fabrics') }}</strong></td>
+			<td class="py-1">{{ bridge_status.fabric_count if bridge_status.available else '?' }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Freigegebene Items') }}</strong></td>
+			<td class="py-1">{{ bridge_items|length }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+{{ super() }}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">
+	<i class="fas fa-server"></i>&nbsp;{{ _('Server') }}
+</button>
+{% endblock buttons %}
+
+{% block pluginscripts %}
+<script>
+	const MATTER_TEXT = {
+		inactive: {{ _('inaktiv')|tojson }},
+		confirmRemoveFabric: {{ _('Fabric wirklich entfernen?')|tojson }},
+		removeFabricHint: {{ _('Der jeweilige Controller (Apple Home, Google Home o.ä.) verliert damit den Zugriff auf diese Bridge, bis er neu gekoppelt wird.')|tojson }},
+	};
+
+	$(document).ready( function () {
+		$(window).trigger('datatables_defaults');
+		try {
+			$('#bridgefabricstable').DataTable( { order: [[1, 'asc']] } );
+			$('#bridgeitemstable').DataTable( { order: [[1, 'asc']] } );
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard tables without sort/filter " + e);
+		}
+
+		// Local countdown of the commissioning window from the value rendered at page load (no polling on this view).
+		{% if bridge_status.commissioning_window_open %}
+		(function () {
+			let remainingSeconds = {{ bridge_status.commissioning_window_closes_in_seconds|int }};
+			const countdownText = document.getElementById('window_countdown_text');
+			const indicator = document.getElementById('window_status_indicator');
+			const timer = setInterval(function () {
+				remainingSeconds -= 1;
+				if (remainingSeconds <= 0) {
+					clearInterval(timer);
+					indicator.innerHTML = '';
+					indicator.appendChild($('<span style="color: grey;"></span>').text(MATTER_TEXT.inactive)[0]);
+					return;
+				}
+				const minutes = Math.floor(remainingSeconds / 60);
+				const seconds = remainingSeconds % 60;
+				countdownText.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+			}, 1000);
+		})();
+		{% endif %}
+	});
+
+	// Required no-op: the framework's shared auto-update timer can still call it on this non-polling view.
+	function handleUpdatedData(response, dataSet=null) {}
+
+	// Stop that shared timer after smarthomeng_pageupdate.js's own load handler restarted it from its cookie.
+	$(window).on('load', function () {
+		setTimeout(function () {
+			window.update_active = false;
+			refresh.stop();
+		}, 0);
+	});
+
+	// Explicit '?view=bridge' so the POST is routed to the bridge view regardless of the current URL.
+	function openBridgeWindow() {
+		shngPost('?view=bridge', {open_bridge_window: 1});
+	}
+
+	function removeBridgeFabric(button) {
+		if (confirm(MATTER_TEXT.confirmRemoveFabric + ' (' + button.dataset.label + ', fabric_index=' + button.dataset.fabricIndex + ')\n\n' + MATTER_TEXT.removeFabricHint)) {
+			shngPost('?view=bridge', {remove_bridge_fabric_index: button.dataset.fabricIndex});
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+{% set tabcount = 2 %}
+
+{% set tab1title = "<strong>" ~ _('Status') ~ "</strong>" %}
+{% block bodytab1 %}
+
+	{% if flash.open_bridge_window_error %}
+		<div class="alert alert-danger mt-2">{{ _('Kopplungsmodus aktivieren fehlgeschlagen') }}: {{ flash.open_bridge_window_error }}</div>
+	{% endif %}
+	{% if flash.remove_bridge_fabric_error %}
+		<div class="alert alert-danger mt-2">{{ _('Fabric entfernen fehlgeschlagen') }}: {{ flash.remove_bridge_fabric_error }}</div>
+	{% endif %}
+	{% if flash.request_error %}
+		<div class="alert alert-danger mt-2">{{ flash.request_error }}</div>
+	{% endif %}
+
+	{% if bridge is none %}
+		<div class="alert alert-info mt-2">{{ _('Die Bridge-Rolle ist deaktiviert (bridge_enabled).') }}</div>
+	{% elif not bridge_status.available %}
+		<div class="alert alert-warning mt-2">{{ _('Bridge nicht verbunden - keine Statusdaten verfügbar.') }}</div>
+	{% else %}
+		<div class="mb-3">
+			<h5>{{ _('Kopplungscode') }}</h5>
+			<div class="d-flex align-items-start">
+				<div class="mr-3" style="background:#fff; padding:8px; display:inline-block;">
+					{{ bridge_qr_svg | safe }}
+				</div>
+				<div>
+					{{ _('Mit diesem Code die Bridge in Apple Home, Google Home o.ä. koppeln - nur während der Kopplungsmodus aktiv ist.') }}
+					{% if bridge_status.commissioned %}
+						{{ _('Bereits kommissioniert - der Kopplungsmodus erlaubt dann einen weiteren Controller, ohne bestehende Kopplungen zu beeinträchtigen.') }}
+					{% endif %}<br>
+					{{ _('Manueller Code') }}: <code>{{ bridge_status.manual_pairing_code }}</code><br>
+					{{ _('QR-Inhalt') }}: <code>{{ bridge_status.qr_pairing_code }}</code><br>
+					{{ _('Discriminator') }}: <code>{{ bridge_status.discriminator }}</code>
+				</div>
+			</div>
+			<div class="mt-2">
+				<strong>{{ _('Kopplungsmodus') }}:</strong>
+				<span id="window_status_indicator">
+					{% if bridge_status.commissioning_window_open %}
+						<span style="color: green;">{{ _('aktiv') }}</span> -
+						{{ _('schließt in') }}
+						<span id="window_countdown_text">{{ '%d:%02d'|format(bridge_status.commissioning_window_closes_in_seconds // 60, bridge_status.commissioning_window_closes_in_seconds % 60) }}</span>
+					{% else %}
+						<span style="color: grey;">{{ _('inaktiv') }}</span>
+					{% endif %}
+				</span>
+			</div>
+			<button type="button" class="btn btn-shng btn-sm mt-2" onclick="openBridgeWindow()">
+				<i class="fas fa-plug"></i>&nbsp;{{ _('Kopplungsmodus aktivieren') }}
+			</button>
+		</div>
+
+		<h5>{{ _('Gekoppelte Controller (Fabrics)') }}</h5>
+		<table id="bridgefabricstable" class="dataTableAdditional">
+			<thead>
+			<tr>
+				<th></th>
+				<th>fabric_index</th>
+				<th>vendor_id</th>
+				<th>{{ _('Label') }}</th>
+				<th>fabric_id</th>
+				<th></th>
+			</tr>
+			</thead>
+			{% for fabric in bridge_fabrics %}
+				<tr>
+					<td></td>
+					<td class="py-1">{{ fabric.fabric_index }}</td>
+					<td class="py-1">{{ fabric.vendor_id }}</td>
+					<td class="py-1">{{ fabric.fabric_label or ('<' ~ _('kein Label') ~ '>') }}</td>
+					<td class="py-1">{{ fabric.fabric_id }}</td>
+					<td class="py-1">
+						<button type="button" class="btn btn-shng btn-sm" onclick="removeBridgeFabric(this)" data-fabric-index="{{ fabric.fabric_index }}" data-label="{{ fabric.vendor_id }}">
+							<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
+						</button>
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+	{% endif %}
+
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ _('Freigegebene Items') ~ "</strong> (" ~ bridge_items|length ~ ")" %}
+{% block bodytab2 %}
+	<table id="bridgeitemstable" class="dataTableAdditional">
+		<thead>
+		<tr>
+			<th></th>
+			<th>{{ _('Item') }}</th>
+			<th>{{ _('Name (extern sichtbar)') }}</th>
+			<th>matter_expose_type</th>
+			<th>endpoint_id</th>
+		</tr>
+		</thead>
+		{% for item in bridge_items %}
+			<tr>
+				<td></td>
+				<td class="py-1">{{ item.item_path }}</td>
+				<td class="py-1">{{ item.name }}</td>
+				<td class="py-1">{{ item.expose_type }}</td>
+				<td class="py-1">{{ item.endpoint_id if item.endpoint_id is not none else ('<' ~ _('noch nicht hinzugefügt') ~ '>') }}</td>
+			</tr>
+		{% endfor %}
+	</table>
+{% endblock bodytab2 %}

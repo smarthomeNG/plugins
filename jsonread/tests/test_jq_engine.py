@@ -52,10 +52,9 @@ class TestTraversePlainKeys(_EngineBase):
 
 class TestTraverseBracketIndices(_EngineBase):
     """
-    Regression coverage for the bug fixed in this branch: .Data["0"] and
-    .Data[0] were being treated as one literal (and always-missing) key
-    name, so every filter using array indexing silently resolved to
-    nothing.
+    Regression coverage: .Data["0"] and .Data[0] must not be treated as one
+    literal (and always-missing) key name, or every filter using array
+    indexing silently resolves to nothing.
     """
 
     def setUp(self):
@@ -109,6 +108,48 @@ class TestJqUnwrap(_EngineBase):
 
     def test_multi_item_list_stays_a_list(self):
         self.assertEqual(self.plg.jq_unwrap([1, 2]), [1, 2])
+
+
+class TestTranslateJqToJmespath(_EngineBase):
+    """
+    Unit tests for the jq-dialect → JMESPath expression translator.
+    Tests verify the *output string*, not evaluation, keeping them fast
+    and independent of jmespath's own parser.
+    """
+
+    def t(self, expr):
+        return self.plg._translate_jq_to_jmespath(expr)
+
+    def test_strips_leading_dot(self):
+        self.assertEqual(self.t('.Body'), 'Body')
+
+    def test_nested_plain_path(self):
+        self.assertEqual(self.t('.Body.Data.foo'), 'Body.Data.foo')
+
+    def test_quoted_numeric_bracket_index(self):
+        self.assertEqual(self.t('.Body.Data["0"].foo'), 'Body.Data[0].foo')
+
+    def test_unquoted_numeric_bracket_index(self):
+        self.assertEqual(self.t('.Body.Data[0].foo'), 'Body.Data[0].foo')
+
+    def test_second_element_index(self):
+        self.assertEqual(self.t('.Body.Data["1"].foo'), 'Body.Data[1].foo')
+
+    def test_flatten_suffix_passes_through(self):
+        self.assertEqual(self.t('.Data[].name'), 'Data[].name')
+
+    def test_pipe_is_preserved(self):
+        result = self.t('.items[] | .name')
+        self.assertIn('|', result)
+
+    def test_select_translates_to_filter_projection(self):
+        result = self.t('.items[] | select(.id==1) | .name')
+        self.assertIn('[?', result)
+        self.assertIn('id', result)
+
+    def test_production_fronius_filter(self):
+        # The exact filter strings in etc/items/fronius_smartmeter.yaml
+        self.assertEqual(self.t('.Body.Data["0"].Current_AC_Phase_1'), 'Body.Data[0].Current_AC_Phase_1')
 
 
 if __name__ == '__main__':

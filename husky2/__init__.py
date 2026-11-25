@@ -27,7 +27,7 @@
 import asyncio
 import threading
 from concurrent.futures import CancelledError
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import json
 
@@ -71,7 +71,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.1.2'
+    PLUGIN_VERSION = '3.0.0'
 
     ITEM_INFO = 'husky_info'
     ITEM_CONTROL = 'husky_control'
@@ -315,6 +315,7 @@ class Husky2(SmartPlugin):
 
     def huky2Thread(self):
         self.asyncLoop = asyncio.new_event_loop()
+        self.set_asyncio_executor_names(self.asyncLoop)
 
         task = self.asyncLoop.create_task(self.initWorker())
         task.add_done_callback(self.startFinished)
@@ -350,7 +351,7 @@ class Husky2(SmartPlugin):
         self.alive = True
         self.logger.debug('Init finished, husky2 plugin is running')
 
-        dt = self.shtime.now() + timedelta(seconds=self.poll_cycle)
+        dt = self.shtime.add_seconds(self.shtime.now(), self.poll_cycle)
         self.scheduler_add(
             'poll_husky_device_' + self.instance, self.poll_device, cycle=self.poll_cycle, prio=5, next=dt
         )

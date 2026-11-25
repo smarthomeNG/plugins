@@ -75,6 +75,12 @@ function mainpage() {
 {% set tabcount = 1 %}
 
 {% block headtable %}
+{% if not p.sun_available %}
+<div class="mb-2 alert alert-warning" role="alert">
+  <strong>{{ _('Sonnenstand nicht verfügbar') }}</strong><br/>
+  {{ _('Breitengrad/Längengrad sind nicht konfiguriert oder es ist keine Ephemeriden-Bibliothek installiert. Sonnenstands-Bedingungen werden nicht erfüllt, sun_tracking() rechnet mit einer Sonnenhöhe von 45°.') }}
+</div>
+{% endif %}
 <table class="table table-striped table-hover">
   <tbody>
     <tr>
@@ -142,7 +148,7 @@ function mainpage() {
           {% endif %}
         </td>
         <td class="py-1" id="{{ item }}_log_level">{{ item.logger.log_level_as_num }}</td>
-        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.get_sh().return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.get_sh().return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
+        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.get_sh().items.return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.get_sh().items.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
 
 
       </tr>

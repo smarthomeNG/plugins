@@ -1,0 +1,19 @@
+<svg version="1.1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+ <title>SmartTV</title>
+ <g>
+  <rect x="25" y="45" width="150" height="90" rx="2" fill="#111" stroke="#fff" stroke-width="2"/>
+  <rect x="27" y="47" width="146" height="86" rx="1"/>
+  <rect x="35" y="112" width="16" height="12" rx="1" fill="#ff1744"/>
+  <rect x="56" y="112" width="16" height="12" rx="1" fill="#00e5ff"/>
+  <rect x="77" y="112" width="16" height="12" rx="1" fill="#d500f9"/>
+  <rect x="34.709" y="92.591" width="16" height="12" rx="1" fill="#00e676"/>
+  <rect x="97.903" y="92.759" width="16" height="12" rx="1" fill="#ffea00"/>
+  <rect x="76.709" y="92.591" width="16" height="12" rx="1" fill="#ff9100"/>
+  <g transform="translate(0,-12)" stroke-linecap="round">
+   <line x1="100" x2="55" y1="150" y2="165" stroke="#fff" stroke-width="5"/>
+   <line x1="100" x2="145" y1="150" y2="165" stroke="#fff" stroke-width="5"/>
+   <line x1="100" x2="55" y1="150" y2="165" stroke="#cfd8dc" stroke-width="2"/>
+   <line x1="100" x2="145" y1="150" y2="165" stroke="#cfd8dc" stroke-width="2"/>
+  </g>
+ </g>
+</svg>

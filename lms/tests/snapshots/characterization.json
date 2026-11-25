@@ -1,0 +1,3784 @@
+{
+ "jobs_after_run": [
+  "lms_cyclic",
+  "read_initial_values"
+ ],
+ "initial_sends": [
+  {
+   "payload": "listen 1\r",
+   "data": true,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff status 0 1 tags:g subscribe:0\r",
+   "data": "0",
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "version ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "favorites items\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "syncgroups ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "players 0 100\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "playlists 0 1000 tags:u\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "rescan ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "info total genres ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "info total duration ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "info total artists ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "info total albums ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "info total songs ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff playerpref plugin.customskip3:filter ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff power ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff mixer muting ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff mixer volume ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff alarms 0 100 all\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff sync ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff display ? ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff sleep ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff playlist repeat ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff playlist shuffle ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff playlist playlistsinfo\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  },
+  {
+   "payload": "aa:bb:cc:dd:ee:ff current_title ?\r",
+   "data": null,
+   "limit_response": {
+    "bytes": "0d"
+   }
+  }
+ ],
+ "initial_dispatched": [],
+ "writes": [
+  {
+   "item": "dev.database.rescan.abortscan",
+   "value": true,
+   "sent": [
+    {
+     "payload": "abortscan\r",
+     "data": "True",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.database.rescan.abortscan": true
+   }
+  },
+  {
+   "item": "dev.database.rescan.start",
+   "value": "x",
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.database.rescan.wipecache",
+   "value": true,
+   "sent": [
+    {
+     "payload": "wipecache\r",
+     "data": "wipecache",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.database.rescan.wipecache": true
+   }
+  },
+  {
+   "item": "dev.player.control.connect",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff connect x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.connect": "x"
+   }
+  },
+  {
+   "item": "dev.player.control.disconnect",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "disconnect aa:bb:cc:dd:ee:ff x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.disconnect": "x"
+   }
+  },
+  {
+   "item": "dev.player.control.display",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff display x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.display": "x"
+   }
+  },
+  {
+   "item": "dev.player.control.forward",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff time +1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.forward": 1
+   }
+  },
+  {
+   "item": "dev.player.control.mute",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer muting 1\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.mute": true
+   }
+  },
+  {
+   "item": "dev.player.control.playitem",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist play x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.playitem": "x"
+   }
+  },
+  {
+   "item": "dev.player.control.playmode",
+   "value": "play",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mode play\r",
+     "data": "play",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.playmode": "play"
+   }
+  },
+  {
+   "item": "dev.player.control.playpause",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff play 3\r",
+     "data": "play 3",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.playpause": true
+   }
+  },
+  {
+   "item": "dev.player.control.power",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff power 1\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.power": true
+   }
+  },
+  {
+   "item": "dev.player.control.rewind",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff time -1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.rewind": 1
+   }
+  },
+  {
+   "item": "dev.player.control.set_alarm",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff alarm x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    },
+    {
+     "payload": "aa:bb:cc:dd:ee:ff alarms 0 100 all\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.alarms.query": true,
+    "dev.player.control.set_alarm": "x"
+   }
+  },
+  {
+   "item": "dev.player.control.sleep",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff sleep 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.sleep": 1
+   }
+  },
+  {
+   "item": "dev.player.control.stop",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff stop\r",
+     "data": "stop",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.stop": true
+   }
+  },
+  {
+   "item": "dev.player.control.sync",
+   "value": "NONE",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff sync -\r",
+     "data": "-",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.sync": "NONE"
+   }
+  },
+  {
+   "item": "dev.player.control.time",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff time 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.time": 1
+   }
+  },
+  {
+   "item": "dev.player.control.unsync",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff sync -\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.unsync": true
+   }
+  },
+  {
+   "item": "dev.player.control.volume",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer volume 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.volume": 1
+   }
+  },
+  {
+   "item": "dev.player.control.volume_fading",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer volume 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.volume_fading": 1
+   }
+  },
+  {
+   "item": "dev.player.control.volume_high",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer volume 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.volume_high": 1
+   }
+  },
+  {
+   "item": "dev.player.control.volume_low",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer volume 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.volume_low": 1
+   }
+  },
+  {
+   "item": "dev.player.control.volumedown",
+   "value": 2,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer volume -2\r",
+     "data": "2",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.volumedown": 2
+   }
+  },
+  {
+   "item": "dev.player.control.volumeup",
+   "value": 2,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff mixer volume +2\r",
+     "data": "2",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.control.volumeup": 2
+   }
+  },
+  {
+   "item": "dev.player.info.player.name",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff name x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.info.player.name": "x"
+   }
+  },
+  {
+   "item": "dev.player.info.player.status_subscribe",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff status 0 1 tags:g subscribe:0\r",
+     "data": "0",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.info.player.status_subscribe": true
+   }
+  },
+  {
+   "item": "dev.player.playlist.addalbum",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist addalbum x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.addalbum": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.additem",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist add x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.additem": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.addtracks",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist addtracks x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.addtracks": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.clear",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist clear\r",
+     "data": "clear",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.clear": true
+   }
+  },
+  {
+   "item": "dev.player.playlist.current_id",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlistcontrol cmd:load playlist_id:1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.current_id": 1
+   }
+  },
+  {
+   "item": "dev.player.playlist.current_name",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist name x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.current_name": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.delete_current",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlists delete playlist_id:\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.delete_current": true
+   }
+  },
+  {
+   "item": "dev.player.playlist.deletealbum",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist deletealbum x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.deletealbum": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.deleteitem",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist deleteitem x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.deleteitem": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.deletesong",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist delete 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.deletesong": 1
+   }
+  },
+  {
+   "item": "dev.player.playlist.index",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist index x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.index": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.insertalbum",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist insertalbum x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.insertalbum": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.insertitem",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist insert x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.insertitem": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.load",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlistcontrol cmd:load playlist_name:x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.load": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.loadalbum",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist loadalbum x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.loadalbum": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.loadtracks",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist loadtracks x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.loadtracks": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.next",
+   "value": 2,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist index +2\r",
+     "data": "2",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.next": 2
+   }
+  },
+  {
+   "item": "dev.player.playlist.preview",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist preview x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.preview": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.previous",
+   "value": 2,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist index -2\r",
+     "data": "2",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.previous": 2
+   }
+  },
+  {
+   "item": "dev.player.playlist.rename_current",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlists rename playlist_id: newname:x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.rename_current": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.repeat",
+   "value": "SONG",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist repeat 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.repeat": "SONG"
+   }
+  },
+  {
+   "item": "dev.player.playlist.save",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist save x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.save": "x"
+   }
+  },
+  {
+   "item": "dev.player.playlist.shuffle",
+   "value": "SONG",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff playlist shuffle 1\r",
+     "data": "1",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player.playlist.shuffle": "SONG"
+   }
+  },
+  {
+   "item": "dev.player_plugins.customskip.active_filter",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff customskip setfilter x.cs.xml\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player_plugins.customskip.active_filter": "x"
+   }
+  },
+  {
+   "item": "dev.player_plugins.customskip.remove_filter",
+   "value": true,
+   "sent": [
+    {
+     "payload": "aa:bb:cc:dd:ee:ff customskip clearfilter\r",
+     "data": "True",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.player_plugins.customskip.remove_filter": true
+   }
+  },
+  {
+   "item": "dev.server.listenmode",
+   "value": true,
+   "sent": [
+    {
+     "payload": "listen 1\r",
+     "data": true,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.server.listenmode": true
+   }
+  },
+  {
+   "item": "dev.server.playlists.delete",
+   "value": "NONE",
+   "sent": [
+    {
+     "payload": "playlists delete playlist_id:-\r",
+     "data": "-",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.server.playlists.delete": "NONE"
+   }
+  },
+  {
+   "item": "dev.server.playlists.rename",
+   "value": "x",
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.server.restart",
+   "value": true,
+   "sent": [
+    {
+     "payload": "restartserver\r",
+     "data": "True",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.server.restart": true
+   }
+  },
+  {
+   "item": "dev.server_plugins.trackstat.get_rating",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "trackstat getrating x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.server_plugins.trackstat.get_rating": "x"
+   }
+  },
+  {
+   "item": "dev.server_plugins.trackstat.set_rating",
+   "value": "x",
+   "sent": [
+    {
+     "payload": "trackstat setrating x\r",
+     "data": "x",
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.server_plugins.trackstat.set_rating": "x"
+   }
+  }
+ ],
+ "reads": [
+  {
+   "command": "database.rescan.abortscan",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.rescan.fail",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.rescan.progress",
+   "sent": [
+    {
+     "payload": "rescanprogress\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.rescan.running",
+   "sent": [
+    {
+     "payload": "rescan ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.rescan.runningtime",
+   "sent": [
+    {
+     "payload": "rescanprogress totaltime\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.rescan.wipecache",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.totalalbums",
+   "sent": [
+    {
+     "payload": "info total albums ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.totalartists",
+   "sent": [
+    {
+     "payload": "info total artists ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.totalduration",
+   "sent": [
+    {
+     "payload": "info total duration ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.totalgenres",
+   "sent": [
+    {
+     "payload": "info total genres ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.totalplaylists",
+   "sent": [
+    {
+     "payload": "playlists 0 1000 tags:u\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "database.totalsongs",
+   "sent": [
+    {
+     "payload": "info total songs ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.alarms",
+   "sent": [
+    {
+     "payload": " alarms 0 100 all\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.connect",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.disconnect",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.display",
+   "sent": [
+    {
+     "payload": " display ? ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.forward",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.mute",
+   "sent": [
+    {
+     "payload": " mixer muting ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.playmode",
+   "sent": [
+    {
+     "payload": " mode ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.playpause",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.power",
+   "sent": [
+    {
+     "payload": " power ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.rewind",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.set_alarm",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.sleep",
+   "sent": [
+    {
+     "payload": " sleep ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.stop",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.sync",
+   "sent": [
+    {
+     "payload": " sync ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.time",
+   "sent": [
+    {
+     "payload": " time ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.control.volume",
+   "sent": [
+    {
+     "payload": " mixer volume ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.currentsong.album",
+   "sent": [
+    {
+     "payload": " album ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.currentsong.artist",
+   "sent": [
+    {
+     "payload": " artist ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.currentsong.duration",
+   "sent": [
+    {
+     "payload": " duration ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.currentsong.file_path",
+   "sent": [
+    {
+     "payload": " path ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.currentsong.genre",
+   "sent": [
+    {
+     "payload": " genre ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.currentsong.title",
+   "sent": [
+    {
+     "payload": " current_title ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.albumarturl",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.connected",
+   "sent": [
+    {
+     "payload": " connected ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.ip",
+   "sent": [
+    {
+     "payload": " ip ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.name",
+   "sent": [
+    {
+     "payload": " name ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.signalstrength",
+   "sent": [
+    {
+     "payload": " signalstrength ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.status",
+   "sent": [
+    {
+     "payload": " status\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.info.player.status_subscribe",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.clear",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.current_id",
+   "sent": [
+    {
+     "payload": " playlist playlistsinfo\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.current_name",
+   "sent": [
+    {
+     "payload": " playlist name ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.current_url",
+   "sent": [
+    {
+     "payload": " playlist playlistsinfo url\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.index",
+   "sent": [
+    {
+     "payload": " playlist index ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.load",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.loadalbum",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.loadtracks",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.modified",
+   "sent": [
+    {
+     "payload": " playlist modified ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.preview",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.repeat",
+   "sent": [
+    {
+     "payload": " playlist repeat ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.save",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.shuffle",
+   "sent": [
+    {
+     "payload": " playlist shuffle ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player.playlist.tracks",
+   "sent": [
+    {
+     "payload": " playlist tracks ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "player_plugins.customskip.active_filter",
+   "sent": [
+    {
+     "payload": " playerpref plugin.customskip3:filter ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.favoritescount",
+   "sent": [
+    {
+     "payload": "favorites items\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.forgetclient",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.listenmode",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.newclient",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.playercount",
+   "sent": [
+    {
+     "payload": "player count ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.players",
+   "sent": [
+    {
+     "payload": "players 0 100\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.playlists.available",
+   "sent": [
+    {
+     "payload": "playlists 0 1000 tags:u\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.playlists.delete",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.syncgroups.members",
+   "sent": [
+    {
+     "payload": "syncgroups ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.syncgroups.names",
+   "sent": [
+    {
+     "payload": "syncgroups ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server.version",
+   "sent": [
+    {
+     "payload": "version ?\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "server_plugins.trackstat.get_rating",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  }
+ ],
+ "replies": [
+  {
+   "reply_to": "database.rescan.abortscan",
+   "data": "abortscan",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.abortscan",
+     "abortscan"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.fail",
+   "data": "rescanprogress totaltime rescan:0 lastscanfailed:a",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.fail",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.database.rescan.fail": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.progress",
+   "data": "scanner notify progress:a",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.running",
+     true
+    ],
+    [
+     "database.rescan.progress",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.database.rescan.progress": "a",
+    "dev.database.rescan.running": true
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.running",
+   "data": "rescanprogress rescan:a",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.running",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.running",
+   "data": "rescan a",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.running",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.running",
+   "data": "scanner notify progress:a",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.running",
+     true
+    ],
+    [
+     "database.rescan.progress",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.running",
+   "data": "scanner notify exit",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.running",
+     false
+    ],
+    [
+     "database.rescan.progress",
+     ""
+    ]
+   ],
+   "changed": {
+    "dev.database.rescan.progress": "",
+    "dev.database.rescan.running": false
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.runningtime",
+   "data": "rescanprogress totaltime rescan:0",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.runningtime",
+     "0"
+    ]
+   ],
+   "changed": {
+    "dev.database.rescan.runningtime": "0"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.runningtime",
+   "data": "rescanprogress totaltime rescanatotaltime:00:00:00",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.runningtime",
+     "00:00:00"
+    ]
+   ],
+   "changed": {
+    "dev.database.rescan.runningtime": "00:00:00"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.rescan.wipecache",
+   "data": "wipecache",
+   "command": null,
+   "dispatched": [
+    [
+     "database.rescan.wipecache",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.totalalbums",
+   "data": "info total albums 1",
+   "command": null,
+   "dispatched": [
+    [
+     "database.totalalbums",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.database.totalalbums": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.totalartists",
+   "data": "info total artists 1",
+   "command": null,
+   "dispatched": [
+    [
+     "database.totalartists",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.database.totalartists": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.totalduration",
+   "data": "info total duration 0",
+   "command": null,
+   "dispatched": [
+    [
+     "database.totalduration",
+     "0"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.totalgenres",
+   "data": "info total genres 1",
+   "command": null,
+   "dispatched": [
+    [
+     "database.totalgenres",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.database.totalgenres": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.totalplaylists",
+   "data": "playlists 0 1000 tags:uacount:1",
+   "command": null,
+   "dispatched": [
+    [
+     "server.playlists.available",
+     {}
+    ],
+    [
+     "database.totalplaylists",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.database.totalplaylists": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "database.totalsongs",
+   "data": "info total songs 1",
+   "command": null,
+   "dispatched": [
+    [
+     "database.totalsongs",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.database.totalsongs": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.alarms",
+   "data": "00-00-00-00-00-00 alarms 0 100 all fade:1 count:1 a",
+   "command": null,
+   "dispatched": [],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.connect",
+   "data": "00-00-00-00-00-00 connect a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.connect",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.disconnect",
+   "data": "disconnect 00-00-00-00-00-00 a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.disconnect",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.display",
+   "data": "00-00-00-00-00-00 display a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.display",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.forward",
+   "data": "00-00-00-00-00-00 time +1.11",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.forward",
+     "1.11"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.mute",
+   "data": "00-00-00-00-00-00 mixer muting",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.mute",
+     null
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.mute",
+   "data": "00-00-00-00-00-00 mixer muting 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.mute",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.playmode",
+   "data": "00-00-00-00-00-00 mode PLAY",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playmode",
+     "stop"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.playmode",
+   "data": "00-00-00-00-00-00 playlist pause 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playmode",
+     "pause"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.playmode",
+   "data": "00-00-00-00-00-00 statusamode:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playmode",
+     "stop"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.playpause",
+   "data": "00-00-00-00-00-00 playlist play 3",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playpause",
+     true
+    ],
+    [
+     "player.control.stop",
+     false
+    ],
+    [
+     "player.info.currentsong.file_path",
+     "3"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.playpause",
+   "data": "00-00-00-00-00-00 pause 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playpause",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.power",
+   "data": "00-00-00-00-00-00 prefset server power 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.power",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.power",
+   "data": "00-00-00-00-00-00 statusapower:aa",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.power",
+     null
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.rewind",
+   "data": "00-00-00-00-00-00 time -1.11",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.rewind",
+     "1.11"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.set_alarm",
+   "data": "00-00-00-00-00-00 alarm a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.set_alarm",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.sleep",
+   "data": "00-00-00-00-00-00 sleep aa",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.sleep",
+     "aa"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.stop",
+   "data": "00-00-00-00-00-00 playlist stop",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playmode",
+     "stop"
+    ],
+    [
+     "player.control.stop",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.stop",
+   "data": "00-00-00-00-00-00 playlist play 3",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.playpause",
+     true
+    ],
+    [
+     "player.control.stop",
+     false
+    ],
+    [
+     "player.info.currentsong.file_path",
+     "3"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.sync",
+   "data": "00-00-00-00-00-00 sync a,-,a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.sync",
+     "NONE"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.sync",
+   "data": "00-00-00-00-00-00 sync -",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.sync",
+     "NONE"
+    ],
+    [
+     "player.control.sync",
+     "NONE"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.time",
+   "data": "00-00-00-00-00-00 time 1.11",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.time",
+     "1.11"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.time",
+   "data": "00-00-00-00-00-00 statusatime:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.time",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.volume",
+   "data": "00-00-00-00-00-00 mixer volume -1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.volume",
+     "-1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.control.volume",
+   "data": "00-00-00-00-00-00 statusamixer volume:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.control.volume",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.album",
+   "data": "00-00-00-00-00-00 album a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.album",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.artist",
+   "data": "00-00-00-00-00-00 artist a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.artist",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.duration",
+   "data": "00-00-00-00-00-00 duration 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.duration",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.file_path",
+   "data": "00-00-00-00-00-00 path a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.file_path",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.file_path",
+   "data": "00-00-00-00-00-00 playlist open a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.file_path",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.file_path",
+   "data": "00-00-00-00-00-00 playlist play a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.file_path",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.genre",
+   "data": "00-00-00-00-00-00 genre a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.genre",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.genre",
+   "data": "00-00-00-00-00-00 statusagenre:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.genre",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.title",
+   "data": "00-00-00-00-00-00 current_title a 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.title",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.currentsong.title",
+   "data": "00-00-00-00-00-00 statusatitle:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.currentsong.title",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.albumarturl",
+   "data": "https://a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.albumarturl",
+     "https://a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.connected",
+   "data": "00-00-00-00-00-00 connected 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.connected",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.connected",
+   "data": "00-00-00-00-00-00 statusaplayer_connected:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.connected",
+     false
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.ip",
+   "data": "00-00-00-00-00-00 ip a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.ip",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.ip",
+   "data": "00-00-00-00-00-00 statusaplayer_ip:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.ip",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.name",
+   "data": "00-00-00-00-00-00 prefset server playername a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.name",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.name",
+   "data": "00-00-00-00-00-00 name a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.name",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.name",
+   "data": "00-00-00-00-00-00 statusaplayer_name:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.name",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.signalstrength",
+   "data": "00-00-00-00-00-00 signalstrength 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.signalstrength",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.signalstrength",
+   "data": "00-00-00-00-00-00 statusasignalstrength:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.signalstrength",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.status",
+   "data": "00-00-00-00-00-00 status 1 1 tags:a a playlist index:",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.status",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.info.player.status_subscribe",
+   "data": "00-00-00-00-00-00 status 0 1 tags:g subscribe:- ",
+   "command": null,
+   "dispatched": [
+    [
+     "player.info.player.status_subscribe",
+     false
+    ],
+    [
+     "player.info.player.status",
+     "subscribe:- "
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.clear",
+   "data": "00-00-00-00-00-00 playlist clear",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.clear",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.current_id",
+   "data": "00-00-00-00-00-00 playlist playlistsinfo id:1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_id",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.current_id",
+   "data": "00-00-00-00-00-00 playlist loadtracks playlistaid=1 ",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_id",
+     "1"
+    ],
+    [
+     "player.playlist.loadtracks",
+     "playlistaid=1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.current_name",
+   "data": "00-00-00-00-00-00 playlistcontrol cmd:load playlist_name:a count:1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_name",
+     "a"
+    ],
+    [
+     "player.playlist.load",
+     "a"
+    ],
+    [
+     "player.playlist.tracks",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.current_name",
+   "data": "00-00-00-00-00-00 playlist name aa",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_name",
+     "aa"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.current_name",
+   "data": "00-00-00-00-00-00 playlist playlistsinfo id:1 name:a modified:",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_name",
+     "a"
+    ],
+    [
+     "player.playlist.current_id",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.current_url",
+   "data": "00-00-00-00-00-00 playlist playlistsinfo url id:1 name:a modified:0 url:a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_url",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.delete_current",
+   "data": "00-00-00-00-00-00 playlists delete playlist_id:1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.delete_current",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.index",
+   "data": "00-00-00-00-00-00 playlist index 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.index",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.index",
+   "data": "00-00-00-00-00-00 statusaplaylist_cur_index:1a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.index",
+     "1a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.index",
+   "data": "00-00-00-00-00-00 prefset server currentSong 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.index",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.index",
+   "data": "00-00-00-00-00-00 playlist jump 1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.index",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.load",
+   "data": "00-00-00-00-00-00 playlistcontrol cmd:load playlist_name:a count:1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_name",
+     "a"
+    ],
+    [
+     "player.playlist.load",
+     "a"
+    ],
+    [
+     "player.playlist.tracks",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.load",
+   "data": "00-00-00-00-00-00 playlist resume a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.load",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.load",
+   "data": "00-00-00-00-00-00 playlist loadtracks playlistaname:a ",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.load",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.loadalbum",
+   "data": "00-00-00-00-00-00 playlist loadalbum a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.loadalbum",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.loadtracks",
+   "data": "00-00-00-00-00-00 playlist loadtracks a=a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.loadtracks",
+     "a=a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.modified",
+   "data": "00-00-00-00-00-00 playlist modified 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.modified",
+     "0"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.modified",
+   "data": "00-00-00-00-00-00 playlist playlistsinfo id:1 name:a modified:0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.current_name",
+     "a"
+    ],
+    [
+     "player.playlist.current_id",
+     "1"
+    ],
+    [
+     "player.playlist.modified",
+     "0"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.preview",
+   "data": "00-00-00-00-00-00 playlist preview a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.preview",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.rename_current",
+   "data": "00-00-00-00-00-00 playlists rename playlist_id:1 newname:a overwritten_playlist_id:1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.rename_current",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.repeat",
+   "data": "00-00-00-00-00-00 prefset server repeat 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.repeat",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.repeat",
+   "data": "00-00-00-00-00-00 playlist repeat 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.repeat",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.repeat",
+   "data": "00-00-00-00-00-00 statusaplaylist repeat:0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.repeat",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.save",
+   "data": "00-00-00-00-00-00 playlist save a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.save",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.shuffle",
+   "data": "00-00-00-00-00-00 prefset server shuffle 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.shuffle",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.shuffle",
+   "data": "00-00-00-00-00-00 playlist shuffle 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.shuffle",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.shuffle",
+   "data": "00-00-00-00-00-00 statusaplaylist shuffle:0",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.shuffle",
+     "OFF"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.tracks",
+   "data": "00-00-00-00-00-00 playlistcontrol cmd:load a count:1",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.tracks",
+     "1"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.tracks",
+   "data": "00-00-00-00-00-00 playlist_tracks 1a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.tracks",
+     "1a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player.playlist.tracks",
+   "data": "00-00-00-00-00-00 statusaplaylist_tracks:1a",
+   "command": null,
+   "dispatched": [
+    [
+     "player.playlist.tracks",
+     "1a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player_plugins.customskip.active_filter",
+   "data": "00-00-00-00-00-00 prefset pluginacustomskip3 filter aacsaxml",
+   "command": null,
+   "dispatched": [
+    [
+     "player_plugins.customskip.active_filter",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player_plugins.customskip.active_filter",
+   "data": "00-00-00-00-00-00 prefset pluginacustomskip3 filter 0",
+   "command": null,
+   "dispatched": [
+    [
+     "player_plugins.customskip.active_filter",
+     "0"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "player_plugins.customskip.active_filter",
+   "data": "00-00-00-00-00-00 playerpref pluginacustomskip3:filter aacsaxml",
+   "command": null,
+   "dispatched": [
+    [
+     "player_plugins.customskip.active_filter",
+     "a"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.favoritescount",
+   "data": "favorites items count:1",
+   "command": null,
+   "dispatched": [
+    [
+     "server.favoritescount",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.server.favoritescount": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.forgetclient",
+   "data": "00-00-00-00-00-00 client forget",
+   "command": null,
+   "dispatched": [
+    [
+     "server.forgetclient",
+     "00-00-00-00-00-00"
+    ]
+   ],
+   "changed": {
+    "dev.server.forgetclient": "00-00-00-00-00-00"
+   },
+   "sent": [
+    {
+     "payload": "players 0 100\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "exception": null
+  },
+  {
+   "reply_to": "server.listenmode",
+   "data": "listen 1",
+   "command": null,
+   "dispatched": [
+    [
+     "server.listenmode",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.newclient",
+   "data": "00-00-00-00-00-00 client new",
+   "command": null,
+   "dispatched": [
+    [
+     "server.newclient",
+     "00-00-00-00-00-00"
+    ]
+   ],
+   "changed": {
+    "dev.server.newclient": "00-00-00-00-00-00"
+   },
+   "sent": [
+    {
+     "payload": "players 0 100\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "exception": null
+  },
+  {
+   "reply_to": "server.newclient",
+   "data": "00-00-00-00-00-00 client reconnect",
+   "command": null,
+   "dispatched": [
+    [
+     "server.newclient",
+     "00-00-00-00-00-00"
+    ],
+    [
+     "player.info.player.connected",
+     true
+    ]
+   ],
+   "changed": {},
+   "sent": [
+    {
+     "payload": "players 0 100\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "exception": null
+  },
+  {
+   "reply_to": "server.playercount",
+   "data": "player count 1",
+   "command": null,
+   "dispatched": [
+    [
+     "server.playercount",
+     "1"
+    ]
+   ],
+   "changed": {
+    "dev.server.playercount": 1
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.playercount",
+   "data": "players 0 100 count:1 ",
+   "command": null,
+   "dispatched": [
+    [
+     "server.playercount",
+     "1"
+    ],
+    [
+     "server.players",
+     {
+      "-": {
+       "ip": null,
+       "name": "NONE",
+       "model": null,
+       "firmware": null
+      }
+     }
+    ]
+   ],
+   "changed": {
+    "dev.server.players": {
+     "-": {
+      "ip": null,
+      "name": "NONE",
+      "model": null,
+      "firmware": null
+     }
+    }
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.players",
+   "data": "players 0 100 a",
+   "command": null,
+   "dispatched": [
+    [
+     "server.players",
+     {
+      "-": {
+       "ip": null,
+       "name": "NONE",
+       "model": null,
+       "firmware": null
+      }
+     }
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.playlists.available",
+   "data": "playlists 0 1000 tags:u a",
+   "command": null,
+   "dispatched": [
+    [
+     "server.playlists.available",
+     {}
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.playlists.delete",
+   "data": "playlists delete playlist_id:-",
+   "command": null,
+   "dispatched": [
+    [
+     "server.playlists.delete",
+     "NONE"
+    ]
+   ],
+   "changed": {},
+   "sent": [
+    {
+     "payload": "playlists 0 1000 tags:u\r",
+     "data": null,
+     "limit_response": {
+      "bytes": "0d"
+     }
+    }
+   ],
+   "exception": null
+  },
+  {
+   "reply_to": "server.playlists.rename",
+   "data": "playlists rename a overwritten_playlist_id:a",
+   "command": null,
+   "dispatched": [
+    [
+     "server.playlists.rename",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.server.playlists.rename": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.restart",
+   "data": "restartserver",
+   "command": null,
+   "dispatched": [
+    [
+     "server.restart",
+     "restartserver"
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.syncgroups.members",
+   "data": "syncgroups a",
+   "command": null,
+   "dispatched": [
+    [
+     "server.syncgroups.members",
+     []
+    ],
+    [
+     "player.control.sync_status#aa:bb:cc:dd:ee:ff",
+     []
+    ],
+    [
+     "player.control.sync#aa:bb:cc:dd:ee:ff",
+     "-"
+    ],
+    [
+     "server.syncgroups.names",
+     []
+    ]
+   ],
+   "changed": {
+    "dev.player.control.sync": "-"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.syncgroups.names",
+   "data": "syncgroups a",
+   "command": null,
+   "dispatched": [
+    [
+     "server.syncgroups.members",
+     []
+    ],
+    [
+     "player.control.sync_status#aa:bb:cc:dd:ee:ff",
+     []
+    ],
+    [
+     "player.control.sync#aa:bb:cc:dd:ee:ff",
+     "-"
+    ],
+    [
+     "server.syncgroups.names",
+     []
+    ]
+   ],
+   "changed": {},
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server.version",
+   "data": "version a",
+   "command": null,
+   "dispatched": [
+    [
+     "server.version",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.server.version": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server_plugins.trackstat.get_rating",
+   "data": "trackstat getrating a",
+   "command": null,
+   "dispatched": [
+    [
+     "server_plugins.trackstat.get_rating",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.server_plugins.trackstat.get_rating": "a"
+   },
+   "sent": [],
+   "exception": null
+  },
+  {
+   "reply_to": "server_plugins.trackstat.set_rating",
+   "data": "trackstat setrating a",
+   "command": null,
+   "dispatched": [
+    [
+     "server_plugins.trackstat.set_rating",
+     "a"
+    ]
+   ],
+   "changed": {
+    "dev.server_plugins.trackstat.set_rating": "a"
+   },
+   "sent": [],
+   "exception": null
+  }
+ ]
+}

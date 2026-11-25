@@ -28,7 +28,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Traffic(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
     _base_url = 'https://maps.googleapis.com/maps/api/directions/json'
 
     def __init__(self, sh, *args, **kwargs):
@@ -38,6 +38,7 @@ class Traffic(SmartPlugin):
         api key. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
         @param language: two char language code. default: de
         """
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self._apikey = self.get_parameter_value('apikey')
         self._language = self.get_parameter_value('language')

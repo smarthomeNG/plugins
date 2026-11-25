@@ -29,15 +29,12 @@ import json
 
 
 class Pushover(SmartPlugin):
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     _url = 'https://api.pushover.net/1/messages.json'
 
     def __init__(self, sh, *args, **kwargs):
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
         self._apiKey = self.get_parameter_value('apiKey')
         self._userKey = self.get_parameter_value('userKey')
         self._device = self.get_parameter_value('device')

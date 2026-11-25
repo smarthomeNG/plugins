@@ -19,7 +19,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import datetime
 import os
 import errno
@@ -29,11 +28,10 @@ import dateutil.relativedelta
 from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
 from lib.network import Http, Network
-from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
     ALLOW_MULTIINSTANCE = False
     DAYS = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
     FREQ = ('YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', 'HOURLY', 'MINUTELY', 'SECONDLY')
@@ -41,8 +39,6 @@ class iCal(SmartPlugin):
 
     def __init__(self, smarthome):
         super().__init__()
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         try:
             self.shtime = Shtime.get_instance()
             self.handle_login = self.get_parameter_value('handle_login')
@@ -80,16 +76,10 @@ class iCal(SmartPlugin):
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info(
-                    'Registering calendar {} with alias {}.'.format(
-                        Network.clean_uri(calendar, self.handle_login), name
-                    )
-                )
+                self.logger.info('Registering calendar {} with alias {}.'.format(self._uri_for_log(calendar), name))
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info(
-                    'Registering calendar {} without alias.'.format(Network.clean_uri(calendar, self.handle_login))
-                )
+                self.logger.info('Registering calendar {} without alias.'.format(self._uri_for_log(calendar)))
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
@@ -127,14 +117,16 @@ class iCal(SmartPlugin):
 
     def __call__(self, ics='', delta=1, offset=0, username=None, password=None, prio=1, verify=True):
         if ics in self._ical_aliases:
-            self.logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
+            self.logger.debug(
+                'iCal retrieve events by alias {0} -> {1}'.format(ics, self._uri_for_log(self._ical_aliases[ics]))
+            )
             return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
 
         if ics in self._icals:
-            self.logger.debug('iCal retrieve cached events {0}'.format(ics))
+            self.logger.debug('iCal retrieve cached events {0}'.format(self._uri_for_log(ics)))
             return self._filter_events(self._icals[ics], delta, offset)
 
-        self.logger.debug('iCal retrieve events {0}'.format(ics))
+        self.logger.debug('iCal retrieve events {0}'.format(self._uri_for_log(ics)))
         return self._filter_events(
             self._read_events(ics, username=username, password=password, prio=prio, verify=verify), delta, offset
         )
@@ -169,10 +161,14 @@ class iCal(SmartPlugin):
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('Updated calendar {0}'.format(Network.clean_uri(uri, self.handle_login)))
+            self.logger.debug('Updated calendar {0}'.format(self._uri_for_log(uri)))
 
         if len(self._icals):
             self._update_items()
+
+    def _uri_for_log(self, uri):
+        """`uri` with embedded login data handled according to parameter ``handle_login``."""
+        return Network.clean_uri(uri, self.handle_login)
 
     def _filter_events(self, events, delta=1, offset=0, prio=1):
         now = self.shtime.now()
@@ -225,13 +221,9 @@ class iCal(SmartPlugin):
                 url=ics, local=filename, params={username: username, password: password}, verify=verify, auth=auth
             )
             if downloaded is False:
-                self.logger.error('Could not download online ics file {0}.'.format(ics))
+                self.logger.error('Could not download online ics file {0}.'.format(self._uri_for_log(ics)))
                 return {}
-            self.logger.debug(
-                'Online ics {} successfully downloaded to {}'.format(
-                    Network.clean_uri(ics, self.handle_login), filename
-                )
-            )
+            self.logger.debug('Online ics {} successfully downloaded to {}'.format(self._uri_for_log(ics), filename))
             ics = os.path.normpath(filename)
         try:
             ics = ics.replace('\\', os.sep).replace('/', os.sep)

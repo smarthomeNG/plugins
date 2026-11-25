@@ -14,3 +14,91 @@ main:
 
     nodb:
         type: num
+
+    maxage:
+        type: num
+        database: init
+        database_maxage: 30
+
+    maxage_empty:
+        type: num
+        database: init
+        database_maxage: ''
+        database_maxage_action: min
+
+    maxage_sum:
+        type: num
+        database: init
+        database_maxage: 1
+        database_maxage_action: sum
+        database_maxage_interval: 1h
+
+    maxage_avg:
+        type: num
+        database: init
+        database_maxage: 1
+        database_maxage_action: avg
+        database_maxage_interval: 1h
+
+    maxage_min:
+        type: num
+        database: init
+        database_maxage: 1
+        database_maxage_action: min
+        database_maxage_interval: 1h
+
+    maxage_duty_cycle:
+        type: bool
+        database: init
+        database_maxage: 1
+        database_maxage_action: duty_cycle
+        database_maxage_interval: 1h
+
+    invalid_after_num:
+        type: num
+        database: init
+        enforce_updates: true
+        database_invalid_after: 5m
+
+    invalid_after_no_enforce:
+        type: num
+        database: init
+        database_invalid_after: 5m
+
+    invalid_after_ro:
+        type: num
+        database: init
+        database_acl: ro
+        enforce_updates: true
+        database_invalid_after: 5m
+
+    invalid_after_bad_value:
+        type: num
+        database: init
+        enforce_updates: true
+        database_invalid_after: not-a-duration
+
+    maxage_invalid_type:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: sum
+
+    maxage_no_action:
+        type: num
+        database: init
+        database_maxage: 1
+
+    maxage_first_str:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: first
+        database_maxage_interval: 1h
+
+    maxage_last_str:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: last
+        database_maxage_interval: 1h

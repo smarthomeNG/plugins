@@ -92,6 +92,13 @@ class Robot:
 
     def setClientIDHash(self, hash):
         self._clientIDHash = hash
+    
+    def getSecretKeyValid(self):
+        if self.__secretKey == '':
+            return 'invalid'
+        else:
+            return 'valid'
+
 
     # Send command to robot. Return None if not successful
     def robot_command(self, command, arg1=None, arg2=None):
@@ -196,7 +203,7 @@ class Robot:
                 self.logger.debug('Robot: SecretKey is {0}'.format(self.__secretKey))
 
         if self.__secretKey == '':
-            self.logger.warning('Robot: Still no valid secret key. Aborting update fct.')
+            self.logger.debug('Robot: Still no valid secret key. Aborting update fct.')
             self._backendOnline = False
             return 'error'
 
@@ -602,6 +609,12 @@ class Robot:
             return ''
 
         # self.logger.debug("Response: {0}".format(request_robots_response.text))
+
+        statusCode = request_robots_response.status_code
+        if statusCode != 200:
+            self.logger.warning('Error during secret token request: {0}'.format(statusCode))
+            return ''
+
         responseJson = request_robots_response.json()
 
         if 'robots' in responseJson:
@@ -635,5 +648,8 @@ class Robot:
                 # self.logger.debug("Secret key via oauth2 is {0}".format(secretKey))
                 self.__secretKey = secretKey
                 return secretKey
+        else:
+            # self.logger.debug("No section robot found when requesting secret key.")
+            self.logger.debug(f"Secret key request answer is {request_robots_response}")
 
         return ''

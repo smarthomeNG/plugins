@@ -122,7 +122,7 @@ class Echo(object):
 
 
 class AlexaRc4shNG(SmartPlugin):
-    PLUGIN_VERSION = '1.0.4'
+    PLUGIN_VERSION = '1.0.5'
     ALLOW_MULTIINSTANCE = False
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
@@ -130,6 +130,7 @@ class AlexaRc4shNG(SmartPlugin):
     """
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         # get Instances
         self.logger = logging.getLogger(__name__)
         self.sh = self.get_sh()

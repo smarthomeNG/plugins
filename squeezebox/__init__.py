@@ -27,16 +27,14 @@ from lib.network import Tcp_client
 import re
 import time
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
 
 
 class Squeezebox(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.4.0'
+    PLUGIN_VERSION = '1.4.1'
 
     def __init__(self, smarthome):
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
         try:
             self._host = self.get_parameter_value('host')
             self._port = self.get_parameter_value('port')

@@ -345,11 +345,11 @@
             </tr>
         </thead>
         <tbody>
-            {% for device in p.zigbee2mqtt_devices %}
+            {% for device, entry in p._devices.items() if 'meta' in entry or 'data' in entry %}
                 <tr>
                     <td class="py-1"><a>{{ device }}</a></td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta'] }}</td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['data'] }}</td>
+                    <td class="py-1">{{ entry['meta'] }}</td>
+                    <td class="py-1">{{ entry['data'] }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -364,11 +364,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for device in p.zigbee2mqtt_plugin_devices %}
+            {% for device, entry in p._devices.items() %}
+                {% set connected = entry.items()|selectattr('1.item', 'defined')|list %}
+                {% if connected %}
                 <tr>
                     <td class="py-1"><a>{{ device }}</a></td>
-                    <td class="py-1">{{ p.zigbee2mqtt_plugin_devices[device]}}</td>
+                    <td class="py-1">{% for attr, a in connected %}{{ attr }}: {{ a['value'] }} ({{ a['item'].property.path }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
                 </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>

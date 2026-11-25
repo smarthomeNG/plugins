@@ -1,0 +1,3537 @@
+{
+ "jobs_after_run": [
+  "read_initial_values"
+ ],
+ "initial_sends": [
+  {
+   "payload": "00f8",
+   "data": {
+    "value": null,
+    "len": 2
+   }
+  }
+ ],
+ "initial_dispatched": [
+  [
+   "Anlagentyp",
+   null
+  ]
+ ],
+ "writes": [
+  {
+   "item": "dev.allgemein.systemtime",
+   "value": true,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.allgemein.tempkoffset",
+   "value": 1193045,
+   "sent": [
+    {
+     "payload": "6760",
+     "data": {
+      "value": {
+       "bytes": "55"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.allgemein.tempkoffset": 1193045
+   }
+  },
+  {
+   "item": "dev.brenner.betriebsstunden",
+   "value": 1193045,
+   "sent": [
+    {
+     "payload": "08a7",
+     "data": {
+      "value": {
+       "bytes": "ffffeb50"
+      },
+      "mult": 3600,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.brenner.betriebsstunden": 1193045
+   }
+  },
+  {
+   "item": "dev.brenner.oeldurchsatz",
+   "value": 1193045,
+   "sent": [
+    {
+     "payload": "5726",
+     "data": {
+      "value": {
+       "bytes": "00123455"
+      },
+      "signed": true,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.brenner.oeldurchsatz": 1193045
+   }
+  },
+  {
+   "item": "dev.brenner.oelverbrauch",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "7574",
+     "data": {
+      "value": {
+       "bytes": "000003e8"
+      },
+      "mult": 1000,
+      "signed": true,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.brenner.oelverbrauch": 1
+   }
+  },
+  {
+   "item": "dev.brenner.starts",
+   "value": 1193045,
+   "sent": [
+    {
+     "payload": "088a",
+     "data": {
+      "value": {
+       "bytes": "00123455"
+      },
+      "signed": true,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.brenner.starts": 1193045
+   }
+  },
+  {
+   "item": "dev.ferienprogramm.a1m1.abreisetag",
+   "value": true,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.ferienprogramm.m2.abreisetag",
+   "value": true,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.a1m1.heizkennlinie.neigung",
+   "value": 0.2,
+   "sent": [
+    {
+     "payload": "27d3",
+     "data": {
+      "value": {
+       "bytes": "02"
+      },
+      "mult": 10,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.heizkennlinie.neigung": 0.2
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.heizkennlinie.niveau",
+   "value": -13,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.a1m1.partybetrieb_zeitbegrenzung",
+   "value": 12,
+   "sent": [
+    {
+     "payload": "27f2",
+     "data": {
+      "value": {
+       "bytes": "0c"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.partybetrieb_zeitbegrenzung": 12
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.betriebsart",
+   "value": 4,
+   "sent": [
+    {
+     "payload": "2323",
+     "data": {
+      "value": {
+       "bytes": "04"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.betriebsart": 4
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.externe_betriebsartenumschaltung",
+   "value": 4,
+   "sent": [
+    {
+     "payload": "2549",
+     "data": {
+      "value": {
+       "bytes": "04"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.externe_betriebsartenumschaltung": 4
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.externe_raumsolltemperatur_normal",
+   "value": 37,
+   "sent": [
+    {
+     "payload": "2321",
+     "data": {
+      "value": {
+       "bytes": "25"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.externe_raumsolltemperatur_normal": 37
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.frostschutz",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "27a4",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.frostschutz": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.frostschutzgrenze",
+   "value": -9,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.heizkreispumpenlogik",
+   "value": 15,
+   "sent": [
+    {
+     "payload": "27a5",
+     "data": {
+      "value": {
+       "bytes": "0f"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.heizkreispumpenlogik": 15
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.mischersparfunktion",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "27a7",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.mischersparfunktion": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.pumpenstillstandzeit",
+   "value": 15,
+   "sent": [
+    {
+     "payload": "27a9",
+     "data": {
+      "value": {
+       "bytes": "0f"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.pumpenstillstandzeit": 15
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.sparschaltung",
+   "value": 5,
+   "sent": [
+    {
+     "payload": "27a6",
+     "data": {
+      "value": {
+       "bytes": "05"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.sparschaltung": 5
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.speichervorrang",
+   "value": 15,
+   "sent": [
+    {
+     "payload": "27a2",
+     "data": {
+      "value": {
+       "bytes": "0f"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.speichervorrang": 15
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.zustand_partybetrieb",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "2330",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.zustand_partybetrieb": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.status.zustand_sparbetrieb",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "2331",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.status.zustand_sparbetrieb": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.grenze_red_betrieb",
+   "value": -61,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.grenze_red_raumtemp",
+   "value": -60,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.raum.soll_normalbetrieb",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "2306",
+     "data": {
+      "value": {
+       "bytes": "03"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.soll_normalbetrieb": 3
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.raum.soll_party_betrieb",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "2308",
+     "data": {
+      "value": {
+       "bytes": "03"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.soll_party_betrieb": 3
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.raum.soll_red_betrieb",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "2307",
+     "data": {
+      "value": {
+       "bytes": "03"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.soll_red_betrieb": 3
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.vorlauf.erhoehung_soll",
+   "value": 50,
+   "sent": [
+    {
+     "payload": "27fa",
+     "data": {
+      "value": {
+       "bytes": "32"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.erhoehung_soll": 50
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.vorlauf.erhoehung_zeit",
+   "value": 150,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.vorlauf.max",
+   "value": 10,
+   "sent": [
+    {
+     "payload": "27c6",
+     "data": {
+      "value": {
+       "bytes": "0a"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.max": 10
+   }
+  },
+  {
+   "item": "dev.heizkreis.a1m1.temperatur.vorlauf.min",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "27c5",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.min": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.heizkennlinie.neigung",
+   "value": 0.2,
+   "sent": [
+    {
+     "payload": "37d3",
+     "data": {
+      "value": {
+       "bytes": "02"
+      },
+      "mult": 10,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.heizkennlinie.neigung": 0.2
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.heizkennlinie.niveau",
+   "value": -13,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.m2.partybetrieb_zeitbegrenzung",
+   "value": 12,
+   "sent": [
+    {
+     "payload": "37f2",
+     "data": {
+      "value": {
+       "bytes": "0c"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.partybetrieb_zeitbegrenzung": 12
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.betriebsart",
+   "value": 4,
+   "sent": [
+    {
+     "payload": "3323",
+     "data": {
+      "value": {
+       "bytes": "04"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.betriebsart": 4
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.externe_betriebsartenumschaltung",
+   "value": 4,
+   "sent": [
+    {
+     "payload": "3549",
+     "data": {
+      "value": {
+       "bytes": "04"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.externe_betriebsartenumschaltung": 4
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.externe_raumsolltemperatur_normal",
+   "value": 37,
+   "sent": [
+    {
+     "payload": "3321",
+     "data": {
+      "value": {
+       "bytes": "25"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.externe_raumsolltemperatur_normal": 37
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.frostschutz",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "37a4",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.frostschutz": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.frostschutzgrenze",
+   "value": -9,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.m2.status.heizkreispumpenlogik",
+   "value": 15,
+   "sent": [
+    {
+     "payload": "37a5",
+     "data": {
+      "value": {
+       "bytes": "0f"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.heizkreispumpenlogik": 15
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.mischersparfunktion",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "37a7",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.mischersparfunktion": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.pumpenstillstandzeit",
+   "value": 15,
+   "sent": [
+    {
+     "payload": "37a9",
+     "data": {
+      "value": {
+       "bytes": "0f"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.pumpenstillstandzeit": 15
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.sparschaltung",
+   "value": 5,
+   "sent": [
+    {
+     "payload": "37a6",
+     "data": {
+      "value": {
+       "bytes": "05"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.sparschaltung": 5
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.speichervorrang",
+   "value": 15,
+   "sent": [
+    {
+     "payload": "37a2",
+     "data": {
+      "value": {
+       "bytes": "0f"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.speichervorrang": 15
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.zustand_partybetrieb",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "3330",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.zustand_partybetrieb": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.status.zustand_sparbetrieb",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "3331",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.status.zustand_sparbetrieb": 1
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.grenze_red_betrieb",
+   "value": -61,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.grenze_red_raumtemp",
+   "value": -60,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.raum.soll_normalbetrieb",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "3306",
+     "data": {
+      "value": {
+       "bytes": "03"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.soll_normalbetrieb": 3
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.raum.soll_party_betrieb",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "3308",
+     "data": {
+      "value": {
+       "bytes": "03"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.soll_party_betrieb": 3
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.raum.soll_red_betrieb",
+   "value": 3,
+   "sent": [
+    {
+     "payload": "3307",
+     "data": {
+      "value": {
+       "bytes": "03"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.soll_red_betrieb": 3
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.vorlauf.erhoehung_soll",
+   "value": 50,
+   "sent": [
+    {
+     "payload": "37fa",
+     "data": {
+      "value": {
+       "bytes": "32"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.erhoehung_soll": 50
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.vorlauf.erhoehung_zeit",
+   "value": 150,
+   "sent": [],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {}
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.vorlauf.max",
+   "value": 10,
+   "sent": [
+    {
+     "payload": "37c6",
+     "data": {
+      "value": {
+       "bytes": "0a"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.max": 10
+   }
+  },
+  {
+   "item": "dev.heizkreis.m2.temperatur.vorlauf.min",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "37c5",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.min": 1
+   }
+  },
+  {
+   "item": "dev.warmwasser.pumpennachlauf",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "6762",
+     "data": {
+      "value": {
+       "bytes": "0001"
+      },
+      "signed": true,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.warmwasser.pumpennachlauf": 1
+   }
+  },
+  {
+   "item": "dev.warmwasser.soll",
+   "value": 10,
+   "sent": [
+    {
+     "payload": "6300",
+     "data": {
+      "value": {
+       "bytes": "0a"
+      },
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.warmwasser.soll": 10
+   }
+  },
+  {
+   "item": "dev.warmwasser.status",
+   "value": 1,
+   "sent": [
+    {
+     "payload": "650a",
+     "data": {
+      "value": {
+       "bytes": "01"
+      },
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [],
+   "new_jobs": [],
+   "changed": {
+    "dev.warmwasser.status": true
+   }
+  }
+ ],
+ "reads": [
+  {
+   "command": "Allgemein.AM1_Ausgang_1",
+   "sent": [
+    {
+     "payload": "0aa0",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.AM1_Ausgang_1",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.am1_ausgang_1": true
+   }
+  },
+  {
+   "command": "Allgemein.AM1_Ausgang_2",
+   "sent": [
+    {
+     "payload": "0aa1",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.AM1_Ausgang_2",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.am1_ausgang_2": true
+   }
+  },
+  {
+   "command": "Allgemein.Anlagenschema",
+   "sent": [
+    {
+     "payload": "7700",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Anlagenschema",
+     null
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Allgemein.CtrlId",
+   "sent": [
+    {
+     "payload": "08e0",
+     "data": {
+      "value": null,
+      "len": 7
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.CtrlId",
+     null
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Allgemein.EA1_Kontakt_0",
+   "sent": [
+    {
+     "payload": "0a90",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.EA1_Kontakt_0",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.ea1_kontakt_0": true
+   }
+  },
+  {
+   "command": "Allgemein.EA1_Kontakt_1",
+   "sent": [
+    {
+     "payload": "0a91",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.EA1_Kontakt_1",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.ea1_kontakt_1": true
+   }
+  },
+  {
+   "command": "Allgemein.EA1_Kontakt_2",
+   "sent": [
+    {
+     "payload": "0a92",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.EA1_Kontakt_2",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.ea1_kontakt_2": true
+   }
+  },
+  {
+   "command": "Allgemein.EA1_Relais_0",
+   "sent": [
+    {
+     "payload": "0a95",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.EA1_Relais_0",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.ea1_relais_0": true
+   }
+  },
+  {
+   "command": "Allgemein.Inventory",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Allgemein.Relais_K12",
+   "sent": [
+    {
+     "payload": "0842",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Relais_K12",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.relais_k12": true
+   }
+  },
+  {
+   "command": "Allgemein.Systemtime",
+   "sent": [
+    {
+     "payload": "088e",
+     "data": {
+      "value": null,
+      "len": 8
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Systemtime",
+     "0102-03-04T06:07:08"
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Allgemein.Temperatur.Abgas",
+   "sent": [
+    {
+     "payload": "0816",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Abgas",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.abgas": 51
+   }
+  },
+  {
+   "command": "Allgemein.Temperatur.Auslauf",
+   "sent": [
+    {
+     "payload": "0814",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Auslauf",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.auslauf": 51
+   }
+  },
+  {
+   "command": "Allgemein.Temperatur.Aussen",
+   "sent": [
+    {
+     "payload": "0800",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "signed": true,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Aussen",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.aussen": 51
+   }
+  },
+  {
+   "command": "Allgemein.Temperatur.Aussen_Dp",
+   "sent": [
+    {
+     "payload": "5527",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "signed": true,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Aussen_Dp",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.aussen_dp": 51
+   }
+  },
+  {
+   "command": "Allgemein.Temperatur.Aussen_TP",
+   "sent": [
+    {
+     "payload": "5525",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "signed": true,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Aussen_TP",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.aussen_tp": 51
+   }
+  },
+  {
+   "command": "Allgemein.Temperatur.Gem_Vorlauf",
+   "sent": [
+    {
+     "payload": "081a",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Gem_Vorlauf",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.gem_vorlauf": 51
+   }
+  },
+  {
+   "command": "Allgemein.Temperatur.Speicher_Ladesensor",
+   "sent": [
+    {
+     "payload": "0812",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.Temperatur.Speicher_Ladesensor",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.temperatur.speicher_ladesensor": 51
+   }
+  },
+  {
+   "command": "Allgemein.TempKOffset",
+   "sent": [
+    {
+     "payload": "6760",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Allgemein.TempKOffset",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.allgemein.tempkoffset": 1
+   }
+  },
+  {
+   "command": "Anlagentyp",
+   "sent": [
+    {
+     "payload": "00f8",
+     "data": {
+      "value": null,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Anlagentyp",
+     null
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Brenner.Betriebsstunden",
+   "sent": [
+    {
+     "payload": "08a7",
+     "data": {
+      "value": null,
+      "mult": 3600,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Brenner.Betriebsstunden",
+     18696
+    ]
+   ],
+   "changed": {
+    "dev.brenner.betriebsstunden": 18696
+   }
+  },
+  {
+   "command": "Brenner.Oeldurchsatz",
+   "sent": [
+    {
+     "payload": "5726",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Brenner.Oeldurchsatz",
+     67305985
+    ]
+   ],
+   "changed": {
+    "dev.brenner.oeldurchsatz": 67305985
+   }
+  },
+  {
+   "command": "Brenner.Oelverbrauch",
+   "sent": [
+    {
+     "payload": "7574",
+     "data": {
+      "value": null,
+      "mult": 1000,
+      "signed": true,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Brenner.Oelverbrauch",
+     67305
+    ]
+   ],
+   "changed": {
+    "dev.brenner.oelverbrauch": 67305
+   }
+  },
+  {
+   "command": "Brenner.Starts",
+   "sent": [
+    {
+     "payload": "088a",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Brenner.Starts",
+     67305985
+    ]
+   ],
+   "changed": {
+    "dev.brenner.starts": 67305985
+   }
+  },
+  {
+   "command": "Brenner.Status_1",
+   "sent": [
+    {
+     "payload": "0842",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Brenner.Status_1",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.brenner.status_1": true
+   }
+  },
+  {
+   "command": "Brenner.Status_2",
+   "sent": [
+    {
+     "payload": "0849",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Brenner.Status_2",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.brenner.status_2": true
+   }
+  },
+  {
+   "command": "Fehler.Error0",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error1",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error2",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error3",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error4",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error5",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error6",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error7",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error8",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Error9",
+   "sent": [],
+   "dispatched": [],
+   "changed": {}
+  },
+  {
+   "command": "Fehler.Sammelstoerung",
+   "sent": [
+    {
+     "payload": "0a82",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Fehler.Sammelstoerung",
+     null
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Ferienprogramm.A1M1.Abreisetag",
+   "sent": [
+    {
+     "payload": "2309",
+     "data": {
+      "value": null,
+      "len": 8
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Ferienprogramm.A1M1.Abreisetag",
+     "0102-03-04"
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Ferienprogramm.A1M1.Status",
+   "sent": [
+    {
+     "payload": "2535",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Ferienprogramm.A1M1.Status",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.ferienprogramm.a1m1.status": 1
+   }
+  },
+  {
+   "command": "Ferienprogramm.M2.Abreisetag",
+   "sent": [
+    {
+     "payload": "3309",
+     "data": {
+      "value": null,
+      "len": 8
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Ferienprogramm.M2.Abreisetag",
+     "0102-03-04"
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Ferienprogramm.M2.Status",
+   "sent": [
+    {
+     "payload": "3535",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Ferienprogramm.M2.Status",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.ferienprogramm.m2.status": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Heizkennlinie.Neigung",
+   "sent": [
+    {
+     "payload": "27d3",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Heizkennlinie.Neigung",
+     0
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.heizkennlinie.neigung": 0
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Heizkennlinie.Niveau",
+   "sent": [
+    {
+     "payload": "27d4",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Heizkennlinie.Niveau",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.heizkennlinie.niveau": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Partybetrieb_Zeitbegrenzung",
+   "sent": [
+    {
+     "payload": "27f2",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Partybetrieb_Zeitbegrenzung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.partybetrieb_zeitbegrenzung": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Aktuelle_Betriebsart",
+   "sent": [
+    {
+     "payload": "2301",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Aktuelle_Betriebsart",
+     null
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Betriebsart",
+   "sent": [
+    {
+     "payload": "2323",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Betriebsart",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.betriebsart": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Externe_Betriebsartenumschaltung",
+   "sent": [
+    {
+     "payload": "2549",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Externe_Betriebsartenumschaltung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.externe_betriebsartenumschaltung": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Externe_Raumsolltemperatur_Normal",
+   "sent": [
+    {
+     "payload": "2321",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Externe_Raumsolltemperatur_Normal",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.externe_raumsolltemperatur_normal": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Frostschutz",
+   "sent": [
+    {
+     "payload": "27a4",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Frostschutz",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Frostschutzgrenze",
+   "sent": [
+    {
+     "payload": "27a3",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Frostschutzgrenze",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.frostschutzgrenze": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Heizkreispumpenlogik",
+   "sent": [
+    {
+     "payload": "27a5",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Heizkreispumpenlogik",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.heizkreispumpenlogik": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Mischersparfunktion",
+   "sent": [
+    {
+     "payload": "27a7",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Mischersparfunktion",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Partybetrieb",
+   "sent": [
+    {
+     "payload": "2303",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Partybetrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.partybetrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Pumpenstillstandzeit",
+   "sent": [
+    {
+     "payload": "27a9",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Pumpenstillstandzeit",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.pumpenstillstandzeit": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Sparbetrieb",
+   "sent": [
+    {
+     "payload": "2302",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Sparbetrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.sparbetrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Sparschaltung",
+   "sent": [
+    {
+     "payload": "27a6",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Sparschaltung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.sparschaltung": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Speichervorrang",
+   "sent": [
+    {
+     "payload": "27a2",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Speichervorrang",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.speichervorrang": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.StatusFrost",
+   "sent": [
+    {
+     "payload": "2500",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.StatusFrost",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.status.statusfrost": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Zustand_Partybetrieb",
+   "sent": [
+    {
+     "payload": "2330",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Zustand_Partybetrieb",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.A1M1.Status.Zustand_Sparbetrieb",
+   "sent": [
+    {
+     "payload": "2331",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Status.Zustand_Sparbetrieb",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Grenze_red_Betrieb",
+   "sent": [
+    {
+     "payload": "27f8",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Grenze_red_Betrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.grenze_red_betrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Grenze_red_Raumtemp",
+   "sent": [
+    {
+     "payload": "27f9",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Grenze_red_Raumtemp",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.grenze_red_raumtemp": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Raum.Ist",
+   "sent": [
+    {
+     "payload": "0896",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Raum.Ist",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.ist": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Raum.Soll_Normalbetrieb",
+   "sent": [
+    {
+     "payload": "2306",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Raum.Soll_Normalbetrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.soll_normalbetrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Raum.Soll_Party_Betrieb",
+   "sent": [
+    {
+     "payload": "2308",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Raum.Soll_Party_Betrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.soll_party_betrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Raum.Soll_Red_Betrieb",
+   "sent": [
+    {
+     "payload": "2307",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Raum.Soll_Red_Betrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.raum.soll_red_betrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Vorlauf.Erhoehung_Soll",
+   "sent": [
+    {
+     "payload": "27fa",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Vorlauf.Erhoehung_Soll",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.erhoehung_soll": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Vorlauf.Erhoehung_Zeit",
+   "sent": [
+    {
+     "payload": "27fa",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Vorlauf.Erhoehung_Zeit",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.erhoehung_zeit": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Vorlauf.Ist",
+   "sent": [
+    {
+     "payload": "2900",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Vorlauf.Ist",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.ist": 51
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Vorlauf.Max",
+   "sent": [
+    {
+     "payload": "27c6",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Vorlauf.Max",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.max": 1
+   }
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Vorlauf.Min",
+   "sent": [
+    {
+     "payload": "27c5",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Vorlauf.Min",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.A1M1.Temperatur.Vorlauf.Soll",
+   "sent": [
+    {
+     "payload": "2544",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.A1M1.Temperatur.Vorlauf.Soll",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.a1m1.temperatur.vorlauf.soll": 51
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Heizkennlinie.Neigung",
+   "sent": [
+    {
+     "payload": "37d3",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Heizkennlinie.Neigung",
+     0
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.heizkennlinie.neigung": 0
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Heizkennlinie.Niveau",
+   "sent": [
+    {
+     "payload": "37d4",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Heizkennlinie.Niveau",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.heizkennlinie.niveau": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Partybetrieb_Zeitbegrenzung",
+   "sent": [
+    {
+     "payload": "37f2",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Partybetrieb_Zeitbegrenzung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.partybetrieb_zeitbegrenzung": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Aktuelle_Betriebsart",
+   "sent": [
+    {
+     "payload": "3301",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Aktuelle_Betriebsart",
+     null
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.M2.Status.Betriebsart",
+   "sent": [
+    {
+     "payload": "3323",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Betriebsart",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.betriebsart": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Externe_Betriebsartenumschaltung",
+   "sent": [
+    {
+     "payload": "3549",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Externe_Betriebsartenumschaltung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.externe_betriebsartenumschaltung": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Externe_Raumsolltemperatur_Normal",
+   "sent": [
+    {
+     "payload": "3321",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Externe_Raumsolltemperatur_Normal",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.externe_raumsolltemperatur_normal": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Frostschutz",
+   "sent": [
+    {
+     "payload": "37a4",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Frostschutz",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.M2.Status.Frostschutzgrenze",
+   "sent": [
+    {
+     "payload": "37a3",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Frostschutzgrenze",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.frostschutzgrenze": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Heizkreispumpenlogik",
+   "sent": [
+    {
+     "payload": "37a5",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Heizkreispumpenlogik",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.heizkreispumpenlogik": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Mischersparfunktion",
+   "sent": [
+    {
+     "payload": "37a7",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Mischersparfunktion",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.M2.Status.Partybetrieb",
+   "sent": [
+    {
+     "payload": "3303",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Partybetrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.partybetrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Pumpenstillstandzeit",
+   "sent": [
+    {
+     "payload": "37a9",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Pumpenstillstandzeit",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.pumpenstillstandzeit": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Sparbetrieb",
+   "sent": [
+    {
+     "payload": "3302",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Sparbetrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.sparbetrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Sparschaltung",
+   "sent": [
+    {
+     "payload": "37a6",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Sparschaltung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.sparschaltung": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Speichervorrang",
+   "sent": [
+    {
+     "payload": "37a2",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Speichervorrang",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.speichervorrang": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.StatusFrost",
+   "sent": [
+    {
+     "payload": "3500",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.StatusFrost",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.status.statusfrost": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Status.Zustand_Partybetrieb",
+   "sent": [
+    {
+     "payload": "3330",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Zustand_Partybetrieb",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.M2.Status.Zustand_Sparbetrieb",
+   "sent": [
+    {
+     "payload": "3331",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Status.Zustand_Sparbetrieb",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Grenze_red_Betrieb",
+   "sent": [
+    {
+     "payload": "37f8",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Grenze_red_Betrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.grenze_red_betrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Grenze_red_Raumtemp",
+   "sent": [
+    {
+     "payload": "37f9",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Grenze_red_Raumtemp",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.grenze_red_raumtemp": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Raum.Ist",
+   "sent": [
+    {
+     "payload": "0898",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Raum.Ist",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.ist": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Raum.Soll_Normalbetrieb",
+   "sent": [
+    {
+     "payload": "3306",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Raum.Soll_Normalbetrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.soll_normalbetrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Raum.Soll_Party_Betrieb",
+   "sent": [
+    {
+     "payload": "3308",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Raum.Soll_Party_Betrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.soll_party_betrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Raum.Soll_Red_Betrieb",
+   "sent": [
+    {
+     "payload": "3307",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Raum.Soll_Red_Betrieb",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.raum.soll_red_betrieb": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Vorlauf.Erhoehung_Soll",
+   "sent": [
+    {
+     "payload": "37fa",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Vorlauf.Erhoehung_Soll",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.erhoehung_soll": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Vorlauf.Erhoehung_Zeit",
+   "sent": [
+    {
+     "payload": "37fb",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Vorlauf.Erhoehung_Zeit",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.erhoehung_zeit": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Vorlauf.Ist",
+   "sent": [
+    {
+     "payload": "3900",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Vorlauf.Ist",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.ist": 51
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Vorlauf.Max",
+   "sent": [
+    {
+     "payload": "37c6",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Vorlauf.Max",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.max": 1
+   }
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Vorlauf.Min",
+   "sent": [
+    {
+     "payload": "37c5",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Vorlauf.Min",
+     1
+    ]
+   ],
+   "changed": {}
+  },
+  {
+   "command": "Heizkreis.M2.Temperatur.Vorlauf.Soll",
+   "sent": [
+    {
+     "payload": "3544",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Heizkreis.M2.Temperatur.Vorlauf.Soll",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.heizkreis.m2.temperatur.vorlauf.soll": 51
+   }
+  },
+  {
+   "command": "Kessel.Ist",
+   "sent": [
+    {
+     "payload": "0802",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Kessel.Ist",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.kessel.ist": 51
+   }
+  },
+  {
+   "command": "Kessel.Soll",
+   "sent": [
+    {
+     "payload": "555a",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Kessel.Soll",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.kessel.soll": 51
+   }
+  },
+  {
+   "command": "Kessel.TP",
+   "sent": [
+    {
+     "payload": "0810",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Kessel.TP",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.kessel.tp": 51
+   }
+  },
+  {
+   "command": "Pumpen.Heizkreis_A1M1",
+   "sent": [
+    {
+     "payload": "2906",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Heizkreis_A1M1",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.heizkreis_a1m1": true
+   }
+  },
+  {
+   "command": "Pumpen.Heizkreis_A1M1_RPM",
+   "sent": [
+    {
+     "payload": "7663",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Heizkreis_A1M1_RPM",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.heizkreis_a1m1_rpm": true
+   }
+  },
+  {
+   "command": "Pumpen.Heizkreis_M2",
+   "sent": [
+    {
+     "payload": "3906",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Heizkreis_M2",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.heizkreis_m2": true
+   }
+  },
+  {
+   "command": "Pumpen.Heizkreis_M2_RPM",
+   "sent": [
+    {
+     "payload": "7665",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Heizkreis_M2_RPM",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.heizkreis_m2_rpm": true
+   }
+  },
+  {
+   "command": "Pumpen.Intern",
+   "sent": [
+    {
+     "payload": "7660",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Intern",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.intern": true
+   }
+  },
+  {
+   "command": "Pumpen.Relais_Status",
+   "sent": [
+    {
+     "payload": "a152",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Relais_Status",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.relais_status": true
+   }
+  },
+  {
+   "command": "Pumpen.Speicherlade",
+   "sent": [
+    {
+     "payload": "6513",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Speicherlade",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.speicherlade": true
+   }
+  },
+  {
+   "command": "Pumpen.Zirkulation",
+   "sent": [
+    {
+     "payload": "6515",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Pumpen.Zirkulation",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.pumpen.zirkulation": true
+   }
+  },
+  {
+   "command": "Solar.Betriebsstunden",
+   "sent": [
+    {
+     "payload": "6568",
+     "data": {
+      "value": null,
+      "mult": 100,
+      "len": 4
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Solar.Betriebsstunden",
+     673059
+    ]
+   ],
+   "changed": {
+    "dev.solar.betriebsstunden": 673059
+   }
+  },
+  {
+   "command": "Solar.Kollektortemperatur",
+   "sent": [
+    {
+     "payload": "6564",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "signed": true,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Solar.Kollektortemperatur",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.solar.kollektortemperatur": 51
+   }
+  },
+  {
+   "command": "Solar.Nachladeunterdrueckung",
+   "sent": [
+    {
+     "payload": "6551",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Solar.Nachladeunterdrueckung",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.solar.nachladeunterdrueckung": true
+   }
+  },
+  {
+   "command": "Solar.Pumpe",
+   "sent": [
+    {
+     "payload": "6552",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Solar.Pumpe",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.solar.pumpe": true
+   }
+  },
+  {
+   "command": "Solar.Speichertemperatur",
+   "sent": [
+    {
+     "payload": "6566",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Solar.Speichertemperatur",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.solar.speichertemperatur": 51
+   }
+  },
+  {
+   "command": "Solar.Steuerung",
+   "sent": [
+    {
+     "payload": "7754",
+     "data": {
+      "value": null,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Solar.Steuerung",
+     513
+    ]
+   ],
+   "changed": {
+    "dev.solar.steuerung": 513
+   }
+  },
+  {
+   "command": "Warmwasser.Ist",
+   "sent": [
+    {
+     "payload": "0804",
+     "data": {
+      "value": null,
+      "mult": 10,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Warmwasser.Ist",
+     51
+    ]
+   ],
+   "changed": {
+    "dev.warmwasser.ist": 51
+   }
+  },
+  {
+   "command": "Warmwasser.PumpenNachlauf",
+   "sent": [
+    {
+     "payload": "6762",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 2
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Warmwasser.PumpenNachlauf",
+     513
+    ]
+   ],
+   "changed": {
+    "dev.warmwasser.pumpennachlauf": 513
+   }
+  },
+  {
+   "command": "Warmwasser.Soll",
+   "sent": [
+    {
+     "payload": "6300",
+     "data": {
+      "value": null,
+      "signed": true,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Warmwasser.Soll",
+     1
+    ]
+   ],
+   "changed": {
+    "dev.warmwasser.soll": 1
+   }
+  },
+  {
+   "command": "Warmwasser.Status",
+   "sent": [
+    {
+     "payload": "650a",
+     "data": {
+      "value": null,
+      "len": 1
+     }
+    }
+   ],
+   "dispatched": [
+    [
+     "Warmwasser.Status",
+     1
+    ]
+   ],
+   "changed": {}
+  }
+ ]
+}

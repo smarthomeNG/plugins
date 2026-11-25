@@ -6,7 +6,7 @@
 commands = {
     'info': {
         'player': {
-            'read': True,
+            'read': False,
             'write': False,
             'opcode': 'player',
             'reply_pattern': '*',
@@ -16,7 +16,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'state': {
-            'read': True,
+            'read': False,
             'write': False,
             'opcode': 'media',
             'reply_pattern': '*',
@@ -26,7 +26,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'media': {
-            'read': True,
+            'read': False,
             'write': False,
             'opcode': 'media',
             'reply_pattern': '*',
@@ -36,7 +36,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'title': {
-            'read': True,
+            'read': False,
             'write': False,
             'opcode': 'title',
             'reply_pattern': '*',
@@ -46,7 +46,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'streams': {
-            'read': True,
+            'read': False,
             'write': False,
             'opcode': 'streams',
             'reply_pattern': '*',
@@ -56,7 +56,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'subtitles': {
-            'read': True,
+            'read': False,
             'write': False,
             'opcode': 'subtitles',
             'reply_pattern': '*',
@@ -65,8 +65,28 @@ commands = {
             'params': None,
             'item_attrs': {'read_group_levels': 0},
         },
+        'audio_names': {
+            'read': False,
+            'write': False,
+            'opcode': 'audio_names',
+            'reply_pattern': '*',
+            'item_type': 'list',
+            'dev_datatype': 'raw',
+            'params': None,
+            'item_attrs': {'read_group_levels': 0},
+        },
+        'subtitle_names': {
+            'read': False,
+            'write': False,
+            'opcode': 'subtitle_names',
+            'reply_pattern': '*',
+            'item_type': 'list',
+            'dev_datatype': 'raw',
+            'params': None,
+            'item_attrs': {'read_group_levels': 0},
+        },
         'macro': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'macro',
             'reply_pattern': '*',
@@ -92,7 +112,7 @@ commands = {
             'opcode': 'JSONRPC.Ping',
             'reply_pattern': '*',
             'item_type': 'bool',
-            'dev_datatype': 'raw',
+            'dev_datatype': 'bool',
             'params': None,
         },
         'get_status_au': {
@@ -121,6 +141,7 @@ commands = {
             'item_type': 'dict',
             'dev_datatype': 'raw',
             'params': None,
+            'item_attrs': {'read_group_levels': 1},
         },
         'get_status_play': {
             'read': True,
@@ -169,7 +190,7 @@ commands = {
     },
     'control': {
         'playpause': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.PlayPause',
             'reply_pattern': r'{\'speed\': (\d)}',
@@ -179,7 +200,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'seek': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.Seek',
             'reply_pattern': '*',
@@ -190,7 +211,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'audio': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.SetAudioStream',
             'reply_pattern': '*',
@@ -200,7 +221,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'speed': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.SetSpeed',
             'reply_pattern': '*',
@@ -211,7 +232,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'subtitle': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.SetSubtitle',
             'reply_pattern': '*',
@@ -221,7 +242,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'stop': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.Stop',
             'reply_pattern': '*',
@@ -231,7 +252,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'goto': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Player.GoTo',
             'reply_pattern': '*',
@@ -242,7 +263,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'power': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'System.Shutdown',
             'reply_pattern': '*',
@@ -252,7 +273,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'quit': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Application.Quit',
             'reply_pattern': '*',
@@ -262,7 +283,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'mute': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Application.SetMute',
             'reply_pattern': '*',
@@ -272,7 +293,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'volume': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Application.SetVolume',
             'reply_pattern': '*',
@@ -283,7 +304,7 @@ commands = {
             'item_attrs': {'read_group_levels': 0},
         },
         'action': {
-            'read': True,
+            'read': False,
             'write': True,
             'opcode': 'Input.ExecuteAction',
             'reply_pattern': '*',

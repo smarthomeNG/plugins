@@ -255,9 +255,9 @@ class EEP_Parser:
 
         # It is confirmed by Eltako that with the use of multiple repeaters in an Eltako network, values can be corrupted in random cases.
         # Catching these random errors via plausibility check:
-        if value > 2300:
+        if value > 2045:
             self.logger.warning(
-                f'A5_12_01 plausibility error: power value {value} is greater than 2300W, which is not plausible. Skipping.'
+                f'A5_12_01 plausibility error: power value {value} is greater than 2045W, which is not plausible. Skipping.'
             )
             # self.logger.warning(f"A5_12_01 exception: value {value}, divisor {divisor}, divenum {div_enum}, statusPayload {status_byte}, header status {status}")
             # self.logger.warning(f"A5_12_01 exception: payloads 0-3: {payload[0]},{payload[1]},{payload[2]},{payload[3]}")

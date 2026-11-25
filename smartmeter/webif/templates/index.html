@@ -104,7 +104,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 		let output = "";
 		for (const key in jsonData) {
 		  if (jsonData.hasOwnProperty(key)) {
-			output += `${key}: ${jsonData[key]}<br>`;
+			output += $('<div>').text(`${key}: ${jsonData[key]}`).html() + '<br>';
 		  }
 		}
 		console.log("jsonToKeyValueLines: " + output)
@@ -130,7 +130,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 			$("#"+relevant_datatable).DataTable().draw(false);
 		}
 		console.log("Update table row @" + relevant_datatable + " for: " + obis);
-		shngInsertText(obis+'_value', obis_data_formatted, relevant_datatable, 10);
+		shngInsertText(obis+'_value', obis_data_formatted, relevant_datatable, 10, true);
 		$("#"+relevant_datatable).DataTable().draw(false);
 	}
 </script>

@@ -22,7 +22,6 @@
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf, Modules
 
-from bin.smarthome import VERSION
 
 import threading
 import logging
@@ -38,7 +37,7 @@ class Snmp(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     _flip = {0: '1', 1: '0', '0': True, '1': False}
 
@@ -55,9 +54,7 @@ class Snmp(SmartPlugin):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
 
         self.logger.debug('init {}'.format(__name__))
 

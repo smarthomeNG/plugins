@@ -342,7 +342,7 @@ class HeliosException(Exception):
 
 
 class HeliosBase(SmartPlugin):
-    PLUGIN_VERSION = '1.4.3'
+    PLUGIN_VERSION = '1.4.4'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):

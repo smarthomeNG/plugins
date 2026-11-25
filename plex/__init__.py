@@ -26,10 +26,11 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Plex(SmartPlugin):
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '1.0.2'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self._displayTime = self.get_parameter_value('displaytime')
         self.logger.info('Init Plex notifications')
         self._images = ['info', 'error', 'warning']
@@ -59,7 +60,7 @@ class Plex(SmartPlugin):
 
     def notify(self, title, message, image='info'):
         if image not in self._images:
-            self.logger.warn('Plex image must be: {}'.format(', '.join(self._images)))
+            self.logger.warning('Plex image must be: {}'.format(', '.join(self._images)))
         else:
             data = {
                 'jsonrpc': '2.0',

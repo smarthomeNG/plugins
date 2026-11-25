@@ -199,7 +199,7 @@
 			iteminfo += String(iodevicecount) + ' {{ _('I/O-Geräteadresse(n)') }}, ';
 			iteminfo += String(ibuttoncount) + ' {{ _('iButtonadresse(n)') }}';
 			shngInsertText ('itemcount', objResponse['items'].length);
-			shngInsertText ('iteminfo', iteminfo);
+			shngInsertText ('iteminfo', iteminfo, null, 0, true);
 			itemtable.draw(false);
 
 			// Update bus table
@@ -230,10 +230,10 @@
 				if (businfo !== '') {
 					businfo += ', '
 				}
-				businfo += '<strong>' + buses[bus]['bus'] + ' </strong>: ' + buses[bus]['devicecount'] +' {{ _('Gerät(e)') }}'
+				businfo += '<strong>' + $('<div>').text(buses[bus]['bus']).html() + ' </strong>: ' + $('<div>').text(buses[bus]['devicecount']).html() +' {{ _('Gerät(e)') }}'
 			}
 			shngInsertText ('buscount', objResponse['buses'].length);
-			shngInsertText ('businfo', businfo);
+			shngInsertText ('businfo', businfo, null, 0, true);
 			bustable.draw(false);
 		}
 

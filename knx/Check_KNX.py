@@ -16,7 +16,7 @@ if you do not have one, it is a good idea to export it from ETS now
 """
 esf = 'Smarthome.esf'
 
-esf = os.path.join( sh.base_dir, 'var', esf)
+esf = os.path.join(sh.get_vardir(), esf)
 
 if os.path.isfile(esf):
     # pyhon works with utf8 internally so we need to convert it, then chop the columns
@@ -129,7 +129,7 @@ if os.path.isfile(esf):
     out += "="*70+nl
     
     max_len_id = 0
-    for item in sh.return_items():
+    for item in sh.items.return_items():
         len_id = len(item.property.path)
         if len_id > max_len_id:
             max_len_id = len_id
@@ -145,7 +145,7 @@ if os.path.isfile(esf):
     
     item_ga = {}
     
-    for item in sh.return_items():
+    for item in sh.items.return_items():
         item_prefix = fmtStrg.format(item.property.path)
         item_prefix += "{1}{0:>10}".format(item.type(), sep)
             

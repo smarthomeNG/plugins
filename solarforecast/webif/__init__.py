@@ -30,7 +30,6 @@ import time
 import os
 import json
 
-from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
 
@@ -56,7 +55,6 @@ class WebInterface(SmartPluginWebIf):
         self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
-        self.items = Items.get_instance()
 
         self.tplenv = self.init_template_environment()
 
@@ -82,12 +80,7 @@ class WebInterface(SmartPluginWebIf):
         except Exception:
             pass
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(
-            p=self.plugin,
-            webif_pagelength=pagelength,
-            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-            item_count=0,
-        )
+        return tmpl.render(p=self.plugin, webif_pagelength=pagelength)
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):

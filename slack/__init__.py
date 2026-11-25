@@ -27,11 +27,12 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Slack(SmartPlugin):
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
     ALLOW_MULTIINSTANCE = True
     SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
     def __init__(self, sh):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Slack notifications')
         self._sh = sh

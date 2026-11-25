@@ -6,12 +6,12 @@ plugin:
         de: Lesen und Schreiben von Werten einer Viessmann Heizung
         en: Read and write data from/to a Viessmann heating system
     maintainer: Morg
-    state: develop
+    state: ready
     keywords: iot device sdp
-    version: 2.0.0
-    sh_minversion: '1.9.5.1'  # 1.10.0.1
-    py_minversion: '3.6'
-    sdp_minversion: '1.1.0'
+    version: '3.0.0'
+    sh_minversion: '2.0.0'
+#   py_minversion:
+    sdp_minversion: '2.0.0'
     multi_instance: false
     restartable: true
     classname: viessmann
@@ -36,6 +36,14 @@ parameters:
         -   KW
         description: Kommunikationsprotokoll der Heizung
 
+    p300_init_retries:
+        type: num
+        default: 10
+
+        description:
+            de: Anzahl der Versuche für die P300-Initialisierungssequenz, bevor die Verbindung als fehlgeschlagen gilt
+            en: Number of attempts for the P300 initialization handshake before the connection is considered failed
+
     cycle:
         type: num
         default: 30
@@ -52,6 +60,7 @@ parameters:
     loop_guard_count:
         type: num
         default: 5
+
         description:
             de: Anzahl identischer Schreibversuche im Zeitfenster, die den Loop-Guard auslösen (0 = deaktiviert)
             en: number of identical write attempts within the time window that trigger the loop guard (0 = disabled)
@@ -59,6 +68,7 @@ parameters:
     loop_guard_window:
         type: num
         default: 5.0
+
         description:
             de: Zeitfenster in Sekunden für den Loop-Guard
             en: time window in seconds for the loop guard
@@ -66,18 +76,23 @@ parameters:
     loop_guard_source:
         type: str
         default: ''
+
         description:
             de: Präfix des aufrufenden Systems, auf das der Loop-Guard beschränkt wird (leer = alle externen Aufrufer)
             en: caller prefix to restrict loop guard to (empty = all external callers)
+
         description_long:
-            de: 'Wenn gesetzt, zählt der Loop-Guard nur Schreibversuche, deren "caller"-String mit diesem Präfix
-                 beginnt (z.B. "MQTT"). Schreibvorgänge anderer Aufrufer werden immer durchgelassen.'
-            en: 'If set, the loop guard only counts write attempts whose "caller" string starts with this prefix
-                 (e.g. "MQTT"). Writes from all other callers always pass through freely.'
+            de: |4-
+                Wenn gesetzt, zählt der Loop-Guard nur Schreibversuche, deren "caller"-String mit diesem Präfix
+                beginnt (z.B. "MQTT"). Schreibvorgänge anderer Aufrufer werden immer durchgelassen.
+            en: |4-
+                If set, the loop guard only counts write attempts whose "caller" string starts with this prefix
+                (e.g. "MQTT"). Writes from all other callers always pass through freely.
 
     autoreconnect:
         type: bool
         default: true
+
         description:
             de: Verbindung nach Verbindungsabbruch automatisch wiederherstellen
             en: Automatically reconnect after connection loss
@@ -92,6 +107,14 @@ parameters:
         default: true
         description: Entferne Struct-Elemente, die vom gewählten Modell nicht unterstützt werden
 
+    invalidate_on_disconnect:
+        type: bool
+        default: false
+
+        description:
+            de: Items bei Verbindungsverlust im Datenbank-Log als ungültig markieren (Datenlücke)
+            en: mark items invalid in the database log when the connection is lost (data gap)
+
 item_attributes:
 
     viess_command:
@@ -105,8 +128,8 @@ item_attributes:
         type: bool
 
         description:
-            de: Liest/erhält Werte vom Gerät
-            en: Reads/receives data from the device
+            de: Fordert Werte vom Gerät an (Werte empfängt jedes Item mit Kommando)
+            en: Requests data from the device (every item with a command receives its values)
 
     viess_read_group:
         type: list(str)
@@ -165,8 +188,26 @@ item_attributes:
             en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
 
         description_long:
-            de: "Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim\nStart einmalig als dict oder list in das Item geschrieben.\n\n\nDurch Anhängen von \"#<mode>\" an den Namen der Tabelle kann die Art\nder Tabelle ausgewählt werden:\n- fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)\n- rev liefert die Tabelle SmartHomeNG -> Gerät\n- rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben\n- list liefert die Liste der Namen für SmartHomeNG"
-            en: "The lookup table with the given name will be assigned to the item\nin dict or list format once on startup.\n\n\nBy appending \"#<mode>\" to the tables name the type of table can\nbe selected:\n- fwd returns the table device -> SmartHomeNG (default)\n- rev returns the table SmartHomeNG -> device\n- rci returns the table SmartHomeNG -> device in lower case\n- list return the list of names for SmartHomeNG"
+            de: |4-
+                Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim
+                Start einmalig als dict oder list in das Item geschrieben.
+
+                Durch Anhängen von "#<mode>" an den Namen der Tabelle kann die Art
+                der Tabelle ausgewählt werden:
+                - fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)
+                - rev liefert die Tabelle SmartHomeNG -> Gerät
+                - rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben
+                - list liefert die Liste der Namen für SmartHomeNG
+            en: |4-
+                The lookup table with the given name will be assigned to the item
+                in dict or list format once on startup.
+
+                By appending "#<mode>" to the tables name the type of table can
+                be selected:
+                - fwd returns the table device -> SmartHomeNG (default)
+                - rev returns the table SmartHomeNG -> device
+                - rci returns the table SmartHomeNG -> device in lower case
+                - list return the list of names for SmartHomeNG
 
     viess_custom1:
         type: str
@@ -212,9 +253,567 @@ item_structs:
             viess_command@instance: Anlagentyp
             viess_read@instance: true
             viess_write@instance: false
+            visu_acl: ro
             viess_read_group@instance:
             -   ALL
             viess_read_initial@instance: true
+
+    V200HO1C:
+
+        anlagentyp:
+            type: str
+            viess_command@instance: Anlagentyp
+            viess_read@instance: true
+            viess_write@instance: false
+            visu_acl: ro
+            viess_read_group@instance:
+            -   V200HO1C
+            viess_read_initial@instance: true
+
+        allgemein:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Allgemein
+
+            anlagenschema:
+                type: num
+                viess_command@instance: Allgemein.Anlagenschema
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Allgemein
+
+            frostgefahr:
+                type: num
+                viess_command@instance: Allgemein.Frostgefahr
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Allgemein
+
+            anlagenleistung:
+                type: num
+                viess_command@instance: Allgemein.Anlagenleistung
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Allgemein
+
+            temperatur:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    viess_read_group_trigger@instance: Allgemein.Temperatur
+
+                aussen_tp:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Aussen_TP
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   V200HO1C
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                aussen_dp:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Aussen_Dp
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   V200HO1C
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+        kessel:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Kessel
+
+            tp:
+                type: num
+                viess_command@instance: Kessel.TP
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Kessel
+
+            soll:
+                type: num
+                viess_command@instance: Kessel.Soll
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Kessel
+
+            abgastemperatur:
+                type: num
+                viess_command@instance: Kessel.Abgastemperatur
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Kessel
+
+        fehler:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Fehler
+
+            sammelstoerung:
+                type: num
+                viess_command@instance: Fehler.Sammelstoerung
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error0:
+                type: str
+                viess_command@instance: Fehler.Error0
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error1:
+                type: str
+                viess_command@instance: Fehler.Error1
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error2:
+                type: str
+                viess_command@instance: Fehler.Error2
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error3:
+                type: str
+                viess_command@instance: Fehler.Error3
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error4:
+                type: str
+                viess_command@instance: Fehler.Error4
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error5:
+                type: str
+                viess_command@instance: Fehler.Error5
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error6:
+                type: str
+                viess_command@instance: Fehler.Error6
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error7:
+                type: str
+                viess_command@instance: Fehler.Error7
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error8:
+                type: str
+                viess_command@instance: Fehler.Error8
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+            error9:
+                type: str
+                viess_command@instance: Fehler.Error9
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Fehler
+
+        pumpen:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Pumpen
+
+            speicherlade:
+                type: bool
+                viess_command@instance: Pumpen.Speicherlade
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Pumpen
+
+            zirkulation:
+                type: bool
+                viess_command@instance: Pumpen.Zirkulation
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Pumpen
+
+            intern:
+                type: bool
+                viess_command@instance: Pumpen.Intern
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Pumpen
+
+            heizkreis_1:
+                type: bool
+                viess_command@instance: Pumpen.Heizkreis_1
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Pumpen
+
+            heizkreis_2:
+                type: bool
+                viess_command@instance: Pumpen.Heizkreis_2
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Pumpen
+
+        brenner:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Brenner
+
+            starts:
+                type: num
+                viess_command@instance: Brenner.Starts
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Brenner
+
+            leistung:
+                type: num
+                viess_command@instance: Brenner.Leistung
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Brenner
+
+            betriebsstunden:
+                type: num
+                viess_command@instance: Brenner.Betriebsstunden
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Brenner
+
+        solar:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Solar
+
+            pumpe:
+                type: bool
+                viess_command@instance: Solar.Pumpe
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Solar
+
+            kollektortemperatur:
+                type: num
+                viess_command@instance: Solar.Kollektortemperatur
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Solar
+
+            speichertemperatur:
+                type: num
+                viess_command@instance: Solar.Speichertemperatur
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Solar
+
+            betriebsstunden:
+                type: num
+                viess_command@instance: Solar.Betriebsstunden
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Solar
+
+            waermemenge:
+                type: num
+                viess_command@instance: Solar.Waermemenge
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Solar
+
+            ausbeute:
+                type: num
+                viess_command@instance: Solar.Ausbeute
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Solar
+
+        heizkreis:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Heizkreis
+
+            '1':
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    viess_read_group_trigger@instance: Heizkreis.1
+
+                betriebsart:
+                    type: num
+                    viess_command@instance: Heizkreis.1.Betriebsart
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   V200HO1C
+                    -   Heizkreis
+                    -   Heizkreis.1
+
+                heizart:
+                    type: num
+                    viess_command@instance: Heizkreis.1.Heizart
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   V200HO1C
+                    -   Heizkreis
+                    -   Heizkreis.1
+
+                temperatur:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        viess_read_group_trigger@instance: Heizkreis.1.Temperatur
+
+                    vorlauf_soll:
+                        type: num
+                        viess_command@instance: Heizkreis.1.Temperatur.Vorlauf_Soll
+                        viess_read@instance: true
+                        viess_write@instance: false
+                        visu_acl: ro
+                        viess_read_group@instance:
+                        -   V200HO1C
+                        -   Heizkreis
+                        -   Heizkreis.1
+                        -   Heizkreis.1.Temperatur
+
+                    vorlauf_ist:
+                        type: num
+                        viess_command@instance: Heizkreis.1.Temperatur.Vorlauf_Ist
+                        viess_read@instance: true
+                        viess_write@instance: false
+                        visu_acl: ro
+                        viess_read_group@instance:
+                        -   V200HO1C
+                        -   Heizkreis
+                        -   Heizkreis.1
+                        -   Heizkreis.1.Temperatur
+
+            '2':
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    viess_read_group_trigger@instance: Heizkreis.2
+
+                betriebsart:
+                    type: num
+                    viess_command@instance: Heizkreis.2.Betriebsart
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   V200HO1C
+                    -   Heizkreis
+                    -   Heizkreis.2
+
+                heizart:
+                    type: num
+                    viess_command@instance: Heizkreis.2.Heizart
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   V200HO1C
+                    -   Heizkreis
+                    -   Heizkreis.2
+
+                temperatur:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        viess_read_group_trigger@instance: Heizkreis.2.Temperatur
+
+                    vorlauf_soll:
+                        type: num
+                        viess_command@instance: Heizkreis.2.Temperatur.Vorlauf_Soll
+                        viess_read@instance: true
+                        viess_write@instance: false
+                        visu_acl: ro
+                        viess_read_group@instance:
+                        -   V200HO1C
+                        -   Heizkreis
+                        -   Heizkreis.2
+                        -   Heizkreis.2.Temperatur
+
+                    vorlauf_ist:
+                        type: num
+                        viess_command@instance: Heizkreis.2.Temperatur.Vorlauf_Ist
+                        viess_read@instance: true
+                        viess_write@instance: false
+                        visu_acl: ro
+                        viess_read_group@instance:
+                        -   V200HO1C
+                        -   Heizkreis
+                        -   Heizkreis.2
+                        -   Heizkreis.2.Temperatur
+
+        warmwasser:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Warmwasser
+
+            ist:
+                type: num
+                viess_command@instance: Warmwasser.Ist
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Warmwasser
+
+            soll:
+                type: num
+                viess_command@instance: Warmwasser.Soll
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Warmwasser
+
+            austritt:
+                type: num
+                viess_command@instance: Warmwasser.Austritt
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   V200HO1C
+                -   Warmwasser
 
     V200KO1B:
 
@@ -223,6 +822,7 @@ item_structs:
             viess_command@instance: Anlagentyp
             viess_read@instance: true
             viess_write@instance: false
+            visu_acl: ro
             viess_read_group@instance:
             -   V200KO1B
             viess_read_initial@instance: true
@@ -246,6 +846,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Aussen
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -256,6 +857,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Aussen_TP
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -266,6 +868,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Aussen_Dp
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -276,6 +879,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Speicher_Ladesensor
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -286,6 +890,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Auslauf
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -296,6 +901,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Abgas
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -306,6 +912,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Gem_Vorlauf
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Allgemein
@@ -316,6 +923,7 @@ item_structs:
                 viess_command@instance: Allgemein.Relais_K12
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -325,6 +933,7 @@ item_structs:
                 viess_command@instance: Allgemein.Eingang_0-10_V
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -334,6 +943,7 @@ item_structs:
                 viess_command@instance: Allgemein.EA1_Kontakt_0
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -343,6 +953,7 @@ item_structs:
                 viess_command@instance: Allgemein.EA1_Kontakt_1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -352,6 +963,7 @@ item_structs:
                 viess_command@instance: Allgemein.EA1_Kontakt_2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -361,6 +973,7 @@ item_structs:
                 viess_command@instance: Allgemein.EA1_Externer_Soll_0-10V
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -370,6 +983,7 @@ item_structs:
                 viess_command@instance: Allgemein.EA1_Relais_0
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -379,6 +993,7 @@ item_structs:
                 viess_command@instance: Allgemein.AM1_Ausgang_1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -388,6 +1003,7 @@ item_structs:
                 viess_command@instance: Allgemein.AM1_Ausgang_2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -397,6 +1013,7 @@ item_structs:
                 viess_command@instance: Allgemein.TempKOffset
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -406,6 +1023,7 @@ item_structs:
                 viess_command@instance: Allgemein.Systemtime
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -415,6 +1033,7 @@ item_structs:
                 viess_command@instance: Allgemein.Anlagenschema
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -424,6 +1043,7 @@ item_structs:
                 viess_command@instance: Allgemein.Inventory
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -433,6 +1053,7 @@ item_structs:
                 viess_command@instance: Allgemein.CtrlId
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Allgemein
@@ -449,6 +1070,7 @@ item_structs:
                 viess_command@instance: Kessel.Ist
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Kessel
@@ -458,6 +1080,7 @@ item_structs:
                 viess_command@instance: Kessel.TP
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Kessel
@@ -467,6 +1090,7 @@ item_structs:
                 viess_command@instance: Kessel.Soll
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Kessel
@@ -483,96 +1107,107 @@ item_structs:
                 viess_command@instance: Fehler.Sammelstoerung
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error0:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error0
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error1:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error2:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error3:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error3
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error4:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error4
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error5:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error5
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error6:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error6
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error7:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error7
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error8:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error8
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
 
             error9:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error9
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Fehler
@@ -589,6 +1224,7 @@ item_structs:
                 viess_command@instance: Pumpen.Speicherlade
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -598,6 +1234,7 @@ item_structs:
                 viess_command@instance: Pumpen.Zirkulation
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -607,6 +1244,7 @@ item_structs:
                 viess_command@instance: Pumpen.Intern
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -616,6 +1254,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis_A1M1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -625,6 +1264,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis_A1M1_RPM
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -634,6 +1274,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis_M2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -643,6 +1284,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis_M2_RPM
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -652,6 +1294,7 @@ item_structs:
                 viess_command@instance: Pumpen.Relais_Status
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Pumpen
@@ -668,6 +1311,7 @@ item_structs:
                 viess_command@instance: Brenner.Starts
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Brenner
@@ -677,6 +1321,7 @@ item_structs:
                 viess_command@instance: Brenner.Betriebsstunden
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Brenner
@@ -686,6 +1331,7 @@ item_structs:
                 viess_command@instance: Brenner.Status_1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Brenner
@@ -695,6 +1341,7 @@ item_structs:
                 viess_command@instance: Brenner.Status_2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Brenner
@@ -704,6 +1351,7 @@ item_structs:
                 viess_command@instance: Brenner.Oeldurchsatz
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Brenner
@@ -713,6 +1361,7 @@ item_structs:
                 viess_command@instance: Brenner.Oelverbrauch
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Brenner
@@ -729,6 +1378,7 @@ item_structs:
                 viess_command@instance: Solar.Nachladeunterdrueckung
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Solar
@@ -738,6 +1388,7 @@ item_structs:
                 viess_command@instance: Solar.Pumpe
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Solar
@@ -747,6 +1398,7 @@ item_structs:
                 viess_command@instance: Solar.Kollektortemperatur
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Solar
@@ -756,6 +1408,7 @@ item_structs:
                 viess_command@instance: Solar.Speichertemperatur
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Solar
@@ -765,6 +1418,7 @@ item_structs:
                 viess_command@instance: Solar.Betriebsstunden
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Solar
@@ -774,6 +1428,7 @@ item_structs:
                 viess_command@instance: Solar.Steuerung
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Solar
@@ -811,6 +1466,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Ist
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -823,6 +1479,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Soll_Normalbetrieb
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -835,6 +1492,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Soll_Red_Betrieb
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -847,6 +1505,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Soll_Party_Betrieb
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -866,6 +1525,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Ist
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -878,6 +1538,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Soll
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -890,6 +1551,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Min
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -902,6 +1564,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Max
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -914,6 +1577,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Erhoehung_Soll
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -926,6 +1590,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Erhoehung_Zeit
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -938,6 +1603,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Temperatur.Grenze_red_Betrieb
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -949,6 +1615,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Temperatur.Grenze_red_Raumtemp
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -967,6 +1634,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Aktuelle_Betriebsart
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -978,6 +1646,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Betriebsart
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -989,6 +1658,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Sparbetrieb
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1000,6 +1670,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Zustand_Sparbetrieb
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1011,6 +1682,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Partybetrieb
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1022,6 +1694,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Zustand_Partybetrieb
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1033,6 +1706,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.StatusFrost
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1044,6 +1718,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Externe_Raumsolltemperatur_Normal
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1055,6 +1730,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Externe_Betriebsartenumschaltung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1066,6 +1742,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Speichervorrang
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1077,6 +1754,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Frostschutzgrenze
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1088,6 +1766,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Frostschutz
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1099,6 +1778,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Heizkreispumpenlogik
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1110,6 +1790,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Sparschaltung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1121,6 +1802,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Mischersparfunktion
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1132,6 +1814,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Status.Pumpenstillstandzeit
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1150,6 +1833,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Heizkennlinie.Neigung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1161,6 +1845,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Heizkennlinie.Niveau
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1172,6 +1857,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Partybetrieb_Zeitbegrenzung
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Heizkreis
@@ -1203,6 +1889,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Ist
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1215,6 +1902,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Soll_Normalbetrieb
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1227,6 +1915,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Soll_Red_Betrieb
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1239,6 +1928,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Soll_Party_Betrieb
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1258,6 +1948,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Ist
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1270,6 +1961,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Soll
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1282,6 +1974,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Min
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1294,6 +1987,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Max
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1306,6 +2000,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Erhoehung_Soll
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1318,6 +2013,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Erhoehung_Zeit
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KO1B
                             -   Heizkreis
@@ -1330,6 +2026,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Temperatur.Grenze_red_Betrieb
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1341,6 +2038,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Temperatur.Grenze_red_Raumtemp
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1359,6 +2057,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Aktuelle_Betriebsart
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1370,6 +2069,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Betriebsart
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1381,6 +2081,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Sparbetrieb
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1392,6 +2093,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Zustand_Sparbetrieb
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1403,6 +2105,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Partybetrieb
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1414,6 +2117,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Zustand_Partybetrieb
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1425,6 +2129,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.StatusFrost
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1436,6 +2141,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Externe_Raumsolltemperatur_Normal
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1447,6 +2153,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Externe_Betriebsartenumschaltung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1458,6 +2165,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Speichervorrang
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1469,6 +2177,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Frostschutzgrenze
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1480,6 +2189,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Frostschutz
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1491,6 +2201,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Heizkreispumpenlogik
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1502,6 +2213,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Sparschaltung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1513,6 +2225,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Mischersparfunktion
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1524,6 +2237,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Status.Pumpenstillstandzeit
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1542,6 +2256,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Heizkennlinie.Neigung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1553,6 +2268,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Heizkennlinie.Niveau
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KO1B
                         -   Heizkreis
@@ -1564,6 +2280,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Partybetrieb_Zeitbegrenzung
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Heizkreis
@@ -1581,6 +2298,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Ist
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Warmwasser
@@ -1590,6 +2308,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Soll
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Warmwasser
@@ -1599,6 +2318,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Status
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Warmwasser
@@ -1608,6 +2328,7 @@ item_structs:
                 viess_command@instance: Warmwasser.PumpenNachlauf
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KO1B
                 -   Warmwasser
@@ -1631,6 +2352,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.A1M1.Status
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Ferienprogramm
@@ -1641,6 +2363,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.A1M1.Abreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Ferienprogramm
@@ -1651,6 +2374,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.A1M1.Rückreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Ferienprogramm
@@ -1668,6 +2392,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.M2.Status
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Ferienprogramm
@@ -1678,6 +2403,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.M2.Abreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Ferienprogramm
@@ -1688,6 +2414,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.M2.Rückreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Ferienprogramm
@@ -1712,6 +2439,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1722,6 +2450,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1732,6 +2461,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1742,6 +2472,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1752,6 +2483,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1762,6 +2494,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1772,6 +2505,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1789,6 +2523,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1799,6 +2534,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1809,6 +2545,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1819,6 +2556,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1829,6 +2567,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1839,6 +2578,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1849,6 +2589,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1866,6 +2607,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1876,6 +2618,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1886,6 +2629,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1896,6 +2640,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1906,6 +2651,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1916,6 +2662,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1926,6 +2673,7 @@ item_structs:
                     viess_command@instance: Timer.M2.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1943,6 +2691,7 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1953,6 +2702,7 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1963,6 +2713,7 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1973,6 +2724,7 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1983,6 +2735,7 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -1993,6 +2746,7 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
@@ -2003,522 +2757,11 @@ item_structs:
                     viess_command@instance: Timer.Zirkulation.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KO1B
                     -   Timer
                     -   Timer.Zirkulation
-
-    V200HO1C:
-
-        anlagentyp:
-            type: str
-            viess_command@instance: Anlagentyp
-            viess_read@instance: true
-            viess_write@instance: false
-            viess_read_group@instance:
-            -   V200HO1C
-            viess_read_initial@instance: true
-
-        allgemein:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Allgemein
-
-            anlagenschema:
-                type: num
-                viess_command@instance: Allgemein.Anlagenschema
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Allgemein
-
-            frostgefahr:
-                type: num
-                viess_command@instance: Allgemein.Frostgefahr
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Allgemein
-
-            anlagenleistung:
-                type: num
-                viess_command@instance: Allgemein.Anlagenleistung
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Allgemein
-
-            temperatur:
-
-                read:
-                    type: bool
-                    enforce_updates: true
-                    viess_read_group_trigger@instance: Allgemein.Temperatur
-
-                aussen_tp:
-                    type: num
-                    viess_command@instance: Allgemein.Temperatur.Aussen_TP
-                    viess_read@instance: true
-                    viess_write@instance: false
-                    viess_read_group@instance:
-                    -   V200HO1C
-                    -   Allgemein
-                    -   Allgemein.Temperatur
-
-                aussen_dp:
-                    type: num
-                    viess_command@instance: Allgemein.Temperatur.Aussen_Dp
-                    viess_read@instance: true
-                    viess_write@instance: false
-                    viess_read_group@instance:
-                    -   V200HO1C
-                    -   Allgemein
-                    -   Allgemein.Temperatur
-
-        kessel:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Kessel
-
-            tp:
-                type: num
-                viess_command@instance: Kessel.TP
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Kessel
-
-            soll:
-                type: num
-                viess_command@instance: Kessel.Soll
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Kessel
-
-            abgastemperatur:
-                type: num
-                viess_command@instance: Kessel.Abgastemperatur
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Kessel
-
-        fehler:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Fehler
-
-            sammelstoerung:
-                type: num
-                viess_command@instance: Fehler.Sammelstoerung
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error0:
-                type: num
-                viess_command@instance: Fehler.Error0
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error1:
-                type: num
-                viess_command@instance: Fehler.Error1
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error2:
-                type: num
-                viess_command@instance: Fehler.Error2
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error3:
-                type: num
-                viess_command@instance: Fehler.Error3
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error4:
-                type: num
-                viess_command@instance: Fehler.Error4
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error5:
-                type: num
-                viess_command@instance: Fehler.Error5
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error6:
-                type: num
-                viess_command@instance: Fehler.Error6
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error7:
-                type: num
-                viess_command@instance: Fehler.Error7
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error8:
-                type: num
-                viess_command@instance: Fehler.Error8
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-            error9:
-                type: num
-                viess_command@instance: Fehler.Error9
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Fehler
-
-        pumpen:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Pumpen
-
-            speicherlade:
-                type: bool
-                viess_command@instance: Pumpen.Speicherlade
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Pumpen
-
-            zirkulation:
-                type: bool
-                viess_command@instance: Pumpen.Zirkulation
-                viess_read@instance: true
-                viess_write@instance: true
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Pumpen
-
-            intern:
-                type: bool
-                viess_command@instance: Pumpen.Intern
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Pumpen
-
-            heizkreis_1:
-                type: bool
-                viess_command@instance: Pumpen.Heizkreis_1
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Pumpen
-
-            heizkreis_2:
-                type: bool
-                viess_command@instance: Pumpen.Heizkreis_2
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Pumpen
-
-        brenner:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Brenner
-
-            starts:
-                type: num
-                viess_command@instance: Brenner.Starts
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Brenner
-
-            leistung:
-                type: num
-                viess_command@instance: Brenner.Leistung
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Brenner
-
-            betriebsstunden:
-                type: num
-                viess_command@instance: Brenner.Betriebsstunden
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Brenner
-
-        solar:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Solar
-
-            pumpe:
-                type: bool
-                viess_command@instance: Solar.Pumpe
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Solar
-
-            kollektortemperatur:
-                type: num
-                viess_command@instance: Solar.Kollektortemperatur
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Solar
-
-            speichertemperatur:
-                type: num
-                viess_command@instance: Solar.Speichertemperatur
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Solar
-
-            betriebsstunden:
-                type: num
-                viess_command@instance: Solar.Betriebsstunden
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Solar
-
-            waermemenge:
-                type: num
-                viess_command@instance: Solar.Waermemenge
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Solar
-
-            ausbeute:
-                type: num
-                viess_command@instance: Solar.Ausbeute
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Solar
-
-        heizkreis:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Heizkreis
-
-            '1':
-
-                read:
-                    type: bool
-                    enforce_updates: true
-                    viess_read_group_trigger@instance: Heizkreis.1
-
-                betriebsart:
-                    type: num
-                    viess_command@instance: Heizkreis.1.Betriebsart
-                    viess_read@instance: true
-                    viess_write@instance: true
-                    viess_read_group@instance:
-                    -   V200HO1C
-                    -   Heizkreis
-                    -   Heizkreis.1
-
-                heizart:
-                    type: num
-                    viess_command@instance: Heizkreis.1.Heizart
-                    viess_read@instance: true
-                    viess_write@instance: true
-                    viess_read_group@instance:
-                    -   V200HO1C
-                    -   Heizkreis
-                    -   Heizkreis.1
-
-                temperatur:
-
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        viess_read_group_trigger@instance: Heizkreis.1.Temperatur
-
-                    vorlauf_soll:
-                        type: num
-                        viess_command@instance: Heizkreis.1.Temperatur.Vorlauf_Soll
-                        viess_read@instance: true
-                        viess_write@instance: false
-                        viess_read_group@instance:
-                        -   V200HO1C
-                        -   Heizkreis
-                        -   Heizkreis.1
-                        -   Heizkreis.1.Temperatur
-
-                    vorlauf_ist:
-                        type: num
-                        viess_command@instance: Heizkreis.1.Temperatur.Vorlauf_Ist
-                        viess_read@instance: true
-                        viess_write@instance: false
-                        viess_read_group@instance:
-                        -   V200HO1C
-                        -   Heizkreis
-                        -   Heizkreis.1
-                        -   Heizkreis.1.Temperatur
-
-            '2':
-
-                read:
-                    type: bool
-                    enforce_updates: true
-                    viess_read_group_trigger@instance: Heizkreis.2
-
-                betriebsart:
-                    type: num
-                    viess_command@instance: Heizkreis.2.Betriebsart
-                    viess_read@instance: true
-                    viess_write@instance: true
-                    viess_read_group@instance:
-                    -   V200HO1C
-                    -   Heizkreis
-                    -   Heizkreis.2
-
-                heizart:
-                    type: num
-                    viess_command@instance: Heizkreis.2.Heizart
-                    viess_read@instance: true
-                    viess_write@instance: true
-                    viess_read_group@instance:
-                    -   V200HO1C
-                    -   Heizkreis
-                    -   Heizkreis.2
-
-                temperatur:
-
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        viess_read_group_trigger@instance: Heizkreis.2.Temperatur
-
-                    vorlauf_soll:
-                        type: num
-                        viess_command@instance: Heizkreis.2.Temperatur.Vorlauf_Soll
-                        viess_read@instance: true
-                        viess_write@instance: false
-                        viess_read_group@instance:
-                        -   V200HO1C
-                        -   Heizkreis
-                        -   Heizkreis.2
-                        -   Heizkreis.2.Temperatur
-
-                    vorlauf_ist:
-                        type: num
-                        viess_command@instance: Heizkreis.2.Temperatur.Vorlauf_Ist
-                        viess_read@instance: true
-                        viess_write@instance: false
-                        viess_read_group@instance:
-                        -   V200HO1C
-                        -   Heizkreis
-                        -   Heizkreis.2
-                        -   Heizkreis.2.Temperatur
-
-        warmwasser:
-
-            read:
-                type: bool
-                enforce_updates: true
-                viess_read_group_trigger@instance: Warmwasser
-
-            ist:
-                type: num
-                viess_command@instance: Warmwasser.Ist
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Warmwasser
-
-            soll:
-                type: num
-                viess_command@instance: Warmwasser.Soll
-                viess_read@instance: true
-                viess_write@instance: true
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Warmwasser
-
-            austritt:
-                type: num
-                viess_command@instance: Warmwasser.Austritt
-                viess_read@instance: true
-                viess_write@instance: false
-                viess_read_group@instance:
-                -   V200HO1C
-                -   Warmwasser
 
     V200KW2:
 
@@ -2527,6 +2770,7 @@ item_structs:
             viess_command@instance: Anlagentyp
             viess_read@instance: true
             viess_write@instance: false
+            visu_acl: ro
             viess_read_group@instance:
             -   V200KW2
             viess_read_initial@instance: true
@@ -2550,6 +2794,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Aussen
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Allgemein
@@ -2560,6 +2805,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Aussen_Dp
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Allgemein
@@ -2570,6 +2816,7 @@ item_structs:
                 viess_command@instance: Allgemein.Anlagenschema
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Allgemein
@@ -2579,6 +2826,7 @@ item_structs:
                 viess_command@instance: Allgemein.AnlagenSoftwareIndex
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Allgemein
@@ -2588,6 +2836,7 @@ item_structs:
                 viess_command@instance: Allgemein.Systemtime
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Allgemein
@@ -2604,6 +2853,7 @@ item_structs:
                 viess_command@instance: Kessel.TempKOffset
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Kessel
@@ -2613,6 +2863,7 @@ item_structs:
                 viess_command@instance: Kessel.Ist
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Kessel
@@ -2622,6 +2873,7 @@ item_structs:
                 viess_command@instance: Kessel.Soll
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Kessel
@@ -2638,6 +2890,7 @@ item_structs:
                 viess_command@instance: Fehler.Sammelstoerung
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
@@ -2647,96 +2900,107 @@ item_structs:
                 viess_command@instance: Fehler.Brennerstoerung
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error0:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error0
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error1:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error2:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error3:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error3
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error4:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error4
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error5:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error5
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error6:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error6
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error7:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error7
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error8:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error8
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
 
             error9:
-                type: num
+                type: str
                 viess_command@instance: Fehler.Error9
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Fehler
@@ -2753,6 +3017,7 @@ item_structs:
                 viess_command@instance: Pumpen.Speicherlade
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Pumpen
@@ -2762,6 +3027,7 @@ item_structs:
                 viess_command@instance: Pumpen.Zirkulation
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Pumpen
@@ -2771,6 +3037,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis_A1M1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Pumpen
@@ -2780,6 +3047,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis_M2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Pumpen
@@ -2796,6 +3064,7 @@ item_structs:
                 viess_command@instance: Brenner.Typ
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2805,6 +3074,7 @@ item_structs:
                 viess_command@instance: Brenner.Stufe
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2814,6 +3084,7 @@ item_structs:
                 viess_command@instance: Brenner.Starts
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2823,6 +3094,7 @@ item_structs:
                 viess_command@instance: Brenner.Status_1
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2832,6 +3104,7 @@ item_structs:
                 viess_command@instance: Brenner.Status_2
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2841,6 +3114,7 @@ item_structs:
                 viess_command@instance: Brenner.BetriebsstundenStufe1
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2850,6 +3124,7 @@ item_structs:
                 viess_command@instance: Brenner.BetriebsstundenStufe2
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Brenner
@@ -2887,6 +3162,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Soll_Normal
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -2899,6 +3175,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Soll_Reduziert
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -2911,6 +3188,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Soll_Party
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -2930,6 +3208,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Ist
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -2942,6 +3221,7 @@ item_structs:
                             viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Soll
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -2954,6 +3234,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Betriebsart
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -2964,6 +3245,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Aktuelle_Betriebsart
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -2974,6 +3256,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Sparbetrieb
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -2984,6 +3267,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Partybetrieb_Zeit
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -2994,6 +3278,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Partybetrieb
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3004,6 +3289,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.MischerM1
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3014,6 +3300,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Heizkreispumpenlogik
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3024,6 +3311,7 @@ item_structs:
                     viess_command@instance: Heizkreis.A1M1.Sparschaltung
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3041,6 +3329,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Heizkennlinie.Neigung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KW2
                         -   Heizkreis
@@ -3052,6 +3341,7 @@ item_structs:
                         viess_command@instance: Heizkreis.A1M1.Heizkennlinie.Niveau
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KW2
                         -   Heizkreis
@@ -3084,6 +3374,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Soll_Normal
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3096,6 +3387,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Soll_Reduziert
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3108,6 +3400,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Raum.Soll_Party
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3127,6 +3420,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Soll
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3139,6 +3433,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Ist
                             viess_read@instance: true
                             viess_write@instance: false
+                            visu_acl: ro
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3151,6 +3446,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Min
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3163,6 +3459,7 @@ item_structs:
                             viess_command@instance: Heizkreis.M2.Temperatur.Vorlauf.Max
                             viess_read@instance: true
                             viess_write@instance: true
+                            visu_acl: rw
                             viess_read_group@instance:
                             -   V200KW2
                             -   Heizkreis
@@ -3175,6 +3472,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Betriebsart
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3185,6 +3483,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Aktuelle_Betriebsart
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3195,6 +3494,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Sparbetrieb
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3205,6 +3505,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Partybetrieb
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3215,6 +3516,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Partybetrieb_Zeit
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3225,6 +3527,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.MischerM2
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3235,6 +3538,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.MischerM2Auf
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3245,6 +3549,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.MischerM2Zu
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3255,6 +3560,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Heizkreispumpenlogik
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3265,6 +3571,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.Sparschaltung
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3275,6 +3582,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.StatusKlemme2
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3285,6 +3593,7 @@ item_structs:
                     viess_command@instance: Heizkreis.M2.StatusKlemme17
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Heizkreis
@@ -3302,6 +3611,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Heizkennlinie.Neigung
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KW2
                         -   Heizkreis
@@ -3313,6 +3623,7 @@ item_structs:
                         viess_command@instance: Heizkreis.M2.Heizkennlinie.Niveau
                         viess_read@instance: true
                         viess_write@instance: true
+                        visu_acl: rw
                         viess_read_group@instance:
                         -   V200KW2
                         -   Heizkreis
@@ -3331,6 +3642,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Status
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3340,6 +3652,7 @@ item_structs:
                 viess_command@instance: Warmwasser.KesselOffset
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3349,6 +3662,7 @@ item_structs:
                 viess_command@instance: Warmwasser.BeiPartyDNormal
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3358,6 +3672,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Ist
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3367,6 +3682,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Soll
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3376,6 +3692,7 @@ item_structs:
                 viess_command@instance: Warmwasser.SollAktuell
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3385,6 +3702,7 @@ item_structs:
                 viess_command@instance: Warmwasser.SollMax
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200KW2
                 -   Warmwasser
@@ -3408,6 +3726,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.A1M1.Status
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Ferienprogramm
@@ -3418,6 +3737,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.A1M1.Abreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Ferienprogramm
@@ -3428,6 +3748,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.A1M1.Rückreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Ferienprogramm
@@ -3445,6 +3766,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.M2.Status
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200KW2
                     -   Ferienprogramm
@@ -3455,6 +3777,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.M2.Abreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Ferienprogramm
@@ -3465,6 +3788,7 @@ item_structs:
                     viess_command@instance: Ferienprogramm.M2.Rückreisetag
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Ferienprogramm
@@ -3489,6 +3813,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3499,6 +3824,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3509,6 +3835,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3519,6 +3846,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3529,6 +3857,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3539,6 +3868,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3549,6 +3879,7 @@ item_structs:
                     viess_command@instance: Timer.Warmwasser.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3566,6 +3897,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3576,6 +3908,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3586,6 +3919,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3596,6 +3930,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3606,6 +3941,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3616,6 +3952,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3626,6 +3963,7 @@ item_structs:
                     viess_command@instance: Timer.A1M1.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3643,6 +3981,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Mo
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3653,6 +3992,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Di
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3663,6 +4003,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Mi
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3673,6 +4014,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Do
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3683,6 +4025,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Fr
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3693,6 +4036,7 @@ item_structs:
                     viess_command@instance: Timer.M2.Sa
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3703,6 +4047,7 @@ item_structs:
                     viess_command@instance: Timer.M2.So
                     viess_read@instance: true
                     viess_write@instance: true
+                    visu_acl: rw
                     viess_read_group@instance:
                     -   V200KW2
                     -   Timer
@@ -3715,6 +4060,7 @@ item_structs:
             viess_command@instance: Anlagentyp
             viess_read@instance: true
             viess_write@instance: false
+            visu_acl: ro
             viess_read_group@instance:
             -   V200WO1C
             viess_read_initial@instance: true
@@ -3738,6 +4084,7 @@ item_structs:
                     viess_command@instance: Allgemein.Temperatur.Aussen
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Allgemein
@@ -3748,6 +4095,7 @@ item_structs:
                 viess_command@instance: Allgemein.Betriebsart
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Allgemein
@@ -3762,6 +4110,7 @@ item_structs:
                 viess_command@instance: Allgemein.Manuell
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Allgemein
@@ -3771,6 +4120,7 @@ item_structs:
                 viess_command@instance: Allgemein.Outdoor_Fanspeed
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Allgemein
@@ -3780,6 +4130,7 @@ item_structs:
                 viess_command@instance: Allgemein.Status_Fanspeed
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Allgemein
@@ -3789,6 +4140,7 @@ item_structs:
                 viess_command@instance: Allgemein.Kompressor_Freq
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Allgemein
@@ -3798,6 +4150,7 @@ item_structs:
                 viess_command@instance: Allgemein.SollLeistung_Verdichter
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Allgemein
@@ -3814,6 +4167,7 @@ item_structs:
                 viess_command@instance: Pumpen.Sekundaer
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Pumpen
@@ -3823,6 +4177,7 @@ item_structs:
                 viess_command@instance: Pumpen.Heizkreis
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Pumpen
@@ -3832,6 +4187,7 @@ item_structs:
                 viess_command@instance: Pumpen.Zirkulation
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Pumpen
@@ -3862,6 +4218,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Raum.Soll
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3873,6 +4230,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Raum.Soll_Reduziert
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3884,6 +4242,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Raum.Soll_Party
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3902,6 +4261,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Vorlauf.Ist
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3914,6 +4274,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Vorlauf.Soll
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3925,6 +4286,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Vorlauf.Mittel
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3943,6 +4305,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Ruecklauf.Ist
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3955,6 +4318,7 @@ item_structs:
                         viess_command@instance: Heizkreis.Temperatur.Ruecklauf.Mittel
                         viess_read@instance: true
                         viess_write@instance: false
+                        visu_acl: ro
                         viess_read_group@instance:
                         -   V200WO1C
                         -   Heizkreis
@@ -3973,6 +4337,7 @@ item_structs:
                     viess_command@instance: Heizkreis.Heizkennlinie.Niveau
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Heizkreis
@@ -3983,6 +4348,7 @@ item_structs:
                     viess_command@instance: Heizkreis.Heizkennlinie.Neigung
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Heizkreis
@@ -4000,6 +4366,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Ist
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Warmwasser
@@ -4010,6 +4377,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Soll
                 viess_read@instance: true
                 viess_write@instance: true
+                visu_acl: rw
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Warmwasser
@@ -4019,6 +4387,7 @@ item_structs:
                 viess_command@instance: Warmwasser.Ventil
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Warmwasser
@@ -4043,6 +4412,7 @@ item_structs:
                     viess_command@instance: Statistik.Einschaltungen.Sekundaer
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4053,6 +4423,7 @@ item_structs:
                     viess_command@instance: Statistik.Einschaltungen.Heizstab1
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4063,6 +4434,7 @@ item_structs:
                     viess_command@instance: Statistik.Einschaltungen.Heizstab2
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4073,6 +4445,7 @@ item_structs:
                     viess_command@instance: Statistik.Einschaltungen.Heizkreis
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4090,6 +4463,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.Sekundaer
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4100,6 +4474,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.Heizstab1
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4110,6 +4485,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.Heizstab2
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4120,6 +4496,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.Heizkreis
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4130,6 +4507,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.Ventil
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4140,6 +4518,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.VerdichterStufe1
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4150,6 +4529,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.VerdichterStufe2
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4160,6 +4540,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.VerdichterStufe3
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4170,6 +4551,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.VerdichterStufe4
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4180,6 +4562,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.VerdichterStufe5
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4190,6 +4573,7 @@ item_structs:
                     viess_command@instance: Statistik.Laufzeiten.VerdichterWP
                     viess_read@instance: true
                     viess_write@instance: false
+                    visu_acl: ro
                     viess_read_group@instance:
                     -   V200WO1C
                     -   Statistik
@@ -4200,6 +4584,7 @@ item_structs:
                 viess_command@instance: Statistik.OAT_Temperature
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
@@ -4209,6 +4594,7 @@ item_structs:
                 viess_command@instance: Statistik.ICT_Temperature
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
@@ -4218,6 +4604,7 @@ item_structs:
                 viess_command@instance: Statistik.CCT_Temperature
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
@@ -4227,6 +4614,7 @@ item_structs:
                 viess_command@instance: Statistik.HST_Temperature
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
@@ -4236,6 +4624,7 @@ item_structs:
                 viess_command@instance: Statistik.OMT_Temperature
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
@@ -4245,6 +4634,7 @@ item_structs:
                 viess_command@instance: Statistik.WaermeWW12M
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
@@ -4254,6 +4644,1043 @@ item_structs:
                 viess_command@instance: Statistik.ElektroWW12M
                 viess_read@instance: true
                 viess_write@instance: false
+                visu_acl: ro
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Statistik
+
+    VScotHO1_200_11:
+
+        anlagentyp:
+            type: str
+            viess_command@instance: Anlagentyp
+            viess_read@instance: true
+            viess_write@instance: false
+            visu_acl: ro
+            viess_read_group@instance:
+            -   VScotHO1_200_11
+            viess_read_initial@instance: true
+
+        allgemein:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Allgemein
+
+            temperatur:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    viess_read_group_trigger@instance: Allgemein.Temperatur
+
+                aussentemperatur:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Aussentemperatur
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                aussentemperatur_tp:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Aussentemperatur_TP
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                aussentemperatur_dp:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Aussentemperatur_Dp
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                temp_speicher_ladesensor:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Temp_Speicher_Ladesensor
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                auslauftemperatur:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Auslauftemperatur
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                abgastemperatur:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Abgastemperatur
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+                gem_vorlauftemperatur:
+                    type: num
+                    viess_command@instance: Allgemein.Temperatur.Gem_Vorlauftemperatur
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Allgemein
+                    -   Allgemein.Temperatur
+
+            tempkoffset:
+                type: num
+                viess_command@instance: Allgemein.TempKOffset
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Allgemein
+
+            systemtime:
+                type: bool
+                viess_command@instance: Allgemein.Systemtime
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Allgemein
+
+            anlagenschema:
+                type: str
+                viess_command@instance: Allgemein.Anlagenschema
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Allgemein
+
+            ctrlid:
+                type: num
+                viess_command@instance: Allgemein.CtrlId
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Allgemein
+
+        kessel:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Kessel
+
+            kesseltemperatur:
+                type: num
+                viess_command@instance: Kessel.Kesseltemperatur
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Kessel
+
+            kesseltemperatur_tp:
+                type: num
+                viess_command@instance: Kessel.Kesseltemperatur_TP
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Kessel
+
+            kesselsolltemperatur:
+                type: num
+                viess_command@instance: Kessel.Kesselsolltemperatur
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Kessel
+
+        fehler:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Fehler
+
+            sammelstoerung:
+                type: num
+                viess_command@instance: Fehler.Sammelstoerung
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error0:
+                type: str
+                viess_command@instance: Fehler.Error0
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error1:
+                type: str
+                viess_command@instance: Fehler.Error1
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error2:
+                type: str
+                viess_command@instance: Fehler.Error2
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error3:
+                type: str
+                viess_command@instance: Fehler.Error3
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error4:
+                type: str
+                viess_command@instance: Fehler.Error4
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error5:
+                type: str
+                viess_command@instance: Fehler.Error5
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error6:
+                type: str
+                viess_command@instance: Fehler.Error6
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error7:
+                type: str
+                viess_command@instance: Fehler.Error7
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error8:
+                type: str
+                viess_command@instance: Fehler.Error8
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            error9:
+                type: str
+                viess_command@instance: Fehler.Error9
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler01:
+                type: str
+                viess_command@instance: Fehler.Fehler01
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler02:
+                type: str
+                viess_command@instance: Fehler.Fehler02
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler03:
+                type: str
+                viess_command@instance: Fehler.Fehler03
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler04:
+                type: str
+                viess_command@instance: Fehler.Fehler04
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler05:
+                type: str
+                viess_command@instance: Fehler.Fehler05
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler06:
+                type: str
+                viess_command@instance: Fehler.Fehler06
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler07:
+                type: str
+                viess_command@instance: Fehler.Fehler07
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler08:
+                type: str
+                viess_command@instance: Fehler.Fehler08
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler09:
+                type: str
+                viess_command@instance: Fehler.Fehler09
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler10:
+                type: str
+                viess_command@instance: Fehler.Fehler10
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler11:
+                type: str
+                viess_command@instance: Fehler.Fehler11
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler12:
+                type: str
+                viess_command@instance: Fehler.Fehler12
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler13:
+                type: str
+                viess_command@instance: Fehler.Fehler13
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler14:
+                type: str
+                viess_command@instance: Fehler.Fehler14
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler15:
+                type: str
+                viess_command@instance: Fehler.Fehler15
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler16:
+                type: str
+                viess_command@instance: Fehler.Fehler16
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler17:
+                type: str
+                viess_command@instance: Fehler.Fehler17
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler18:
+                type: str
+                viess_command@instance: Fehler.Fehler18
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler19:
+                type: str
+                viess_command@instance: Fehler.Fehler19
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+            fehler20:
+                type: str
+                viess_command@instance: Fehler.Fehler20
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Fehler
+
+        pumpen:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Pumpen
+
+            speicherladepumpe:
+                type: bool
+                viess_command@instance: Pumpen.Speicherladepumpe
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Pumpen
+
+            zirkulationspumpe:
+                type: bool
+                viess_command@instance: Pumpen.Zirkulationspumpe
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Pumpen
+
+            interne_pumpe:
+                type: bool
+                viess_command@instance: Pumpen.Interne_Pumpe
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Pumpen
+
+            heizkreispumpe_a1m1:
+                type: bool
+                viess_command@instance: Pumpen.Heizkreispumpe_A1M1
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Pumpen
+
+            heizkreispumpe_a1m1_rpm:
+                type: bool
+                viess_command@instance: Pumpen.Heizkreispumpe_A1M1_RPM
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Pumpen
+
+            relais_status_pumpe_a1m1:
+                type: bool
+                viess_command@instance: Pumpen.Relais_Status_Pumpe_A1M1
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Pumpen
+
+        brenner:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Brenner
+
+            brennerstarts:
+                type: num
+                viess_command@instance: Brenner.Brennerstarts
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Brenner
+
+            brenner_betriebsstunden:
+                type: num
+                viess_command@instance: Brenner.Brenner_Betriebsstunden
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Brenner
+
+            brennerstatus_1:
+                type: bool
+                viess_command@instance: Brenner.Brennerstatus_1
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Brenner
+
+        heizkreis:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Heizkreis
+
+            a1m1:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    viess_read_group_trigger@instance: Heizkreis.A1M1
+
+                temperatur:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        viess_read_group_trigger@instance: Heizkreis.A1M1.Temperatur
+
+                    raum:
+
+                        read:
+                            type: bool
+                            enforce_updates: true
+                            viess_read_group_trigger@instance: Heizkreis.A1M1.Temperatur.Raum
+
+                        raumtemperatur_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Raumtemperatur_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: false
+                            visu_acl: ro
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Raum
+
+                        raumtemperatur_soll_normalbetrieb_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Raumtemperatur_Soll_Normalbetrieb_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: true
+                            visu_acl: rw
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Raum
+
+                        raumtemperatur_soll_red_betrieb_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Raumtemperatur_Soll_Red_Betrieb_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: true
+                            visu_acl: rw
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Raum
+
+                        raumtemperatur_soll_party_betrieb_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Raum.Raumtemperatur_Soll_Party_Betrieb_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: true
+                            visu_acl: rw
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Raum
+
+                    vorlauf:
+
+                        read:
+                            type: bool
+                            enforce_updates: true
+                            viess_read_group_trigger@instance: Heizkreis.A1M1.Temperatur.Vorlauf
+
+                        vorlauftemperatur_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Vorlauftemperatur_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: false
+                            visu_acl: ro
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Vorlauf
+
+                        vorlauftemperatur_soll_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Vorlauftemperatur_Soll_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: false
+                            visu_acl: ro
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Vorlauf
+
+                        vorlauftemperatur_min_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Vorlauftemperatur_min_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: true
+                            visu_acl: rw
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Vorlauf
+
+                        vorlauftemperatur_max_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Vorlauftemperatur_max_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: true
+                            visu_acl: rw
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Vorlauf
+
+                        vorlauftemperatur_erhoehung_soll_a1m1:
+                            type: num
+                            viess_command@instance: Heizkreis.A1M1.Temperatur.Vorlauf.Vorlauftemperatur_Erhoehung_Soll_A1M1
+                            viess_read@instance: true
+                            viess_write@instance: true
+                            visu_acl: rw
+                            viess_read_group@instance:
+                            -   VScotHO1_200_11
+                            -   Heizkreis
+                            -   Heizkreis.A1M1
+                            -   Heizkreis.A1M1.Temperatur
+                            -   Heizkreis.A1M1.Temperatur.Vorlauf
+
+                    temperaturgrenze_red_betrieb_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Temperatur.Temperaturgrenze_red_Betrieb_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Temperatur
+
+                    temperaturgrenze_red_raumtemp_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Temperatur.Temperaturgrenze_red_Raumtemp_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Temperatur
+
+                status:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        viess_read_group_trigger@instance: Heizkreis.A1M1.Status
+
+                    aktuelle_betriebsart_a1m1:
+                        type: str
+                        viess_command@instance: Heizkreis.A1M1.Status.Aktuelle_Betriebsart_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: false
+                        visu_acl: ro
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+                        viess_read_initial@instance: true
+
+                        lookup:
+                            type: list
+                            viess_lookup@instance: operatingmodes#list
+
+                    betriebsart_a1m1:
+                        type: str
+                        viess_command@instance: Heizkreis.A1M1.Status.Betriebsart_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+                        viess_read_initial@instance: true
+
+                    statusfrost_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.StatusFrost_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: false
+                        visu_acl: ro
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    externe_raumsolltemperatur_normal_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Externe_Raumsolltemperatur_Normal_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    externe_betriebsartenumschaltung_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Externe_Betriebsartenumschaltung_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    speichervorrang_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Speichervorrang_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    frostschutzgrenze_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Frostschutzgrenze_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    heizkreispumpenlogik_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Heizkreispumpenlogik_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    sparschaltung_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Sparschaltung_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                    pumpenstillstandzeit_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Status.Pumpenstillstandzeit_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Status
+
+                heizkennlinie:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        viess_read_group_trigger@instance: Heizkreis.A1M1.Heizkennlinie
+
+                    neigung_heizkennlinie_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Heizkennlinie.Neigung_Heizkennlinie_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Heizkennlinie
+
+                    niveau_heizkennlinie_a1m1:
+                        type: num
+                        viess_command@instance: Heizkreis.A1M1.Heizkennlinie.Niveau_Heizkennlinie_A1M1
+                        viess_read@instance: true
+                        viess_write@instance: true
+                        visu_acl: rw
+                        viess_read_group@instance:
+                        -   VScotHO1_200_11
+                        -   Heizkreis
+                        -   Heizkreis.A1M1
+                        -   Heizkreis.A1M1.Heizkennlinie
+
+                partybetrieb_zeitbegrenzung_a1m1:
+                    type: num
+                    viess_command@instance: Heizkreis.A1M1.Partybetrieb_Zeitbegrenzung_A1M1
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Heizkreis
+                    -   Heizkreis.A1M1
+
+        warmwasser:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Warmwasser
+
+            warmwasser_temperatur:
+                type: num
+                viess_command@instance: Warmwasser.Warmwasser_Temperatur
+                viess_read@instance: true
+                viess_write@instance: false
+                visu_acl: ro
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Warmwasser
+
+            warmwasser_solltemperatur:
+                type: num
+                viess_command@instance: Warmwasser.Warmwasser_Solltemperatur
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Warmwasser
+
+            warmwasserpumpennachlauf:
+                type: num
+                viess_command@instance: Warmwasser.WarmwasserPumpenNachlauf
+                viess_read@instance: true
+                viess_write@instance: true
+                visu_acl: rw
+                viess_read_group@instance:
+                -   VScotHO1_200_11
+                -   Warmwasser
+
+        ferienprogramm:
+
+            read:
+                type: bool
+                enforce_updates: true
+                viess_read_group_trigger@instance: Ferienprogramm
+
+            a1m1:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    viess_read_group_trigger@instance: Ferienprogramm.A1M1
+
+                ferienprogramm_a1m1:
+                    type: num
+                    viess_command@instance: Ferienprogramm.A1M1.Ferienprogramm_A1M1
+                    viess_read@instance: true
+                    viess_write@instance: false
+                    visu_acl: ro
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Ferienprogramm
+                    -   Ferienprogramm.A1M1
+
+                ferien_abreisetag_a1m1:
+                    type: bool
+                    viess_command@instance: Ferienprogramm.A1M1.Ferien_Abreisetag_A1M1
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Ferienprogramm
+                    -   Ferienprogramm.A1M1
+
+                ferien_rückreisetag_a1m1:
+                    type: bool
+                    viess_command@instance: Ferienprogramm.A1M1.Ferien_Rückreisetag_A1M1
+                    viess_read@instance: true
+                    viess_write@instance: true
+                    visu_acl: rw
+                    viess_read_group@instance:
+                    -   VScotHO1_200_11
+                    -   Ferienprogramm
+                    -   Ferienprogramm.A1M1

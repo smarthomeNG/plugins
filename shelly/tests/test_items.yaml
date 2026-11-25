@@ -1,0 +1,46 @@
+trv:
+    temp:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: temp
+    target_t:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: target_t
+    temperature_offset:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: temperature_offset
+    battery:
+        type: num
+        shelly_id: ABC123
+        shelly_group: sensor
+        shelly_attr: battery
+    valve_pos:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: valve_pos
+    window_open:
+        type: bool
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: window_open
+    boost_minutes:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: boost_minutes
+    schedule:
+        type: bool
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: schedule
+    schedule_profile:
+        type: num
+        shelly_id: ABC123
+        shelly_group: 'thermostat:0'
+        shelly_attr: schedule_profile

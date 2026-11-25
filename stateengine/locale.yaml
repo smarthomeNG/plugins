@@ -1,5 +1,7 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
+    'Sonnenstand nicht verfügbar':                                  {'de': '=', 'en': 'Sun position not available'}
+    'Breitengrad/Längengrad sind nicht konfiguriert oder es ist keine Ephemeriden-Bibliothek installiert. Sonnenstands-Bedingungen werden nicht erfüllt, sun_tracking() rechnet mit einer Sonnenhöhe von 45°.': {'de': '=', 'en': 'Latitude/longitude are not configured or no ephemeris library is installed. Sun position conditions will not match, sun_tracking() assumes a sun altitude of 45°.'}
     'Die folgenden Items verfügen über ein StateEngine Item':       {'de': '=', 'en': 'The following items have a StateEngine item assigned'}
     'Klick auf das Lupensymbol öffnet die Visualisierung!':  {'de': '=', 'en': 'Clicking the magnifying symbol opens the visualization'}
     'Visualisierung':                                               {'de': '=', 'en': 'Visualization'}

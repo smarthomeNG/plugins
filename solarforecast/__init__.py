@@ -37,7 +37,7 @@ DUMMY = {}
 
 
 class Solarforecast(SmartPlugin):
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '1.9.7'
 
     def __init__(self, sh):
         """
@@ -101,6 +101,14 @@ class Solarforecast(SmartPlugin):
             # the last one is equal to old self._items, but supports (later) item removal
             self.add_item(item, mapping=self.get_iattr_value(item.conf, 'solarforecast_attribute'))
 
+    def get_items(self):
+        """
+        Return the items of the plugin by their solarforecast_attribute.
+
+        :return: dict of solarforecast_attribute -> list of items
+        """
+        return self._item_lookup_dict
+
     def _get_json(self, url):
 
         if TESTING and url in DUMMY:
@@ -113,6 +121,9 @@ class Solarforecast(SmartPlugin):
 
             except requests.exceptions.Timeout as e:
                 self.logger.warning(f'Timeout exception during get command: {e}')
+                return
+            except requests.exceptions.ConnectionError as e:
+                self.logger.warning(f'Connection Error exception during get command: {e}')
                 return
             except Exception as e:
                 self.logger.error(f'Exception during get command: {e}')

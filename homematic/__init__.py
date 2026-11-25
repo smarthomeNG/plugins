@@ -43,7 +43,7 @@ class Homematic(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
     #    ALLOW_MULTIINSTANCE = False
 
     connected = False

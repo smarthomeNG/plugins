@@ -1,0 +1,24 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<div>
+  <p>The widget needs the items of the struct deebot.all below one base item, here saugroboter.</p>
+
+  <div class="twig">Example:<br>
+    <code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+      {{ deebot.map('', 'saugroboter') }}
+    {% endverbatim %}{% endfilter %}</code>
+  </div>
+  <div class="html">
+    {{ deebot.map('', 'saugroboter') }}
+  </div>
+</div>
+{% endblock %}

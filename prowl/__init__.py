@@ -22,7 +22,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 from collections import OrderedDict
 import urllib.parse
 import http.client
@@ -41,7 +40,7 @@ class Prowl(SmartPlugin):
     more control, maybe use a logic to call `notify()` with all relevant parameters.
     """
 
-    PLUGIN_VERSION = '1.3.3'
+    PLUGIN_VERSION = '1.3.4'
 
     _host = 'api.prowlapp.com'
     _api = '/publicapi/add'
@@ -51,11 +50,6 @@ class Prowl(SmartPlugin):
         super().__init__()
 
         self._prowl_items = {}
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._apikey = self.get_parameter_value('apikey')
 

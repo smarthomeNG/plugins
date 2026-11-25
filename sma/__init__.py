@@ -412,9 +412,10 @@ name_to_id = {
 
 class SMA(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.2'
+    PLUGIN_VERSION = '1.3.3'
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.shtime = Shtime.get_instance()
 
         # TODO: self._own_bt_addr setzen
@@ -988,7 +989,7 @@ class SMA(SmartPlugin):
             local_time
             + local_time
             + local_time
-            + round((datetime.now() - self.shtime.utcnow()).total_seconds()).to_bytes(4, byteorder='little')
+            + int(self.shtime.now().utcoffset().total_seconds()).to_bytes(4, byteorder='little', signed=True)
             + local_time
             + bytes([0x01, 0x00, 0x00, 0x00])
         )

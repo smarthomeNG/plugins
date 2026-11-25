@@ -4,9 +4,9 @@
 
 forecast = sh.wetter_com.forecast('CITYCODE')
 
-d0 = sh.now().date()
-d1 = (sh.now() + dateutil.relativedelta.relativedelta(days=1)).date()
-d2 = (sh.now() + dateutil.relativedelta.relativedelta(days=2)).date()
+d0 = sh.shtime.now().date()
+d1 = (sh.shtime.now() + dateutil.relativedelta.relativedelta(days=1)).date()
+d2 = (sh.shtime.now() + dateutil.relativedelta.relativedelta(days=2)).date()
 
 items = { d0: sh.wetter.vorhersage.heute, d1: sh.wetter.vorhersage.morgen, d2: sh.wetter.vorhersage.uebermorgen}
 try:

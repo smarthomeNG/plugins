@@ -29,7 +29,6 @@ import struct
 import binascii
 import random
 import time
-from datetime import timedelta
 import pathlib
 
 from lib.network import Tcp_client
@@ -40,6 +39,8 @@ from lib.shtime import Shtime
 
 from . import dpts
 from . import knxproj
+from .cachereads import CacheReadTracker
+from .connection import CacheReadConnection, KnxdFrameReader, frame_packet
 from .knxd import KNXD
 from .globals import (
     DPT,
@@ -50,6 +51,8 @@ from .globals import (
     ITEM,
     ITEMS,
     KNXD_CACHEREAD_DELAY,
+    KNXD_CACHEREAD_RETRY_DELAYS,
+    KNXD_CACHEREAD_TIMEOUT,
     KNX_CACHE,
     KNX_DATA_MASK,
     KNX_DPT,
@@ -60,6 +63,7 @@ from .globals import (
     KNX_POLL,
     KNX_REPLY,
     KNX_SEND,
+    KNX_SOURCE_INIT,
     KNX_STATUS,
     LOGIC,
     LOGICS,
@@ -68,7 +72,7 @@ from .webif import WebInterface
 
 
 class KNX(SmartPlugin):
-    PLUGIN_VERSION = '1.8.5'
+    PLUGIN_VERSION = '2.0.0'
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -91,17 +95,13 @@ class KNX(SmartPlugin):
         self.port = self.get_parameter_value('port')
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
 
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
         name = 'plugins.' + self.get_fullname()
         self._client = Tcp_client(
             name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30
         )
+        self._frames = KnxdFrameReader(self.handle_knxd_message, self._log_knxd_framing_error)
         self._client.set_callbacks(
-            connected=self.handle_connect, data_received=self.parse_knxd_message
+            connected=self.handle_connect, data_received=self._frames.feed
         )  # , disconnected=disconnected_callback, data_received=receive_callback
 
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -111,8 +111,10 @@ class KNX(SmartPlugin):
         self.gal = {}  # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
         self.gar = {}  # group addresses to reply if requested from knx, {DPT: dpt, ITEM: item, LOGIC: None}
         self._init_ga = []
+        self._init_awaiting = set()  # group addresses with a knx_init read whose response is still due
         self._cache_ga = []  # group addresses which should be initalized by the knxd cache
-        self._cache_ga_response_pending = []  # group adresses for which a read request was sent to knxd
+        self._warned_no_group_cache = False  # warn only once about knxd rejecting cache requests
+        self._cache_reads = CacheReadTracker(KNXD_CACHEREAD_RETRY_DELAYS)  # group addresses without a cache value yet
         self._cache_ga_response_no_value = []  # group adresses for which a response from knxd did not provide a value
 
         self.time_ga = self.get_parameter_value('time_ga')
@@ -173,7 +175,7 @@ class KNX(SmartPlugin):
                 self.logger.warning(self.translate('Given path is absolute, using {}').format(self.projectpath))
             else:
                 self.projectpath = (
-                    pathlib.Path(self.get_sh().get_basedir()) / self.projectpath / self.base_project_filename
+                    pathlib.Path(self.get_sh().resolve_var_path(str(self.projectpath))) / self.base_project_filename
                 )
                 self.logger.info(self.translate('Given path is relative, using {path}', {'path': self.projectpath}))
 
@@ -208,10 +210,7 @@ class KNX(SmartPlugin):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('Illegal data size: {}').format(repr(data)))
             return False
-        # prepend data length for knxd
-        send = bytearray(len(data).to_bytes(2, byteorder='big'))
-        send.extend(data)
-        self._client.send(send)
+        self._client.send(frame_packet(data))
 
     def groupwrite(self, ga, payload, dpt, flag='write'):
         pkt = bytearray([0, KNXD.GROUP_PACKET])
@@ -255,20 +254,95 @@ class KNX(SmartPlugin):
                 self.logger.debug(self.translate('groupwrite telegram for: {} - Value: {} sent.').format(ga, payload))
             self._send(pkt)
 
-    def _cacheread(self, ga):
+    def _cacheread_request(self, ga):
+        """Build the knxd request reading ``ga`` from the group cache; None if ``ga`` cannot be encoded"""
         pkt = bytearray([0, KNXD.CACHE_READ])
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except Exception:
             self.logger.warning('_cacheread: ' + self.translate('problem encoding ga: {}').format(ga))
-            return
+            return None
         pkt.extend([0, 0])
+        return pkt
+
+    def _cacheread(self, ga):
+        pkt = self._cacheread_request(ga)
+        if pkt is None:
+            return
         if not self.alive:
             self.logger.info(self.translate('not reading knxd cache for ga {} because plugin is not alive.').format(ga))
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('reading knxd cache for ga: {}').format(ga))
             self._send(pkt)
+
+    def _cacheread_all(self, gas):
+        """Request the given group addresses from the knxd cache, one after another"""
+        for ga in gas:
+            self._cacheread(ga)
+            # wait a little to not overdrive the knxd unless there is a fix
+            time.sleep(KNXD_CACHEREAD_DELAY)
+
+    def _cacheread_on_own_connection(self, gas):
+        """Read the given group addresses from the knxd cache over a short-lived connection of their own"""
+        if not self.alive:
+            self.logger.info(
+                self.translate('not reading knxd cache for ga {} because plugin is not alive.').format(', '.join(gas))
+            )
+            return
+        requests = [pkt for pkt in map(self._cacheread_request, gas) if pkt is not None]
+        try:
+            replies = CacheReadConnection(self.host, self.port, self.handle_knxd_message).read(
+                requests, KNXD_CACHEREAD_TIMEOUT, pause=KNXD_CACHEREAD_DELAY
+            )
+        except OSError as e:
+            self.logger.warning(self.translate('knxd cache read connection failed: {}').format(e))
+            return
+        if replies < len(requests):
+            self.logger.log(
+                self._cache_problem_loglevel(),
+                self.translate('knxd answered {} of {} cache reads').format(replies, len(requests)),
+            )
+
+    def _cache_problem_loglevel(self):
+        """Numeric log level configured by ``loglevel_knxd_cache_problems``"""
+        loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
+        if not isinstance(loglevel, int):
+            loglevel = logging.getLevelName(loglevel)
+        return loglevel
+
+    def _cacheread_retry_jobname(self):
+        return f'KNX[{self.get_instance_name()}] cache read retry'
+
+    def _schedule_cacheread_retry(self):
+        """Schedule the next round of re-reading group addresses the knxd cache had no value for"""
+        delay = self._cache_reads.next_retry_delay()
+        if delay is None:
+            unanswered = self._cache_reads.pending
+            if unanswered:
+                self.logger.log(
+                    self._cache_problem_loglevel(),
+                    self.translate('no knxd cache value for group addresses {} after all retries').format(
+                        ', '.join(unanswered)
+                    ),
+                )
+            return
+        self.scheduler_add(
+            self._cacheread_retry_jobname(),
+            self._cacheread_retry,
+            next=self.shtime.add_seconds(self.shtime.now(), delay),
+        )
+
+    def _cacheread_retry(self):
+        """Scheduler job: read unanswered cache group addresses again and plan the next round"""
+        if not self.alive:
+            return
+        gas = self._cache_reads.take_retry()
+        if gas:
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(self.translate('retrying knxd cache read for ga: {}').format(', '.join(gas)))
+            self._cacheread_on_own_connection(gas)
+        self._schedule_cacheread_retry()
 
     def groupread(self, ga):
         pkt = bytearray([0, KNXD.GROUP_PACKET])
@@ -301,7 +375,7 @@ class KNX(SmartPlugin):
             try:
                 ga = kwargs['ga']
                 interval = int(kwargs['interval'])
-                next = self.shtime.now() + timedelta(seconds=interval)
+                next = self.shtime.add_seconds(self.shtime.now(), interval)
                 self.scheduler_add(
                     f'KNX poll {item}',
                     self._poll,
@@ -342,23 +416,18 @@ class KNX(SmartPlugin):
         self._send(enable_cache)
 
         # set next kind of data to expect from connection
-        self._isLength = True
+        self._frames.reset()
 
         # if this is the first connect after init of plugin then read the
         # group addresses from knxd which have the knx_cache attribute
         if self._cache_ga != []:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('reading knxd cache'))
-            for ga in self._cache_ga:
-                self._cache_ga_response_pending.append(ga)
-            for ga in self._cache_ga:
-                if ga != '':
-                    self._cacheread(ga)
-                    # wait a little to not overdrive the knxd unless there is a fix
-                    time.sleep(KNXD_CACHEREAD_DELAY)
+            self._cacheread_all(self._cache_reads.start(self._cache_ga))
             self._cache_ga = []
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('finished reading knxd cache'))
+            self._schedule_cacheread_retry()
 
         # let knxd create a new group monitor and send the read requests
         # for all group addresses which have the knx_read  attribute
@@ -372,6 +441,7 @@ class KNX(SmartPlugin):
             if client.connected():
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(self.translate('knxd init read for {} ga').format(len(self._init_ga)))
+                self._init_awaiting.update(self._init_ga)
                 for ga in self._init_ga:
                     self.groupread(ga)
                 self._init_ga = []
@@ -384,37 +454,58 @@ class KNX(SmartPlugin):
     def decode(self, data, dpt):
         return dpts.decode[str(dpt)](data)
 
-    def parse_knxd_message(self, client, data):
+    def _dpt2_to_bus(self, value, dpt, item):
+        """
+        Convert an item's DPT2 value into the [control, value] list DPT2 (en2) expects.
+
+        Applies to '2' and all of its 2.xxx control subtypes (2.001 DPT_Switch_Control
+        through 2.012 DPT_Invert_Control - see dpts.py's encode table), which all share
+        en2's wire encoding and only differ in the semantic meaning of the two bits.
+        Item type 'num' unpacks a priority number (0-3); item type 'dict' unpacks a
+        {'control': bool, 'value': bool} mapping; any other item type (typically 'list')
+        is passed through unchanged.
+        """
+        if dpts.encode.get(str(dpt)) is not dpts.en2:
+            return value
+        if item.type() == 'num' and not isinstance(value, (list, tuple)):
+            num = int(value) & 0x03
+            value = [(num >> 1) & 0x01, num & 0x01]
+        elif item.type() == 'dict' and isinstance(value, dict):
+            value = [int(bool(value.get('control'))), int(bool(value.get('value')))]
+        return value
+
+    def _dpt2_from_bus(self, value, dpt, item):
+        """
+        Convert a decoded DPT2 [control, value] list into the item's representation.
+
+        Applies to '2' and all of its 2.xxx control subtypes (see _dpt2_to_bus). Item
+        type 'num' packs it into a priority number (0-3); item type 'dict' packs it into
+        a {'control': bool, 'value': bool} mapping; any other item type (typically
+        'list') is passed through unchanged.
+        """
+        if dpts.decode.get(str(dpt)) is not dpts.de2 or not isinstance(value, (list, tuple)):
+            return value
+        if item.type() == 'num':
+            value = (value[0] << 1) | value[1]
+        elif item.type() == 'dict':
+            value = {'control': bool(value[0]), 'value': bool(value[1])}
+        return value
+
+    def _log_knxd_framing_error(self, description):
+        self.logger.error(f'KNX[{self.get_instance_name()}]: {description}')
+
+    def handle_knxd_message(self, data):
         """
         inspects a message from knxd (eibd)
 
-        :param client: Tcp_client
-        :param data: message from knxd as bytearray
+        :param data: complete message from knxd as bytearray, without its length prefix
 
-        a message from knxd will have 4 extra bytes plus eventually the knx telegram payload
-        2 byte length
+        a message from knxd consists of
         2 byte knxd message type   --> see eibtypes.h
+        followed by eventually a knx telegram of at least 6 bytes if valid
 
-        knx telegram then consists of least 6 bytes if valid
-
-        The process consists of two steps:
-        * At first the variable ``self._isLength`` is True and the length for the
-          following knxd message plus eventual knx telegram is set to ``client.terminator``
-        * then the next call to parse_knxd_message is awaited to contain
-          the knxd message type in the first two bytes and then following eventually a knx telegram
+        The length prefix is stripped by ``KnxdFrameReader`` before this method is called.
         """
-        if self._isLength:
-            self._isLength = False
-            try:
-                # expecting an unsigned short integer:
-                client.terminator = struct.unpack('>H', data)[0]
-            except Exception:
-                self.logger.error(f'KNX[{self.get_instance_name()}]: problem unpacking length: {data}')
-            return
-        else:
-            self._isLength = True
-            client.terminator = 2
-
         # expecting the type of the following knxd telegram as an unsigned short integer
         knxd_msg_type = struct.unpack('>H', data[0:2])[0]
 
@@ -434,22 +525,20 @@ class KNX(SmartPlugin):
             n byte data optional, only indicated by length
         """
 
-        # knxd will only deliver 4 bytes and no command/data payload when it is unable to provide a group address from cache.
+        is_cache_reply = knxd_msg_type in (KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT)
+        if is_cache_reply:
+            self._cache_reads.note_reply()
+
+        # knxd answers a cache read it has no value for with only the 4 bytes source and destination address
         if len(knx_data) < 6:
-            knx_data_str = binascii.hexlify(knx_data).decode()
-            src = ''
-            dst = ''
-            try:
-                src = self.decode(knx_data[0:2], 'pa')
+            if is_cache_reply and len(knx_data) == 4:
                 dst = self.decode(knx_data[2:4], 'ga')
-            finally:
                 self._cache_ga_response_no_value.append(dst)
-                loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
-                if not isinstance(loglevel, int):
-                    loglevel = logging.getLevelName(loglevel)
-                self.logger.log(
-                    loglevel,
-                    f'{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse',
+                self.logger.log(self._cache_problem_loglevel(), f'cache miss: knxd has no value for ga {dst}')
+            else:
+                msg_name = KNXD.MessageDescriptions.get(knxd_msg_type, knxd_msg_type)
+                self.logger.warning(
+                    f'ignoring truncated knxd message {msg_name}, {len(knx_data)} bytes [{binascii.hexlify(knx_data).decode()}]'
                 )
             return
 
@@ -531,10 +620,14 @@ class KNX(SmartPlugin):
                 #    out += " {0:x}".format(i)
                 # print "out:{0}".format(out)
 
-                # remove all ga that came from a cache read request
-                if knxd_msg_type == KNXD.CACHE_READ:
-                    if dst in self._cache_ga_response_pending:
-                        self._cache_ga_response_pending.remove(dst)
+                was_waiting_for_cache = self._cache_reads.answered(dst)
+                is_init_response = flg == 'response' and dst in self._init_awaiting
+                self._init_awaiting.discard(dst)
+                is_initial_value = (
+                    knxd_msg_type in (KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT)
+                    or is_init_response
+                    or (flg == 'response' and was_waiting_for_cache)
+                )
                 way = '' if knxd_msg_type != KNXD.CACHE_READ else ' (from knxd Cache)'
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(
@@ -546,14 +639,17 @@ class KNX(SmartPlugin):
                 if src_wrk != '':
                     src_wrk += ':'
                 src_wrk += src + ':ga=' + dst
+                if is_initial_value:
+                    src_wrk += f':{KNX_SOURCE_INIT}'
                 for item in self.gal[dst][ITEMS]:
+                    item_val = self._dpt2_from_bus(val, dpt, item)
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(
                             "Set Item '{}' to value '{}' caller='{}', source='{}', dest='{}'".format(
-                                item, val, self.get_shortname(), src, dst
+                                item, item_val, self.get_shortname(), src, dst
                             )
                         )
-                    item(val, self.get_shortname(), src_wrk, dst)
+                    item(item_val, self.get_shortname(), src_wrk, dst)
                 for logic in self.gal[dst][LOGICS]:
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(
@@ -581,16 +677,15 @@ class KNX(SmartPlugin):
             if dst in self.gar:  # read item
                 if self.gar[dst][ITEM] is not None:
                     item = self.gar[dst][ITEM]
-                    val = item()
+                    dpt = self.get_iattr_value(item.conf, KNX_DPT)
+                    val = self._dpt2_to_bus(item(), dpt, item)
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(
-                            "groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(
-                                dst, val, self.get_iattr_value(item.conf, KNX_DPT)
-                            )
+                            "groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, val, dpt)
                         )
                     if self._log_own_packets is True:
                         self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
-                    self.groupwrite(dst, val, self.get_iattr_value(item.conf, KNX_DPT), 'response')
+                    self.groupwrite(dst, val, dpt, 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
                     if src_wrk != '':
@@ -617,6 +712,19 @@ class KNX(SmartPlugin):
 
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(msg)
+
+        if (
+            knxd_msg_type == KNXD.INVALID_REQUEST
+            and self._cache_reads.pending
+            and not self._cache_reads.replied
+            and not self._warned_no_group_cache
+        ):
+            self._warned_no_group_cache = True
+            self.logger.warning(
+                self.translate(
+                    'knxd rejected a request and has answered no knx_cache read, it probably has no group cache (knxd.ini: cache = <section> in [main])'
+                )
+            )
 
     def run(self):
         """
@@ -646,6 +754,8 @@ class KNX(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
         self.alive = False
+        if self.scheduler_get(self._cacheread_retry_jobname()):
+            self.scheduler_remove(self._cacheread_retry_jobname())
         # added to effect better cleanup on stop
         if self.scheduler_get(f'KNX[{self.get_instance_name()}] time'):
             self.scheduler_remove(f'KNX[{self.get_instance_name()}] time')
@@ -839,22 +949,23 @@ class KNX(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive:
+            dpt = self.get_iattr_value(item.conf, KNX_DPT)
             if self.has_iattr(item.conf, KNX_SEND):
                 if caller != self.get_shortname():
                     for ga in self.get_iattr_value(item.conf, KNX_SEND):
-                        _value = item()
+                        _value = self._dpt2_to_bus(item(), dpt, item)
                         if self._log_own_packets is True:
                             self._busmonitor(self._bm_format_send.format(self.get_instance_name(), 'SEND', ga, _value))
-                        self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
+                        self.groupwrite(ga, _value, dpt)
             if self.has_iattr(item.conf, KNX_STATUS):
                 for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
                     if ga != dest:
-                        _value = item()
+                        _value = self._dpt2_to_bus(item(), dpt, item)
                         if self._log_own_packets is True:
                             self._busmonitor(
                                 self._bm_format_send.format(self.get_instance_name(), 'STATUS', ga, _value)
                             )
-                        self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
+                        self.groupwrite(ga, _value, dpt)
 
     # ------------------------------------------
     #    Statistics functions for KNX
@@ -995,4 +1106,4 @@ class KNX(SmartPlugin):
         So ideally no reminding ga should be left after a delay time of startup
         :return: list of group addresses that did not receive a cache read response
         """
-        return self._cache_ga_response_pending
+        return self._cache_reads.pending

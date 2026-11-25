@@ -12,6 +12,8 @@ plugin_translations:
     'Back in Time':               {'de': '=', 'en': '='}
     'Dictionary':                 {'de': '=', 'en': '='}
     'Letzter Wert':               {'de': '=', 'en': 'Last Value'}
+    'Sonnenstand nicht verfügbar':   {'de': '=', 'en': 'Sun position not available'}
+    'Breitengrad/Längengrad sind nicht konfiguriert oder es ist keine Ephemeriden-Bibliothek installiert. Einträge und Serien mit Sonnenaufgang/Sonnenuntergang werden ignoriert.': {'de': '=', 'en': 'Latitude/longitude are not configured or no ephemeris library is installed. Entries and series using sunrise/sunset are ignored.'}
     'Sonnenaufgang':              {'de': '=', 'en': 'sun rise'}
     'Sonnenuntergang':            {'de': '=', 'en': 'sun set'}
     'Uhr':                        {'de': '=', 'en': "o'clock"}

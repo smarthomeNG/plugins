@@ -40,7 +40,7 @@ class Volkszaehler(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -56,10 +56,7 @@ class Volkszaehler(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
 
         self.logger.info('Init Volkszaehler Plugin')
 

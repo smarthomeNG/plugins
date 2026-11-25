@@ -12,8 +12,8 @@ plugin:
     keywords: KNX knxd listen cache bus
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    sh_minversion: '1.9.0'          # minimum shNG version to use this plugin
-    version: 1.8.5                 # Plugin version
+    sh_minversion: '2.0.0'                # minimum shNG version to use this plugin
+    version: 2.0.0                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true
@@ -167,6 +167,30 @@ item_attributes:
         valid_list:
          - '1'
          - '2'
+         - '2001'
+         - '2.001'
+         - '2002'
+         - '2.002'
+         - '2003'
+         - '2.003'
+         - '2004'
+         - '2.004'
+         - '2005'
+         - '2.005'
+         - '2006'
+         - '2.006'
+         - '2007'
+         - '2.007'
+         - '2008'
+         - '2.008'
+         - '2009'
+         - '2.009'
+         - '2010'
+         - '2.010'
+         - '2011'
+         - '2.011'
+         - '2012'
+         - '2.012'
          - '3'
          - '4002'
          - '4.002'
@@ -205,7 +229,31 @@ item_attributes:
         valid_list_description:
             de:
              - 'Schalten (1 Bit) -> bool'
-             - 'Zwangssteuerung (2 Bit) -> list'
+             - 'Zwangssteuerung (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Schalten (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Schalten (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Bool (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Bool (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Freigabe (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Freigabe (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Rampe (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Rampe (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Alarm (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Alarm (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Binärwert (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Binärwert (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Schritt (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Schritt (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Richtung 1 (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Richtung 1 (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Richtung 2 (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Richtung 2 (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Start (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Start (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Zustand (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Zustand (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Invertierung (2 Bit) -> list, num oder dict (je nach Item-Typ)'
+             - 'Zwangssteuerung Invertierung (2 Bit) -> list, num oder dict (je nach Item-Typ)'
              - 'Dimmen (4 Bit) -> list'
              - 'Zeichen [8859_1] (8 Bit) -> str'
              - 'Zeichen [8859_1] (8 Bit) -> str'
@@ -243,7 +291,31 @@ item_attributes:
              - 'Empfangen von Roh-/Hex-Daten (um Key IDs des alten Winkhaus Schließsystems auszulesen'
             en:
              - 'Switch (1 Bit) -> bool'
-             - 'forced control (2 Bit) -> list'
+             - 'forced control (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control switching (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control switching (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control boolean (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control boolean (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control enable (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control enable (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control ramp (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control ramp (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control alarm (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control alarm (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control binary value (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control binary value (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control step (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control step (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control direction 1 (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control direction 1 (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control direction 2 (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control direction 2 (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control start (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control start (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control state (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control state (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control invert (2 Bit) -> list, num or dict (depending on item type)'
+             - 'forced control invert (2 Bit) -> list, num or dict (depending on item type)'
              - 'Dim (4 Bit) -> list'
              - 'Char [8859_1] (8 Bit) -> str'
              - 'Char [8859_1] (8 Bit) -> str'
@@ -304,8 +376,8 @@ item_attributes:
     knx_cache:
         type: knx_ga
         description:
-            de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
-            en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
+            de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt und die Anfrage nach 2, 5 und 15 Sekunden wiederholt. Voraussetzung ist ein Group Cache im knxd (knxd.ini: cache im Abschnitt [main]). Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
+            en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value and the request is repeated after 2, 5 and 15 seconds. This requires a group cache in knxd (knxd.ini: cache in section [main]). It implies knx_listen, so knx_listen need not to be specified for this group address.'
 
     knx_reply:
         type: list(knx_ga)

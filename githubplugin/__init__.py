@@ -292,7 +292,7 @@ class GithubPlugin(SmartPlugin):
     "live" plugins repo worktree as a private plugin.
     """
 
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '2.0.0'
     REPO_DIR = 'priv_repos'
 
     def loggerr(self, msg: str):

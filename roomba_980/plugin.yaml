@@ -7,13 +7,13 @@ plugin:
         en: 'integration of the iRobot Roomba vacuum cleaner series 900'
     maintainer: 'Zapfen83'
     tester: '?'
-    state: development
+    state: defunct
     keywords: irobot roomba             # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 # Following entries are for Smart-Plugins:
-    version: 1.0.2                 # Plugin version
+    version: 1.0.3                 # Plugin version
     sh_minversion: '1.6'             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false

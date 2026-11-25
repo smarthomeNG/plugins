@@ -29,7 +29,6 @@ from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
 
 import threading
-from datetime import timedelta
 
 import logging
 import time
@@ -44,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '2.0.0'
 
     _flip = {0: '1', 1: '0', '0': True, '1': False}
 
@@ -179,7 +178,7 @@ class OneWire(SmartPlugin):
             prio=5,
             cycle=self._cycle_discovery,
             offset=2,
-            next=self.shtime.now() + timedelta(seconds=5),
+            next=self.shtime.add_seconds(self.shtime.now(), 5),
         )
         self.scheduler_add(
             'sensor_read',
@@ -187,7 +186,7 @@ class OneWire(SmartPlugin):
             cycle=self._cycle,
             prio=5,
             offset=0,
-            next=self.shtime.now() + timedelta(seconds=15),
+            next=self.shtime.add_seconds(self.shtime.now(), 15),
         )
 
     def stop(self):
@@ -266,7 +265,7 @@ class OneWire(SmartPlugin):
         Will be triggered once by scheduler
         This runs endless until the plugin stops
         """
-        threading.currentThread().name = 'onewire-io'
+        threading.current_thread().name = 'onewire-io'
         self.logger.debug('Starting I/O detection')
         while self.alive:
             if self.log_counter_io_loop_time == -1 or self.log_counter_io_loop_time > 0:
@@ -354,7 +353,7 @@ class OneWire(SmartPlugin):
         """
         This is once called after detection of a iButton busmaster and runs endless until plugin stops
         """
-        threading.currentThread().name = 'onewire-ibutton'
+        threading.current_thread().name = 'onewire-ibutton'
         self.logger.debug('Starting iButton detection')
         while self.alive:
             self._ibutton_cycle()

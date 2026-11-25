@@ -30,11 +30,12 @@ from .ksem import Ksem
 
 
 class Ksemmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.5'
     ksem = 'None'
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self.ksem = Ksem(self.get_parameter_value('ksem_ip'), self.get_parameter_value('modbus_port'))
         self._cycle = int(self.get_parameter_value('update_cycle'))
         return

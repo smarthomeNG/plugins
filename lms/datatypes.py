@@ -37,13 +37,13 @@ class DT_LMSPlay(DT.Datatype):
 
 class DT_LMSSyncnames(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        pattern = r'sync_member_names:([^s]+(?: [^s]+)*)(?= sync_members|$)'
+        pattern = r'sync_member_names:(\S+(?: \S+)*?)(?= sync_members|$)'
         return re.findall(pattern, data)
 
 
 class DT_LMSSyncmembers(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        pattern = r'sync_members:([^s]+(?: [^s]+)*)(?= sync_member_names|$)'
+        pattern = r'sync_members:(\S+(?: \S+)*?)(?= sync_member_names|$)'
         return re.findall(pattern, data)
 
 
@@ -63,7 +63,7 @@ class DT_LMSAlarms(DT.Datatype):
         _id = None
         res = data.split()
         for i in res:
-            key, value = i.split(':')
+            key, value = i.split(':', 1)
             if key == 'id':
                 _id = value
                 dic[_id] = {}
@@ -119,7 +119,7 @@ class DT_LMSPlayers(DT.Datatype):
             player_id = player_data.pop('playerid', None)
             if player_id:
                 players_dict[player_id] = player_data
-        players_dict['-'] = {'ip:': None, 'name': 'NONE', 'model': None, 'firmware': None}
+        players_dict['-'] = {'ip': None, 'name': 'NONE', 'model': None, 'firmware': None}
         return players_dict
 
 
@@ -142,11 +142,9 @@ class DT_LMSPlaylists(DT.Datatype):
 class DT_LMSPlaylistrename(DT.Datatype):
     def get_send_data(self, data, type=None, **kwargs):
         values = data.split(' ')
-        try:
-            data = f'playlist_id:{values[0]} newname:{values[1]}'
-        except Exception:
-            pass
-        return data
+        if len(values) < 2:
+            raise ValueError(f'playlist rename value {data!r} must be "playlist_id newname"')
+        return f'playlist_id:{values[0]} newname:{values[1]}'
 
     def get_shng_data(self, data, type=None, **kwargs):
         match = re.search(r'playlist_id:(\d+)\s+newname:(.*)', data)

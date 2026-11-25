@@ -45,7 +45,7 @@ class RTR(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '2.0.0'
 
     HVACMode_Auto = 0
     HVACMode_Comfort = 1
@@ -87,16 +87,11 @@ class RTR(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
         self.logger.debug('rtr: init method called')
 
         self.alive = None
         sh = self.get_sh()
-        self.path = sh.base_dir + '/var/rtr/timer/'
+        self.path = os.path.join(sh.get_vardir(), 'rtr', 'timer', '')
         self._items = Items.get_instance()
 
         # preset the controller defaults
@@ -696,7 +691,7 @@ class RTR(SmartPlugin):
                 if timer:
                     if edt is None:
                         shtime = Shtime.get_instance()
-                        edt = shtime.now() + datetime.timedelta(minutes=self._controller[c]['tempBoostTime'])
+                        edt = shtime.add_seconds(shtime.now(), self._controller[c]['tempBoostTime'] * 60)
 
                     self._deleteTimer('drop_' + c)
                     self._createTimer('boost_' + c, c, edt)
@@ -738,7 +733,7 @@ class RTR(SmartPlugin):
         self.logger.info('run valve protecion')
 
         shtime = Shtime.get_instance()
-        edt = shtime.now() + datetime.timedelta(minutes=5)
+        edt = shtime.add_seconds(shtime.now(), 5 * 60)
 
         if y == 100:
             self.scheduler_add('protectClose', self.valve_protect, value={'y': 0}, next=edt)

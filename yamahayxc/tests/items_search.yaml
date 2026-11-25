@@ -1,0 +1,26 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+        yamahayxc_zone: main
+
+        volume:
+            type: num
+            yamahayxc_cmd: volume
+
+        browse_return:
+            type: bool
+            yamahayxc_cmd: browse_return
+
+        search:
+            type: str
+            yamahayxc_cmd: search_play
+            enforce_updates: true
+
+            status:
+                type: str
+                yamahayxc_cmd: search_status
+
+            result:
+                type: dict
+                yamahayxc_cmd: search_result

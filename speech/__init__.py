@@ -127,7 +127,7 @@ class Speech_Parser(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
     listeners = {}
     socket_warning = 10
     socket_warning = 2
@@ -137,10 +137,6 @@ class Speech_Parser(SmartPlugin):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.ip = self.get_parameter_value('listen_ip')
@@ -425,7 +421,7 @@ class ParseText:
         return False
 
     def get_item_value(self, status_item):
-        item = self._sh.return_item(status_item)
+        item = self._sh.items.return_item(status_item)
         if not item():
             self.errorMessage = dictError['status_error']
         return item()

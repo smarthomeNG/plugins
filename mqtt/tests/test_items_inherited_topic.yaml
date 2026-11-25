@@ -1,0 +1,16 @@
+boiler:
+    state:
+        type: dict
+        mqtt_topic_in: ems/boiler
+        power:
+            type: num
+            mqtt_select_in: hppower
+        pump:
+            type: bool
+            mqtt_select_in: heatingpump
+    combined:
+        type: dict
+        mqtt_topic: ems/combined
+        power:
+            type: num
+            mqtt_select_in: hppower

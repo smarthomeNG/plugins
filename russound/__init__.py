@@ -42,16 +42,12 @@ class Russound(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.3'
+    PLUGIN_VERSION = '1.7.4'
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         super().__init__()
         self.host = self.get_parameter_value('host')
@@ -201,14 +197,7 @@ class Russound(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        # check for pause item
-        if item is self._pause_item:
-            if caller != self.get_shortname():
-                self.logger.debug(f'pause item changed to {item()}')
-                if item() and self.alive:
-                    self.stop()
-                elif not item() and not self.alive:
-                    self.run()
+        if self._handle_pause_item(item, caller):
             return
 
         if self.alive and caller != self.get_shortname():
@@ -377,7 +366,7 @@ class Russound(SmartPlugin):
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.sh.items.find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional

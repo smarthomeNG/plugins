@@ -1,0 +1,17 @@
+yamaha:
+
+    one:
+        yamahayxc_host: 127.0.0.1
+        yamahayxc_zone: main
+
+        alarm_on:
+            type: bool
+            yamahayxc_cmd: alarm_on
+
+    two:
+        yamahayxc_host: 127.0.0.2
+        yamahayxc_zone: main
+
+        volume:
+            type: num
+            yamahayxc_cmd: volume

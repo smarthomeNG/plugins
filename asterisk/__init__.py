@@ -21,7 +21,6 @@
 #########################################################################
 
 import threading
-import logging
 import datetime
 
 import lib.log
@@ -30,7 +29,7 @@ from lib.network import Tcp_client
 
 
 class Asterisk(SmartPlugin):
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     DB = 'ast_db'
     DEV = 'ast_dev'
@@ -53,11 +52,6 @@ class Asterisk(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.host = self.get_parameter_value('host')
@@ -342,7 +336,7 @@ class Asterisk(SmartPlugin):
                 else:
                     self._mailboxes[mb](0)
         elif event['Event'] == 'Cdr':
-            end = self.get_sh().now()
+            end = self.get_sh().shtime.now()
             start = end - datetime.timedelta(seconds=int(event['Duration']))
             duration = event['BillableSeconds']
             if len(event['Source']) <= 4:

@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     def __init__(self, sh):
         """Initializes the plugin."""

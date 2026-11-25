@@ -93,7 +93,7 @@ class Sml2(SmartPlugin):
             self.smlx.logger.error('Connection so serial device was closed')
             self.smlx.connected = False
 
-    PLUGIN_VERSION = '2.0.1'
+    PLUGIN_VERSION = '3.0.0'
 
     def __init__(self, sh):
         """
@@ -146,6 +146,7 @@ class Sml2(SmartPlugin):
             self.scheduler_add(SML_SCHEDULER_NAME, self.poll_device, cycle=self.cycle)
         else:
             self.loop = asyncio.new_event_loop()
+            self.set_asyncio_executor_names(self.loop)
             self.loop_thread = threading.Thread(target=self.start_background_loop, args=(), daemon=True)
             self.loop_thread.start()
 

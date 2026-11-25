@@ -1,0 +1,24 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Ja':                    {'de': '=', 'en': 'Yes'}
+    'Nein':                  {'de': '=', 'en': 'No'}
+    'Keine Karte verfügbar': {'de': '=', 'en': 'No map available'}
+    'Verbindung':            {'de': '=', 'en': 'Connection'}
+    'Gerät':                 {'de': '=', 'en': 'Device'}
+    'Geräteklasse':          {'de': '=', 'en': 'Device class'}
+    'Code anfordern':        {'de': '=', 'en': 'Request code'}
+    'Bestätigung':           {'de': '=', 'en': 'Verification'}
+    'Bestätigen':            {'de': '=', 'en': 'Confirm'}
+    'Karte':                 {'de': '=', 'en': 'Map'}
+    'Werte':                 {'de': '=', 'en': 'Values'}
+    'Merkmal':               {'de': '=', 'en': 'Feature'}
+    'Wert':                  {'de': '=', 'en': 'Value'}
+    'Pfad':                  {'de': '=', 'en': 'Path'}
+    'Typ':                   {'de': '=', 'en': 'Type'}
+    'Schreibbar':            {'de': '=', 'en': 'Writable'}
+    'Letztes Update':        {'de': '=', 'en': 'Last update'}
+    'Letzte Änderung':       {'de': '=', 'en': 'Last change'}
+    'Ecovacs verlangt eine Bestätigung dieser Installation. Code per E-Mail anfordern und hier eingeben.':
+        de: '='
+        en: 'Ecovacs requires this installation to be verified. Request the code by e-mail and enter it here.'

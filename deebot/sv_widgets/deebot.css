@@ -1,0 +1,91 @@
+/* ---- deebot.panel -------------------------------------------------------- */
+
+.deebot-row {
+    margin: 4px 0;
+}
+
+.deebot-muted {
+    opacity: 0.7;
+}
+
+.deebot-error {
+    color: #d9372b;
+}
+
+.deebot-battery {
+    float: right;
+}
+
+.deebot-state-cleaning,
+.deebot-state-returning {
+    color: #2e9e4f;
+}
+
+.deebot-state-error {
+    color: #d9372b;
+}
+
+.deebot-state-paused {
+    color: #d99a1a;
+}
+
+.deebot-state-unavailable {
+    color: #888;
+}
+
+.deebot-btn {
+    margin: 2px 4px 2px 0;
+}
+
+.deebot-settings label {
+    display: inline-block;
+    margin: 0 8px 0 0;
+}
+
+.deebot-part {
+    font-size: 0.85em;
+}
+
+.deebot-bar {
+    height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+}
+
+.deebot-bar-fill {
+    height: 4px;
+    background: #2e9e4f;
+    border-radius: 2px;
+}
+
+.deebot-bar-fill.deebot-low {
+    background: #d9372b;
+}
+
+.deebot-roomlist {
+    max-width: 22em;
+    margin: 0 auto;
+}
+
+.deebot-room {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2px 0;
+}
+
+/* ---- deebot.map ---------------------------------------------------------- */
+
+/* the SVG has a viewBox but no size: without a width the image shrinks to the browser's default of 300 px */
+.deebot-map {
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.deebot-map-popup {
+    width: 80vw;
+    max-width: 95vw;
+    text-align: center;
+}

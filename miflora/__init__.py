@@ -28,12 +28,13 @@ from lib.model.smartplugin import Modules, SmartPlugin, SmartPluginWebIf
 
 
 class Miflora(SmartPlugin):
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin.
         """
+        super().__init__()
         self._bt_addr = self.get_parameter_value('bt_addr')
         self._bt_library = self.get_parameter_value('bt_library')
         self._cycle = self.get_parameter_value('cycle')

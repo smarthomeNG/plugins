@@ -21,14 +21,14 @@ class TestUZSUBase(unittest.TestCase):
     environments), and constructs the plugin.
     """
 
-    def plugin(self, parameters=None, tz='Europe/Berlin'):
+    def plugin(self, parameters=None, tz='Europe/Berlin', with_sun=True):
         self.sh = MockSmartHome()
         self.sh.shtime.set_tz(tz)
         # UZSU relies on sh.sun/sh.moon (set up by bin/smarthome.py in a real
         # instance) for sunrise/sunset-bound entries; MockSmartHome doesn't
         # provide these, so build them the same way lib/smarthome.py does.
-        self.sh.sun = Orb('sun', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV)
-        self.sh.moon = Orb('moon', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV)
+        self.sh.sun = Orb('sun', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV) if with_sun else False
+        self.sh.moon = Orb('moon', BERLIN_LON, BERLIN_LAT, BERLIN_ELEV) if with_sun else False
         self.sh.with_items_from(os.path.join(os.path.dirname(__file__), 'test_items.yaml'))
 
         UZSU._parameters = {
@@ -44,7 +44,7 @@ class TestUZSUBase(unittest.TestCase):
             UZSU._parameters.update(parameters)
 
         plugin = UZSU(self.sh)
-        for item in self.sh.return_items():
+        for item in self.sh.items.return_items():
             callback = plugin.parse_item(item)
             if callback is not None:
                 plugin._items_callback = callback
@@ -60,7 +60,7 @@ class TestUZSUBase(unittest.TestCase):
         wired up in this mock setup) and writes the internal state the
         scheduling methods (_get_time, _schedule, ...) actually consume."""
         plugin = self.plugin(**plugin_kwargs)
-        item = self.sh.return_item(item_path)
+        item = self.sh.items.return_item(item_path)
         full_entry = {'active': True, 'rrule': rrule, **entry}
         plugin._items[item]['active'] = active
         plugin._items[item]['list'] = [full_entry]

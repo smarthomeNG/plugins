@@ -55,7 +55,7 @@ class EspHome(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '0.0.2'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '0.0.3'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):
@@ -209,15 +209,7 @@ class EspHome(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        # check for pause item
-        if item is self._pause_item:
-            if caller != self.get_shortname():
-                self.logger.debug(f'pause item changed to {item()}')
-                if item() and self.alive:
-                    self.stop()
-                elif not item() and not self.alive:
-                    self.run()
-            return
+        # if self._handle_pause_item(item, caller): return  # implemented, but left commented out as before
 
         if self.alive and caller != self.get_fullname():
             # code to execute if the plugin is not stopped
@@ -240,7 +232,7 @@ class EspHome(SmartPlugin):
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.sh.items.find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional

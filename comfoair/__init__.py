@@ -29,9 +29,10 @@ from lib.model.smartplugin import SmartPlugin
 
 class ComfoAir(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '1.3.2'
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.connected = False
         self._params = {}
         self._init_cmds = []

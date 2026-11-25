@@ -72,7 +72,7 @@ class AppleTV(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh):
         """
@@ -93,7 +93,8 @@ class AppleTV(SmartPlugin):
 
         self._items = {}
         self._state = {}
-        self._loop = asyncio.get_event_loop()
+        self._loop = asyncio.new_event_loop()
+        self.set_asyncio_executor_names(self._loop)
         self._push_listener_loop = None
         self._cycle = 5
         self._scheduler_running = False
@@ -441,7 +442,7 @@ class AppleTV(SmartPlugin):
             self._update_items('power', False)
 
     def connection_lost(self, exception):
-        self.logger.warning('Lost connection:', str(exception))
+        self.logger.warning(f'Lost connection: {exception}')
 
     def connection_closed(self):
         self.logger.warning('Connection closed!')

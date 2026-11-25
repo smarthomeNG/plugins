@@ -31,11 +31,12 @@ from lib.model.smartplugin import SmartPlugin
 
 class Bsblan(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.1.0'
     url = ''
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self.logger.info('INIT')
         self.SH = sh
         return
@@ -66,7 +67,7 @@ class Bsblan(SmartPlugin):
                     item(json_obj[str(item.conf['bsb_lan'])]['value'])
                     item.descr.property.value = json_obj[str(item.conf['bsb_lan'])]['desc']
             except Exception as exc:
-                self.logger.error('Error getting Data from BSBLAN-Adapter: ', exc)
+                self.logger.error(f'Error getting Data from BSBLAN-Adapter: {exc}')
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """

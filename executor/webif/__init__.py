@@ -341,7 +341,7 @@ class WebInterface(SmartPluginWebIf):
                         for function in api:
                             plugin_list.append('sh.' + plugin_config_name + '.' + function)
 
-        myItems = _sh.return_items()
+        myItems = _sh.items.return_items()
         itemList = []
         for item in myItems:
             itemList.append('sh.' + str(item.property.path) + '()')

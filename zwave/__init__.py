@@ -25,7 +25,7 @@
 
 from lib.model.smartplugin import SmartPlugin
 
-import logging
+import os
 import time
 
 try:
@@ -37,7 +37,6 @@ try:
 except Exception:
     REQUIRED_PACKAGE_IMPORTED = False
 
-from bin.smarthome import VERSION
 
 ITEMS = 'items'
 ITEM = 'item'
@@ -51,7 +50,7 @@ class ZWave(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.4.3'
 
     def __init__(self, sh):
         """
@@ -71,8 +70,7 @@ class ZWave(SmartPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
 
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
 
         try:
             self._sh = sh
@@ -110,7 +108,12 @@ class ZWave(SmartPlugin):
         self.alive = True
 
         try:
-            options = ZWaveOption(self._device, config_path=self._config_path, user_path='./var/ozw', cmd_line='')
+            options = ZWaveOption(
+                self._device,
+                config_path=self._config_path,
+                user_path=os.path.join(self._sh.get_vardir(), 'ozw'),
+                cmd_line='',
+            )
         except Exception as e:
             self.logger.error('error on create ZWaveOption - {}'.format(e))
             self.alive = False

@@ -31,8 +31,6 @@ from lib.model.sdp.globals import (
     SDPConnectionError,
     SDPProtocolError,
     CONN_SER_DIR,
-    PLUGIN_ATTR_CB_ON_CONNECT,
-    PLUGIN_ATTR_CB_ON_DISCONNECT,
     PLUGIN_ATTR_CONNECTION,
     PLUGIN_ATTR_CONN_AUTO_CONN,
     PLUGIN_ATTR_CONN_BINARY,
@@ -42,7 +40,6 @@ from lib.model.sdp.globals import (
     PLUGIN_ATTR_SERIAL_BAUD,
     PLUGIN_ATTR_SERIAL_BSIZE,
     PLUGIN_ATTR_SERIAL_PARITY,
-    PLUGIN_ATTR_SERIAL_PORT,
     PLUGIN_ATTR_SERIAL_STOP,
 )
 from lib.model.sdp.protocol import SDPProtocol
@@ -71,109 +68,87 @@ class SDPProtocolViessmann(SDPProtocol):
     implemented for network access as of this time...
     """
 
-    def __init__(self, data_received_callback, name=None, **kwargs):
+    logger = logging.getLogger(__name__)
 
-        self.logger = logging.getLogger(__name__)
+    CONTROLSETS = {
+        'P300': {
+            'baudrate': 4800,
+            'bytesize': 8,
+            'parity': 'E',
+            'stopbits': 2,
+            'timeout': 0.5,
+            'startbyte': 0x41,
+            'request': 0x00,
+            'response': 0x01,
+            'error': 0x03,
+            'read': 0x01,
+            'write': 0x02,
+            'functioncall': 0x7,
+            'acknowledge': 0x06,
+            'not_initiated': 0x05,
+            'init_error': 0x15,
+            'reset_command': 0x04,
+            'reset_command_response': 0x05,
+            'sync_command': 0x160000,
+            'sync_command_response': 0x06,
+            'command_bytes_read': 5,
+            'command_bytes_write': 5,
+            # init:              send'Reset_Command' receive'Reset_Command_Response' send'Sync_Command'
+            # request:           send('StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Request' 'Read' 'addr' 'checksum')
+            # request_response:  receive('Acknowledge' 'StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Response' 'Read' 'addr' 'Anzahl der Bytes des Wertes' 'Wert' 'checksum')
+        },
+        'KW': {
+            'baudrate': 4800,
+            'bytesize': 8,  # 'EIGHTBITS'
+            'parity': 'E',  # 'PARITY_EVEN',
+            'stopbits': 2,  # 'STOPBITS_TWO',
+            'timeout': 1,
+            'startbyte': 0x01,
+            'read': 0xF7,
+            'write': 0xF4,
+            'acknowledge': 0x01,
+            'reset_command': 0x04,
+            'not_initiated': 0x05,
+            'write_ack': 0x00,
+        },
+    }
 
-        if SDP_standalone:  # noqa: F821
-            self.logger = logging.getLogger('__main__')
-
-        self.logger.debug(f'protocol initializing from {self.__class__.__name__} with arguments {kwargs}')
-
-        # set class properties
-        self._is_connected = False
-        self._lock = threading.Lock()
-        self._is_initialized = False
-        self._data_received_callback = data_received_callback
-
-        # try to assure no concurrent sending is done
-        self._send_lock = threading.Lock()
-        self.use_send_lock = True
-
-        self._controlsets = {
-            'P300': {
-                'baudrate': 4800,
-                'bytesize': 8,
-                'parity': 'E',
-                'stopbits': 2,
-                'timeout': 0.5,
-                'startbyte': 0x41,
-                'request': 0x00,
-                'response': 0x01,
-                'error': 0x03,
-                'read': 0x01,
-                'write': 0x02,
-                'functioncall': 0x7,
-                'acknowledge': 0x06,
-                'not_initiated': 0x05,
-                'init_error': 0x15,
-                'reset_command': 0x04,
-                'reset_command_response': 0x05,
-                'sync_command': 0x160000,
-                'sync_command_response': 0x06,
-                'command_bytes_read': 5,
-                'command_bytes_write': 5,
-                # init:              send'Reset_Command' receive'Reset_Command_Response' send'Sync_Command'
-                # request:           send('StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Request' 'Read' 'addr' 'checksum')
-                # request_response:  receive('Acknowledge' 'StartByte' 'Länge der Nutzdaten als Anzahl der Bytes zwischen diesem Byte und der Prüfsumme' 'Response' 'Read' 'addr' 'Anzahl der Bytes des Wertes' 'Wert' 'checksum')
-            },
-            'KW': {
-                'baudrate': 4800,
-                'bytesize': 8,  # 'EIGHTBITS'
-                'parity': 'E',  # 'PARITY_EVEN',
-                'stopbits': 2,  # 'STOPBITS_TWO',
-                'timeout': 1,
-                'startbyte': 0x01,
-                'read': 0xF7,
-                'write': 0xF4,
-                'acknowledge': 0x01,
-                'reset_command': 0x04,
-                'not_initiated': 0x05,
-                'write_ack': 0x00,
-            },
-        }
-
-        # get protocol or default to P300
-        self._viess_proto = kwargs.get('viess_proto', 'P300')
-        if self._viess_proto not in self._controlsets:
-            self._viess_proto = 'P300'
-        # select controlset for viess_proto
-        self._controlset = self._controlsets[self._viess_proto]
-
-        # make sure we have a basic set of parameters for the serial connection
-        self._params = {
-            PLUGIN_ATTR_SERIAL_PORT: '',
-            PLUGIN_ATTR_SERIAL_BAUD: self._controlset[PLUGIN_ATTR_SERIAL_BAUD],
-            PLUGIN_ATTR_SERIAL_BSIZE: self._controlset[PLUGIN_ATTR_SERIAL_BSIZE],
-            PLUGIN_ATTR_SERIAL_PARITY: self._controlset[PLUGIN_ATTR_SERIAL_PARITY],
-            PLUGIN_ATTR_SERIAL_STOP: self._controlset[PLUGIN_ATTR_SERIAL_STOP],
-            PLUGIN_ATTR_CONN_TIMEOUT: self._controlset[PLUGIN_ATTR_CONN_TIMEOUT],
+    def _config_defaults(self, config):
+        controlset = self.CONTROLSETS[self._protocol_name(config)]
+        return {
+            PLUGIN_ATTR_SERIAL_BAUD: controlset[PLUGIN_ATTR_SERIAL_BAUD],
+            PLUGIN_ATTR_SERIAL_BSIZE: controlset[PLUGIN_ATTR_SERIAL_BSIZE],
+            PLUGIN_ATTR_SERIAL_PARITY: controlset[PLUGIN_ATTR_SERIAL_PARITY],
+            PLUGIN_ATTR_SERIAL_STOP: controlset[PLUGIN_ATTR_SERIAL_STOP],
+            PLUGIN_ATTR_CONN_TIMEOUT: controlset[PLUGIN_ATTR_CONN_TIMEOUT],
             PLUGIN_ATTR_CONN_AUTO_CONN: True,
             PLUGIN_ATTR_CONN_BINARY: True,
             PLUGIN_ATTR_CONN_RETRIES: 0,
             PLUGIN_ATTR_CONN_CYCLE: 3,
-            PLUGIN_ATTR_CB_ON_CONNECT: None,
-            PLUGIN_ATTR_CB_ON_DISCONNECT: None,
             PLUGIN_ATTR_CONNECTION: CONN_SER_DIR,
         }
-        self._params.update(kwargs)
-        # check if some of the arguments are usable
-        self._set_connection_params()
 
-        if self._params[PLUGIN_ATTR_CB_ON_CONNECT] or self._params[PLUGIN_ATTR_CB_ON_DISCONNECT]:
-            use_callbacks = True
-        else:
-            use_callbacks = False
+    def _protocol_name(self, config):
+        """Configured viess_proto, P300 if unknown."""
+        name = config.extra.get('viess_proto', 'P300')
+        return name if name in self.CONTROLSETS else 'P300'
 
-        # initialize connection
-        self._get_connection(use_callbacks=use_callbacks, name=name)
+    def _setup(self):
+        self._lock = threading.Lock()
+        self._is_initialized = False
+        self.use_send_lock = True
+
+        self._viess_proto = self._protocol_name(self._config)
+        self._controlset = self.CONTROLSETS[self._viess_proto]
+
+        # metadata resolves 'num' parameters as float
+        self._p300_init_retries = int(self._config.extra.get('p300_init_retries', 10))
+
+        super()._setup()
 
         # set "method pointers"
         self._send_bytes = self._connection._send_bytes
         self._read_bytes = self._connection._read_bytes
-
-        # tell someone about our actual class
-        self.logger.debug(f'protocol initialized from {self.__class__.__name__}')
 
     def _close(self):
         self._is_initialized = False
@@ -207,10 +182,11 @@ class SDPProtocolViessmann(SDPProtocol):
             self.__syncsent = False
             empty_replies = 0
 
-            self.logger.debug(f'send_bytes: send reset command {RESET}')
+            self._connection.reset_input_buffer()
+            self.logger.debug(f'send_bytes: flush input buffer and send reset command {RESET}')
             self._send_bytes(RESET)
 
-            for i in range(10):
+            for i in range(self._p300_init_retries):
                 readbyte = self._read_bytes(1)
                 self.logger.debug(f'read_bytes: read {readbyte}')
 
@@ -243,9 +219,13 @@ class SDPProtocolViessmann(SDPProtocol):
                     self.__syncsent = False
                     empty_replies = 0
 
+                # give the device time to actually process/respond before the next
+                # read, instead of reading back-to-back with no pacing at all
+                sleep(0.15)
+
             if not self._is_initialized:
                 self._close()
-                raise SDPProtocolError('P300 protocol initialization failed after 10 attempts')
+                raise SDPProtocolError(f'P300 protocol initialization failed after {self._p300_init_retries} attempts')
             self.logger.debug('P300 communication initialized successfully')
             return True
 
@@ -327,6 +307,10 @@ class SDPProtocolViessmann(SDPProtocol):
                     return self._parse_response(bytearray(chunk))
 
                 elif self._viess_proto == 'KW':
+                    # chunk was never actually read here before - responselen
+                    # (bytes expected back) is already computed by _build_payload()
+                    chunk = self._read_bytes(responselen)
+                    self.logger.debug(f'received {len(chunk)} bytes: {self._bytes2hexstring(bytearray(chunk))}')
                     if len(chunk) == 0:
                         raise SDPConnectionError('no response from device after KW command')
                     return self._parse_response(bytearray(chunk), data_dict['data']['value'] is None)
