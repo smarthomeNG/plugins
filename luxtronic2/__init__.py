@@ -247,7 +247,7 @@ class LuxBase(SmartPlugin):
 
 class Luxtronic2(LuxBase):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.3'
+    PLUGIN_VERSION = '1.3.4'
 
     _parameter = {}
     _attribute = {}

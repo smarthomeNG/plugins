@@ -12,14 +12,14 @@ def make_two_host_plugin():
 def test_each_host_lists_all_configured_hosts():
     plugin, sh = make_two_host_plugin()
 
-    assert sh.return_item('yamaha.one.available_devices')() == ['127.0.0.1', '127.0.0.2']
-    assert sh.return_item('yamaha.two.available_devices')() == ['127.0.0.1', '127.0.0.2']
+    assert sh.items.return_item('yamaha.one.available_devices')() == ['127.0.0.1', '127.0.0.2']
+    assert sh.items.return_item('yamaha.two.available_devices')() == ['127.0.0.1', '127.0.0.2']
 
 
 def test_removing_a_host_updates_the_remaining_lists():
     plugin, sh = make_two_host_plugin()
 
     for path in ('yamaha.two.available_devices', 'yamaha.two.volume'):
-        plugin.remove_item(sh.return_item(path))
+        plugin.remove_item(sh.items.return_item(path))
 
-    assert sh.return_item('yamaha.one.available_devices')() == ['127.0.0.1']
+    assert sh.items.return_item('yamaha.one.available_devices')() == ['127.0.0.1']

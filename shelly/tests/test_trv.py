@@ -69,22 +69,22 @@ class TestTrvStatus(ShellyTestBase):
     def test_status_sets_measured_temperature(self):
         self.plugin.on_mqtt_gen1_message(f'shellies/{TRV_ID}/status', TRV_STATUS)
 
-        self.assertEqual(self.sh.return_item('trv.temp')(), 20.3)
+        self.assertEqual(self.sh.items.return_item('trv.temp')(), 20.3)
 
     def test_status_sets_target_temperature(self):
         self.plugin.on_mqtt_gen1_message(f'shellies/{TRV_ID}/status', TRV_STATUS)
 
-        self.assertEqual(self.sh.return_item('trv.target_t')(), 20.0)
+        self.assertEqual(self.sh.items.return_item('trv.target_t')(), 20.0)
 
     def test_status_sets_temperature_offset(self):
         self.plugin.on_mqtt_gen1_message(f'shellies/{TRV_ID}/status', {**TRV_STATUS, 'temperature_offset': -1.5})
 
-        self.assertEqual(self.sh.return_item('trv.temperature_offset')(), -1.5)
+        self.assertEqual(self.sh.items.return_item('trv.temperature_offset')(), -1.5)
 
     def test_status_sets_battery_percent(self):
         self.plugin.on_mqtt_gen1_message(f'shellies/{TRV_ID}/status', TRV_STATUS)
 
-        self.assertEqual(self.sh.return_item('trv.battery')(), 99)
+        self.assertEqual(self.sh.items.return_item('trv.battery')(), 99)
 
 
 class TestTrvInfo(ShellyTestBase):
@@ -107,13 +107,13 @@ class TestTrvInfo(ShellyTestBase):
             'schedule': True,
             'schedule_profile': 3,
         }
-        actual = {name: self.sh.return_item(f'trv.{name}')() for name in expected}
+        actual = {name: self.sh.items.return_item(f'trv.{name}')() for name in expected}
         self.assertEqual(actual, expected)
 
     def test_info_sets_battery_percent(self):
         self.publish_info()
 
-        self.assertEqual(self.sh.return_item('trv.battery')(), 99)
+        self.assertEqual(self.sh.items.return_item('trv.battery')(), 99)
 
 
 class TestTrvPayloadsAreRecognized(ShellyTestBase):

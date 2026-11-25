@@ -22,6 +22,7 @@
 #########################################################################
 
 from lib.model.smartplugin import SmartPlugin
+from lib.network import Http
 import urllib.request
 import json
 import time
@@ -38,7 +39,7 @@ class Kostal(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
 
-    PLUGIN_VERSION = '1.3.3'
+    PLUGIN_VERSION = '2.0.0'
 
     _key2json = {
         'operation_status': 16780032,
@@ -147,7 +148,7 @@ class Kostal(SmartPlugin):
         if self.has_iattr(item.conf, 'kostal'):
             setting = self.get_iattr_value(item.conf, 'kostal')
             if setting in self._deprecated:
-                self.logger.warn(
+                self.logger.warning(
                     'Kostal: Using deprecated setting {}, please change to {}'.format(
                         setting, self._deprecated[setting]
                     )
@@ -159,7 +160,8 @@ class Kostal(SmartPlugin):
     def _html(self):
         # HTML-OLD-Coding
         try:
-            data = self._sh.tools.fetch_url('http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
+            auth = (self.user, self.passwd) if self.user and self.passwd else None
+            data = Http().get_binary('http://' + self.ip + '/', auth=auth, timeout=2, require_ok=True).decode()
             # remove all attributes for easy findall()
             data = re.sub(r'<([a-zA-Z0-9]+)(\s+[^>]*)>', r'<\1>', data)
             # search all TD elements

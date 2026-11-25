@@ -29,7 +29,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class LevelJet(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '2.0.0'
 
     _ljetdata = ['dist', 'level', 'liter', 'percent', 'outflags']
 

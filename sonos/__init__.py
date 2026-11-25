@@ -242,7 +242,7 @@ class SubscriptionHandler(object):
                 try:
                     self._event.auto_renew_fail = renew_error_callback
                     self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
-                    self._thread.setDaemon(True)
+                    self._thread.daemon = True
                     self._thread.start()
                     self.logger.debug('start subscribe finished successfully')
                     if not self._thread.is_alive():
@@ -458,9 +458,9 @@ class Speaker(object):
             try:
                 coordinator_uid = self.soco.group.coordinator.uid.lower()
             except Exception as e:
-                self.logger.error(f"soco setter exception occurred: {e}, value {value}")
+                self.logger.error(f'soco setter exception occurred: {e}, value {value}')
                 coordinator_uid = None
-            finally: 
+            finally:
                 self.coordinator = coordinator_uid
 
             self.uid = self.soco.uid.lower()
@@ -3100,7 +3100,7 @@ class Sonos(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff
     """
 
-    PLUGIN_VERSION = '1.8.11'
+    PLUGIN_VERSION = '1.8.12'
 
     def __init__(self, sh):
         """Initializes the plugin."""

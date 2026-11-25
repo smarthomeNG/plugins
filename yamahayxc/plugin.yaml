@@ -69,7 +69,7 @@ plugin:
     keywords: iot yxc yamaha media musiccast
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
     version: 2.3.1                 # Plugin version
-    sh_minversion: '1.12.2.2'             # minimum shNG version to use this plugin
+    sh_minversion: '2.0.0'                   # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: true
     classname: YamahaYXC              # class containing the plugin
@@ -86,8 +86,8 @@ parameters:
         type: str
         default: ''
         description:
-            de: 'Medienserver für die Suche (Item search): Name des UPnP-Medienservers (friendlyName, wird per SSDP gesucht) oder die URL seiner Gerätebeschreibung (http://...). Leer schaltet die Suche ab.'
-            en: 'Media server for the search (item search): UPnP media server name (friendlyName, found via SSDP) or the URL of its device description (http://...). Empty disables the search.'
+            de: 'Nur für die Titel- und Albumsuche (Item search) nötig: Name des UPnP-Medienservers, wie ihn die MusicCast-App in der Server-Liste anzeigt (z.B. Musikserver), oder die Adresse seiner Gerätebeschreibung (http://.../desc.xml). Leer schaltet die Suche ab. Siehe Abschnitt "Titel- und Albumsuche im Medienserver" in der Benutzerdokumentation.'
+            en: 'Only needed for the title and album search (item search): name of the UPnP media server as shown in the MusicCast app server list (e.g. Musikserver), or the URL of its device description (http://.../desc.xml). Empty disables the search. See the section "Titel- und Albumsuche im Medienserver" of the user documentation.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)

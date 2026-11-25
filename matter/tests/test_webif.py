@@ -7,6 +7,7 @@ templates), the action table, and the auto-update payload - with device
 data from a WsPeer standing in for matter-server.
 """
 
+import dataclasses
 import json
 import os
 import unittest
@@ -96,6 +97,29 @@ class TestEscaping(_WebifTest):
 
         self.assertTrue(calls)
         self.assertFalse([line for line in calls if 'true' in line.split('shngInsertText(', 1)[1]])
+
+
+class TestCreateItemButton(_WebifTest):
+    def test_tooltip_names_the_target_item_and_file(self):
+        server = self.plugin.server
+        server.settings = dataclasses.replace(
+            server.settings, generated_items_base='rf.matter', generated_items_file='rf.yaml'
+        )
+
+        html = self.webif._render_server({})
+
+        button = next(line for line in html.splitlines() if "nodeAction('create_item_node_id'" in line)
+        self.assertIn('rf.matter', button)
+        self.assertIn('items/rf.yaml', button)
+
+    def test_tooltip_appends_the_yaml_extension(self):
+        server = self.plugin.server
+        server.settings = dataclasses.replace(server.settings, generated_items_file='matter_devices')
+
+        html = self.webif._render_server({})
+
+        button = next(line for line in html.splitlines() if "nodeAction('create_item_node_id'" in line)
+        self.assertIn('items/matter_devices.yaml', button)
 
 
 class TestActions(_WebifTest):

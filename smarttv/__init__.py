@@ -36,8 +36,9 @@ from websocket import create_connection
 
 from .webif import WebInterface
 
+
 class SmartTV(SmartPlugin):
-    PLUGIN_VERSION = '1.4.0'
+    PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = True
 
     def __init__(self, sh, **kwargs):
@@ -55,8 +56,6 @@ class SmartTV(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
@@ -78,7 +77,7 @@ class SmartTV(SmartPlugin):
         self._remote_control_name = self.get_parameter_value('remote_control_name')
         self._remote_control_app_name = self.get_parameter_value('remote_control_app_name')
         self._tv_name = self.get_parameter_value('tv_name')
-        
+
         if self._tv_version not in ['samsung_m_series', 'classic']:
             self.logger.error('No valid tv_version attribute specified to plugin')
             self._init_complete = False
@@ -90,7 +89,6 @@ class SmartTV(SmartPlugin):
         #
         # if not self.init_webinterface():
         #     self._init_complete = False
-
 
     def run(self):
         """
@@ -147,13 +145,11 @@ class SmartTV(SmartPlugin):
 
             return self.update_item
 
-
     def parse_logic(self, logic):
         """
         Default plugin parse_logic method
         """
         pass
-
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -209,7 +205,6 @@ class SmartTV(SmartPlugin):
                         elif self._tv_version == 'samsung_m_series':
                             self.push_samsung_m_series(key)
 
-
     def push_samsung_m_series(self, key):
         """
         | Pushes a key (as string) to a websocket connection
@@ -219,10 +214,14 @@ class SmartTV(SmartPlugin):
         try:
             ws = create_connection(f'ws://{self._host}:{self._port}/api/v2/channels/samsung.remote.control')
         except Exception as e:
-            self.logger.error(f'Could not connect to ws://{self._host}:{self._port}/api/v2/channels/samsung.remote.control, to send key: {key}. Exception: {e}')
+            self.logger.error(
+                f'Could not connect to ws://{self._host}:{self._port}/api/v2/channels/samsung.remote.control, to send key: {key}. Exception: {e}'
+            )
             return
         cmd = f'{{"method":"ms.remote.control","params":{{"Cmd":"Click","DataOfCmd":"{key}","Option":"false","TypeOfRemote":"SendRemoteKey"}}}}'
-        self.logger.debug(f'Sending {cmd} via websocket connection to ws://{self._host}:{self._port}/api/v2/channels/samsung.remote.control')
+        self.logger.debug(
+            f'Sending {cmd} via websocket connection to ws://{self._host}:{self._port}/api/v2/channels/samsung.remote.control'
+        )
         ws.send(cmd)
         ws.close()
 
@@ -293,7 +292,6 @@ class SmartTV(SmartPlugin):
                 pass
         self.logger.debug('Send {0} to Smart TV'.format(key))
         time.sleep(0.1)
-
 
     def _int_to_words(self, int_val, word_size, num_words):
         max_int = 2 ** (num_words * word_size) - 1

@@ -88,7 +88,7 @@ class kodi(SmartDevicePlugin):
           another place, in ``commands.py`` and/or the item configuration.
     """
 
-    PLUGIN_VERSION = '1.7.3'
+    PLUGIN_VERSION = '2.0.0'
 
     TRANSPORTS = (TransportRule(CONN_NET_TCP_CLI, requires='host'),)
     PROTOCOL = PROTO_JSONRPC

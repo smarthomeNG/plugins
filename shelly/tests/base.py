@@ -69,7 +69,7 @@ class ShellyTestBase(unittest.TestCase):
         plugin._init_complete = True
         plugin.__init__(self.sh)
         plugin.alive = True
-        self.gaps = {item.property.path: GapRecorder(item) for item in self.sh.return_items()}
-        for item in self.sh.return_items():
+        self.gaps = {item.property.path: GapRecorder(item) for item in self.sh.items.return_items()}
+        for item in self.sh.items.return_items():
             plugin.parse_item(item)
         return plugin

@@ -24,7 +24,7 @@ def setup(first_features):
 @pytest.mark.parametrize('answer', UNUSABLE)
 def test_unusable_answer_keeps_the_known_capabilities(answer):
     device, network, plugin, sh = setup(GOOD)
-    input_sources = sh.return_item('yamaha.dev.main.input_sources')
+    input_sources = sh.items.return_item('yamaha.dev.main.input_sources')
     device.features = answer
 
     with network.active():
@@ -49,7 +49,7 @@ def test_usable_answer_replaces_the_known_capabilities():
     with network.active():
         plugin._update_features(HOST)
 
-    assert list(sh.return_item('yamaha.dev.main.input_sources')()) == ['bluetooth']
+    assert list(sh.items.return_item('yamaha.dev.main.input_sources')()) == ['bluetooth']
 
 
 def get_features_calls(device):
@@ -58,7 +58,7 @@ def get_features_calls(device):
 
 def test_poll_fetches_capabilities_missing_after_a_failed_startup():
     device, network, plugin, sh = setup({'response_code': 5})
-    input_sources = sh.return_item('yamaha.dev.main.input_sources')
+    input_sources = sh.items.return_item('yamaha.dev.main.input_sources')
     assert HOST not in plugin._yamaha_features
     device.features = GOOD
 

@@ -6,10 +6,10 @@ plugin:
     tester: Morg
     state: develop
     keywords: iot device av epson sdp
-    version: 1.0.0
-    sh_minversion: '1.9.5'
+    version: 2.0.0
+    sh_minversion: '2.0.0'
     sdp_minversion: '2.0.0'
-    py_minversion: '3.7'
+#   py_minversion:
     multi_instance: false
     restartable: true
     classname: epson

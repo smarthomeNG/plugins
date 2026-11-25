@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = '2.0.7'
+    PLUGIN_VERSION = '2.1.0'
 
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -92,8 +92,10 @@ class TankerKoenig(SmartPlugin):
             self.scheduler_add('update_status_data', self.update_status_data, cycle=self.price_update_cycle)
 
         # create scheduler for detailed data updates
-        if not self.details_update_cycle == 'disabled': 
-            _cycle = {'daily': 24 * 60 * 60, 'weekly': 7 * 24 * 60 * 60, 'monthly': 30.5 * 24 * 60 * 60}[self.details_update_cycle]
+        if not self.details_update_cycle == 'disabled':
+            _cycle = {'daily': 24 * 60 * 60, 'weekly': 7 * 24 * 60 * 60, 'monthly': 30.5 * 24 * 60 * 60}[
+                self.details_update_cycle
+            ]
             self.scheduler_add('update_detail_data', self.update_detail_data, cron='init+30', cycle=_cycle)
 
         self.alive = True
@@ -106,7 +108,7 @@ class TankerKoenig(SmartPlugin):
         self.logger.debug('Stop method called')
         if self.price_update_cycle > 0:
             self.scheduler_remove('update_status_data')
-        if not self.details_update_cycle == 'disabled': 
+        if not self.details_update_cycle == 'disabled':
             self.scheduler_remove('update_detail_data')
 
         self.alive = False
@@ -472,7 +474,7 @@ class TankerKoenig(SmartPlugin):
             return {}
 
     def _request_station_detail(self, station_id: str) -> dict:
-        """
+        r"""
         Returns detail information for a petrol station id
         Should not be used extensively, due to performance issues on tankerkoenig side.
         https://creativecommons.tankerkoenig.de/#techInfo
@@ -548,7 +550,7 @@ class TankerKoenig(SmartPlugin):
             return {}
 
     def _request_station_prices(self, station_ids: list):
-        """
+        r"""
         Returns a json object with prices for an array of petrol station ids
 
         Recommended to be used by tankerkoenig team due to performance issues!!!

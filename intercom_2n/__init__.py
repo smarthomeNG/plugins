@@ -32,7 +32,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 class Intercom2n(SmartPlugin):
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '1.4.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
@@ -74,7 +74,7 @@ class Intercom2n(SmartPlugin):
         ]
         self.registered_events = {}
         self.get_event_thread = threading.Thread(target=self.get_events)
-        self.get_event_thread.setDaemon(True)
+        self.get_event_thread.daemon = True
 
     def get_events(self):
 

@@ -61,17 +61,13 @@ class THZ(SmartPlugin):
     Class THZ implements main control instance
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
         server_port = 57483
         """
         super().__init__()
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.debug('init {}'.format(__name__))
         self._init_complete = False

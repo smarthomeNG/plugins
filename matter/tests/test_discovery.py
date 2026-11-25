@@ -6,7 +6,7 @@ is a trimmed-down version of the real attribute shape returned by
 matter-server's get_nodes(), captured from a real device, not fabricated.
 """
 
-import ruamel.yaml as yaml  # not pyyaml - see discovery.py's import comment
+from ruamel.yaml import YAML
 
 from plugins.matter.server.discovery import (
     build_suggested_items,
@@ -81,7 +81,7 @@ def test_generate_suggested_item_combined_device_lists_both_structs_in_cluster_i
     # same endpoint - both are CLUSTER_STRUCTS-covered, so both belong in the struct list, lower
     # cluster_id first.
     text = generate_suggested_item(SAMPLE_NODE)
-    parsed = yaml.safe_load(text)
+    parsed = YAML(typ='safe', pure=True).load(text)
     item = parsed['matter_node_1']
     assert item['struct'] == ['matter.switch', 'matter.electrical_power_measurement']
     assert item['matter_node'] == 1
@@ -92,14 +92,14 @@ def test_generate_suggested_item_ignores_uncovered_cluster():
     # cluster 999 has no CLUSTER_STRUCTS entry - must never show up in the struct list, regardless
     # of what attributes it has.
     text = generate_suggested_item(SAMPLE_NODE)
-    parsed = yaml.safe_load(text)
+    parsed = YAML(typ='safe', pure=True).load(text)
     assert 'matter.cluster_999' not in parsed['matter_node_1']['struct']
     assert all('999' not in ref for ref in parsed['matter_node_1']['struct'])
 
 
 def test_generate_suggested_item_single_covered_cluster_is_a_bare_string_not_a_list():
     node = {'node_id': 2, 'available': True, 'attributes': {'1/6/0': False}}
-    parsed = yaml.safe_load(generate_suggested_item(node))
+    parsed = YAML(typ='safe', pure=True).load(generate_suggested_item(node))
     assert parsed['matter_node_2']['struct'] == 'matter.switch'
 
 
@@ -109,7 +109,7 @@ def test_generate_suggested_item_key_order_is_remark_struct_node_endpoint():
     # matter_endpoint last (Matter-internal plumbing, least relevant to a human scanning the
     # block) - not incidental/alphabetical ordering.
     text = generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
-    parsed = yaml.safe_load(text)
+    parsed = YAML(typ='safe', pure=True).load(text)
     assert list(parsed['matter_node_1'].keys()) == ['remark', 'struct', 'matter_node', 'matter_endpoint']
 
 
@@ -117,14 +117,16 @@ def test_generate_suggested_item_remark_leads_with_function_labels_then_device_l
     # Real feedback: a bare device-name remark didn't say what a given suggestion actually does
     # once there was more than one device/suggestion on the page - function label(s) first, then
     # the device name for disambiguation.
-    parsed = yaml.safe_load(generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)'))
+    parsed = YAML(typ='safe', pure=True).load(
+        generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
+    )
     assert parsed['matter_node_1']['remark'] == 'Schalter, Energiemessung - Shelly Plug M Gen3 (Küche)'
 
 
 def test_generate_suggested_item_no_device_label_still_has_function_label_remark():
     # remark is no longer conditional on device_label - the function label(s) are always known
     # here, so remark is always set, just without the trailing device name.
-    parsed = yaml.safe_load(generate_suggested_item(SAMPLE_NODE))
+    parsed = YAML(typ='safe', pure=True).load(generate_suggested_item(SAMPLE_NODE))
     assert parsed['matter_node_1']['remark'] == 'Schalter, Energiemessung'
 
 
@@ -147,7 +149,7 @@ def test_build_suggested_items_no_covered_clusters_returns_none():
 def test_generate_suggested_item_is_build_suggested_items_dumped_to_yaml():
     text = generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
     items = build_suggested_items(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
-    assert yaml.safe_load(text) == items
+    assert YAML(typ='safe', pure=True).load(text) == items
 
 
 def test_generate_suggested_item_covered_clusters_on_different_endpoints_produce_one_block_each():
@@ -157,7 +159,7 @@ def test_generate_suggested_item_covered_clusters_on_different_endpoints_produce
     # switch bridge fixture below) - each covered endpoint gets its own item block, keyed uniquely
     # since matter_node_4 alone would collide.
     node = {'node_id': 4, 'available': True, 'attributes': {'1/6/0': False, '2/144/8': 0}}
-    parsed = yaml.safe_load(generate_suggested_item(node))
+    parsed = YAML(typ='safe', pure=True).load(generate_suggested_item(node))
     assert set(parsed.keys()) == {'matter_node_4_ep1', 'matter_node_4_ep2'}
     assert parsed['matter_node_4_ep1']['struct'] == 'matter.switch'
     assert parsed['matter_node_4_ep1']['matter_endpoint'] == 1
@@ -178,7 +180,9 @@ def test_generate_suggested_item_real_ikea_timmerflotte_temperature_and_humidity
             '2/1029/0': 2681,
         },
     }
-    parsed = yaml.safe_load(generate_suggested_item(node, device_label='TIMMERFLOTTE temp/hmd sensor'))
+    parsed = YAML(typ='safe', pure=True).load(
+        generate_suggested_item(node, device_label='TIMMERFLOTTE temp/hmd sensor')
+    )
     assert set(parsed.keys()) == {'matter_node_8_ep0', 'matter_node_8_ep1', 'matter_node_8_ep2'}
     assert parsed['matter_node_8_ep0']['struct'] == 'matter.battery'
     assert parsed['matter_node_8_ep1']['struct'] == 'matter.temperature_sensor'
@@ -190,7 +194,7 @@ def test_generate_suggested_item_bridge_with_three_single_cluster_endpoints():
     # on its own endpoint (bridge.js's BridgedDeviceBasicInformationServer + one device-type cluster
     # per endpoint) - matches what a real matter2 bridge test instance produced.
     node = {'node_id': 14, 'available': True, 'attributes': {'2/6/0': False, '3/69/0': False, '4/1026/0': 2150}}
-    parsed = yaml.safe_load(generate_suggested_item(node))
+    parsed = YAML(typ='safe', pure=True).load(generate_suggested_item(node))
     assert set(parsed.keys()) == {'matter_node_14_ep2', 'matter_node_14_ep3', 'matter_node_14_ep4'}
     assert parsed['matter_node_14_ep2']['struct'] == 'matter.switch'
     assert parsed['matter_node_14_ep3']['struct'] == 'matter.contact'

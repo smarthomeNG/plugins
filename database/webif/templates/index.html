@@ -462,7 +462,7 @@
 					</td>
 					<td>{{ p._maxage.action_for(item) }}</td>
 					<td>
-						{% if adminui_url %}
+						{% if adminui_url is not none %}
 							<a class="btn btn-shng btn-sm" href="{{ adminui_url }}/items?select={{ item.property.path | urlencode }}" target="_blank"><i class="fas fa-pen"></i></a>
 						{% endif %}
 					</td>
@@ -488,7 +488,7 @@
 					<td></td>
 					<td>{{ item.property.path }}</td>
 					<td>
-						{% if adminui_url %}
+						{% if adminui_url is not none %}
 							<a class="btn btn-shng btn-sm" href="{{ adminui_url }}/items?select={{ item.property.path | urlencode }}" target="_blank"><i class="fas fa-pen"></i></a>
 						{% endif %}
 					</td>

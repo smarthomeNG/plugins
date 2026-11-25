@@ -7,11 +7,14 @@ select, the last entry is played. The path's position hints make this one
 list request per layer; if a hint is missing or wrong the layer is scanned.
 """
 
+import logging
 from collections.abc import Callable
 from typing import NamedTuple, Protocol
 
 from .compat import StrEnum
 from .query import HitKind
+
+logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 8
 MAX_RETURNS = 16
@@ -109,7 +112,10 @@ def replay(hit: Hit, cursor: ListCursor, cancelled: Callable[[], bool]) -> Repla
             page = cursor.page(aligned)
         index = _locate(step, page, cursor, cancelled)
         if index is None:
-            return ReplayResult.CANCELLED if cancelled() else ReplayResult.PATH_FAILED
+            if cancelled():
+                return ReplayResult.CANCELLED
+            logger.warning(f'media search: device has no entry {step.text!r} in layer {depth}')
+            return ReplayResult.PATH_FAILED
         if depth < last:
             cursor.select(index)
             page = None

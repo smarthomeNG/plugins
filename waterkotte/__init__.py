@@ -22,6 +22,7 @@
 
 import logging
 from lib.model.smartplugin import SmartPlugin
+from lib.network import Http
 import time
 import re
 import base64
@@ -33,7 +34,7 @@ logger = logging.getLogger('')
 class Waterkotte(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '2.0.0'
 
     _key2tag = {
         'temp_aussen': 'A1',
@@ -117,7 +118,7 @@ class Waterkotte(SmartPlugin):
                 self._items.append([item, waterkotte_key])
                 return self.update_item
             else:
-                logger.warn('invalid key {0} configured', waterkotte_key)
+                logger.warning(f'invalid key {waterkotte_key} configured')
         return None
 
     def parse_logic(self, logic):
@@ -131,15 +132,21 @@ class Waterkotte(SmartPlugin):
         start = time.time()
         try:
             # log in to web interface, retrieve Cookie
-            token = self._sh.tools.fetch_url(
-                'http://' + self.ip + '/cgi/login?username=' + self.user + '&password=' + self.passwd, timeout=10
-            ).decode()
-            token = re.search('IDALToken=\w*', token)
+            token = (
+                Http()
+                .get_binary(
+                    'http://' + self.ip + '/cgi/login?username=' + self.user + '&password=' + self.passwd,
+                    timeout=10,
+                    require_ok=True,
+                )
+                .decode()
+            )
+            token = re.search(r'IDALToken=\w*', token)
             token = token.group(0)
 
             # first of all check and if required set D634 to show total consumption instead of annual
             data2 = self.fetch_url_cookie('http://' + self.ip + '/cgi/readTags?&n=1&t1=D634', token).decode()
-            data2 = re.sub('#\w*\tS_OK\n\w*\t', '', data2)
+            data2 = re.sub('#\\w*\tS_OK\n\\w*\t', '', data2)
             data2 = re.sub('\n', '', data2)
             # if D634 is not set, set it and skip this cycle --- note: updated readings may take 30s or longer!
             if int(data2) == 0:
@@ -153,7 +160,7 @@ class Waterkotte(SmartPlugin):
                 data2 = self.fetch_url_cookie(
                     'http://' + self.ip + '/cgi/readTags?&n=1&t1=' + self._key2tag[waterkotte_key], token
                 ).decode()
-                data2 = re.sub('#\w*\tS_OK\n\w*\t', '', data2)
+                data2 = re.sub('#\\w*\tS_OK\n\\w*\t', '', data2)
                 data2 = re.sub('\n', '', data2)
 
                 # do not convert values that are tagged as "noconv"
@@ -175,7 +182,7 @@ class Waterkotte(SmartPlugin):
         self.cycletime = cycletime
         logger.debug('cycle takes {0} seconds'.format(cycletime))
 
-    # this is fetch_url from lib/tools.py, extended to use the Cookie 'token' in the http request
+    # fetches a url with the Cookie 'token' in the http request
     def fetch_url_cookie(self, url, token, username=None, password=None, timeout=10):
         headers = {'Accept': 'text/plain'}
         headers['Cookie'] = token

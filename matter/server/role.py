@@ -789,6 +789,10 @@ class ServerRole(SidecarRole[MatterServerClient]):
         node = self._node(node_id)
         return generate_suggested_item(node, device_label(node_summary(node)), self.host.get_instance_name())
 
+    def generated_items_file(self) -> str:
+        """Basename (without extension) of the items file create_suggested_items() writes to."""
+        return shyaml.strip_yaml_extension(self.settings.generated_items_file)
+
     def create_suggested_items(self, node_id: int) -> list[str]:
         """
         Create the suggestion for one node as real items under the configured
@@ -801,7 +805,7 @@ class ServerRole(SidecarRole[MatterServerClient]):
         items = build_suggested_items(node, device_label(node_summary(node)), self.host.get_instance_name())
         if items is None:
             raise ValueError('no suggested item for this device')
-        filename = shyaml.strip_yaml_extension(self.settings.generated_items_file)
+        filename = self.generated_items_file()
         paths = {f'{self.settings.generated_items_base}.{key}': config for key, config in items.items()}
         for path in paths:
             if self.host.items.return_item(path) is not None:

@@ -20,7 +20,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import socket
 
 from io import StringIO
@@ -56,16 +55,11 @@ class Mcast(socket.socket):
 
 
 class Yamaha(SmartPlugin):
-    PLUGIN_VERSION = '1.0.3'
+    PLUGIN_VERSION = '1.0.4'
 
     def __init__(self, smarthome):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.info('Init Yamaha')
         self._yamaha_cmds = ['state', 'power', 'input', 'volume', 'mute']
@@ -116,7 +110,7 @@ class Yamaha(SmartPlugin):
             # self.logger.debug("Received '{}' from {}".format(notification,addr))
             if self.mcast_service in notification:
                 if host not in list(self._yamaha_rxv.keys()):
-                    self.logger.warn('Yamaha received notify from unknown host {}'.format(host))
+                    self.logger.warning('Yamaha received notify from unknown host {}'.format(host))
                 else:
                     self.logger.info('Yamaha multicast received {} bytes from {}'.format(len(data), host))
                     self.logger.debug(data)
@@ -135,7 +129,7 @@ class Yamaha(SmartPlugin):
                                 elif event.lower() in self._yamaha_ignore_cmds:
                                     self.logger.debug('Yamaha ignoring command {}.'.format(event))
                                 else:
-                                    self.logger.warn('Yamaha unsupported notify command.')
+                                    self.logger.warning('Yamaha unsupported notify command.')
                 self.logger.debug('Yamaha sending ack to {}:{}'.format(host, port))
                 self.sock.sendto(b'ack', addr)
         else:
@@ -377,12 +371,12 @@ class Yamaha(SmartPlugin):
             response = res.text
             del res
             if response == '':
-                self.logger.warn('No response received.')
+                self.logger.warning('No response received.')
             else:
                 self.logger.debug("Response received: '{}'".format(response))
             return response
         else:
-            self.logger.warn('No payload given')
+            self.logger.warning('No payload given')
             return None
 
     def _lookup_host(self, item):

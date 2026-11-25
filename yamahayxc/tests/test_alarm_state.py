@@ -18,7 +18,7 @@ def test_alarm_items_receive_the_alarm_state():
 
     plugin, sh = make_plugin('items_alarm.yaml', FakeNetwork({'127.0.0.1': one, '127.0.0.2': two}))
 
-    assert sh.return_item('yamaha.one.alarm_on')() is True
+    assert sh.items.return_item('yamaha.one.alarm_on')() is True
 
 
 def test_unexpected_alarm_response_does_not_stop_other_hosts_initializing():
@@ -27,7 +27,7 @@ def test_unexpected_alarm_response_does_not_stop_other_hosts_initializing():
 
     plugin, sh = make_plugin('items_alarm.yaml', FakeNetwork({'127.0.0.1': one, '127.0.0.2': two}))
 
-    assert sh.return_item('yamaha.two.volume')() == 30
+    assert sh.items.return_item('yamaha.two.volume')() == 30
 
 
 def test_alarm_is_not_polled_for_hosts_without_alarm_items():

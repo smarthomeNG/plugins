@@ -49,7 +49,7 @@ class mieleathome(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '1.1.3'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '2.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):
@@ -111,7 +111,7 @@ class mieleathome(SmartPlugin):
 
         # if plugin should start even without web interface
         self.init_webinterface(WebInterface)
-        
+
         return
 
     def run(self):
@@ -458,7 +458,7 @@ class mieleathome(SmartPlugin):
             if self.has_iattr(item.conf, 'miele_command') and item():
                 deviceId = self.miele_device_by_action[item.property.path]
                 myPayload = json.loads(item.conf['miele_command'])
-                
+
                 if self.putCommand2Device(deviceId, myPayload):
                     myPayload = self._getActions4Device(deviceId)
                     if myPayload is not None:
@@ -550,7 +550,7 @@ class mieleathome(SmartPlugin):
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.sh.items.find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional

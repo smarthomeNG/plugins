@@ -14,7 +14,7 @@ from plugins.database.tests.base import TestDatabaseBase
 class TestNativeCaggView(TestDatabaseBase):
     def test_none_when_mode_is_plugin(self):
         plugin = self.plugin()  # mode defaults to 'plugin'
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 30
         plugin._items_with_maxage = [item]
         self.assertIsNone(plugin._native_cagg_view(item))
@@ -22,14 +22,14 @@ class TestNativeCaggView(TestDatabaseBase):
     def test_none_when_item_not_relevant(self):
         plugin = self.plugin()
         plugin._timescale_native_aggregation = True
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         plugin._items_with_maxage = []  # item not covered at all
         self.assertIsNone(plugin._native_cagg_view(item))
 
     def test_none_when_action_is_delete(self):
         plugin = self.plugin()
         plugin._timescale_native_aggregation = True
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 30
         item.conf['database_maxage_action'] = 'delete'
         plugin._items_with_maxage = [item]
@@ -38,7 +38,7 @@ class TestNativeCaggView(TestDatabaseBase):
     def test_resolves_cagg_name_from_interval(self):
         plugin = self.plugin()
         plugin._timescale_native_aggregation = True
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 30
         item.conf['database_maxage_action'] = 'avg'
         item.conf['database_maxage_interval'] = '1h'
@@ -55,7 +55,7 @@ class TestNativeCaggSingle(TestDatabaseBase):
         # relevance check still needs the real item object).
         plugin = self.plugin()
         plugin._timescale_native_aggregation = True
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 30
         item.conf['database_maxage_action'] = action
         item.conf['database_maxage_interval'] = interval
@@ -72,7 +72,7 @@ class TestNativeCaggSingle(TestDatabaseBase):
 
     def test_not_applicable_when_item_not_cagg_covered(self):
         plugin = self.plugin()  # mode 'plugin' - no cagg exists at all
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.assertIsNone(plugin._native_cagg_single('avg', 0, 'now', item))
 
     def test_not_applicable_when_no_raw_data_ever_existed(self):
@@ -144,7 +144,7 @@ class TestSingleUsesNativeCaggWhenApplicable(TestDatabaseBase):
     def test_single_returns_cagg_value_directly_when_applicable(self):
         plugin = self.plugin()
         plugin._timescale_native_aggregation = True
-        item_obj = self.sh.return_item('main.num')
+        item_obj = self.sh.items.return_item('main.num')
         item_obj.conf['database_maxage'] = 30
         item_obj.conf['database_maxage_action'] = 'avg'
         item_obj.conf['database_maxage_interval'] = '1h'

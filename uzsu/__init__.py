@@ -25,52 +25,86 @@
 
 # Item Data Format
 #
-# Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs.
-# Here are the possible keys and their purpose:
+# Each UZSU item is of type dict. Keys set by the user or the visu:
 #
-#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm.
-#               Important e.g. for FREQ=MINUTELY rrules (optional).
+#     active:   True if the UZSU is evaluated, False if not (default False).
 #
-#     value:    the value which will be set to the item.
+#     once:     True deactivates the whole UZSU after its first non-interpolated switching (optional).
 #
-#     active:   True if the entry is activated, False if not.
-#               A deactivated entry is stored to the database but doesn't trigger the setting of the value.
-#               It can be enabled later with the update method.
+#     list:     list of switching entries, each a dict (default []).
 #
-#     time:     time as string
+#     interpolation: dict with keys
+#                  type:        'none' (default), 'linear' or 'cubic'
+#                  interval:    minutes between interpolated values (default: plugin parameter interpolation_interval)
+#                  initage:     minutes to look back for missed entries at plugin start (default: plugin parameter backintime)
+#                  perday:      True uses only today's entries for interpolation (default False)
+#                  initialized: set by the plugin, reset to False at plugin start
+#                  itemtype:    set by the plugin, type of the item to be switched
+#
+# Keys of a list entry:
+#
+#     value:    the value which will be set to the item (mandatory).
+#
+#     active:   True if the entry is activated, False if not (mandatory).
+#               A deactivated entry is stored but doesn't trigger the setting of the value.
+#
+#     time:     time as string (mandatory)
 #               A) regular time expression like 17:00
-#               B) to use sunrise/sunset arithmetics like in the crontab
+#               B) sunrise/sunset with optional offset and bounds: '[H:M<](sunrise|sunset)[+|-offset][<H:M]',
+#                  offset in degrees, or in minutes with suffix 'm'
 #                  examples:
-#                     17:00<sunset
-#                     sunrise>8:00
-#                     17:00<sunset.
-#               C) 'serie' to indicate the use of a time series; definition of a
-#                   time series is mandatory using dict key 'series'
+#                     sunset
+#                     sunrise+30m
+#                     sunset-6
+#                     06:00<sunrise<08:00
+#               C) 'series' to indicate the use of a time series; definition of a
+#                  time series is mandatory using dict key 'series'
 #
-#     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin',
-#               'timeSeriesMax', 'timeSeriesIntervall'
+#     series:   definition of the time series as dict using keys 'timeSeriesMin', 'timeSeriesMax'
+#               or 'timeSeriesCount', and 'timeSeriesIntervall'; 'timeSeriesMin' and 'timeSeriesMax' also accept
+#               sunrise/sunset expressions
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesMax":"15:30",
 #                                 "timeSeriesIntervall":"01:00"}
-#               alternative to 'timeSeriesMax', which indicated the end time of the time series, the key 'timeSeriesCount'
-#               can be used to define the number of cycles to be run
+#               alternative to 'timeSeriesMax', which indicates the end time of the time series, the key
+#               'timeSeriesCount' defines the number of cycles to be run
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesCount":"4",
 #                                 "timeSeriesIntervall":"01:00"}
+#               'active' inside 'series' is not evaluated by the plugin.
 #
+#     rrule:    recurrence rule as documented in the iCalendar RFC (optional, see dateutil.rrule).
+#               An empty rrule is replaced by 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'.
 #
-#     rrule:    You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
+#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm.
+#               Important e.g. for FREQ=MINUTELY rrules (optional).
 #
-#     holidays: combines the rrule weekdays with the core holiday calendar (series: 'seriesCalculated' ignores it):
-#                  'exclude': no switching on holidays
-#                  'include': switching on the rrule weekdays and additionally on holidays
-#                  'only':    switching on holidays only
+#     once:     True deactivates the entry after its first switching; a series after its last one (optional).
 #
-#     holidays_scope: 'all' (default) uses public and custom holidays, 'public' uses public holidays only.
+#     holidays: dict combining the rrule weekdays with the core holiday calendar (series: 'seriesCalculated'
+#               ignores it), default {'mode': 'ignore', 'scope': 'all'}
+#                  mode:  'ignore':  rrule weekdays unchanged
+#                         'exclude': rrule weekdays without holidays
+#                         'include': rrule weekdays and additionally holidays
+#                         'only':    holidays only, rrule weekdays are ignored
+#                  scope: 'all' uses public and custom holidays, 'public' uses public holidays only
+#               Without rrule, a daily recurrence applies. At plugin start and on every item update, a missing
+#               'holidays' gets the default, a missing scope gets 'all', and the flat keys 'holidays' (mode string)
+#               and 'holidays_scope' are converted to this dict.
+#
+# Keys written by the plugin:
+#
+#     plugin_version:   version of the plugin that last wrote the dict
+#     sunrise, sunset:  today's sunrise/sunset as 'HH:MM'
+#     SunCalculated:    {'sunrise': {'MO': 'HH:MM', ...}, 'sunset': {'MO': 'HH:MM', ...}} for the next 7 days
+#     list entries:
+#         calculated:       resolved time 'HH:MM' of a sunrise/sunset entry
+#         activeToday:      True if the entry switched today
+#         seriesCalculated: list of {'seriesMin', 'seriesMax', 'seriesDay', 'maxCountCalculated'} for the next 7 days
 #
 # Example
 #
@@ -88,7 +122,9 @@ from lib.shtime import Shtime
 
 from datetime import datetime, timedelta
 from time import sleep
-from dateutil.rrule import rrulestr, rruleset
+from collections.abc import Callable, Iterable
+from typing import Literal, NotRequired, TypedDict, TypeGuard
+from dateutil.rrule import rrulebase, rrulestr, rruleset
 from dateutil import parser
 from dateutil.tz import tzutc
 from unittest import mock
@@ -99,7 +135,116 @@ from .webif import WebInterface
 
 ITEM_TAG = ['uzsu_item']
 PLUGIN_TAG = 'UZSU Plugin'
-HOLIDAY_MODES = ('exclude', 'include', 'only')
+HolidayMode = Literal['ignore', 'exclude', 'include', 'only']
+HOLIDAY_MODES: tuple[HolidayMode, ...] = ('ignore', 'exclude', 'include', 'only')
+
+
+class HolidaySpec(TypedDict):
+    """Value of a list entry's ``holidays`` key."""
+
+    mode: HolidayMode
+    scope: NotRequired[Literal['all', 'public']]
+
+
+HolidayCombiner = Callable[[rrulebase, list[datetime]], rruleset]
+"""Combines an rrule with holiday datetimes (at the rrule's time of day) into an rruleset."""
+
+
+def _holiday_ruleset(
+    rule: rrulebase | None = None, rdates: Iterable[datetime] = (), exdates: Iterable[datetime] = ()
+) -> rruleset:
+    """Returns an rruleset of the optional ``rule`` plus ``rdates`` minus ``exdates``."""
+    ruleset = rruleset()
+    if rule is not None:
+        ruleset.rrule(rule)
+    for day in rdates:
+        ruleset.rdate(day)
+    for day in exdates:
+        ruleset.exdate(day)
+    return ruleset
+
+
+def _exclude_holidays(rule: rrulebase, holidays: list[datetime]) -> rruleset:
+    """Occurrences of ``rule`` except on holidays."""
+    return _holiday_ruleset(rule, exdates=holidays)
+
+
+def _include_holidays(rule: rrulebase, holidays: list[datetime]) -> rruleset:
+    """Occurrences of ``rule`` and additionally all holidays."""
+    return _holiday_ruleset(rule, rdates=holidays)
+
+
+def _only_holidays(rule: rrulebase, holidays: list[datetime]) -> rruleset:
+    """All holidays, independent of ``rule``."""
+    return _holiday_ruleset(rdates=holidays)
+
+
+def _restrict_to_holidays(rule: rrulebase, holidays: list[datetime]) -> rruleset:
+    """
+    Occurrences of ``rule`` that fall on a holiday, at the occurrence's own time.
+
+    Not mapped to a mode keyword in :data:`HOLIDAY_COMBINERS`.
+    """
+    on_holidays = []
+    for day in holidays:
+        occurrence = rule.after(datetime.combine(day.date(), datetime.min.time()), inc=True)
+        if occurrence is not None and occurrence.date() == day.date():
+            on_holidays.append(occurrence)
+    return _holiday_ruleset(rdates=on_holidays)
+
+
+HOLIDAY_COMBINERS: dict[HolidayMode, HolidayCombiner] = {
+    'exclude': _exclude_holidays,
+    'include': _include_holidays,
+    'only': _only_holidays,
+}
+"""Combiner per ``holidays`` mode; mode ``ignore`` leaves the rrule unchanged."""
+
+
+def default_holidays() -> HolidaySpec:
+    """Returns a new ``holidays`` dict for list entries without one."""
+    return {'mode': 'ignore', 'scope': 'all'}
+
+
+def is_holiday_spec(value: object) -> TypeGuard[HolidaySpec]:
+    """Returns True if ``value`` is a ``holidays`` dict with a known ``mode``."""
+    return isinstance(value, dict) and value.get('mode') in HOLIDAY_MODES
+
+
+def holidays_apply(entry: dict) -> bool:
+    """Returns True if the entry's ``holidays`` dict changes its rrule weekdays, i.e. has a mode other than ``ignore``."""
+    spec = entry.get('holidays')
+    return is_holiday_spec(spec) and spec['mode'] != 'ignore'
+
+
+def migrate_holidays(entry: dict) -> bool:
+    """
+    Brings a list entry's ``holidays`` key into the nested dict format in place:
+
+    - the flat keys ``holidays`` (mode string) and ``holidays_scope`` are converted into the nested dict,
+      a ``holidays_scope`` without mode string is dropped
+    - a missing ``holidays`` key gets :func:`default_holidays`
+    - a valid ``holidays`` dict without ``scope`` gets scope ``all``
+
+    Any other ``holidays`` value is kept unchanged and treated like mode ``ignore``.
+
+    :param entry:   uzsu list entry
+    :return:        True if the entry was changed
+    """
+    changed = 'holidays_scope' in entry
+    scope = entry.pop('holidays_scope', None)
+    mode = entry.get('holidays')
+    if isinstance(mode, str):
+        entry['holidays'] = {'mode': mode} if scope is None else {'mode': mode, 'scope': scope}
+        changed = True
+    elif 'holidays' not in entry:
+        entry['holidays'] = default_holidays()
+        return True
+    spec = entry['holidays']
+    if is_holiday_spec(spec) and 'scope' not in spec:
+        spec['scope'] = 'all'
+        changed = True
+    return changed
 
 
 class UZSU(SmartPlugin):
@@ -110,7 +255,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = '2.1.1'  # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = '3.0.0'  # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -595,6 +740,7 @@ class UZSU(SmartPlugin):
                     self._items[item]['list'][entry].pop('condition', None)
                     self._items[item]['list'][entry].pop('holiday', None)
                     self._items[item]['list'][entry].pop('delayedExec', None)
+            self._migrate_entries(item)
 
             self._webdata['items'].update({item.property.path: {}})
             self._update_item(item, 'init')
@@ -604,12 +750,27 @@ class UZSU(SmartPlugin):
 
             return self.update_item
 
-    def _remove_dupes(self, item):
+    def _migrate_entries(self, item) -> bool:
+        """
+        Converts outdated key formats of all list entries in place.
+
+        :param item:    uzsu item
+        :return:        True if any entry was changed
+        """
+        # list, not generator: every entry is migrated
+        return any([migrate_holidays(entry) for entry in self._items[item].get('list') or []])
+
+    def _remove_dupes(self, item, compare_entries: dict):
+        """
+        Removes identical list entries and deactivates entries that a new active entry replaces with another value.
+
+        :param item:            uzsu item
+        :param compare_entries: uzsu dict before the update, entries not listed in it are new
+        """
         self._items[item]['list'] = [
             i for n, i in enumerate(self._items[item]['list']) if i not in self._items[item]['list'][:n]
         ]
         self.logger.debug(f'Removed duplicate entries for item {item}.')
-        compare_entries = item.prev_value()
         if compare_entries.get('list'):
             newentries = []
             [newentries.append(i) for i in self._items[item]['list'] if i not in compare_entries['list']]
@@ -664,6 +825,11 @@ class UZSU(SmartPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
+        # any write-back below replaces prev_value()
+        previous = item.prev_value()
+        self._items[item] = item()
+        if self._migrate_entries(item):
+            self._write_dict_to_item(item, 'migrate')
         itemtype = self._get_type(item)
         cond = itemtype is not None and ((not caller == PLUGIN_TAG) or source == 'logic')
         self.logger.debug(f'Update Item {item}, Caller {caller}, Source {source}, Dest {dest}. Will update: {cond}')
@@ -671,7 +837,8 @@ class UZSU(SmartPlugin):
             self._check_rruleandplanned(item)
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
-            self._remove_dupes(item)
+            self._remove_dupes(item, previous)
+            self._write_dict_to_item(item, 'remove_dupes')
         self._add_dicts(item)
         if (
             not self._items[item]['interpolation'].get('itemtype')
@@ -1114,7 +1281,7 @@ class UZSU(SmartPlugin):
                 return None, None, None
             if 'sun' in time and self._sun_unavailable_for(item, time):
                 return None, None, None
-            if ('rrule' in entry or entry.get('holidays') in HOLIDAY_MODES) and 'series' not in time:
+            if ('rrule' in entry or holidays_apply(entry)) and 'series' not in time:
                 if entry.get('rrule', '') == '':
                     entry['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
                 if 'dtstart' in entry:
@@ -1275,26 +1442,21 @@ class UZSU(SmartPlugin):
 
     def _apply_holidays(self, rrule, entry):
         """
-        Combines an entry's rrule with the core holiday calendar according to the entry's ``holidays`` key
-        (``exclude``, ``include``, ``only``) and ``holidays_scope`` key (``all``, ``public``).
+        Combines an entry's rrule with the core holiday calendar according to the entry's ``holidays`` dict:
+        ``mode`` (``ignore``, ``exclude``, ``include``, ``only``) and ``scope`` (``all``, ``public``).
 
         :param rrule:   recurrence rule of the entry
         :param entry:   uzsu list entry
         :return:        rrule, or an rruleset providing the same ``before``/``after`` interface
         """
-        mode = entry.get('holidays')
-        if mode not in HOLIDAY_MODES:
+        if not holidays_apply(entry):
             return rrule
+        spec = entry['holidays']
         first = rrule.after(datetime.min, inc=True)
         if first is None:
             return rrule
-        ruleset = rruleset()
-        if mode != 'only':
-            ruleset.rrule(rrule)
-        add = ruleset.exdate if mode == 'exclude' else ruleset.rdate
-        for day in self._holiday_dates(entry.get('holidays_scope') == 'public'):
-            add(datetime.combine(day, first.time()))
-        return ruleset
+        holidays = [datetime.combine(day, first.time()) for day in self._holiday_dates(spec.get('scope') == 'public')]
+        return HOLIDAY_COMBINERS[spec['mode']](rrule, holidays)
 
     def _series_calculate(self, item, caller=None, source=None):
         """
@@ -1691,7 +1853,7 @@ class UZSU(SmartPlugin):
         :return:        two occurrences before today, today's and the following two; with ``holidays`` set
                         according to the holiday calendar, otherwise the first nine rrule occurrences
         """
-        if mydict.get('holidays') not in HOLIDAY_MODES:
+        if not holidays_apply(mydict):
             return list(rrulestr(mydict['rrule'] + ';COUNT=9', dtstart=dtstart))
         rule = self._apply_holidays(rrulestr(mydict['rrule'], dtstart=dtstart), mydict)
         midnight = datetime.now(self._timezone).replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0)

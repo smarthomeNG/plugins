@@ -25,7 +25,7 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         plugin = self.plugin()
         webif = self._webif(plugin)
         # A malformed/malicious item_id must not reach the filesystem at all.
-        traversal_target = os.path.join(self.sh.base_dir, 'var', 'db', '_item_../../../../../../tmp/pwned.csv')
+        traversal_target = os.path.join(self.sh.get_basedir(), 'var', 'db', '_item_../../../../../../tmp/pwned.csv')
         self.assertFalse(os.path.exists(traversal_target))
 
         result = webif.item_csv('../../../../../../tmp/pwned')
@@ -42,7 +42,7 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         # item_csv() writes to <base_dir>/var/db/, which is gitignored and
         # not present on a fresh checkout (e.g. CI). Ensure it exists rather
         # than relying on ambient state left behind by a real shng run.
-        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+        os.makedirs(os.path.join(self.sh.get_basedir(), 'var', 'db'), exist_ok=True)
 
         with (
             mock.patch('cherrypy.request'),
@@ -62,12 +62,12 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         now_ms = int(plugin.shtime.now().timestamp() * 1000)
         plugin.insertLog(id, time=now_ms, duration=3600, val=10, it='num', changed=now_ms)
 
-        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+        os.makedirs(os.path.join(self.sh.get_basedir(), 'var', 'db'), exist_ok=True)
 
         with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
             webif.item_csv(str(id))
 
-        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        csv_path = os.path.join(self.sh.get_basedir(), 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
         self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
         with open(csv_path, encoding='utf-8') as f:
             lines = f.read().splitlines()
@@ -86,12 +86,12 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         now_ms = int(plugin.shtime.now().timestamp() * 1000)
         plugin.insertLog(id, time=now_ms, duration=3600, val=10, it='num', changed=now_ms)
 
-        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+        os.makedirs(os.path.join(self.sh.get_basedir(), 'var', 'db'), exist_ok=True)
 
         with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
             webif.item_csv(str(id), tz='utc')
 
-        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        csv_path = os.path.join(self.sh.get_basedir(), 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
         self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
         with open(csv_path, encoding='utf-8') as f:
             lines = f.read().splitlines()
@@ -109,12 +109,12 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         plugin.insertLog(id, time=5000, duration=1000, val=2, it='num', changed=5000)
         plugin.insertLog(id, time=10000, duration=1000, val=3, it='num', changed=10000)
 
-        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+        os.makedirs(os.path.join(self.sh.get_basedir(), 'var', 'db'), exist_ok=True)
 
         with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
             webif.item_csv(str(id), time_start='4000', time_end='9000')
 
-        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        csv_path = os.path.join(self.sh.get_basedir(), 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
         self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
         with open(csv_path, encoding='utf-8') as f:
             lines = f.read().splitlines()
@@ -128,13 +128,13 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         id = self.create_item(plugin, 'main.num')
         plugin.insertLog(id, time=0, duration=1000, val=1, it='num', changed=0)
 
-        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+        os.makedirs(os.path.join(self.sh.get_basedir(), 'var', 'db'), exist_ok=True)
 
         with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
             result = webif.item_csv(str(id), time_start='not-a-number')
 
         self.assertEqual('served', result)
-        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        csv_path = os.path.join(self.sh.get_basedir(), 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
         self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
         with open(csv_path, encoding='utf-8') as f:
             lines = f.read().splitlines()
@@ -148,12 +148,12 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
         plugin.markLogInvalid(id, time=0)
 
-        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+        os.makedirs(os.path.join(self.sh.get_basedir(), 'var', 'db'), exist_ok=True)
 
         with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
             webif.item_csv(str(id))
 
-        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        csv_path = os.path.join(self.sh.get_basedir(), 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
         self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
         with open(csv_path, encoding='utf-8') as f:
             lines = f.read().splitlines()

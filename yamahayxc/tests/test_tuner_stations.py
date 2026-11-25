@@ -33,7 +33,7 @@ def start(play_info, presets, preset_type='separate', band=None):
 
 
 def stations(sh):
-    return sh.return_item('yamaha.dev.main.tuner_stations')()
+    return sh.items.return_item('yamaha.dev.main.tuner_stations')()
 
 
 def test_fm_presets_are_listed_with_their_frequency_and_slot():

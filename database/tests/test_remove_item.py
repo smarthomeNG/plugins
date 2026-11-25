@@ -15,7 +15,7 @@ from plugins.database.tests.base import TestDatabaseBase
 class TestDatabaseRemoveItem(TestDatabaseBase):
     def test_remove_item_clears_webdata(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.assertIn(item.property.path, plugin._webdata)
 
         plugin.remove_item(item)
@@ -24,7 +24,7 @@ class TestDatabaseRemoveItem(TestDatabaseBase):
 
     def test_remove_item_clears_handled_items(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.assertIn(item, plugin._handled_items)
 
         plugin.remove_item(item)
@@ -33,7 +33,7 @@ class TestDatabaseRemoveItem(TestDatabaseBase):
 
     def test_remove_item_clears_buffer(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.assertIn(item, plugin._buffer_mgr.items())
 
         plugin.remove_item(item)
@@ -42,7 +42,7 @@ class TestDatabaseRemoveItem(TestDatabaseBase):
 
     def test_remove_item_clears_items_with_maxage(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.maxage')
+        item = self.sh.items.return_item('main.maxage')
         self.assertIn(item, plugin._items_with_maxage)
 
         plugin.remove_item(item)
@@ -51,13 +51,13 @@ class TestDatabaseRemoveItem(TestDatabaseBase):
 
     def test_remove_item_returns_false_for_untracked_item(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.nodb')
+        item = self.sh.items.return_item('main.nodb')
 
         self.assertFalse(plugin.remove_item(item))
 
     def test_remove_item_flushes_pending_buffer_to_db(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         plugin._buffer_mgr.push(item, BufferEntry(time=1000, duration=None, value=5))
 
         plugin.remove_item(item)

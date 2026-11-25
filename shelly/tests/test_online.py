@@ -21,14 +21,14 @@ class TestOnlineItem(ShellyTestBase):
     def test_online_false_sets_online_item_false(self):
         self.publish_online(False)
 
-        self.assertFalse(self.sh.return_item('trv.online')())
+        self.assertFalse(self.sh.items.return_item('trv.online')())
 
     def test_online_true_sets_online_item_true(self):
         self.publish_online(False)
 
         self.publish_online(True)
 
-        self.assertTrue(self.sh.return_item('trv.online')())
+        self.assertTrue(self.sh.items.return_item('trv.online')())
 
 
 class TestOnlineBeforeAnnounce(ShellyTestBase):
@@ -40,4 +40,4 @@ class TestOnlineBeforeAnnounce(ShellyTestBase):
 
         plugin.on_mqtt_announce(f'shellies/{TRV_ID}/announce', TRV_ANNOUNCE)
 
-        self.assertFalse(self.sh.return_item('trv.online')())
+        self.assertFalse(self.sh.items.return_item('trv.online')())

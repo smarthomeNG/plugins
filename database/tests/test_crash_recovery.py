@@ -17,7 +17,7 @@ class TestCloseStartupOrphans(TestDatabaseBase):
         return plugin
 
     def duration_at(self, plugin, name, second):
-        item_id = plugin.id(self.sh.return_item(name), create=False)
+        item_id = plugin.id(self.sh.items.return_item(name), create=False)
         rows = plugin._log_store.find(item_id, self.t(second))
         self.assertEqual(1, len(rows))
         return rows[0][COL_LOG_DURATION]
@@ -39,7 +39,7 @@ class TestCloseStartupOrphans(TestDatabaseBase):
     def test_live_row_restored_from_the_item_table_stays_open(self):
         # A restored `database: init` item has last_change() == its open row's time: the value is still active.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item_id = self.create_item(plugin, 'main.num')
         live_time = plugin._timestamp(item.last_change())
         plugin.insertLog(item_id, time=live_time, duration=None, val=5, it='num')
@@ -120,7 +120,7 @@ class TestRunClosesStartupOrphans(TestDatabaseBase):
         durations_at_scheduler_start = []
 
         def record_duration():
-            row = plugin._log_store.find(plugin.id(self.sh.return_item('main.num'), create=False), self.t(10))[0]
+            row = plugin._log_store.find(plugin.id(self.sh.items.return_item('main.num'), create=False), self.t(10))[0]
             durations_at_scheduler_start.append(row[COL_LOG_DURATION])
 
         with mock.patch.object(plugin, '_start_schedulers', side_effect=record_duration):
@@ -147,7 +147,7 @@ class TestRecoverStaleOrphans(TestDatabaseBase):
         self.fail('recovery did not finish')
 
     def duration_at(self, plugin, name, second):
-        item_id = plugin.id(self.sh.return_item(name), create=False)
+        item_id = plugin.id(self.sh.items.return_item(name), create=False)
         rows = plugin._log_store.find(item_id, self.t(second))
         self.assertEqual(1, len(rows))
         return rows[0][COL_LOG_DURATION]
@@ -293,7 +293,7 @@ class TestCompactionAfterRecovery(TestDatabaseBase):
     def build(self):
         plugin = self.plugin()
         plugin._plugin_start_ts = int(time.time() * 1000)
-        item = self.sh.return_item('main.maxage_avg')
+        item = self.sh.items.return_item('main.maxage_avg')
         item_id = self.create_item(plugin, 'main.maxage_avg')
         old_hour = ((int(time.time() * 1000) - 3 * 86400 * 1000) // self.HOUR_MS) * self.HOUR_MS
         plugin.insertLog(item_id, time=old_hour, duration=None, val=10.0, it='num')

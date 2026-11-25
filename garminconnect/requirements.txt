@@ -1,2 +1,1 @@
-garminconnect>=0.1.28,<0.2.0;python_version<='3.9'
-garminconnect>=0.1.28;python_version>='3.10'
+garminconnect>=0.1.28

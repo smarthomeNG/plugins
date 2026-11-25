@@ -41,22 +41,22 @@ class TestDatabaseBasic(TestDatabaseBase):
         # directly, not rely on the len(row)==0 branch of
         # `COL_ITEM_ID >= len(row)` happening to still return None.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         plugin._db._conn = None  # simulate disconnected, no reconnect attempt
 
         self.assertIsNone(plugin.db_itemtype(item))
 
     def test_id_not_creating_items(self):
         plugin = self.plugin()
-        self.assertIsNone(plugin.id(self.sh.return_item('main.num'), False))
-        self.assertIsNone(plugin.id(self.sh.return_item('main.str'), False))
-        self.assertIsNone(plugin.id(self.sh.return_item('main.bool'), False))
+        self.assertIsNone(plugin.id(self.sh.items.return_item('main.num'), False))
+        self.assertIsNone(plugin.id(self.sh.items.return_item('main.str'), False))
+        self.assertIsNone(plugin.id(self.sh.items.return_item('main.bool'), False))
 
     def test_id_creating_items(self):
         plugin = self.plugin()
-        self.assertEqual(1, plugin.id(self.sh.return_item('main.num'), True))
-        self.assertEqual(2, plugin.id(self.sh.return_item('main.str'), True))
-        self.assertEqual(3, plugin.id(self.sh.return_item('main.bool'), True))
+        self.assertEqual(1, plugin.id(self.sh.items.return_item('main.num'), True))
+        self.assertEqual(2, plugin.id(self.sh.items.return_item('main.str'), True))
+        self.assertEqual(3, plugin.id(self.sh.items.return_item('main.bool'), True))
 
     def test_id_creating_from_bare_path_string(self):
         # id() falls back to using the raw argument as the item path (via
@@ -132,7 +132,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         and every thread agrees on its id.
         """
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
 
         results = []
         num_threads = 4
@@ -180,7 +180,7 @@ class TestDatabaseBasic(TestDatabaseBase):
 
     def test_deleteItem(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         plugin.deleteItem(plugin.id(item, True))
         self.assertIsNone(plugin.id(item, False))
 
@@ -354,7 +354,7 @@ class TestDatabaseBasic(TestDatabaseBase):
 
     def test_parse_item(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         plugin.parse_item(item)
         self.assertEqual(0, item())
 
@@ -364,7 +364,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         # every future operation on this connection (including shutdown)
         # wedges until process restart.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
 
         def failing_readitem(*a, **kw):
             raise RuntimeError('simulated readItem failure')
@@ -378,7 +378,7 @@ class TestDatabaseBasic(TestDatabaseBase):
 
     def test_parse_item_with_registered_but_never_logged_item(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         self.create_item(plugin, item.id())
 
         with self.assertRaises(AssertionError):
@@ -390,7 +390,7 @@ class TestDatabaseBasic(TestDatabaseBase):
     @pytest.mark.skip(reason='test for pending implementation')
     def test_parse_item_reads_cache(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         id = self.create_item(plugin, item.id())
         plugin.updateItem(id, time=7200, val='42', it='num', changed=7200)
         plugin.insertLog(id, time=3600, duration=3600, val='20', it='num', changed=3600)
@@ -401,7 +401,7 @@ class TestDatabaseBasic(TestDatabaseBase):
 
     def test_update_item_without_item(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item(10)
         plugin.update_item(item)
 
@@ -412,7 +412,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         # marked broken (see _mark_db_broken()), not just fail safely
         # further down the call chain.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         plugin.alive = False
         item(42)
         plugin.update_item(item)
@@ -441,7 +441,7 @@ class TestDatabaseBasic(TestDatabaseBase):
     @pytest.mark.skip(reason='test for pending implementation')
     def test_update_item_with_cache(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         id = self.create_item(plugin, item.id())
         plugin.updateItem(id, time=7200, val='42', it='num', changed=7200)
         plugin.insertLog(id, time=3600, duration=3600, val='20', it='num', changed=3600)
@@ -614,7 +614,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         # succeeds (the common case), the entry must be restored to the
         # in-memory buffer for a later retry - not silently discarded.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         id = self.create_item(plugin, 'main.num')
         pending = [BufferEntry(1000, 500, 42.0), BufferEntry(1500, None, 43.0)]
         plugin._buffer_mgr.restore(item, list(pending))
@@ -643,7 +643,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         # database_write_on_shutdown attribute at all), silently inverting
         # the documented True default to False.
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         id = self.create_item(plugin, 'main.num')
         self.assertNotIn('database_write_on_shutdown', item.conf)
 
@@ -653,7 +653,7 @@ class TestDatabaseBasic(TestDatabaseBase):
 
     def test_dump_finalize_honours_explicit_write_on_shutdown_false(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_write_on_shutdown'] = False
         id = self.create_item(plugin, 'main.num')
 
@@ -669,8 +669,8 @@ class TestDatabaseBasic(TestDatabaseBase):
         # original self._db.lock(300) check's behaviour: restore the
         # buffer, log, release self._dump_lock, return immediately.
         plugin = self.plugin()
-        item1 = self.sh.return_item('main.num')
-        item2 = self.sh.return_item('main.str')
+        item1 = self.sh.items.return_item('main.num')
+        item2 = self.sh.items.return_item('main.str')
         id1 = self.create_item(plugin, 'main.num')
         id2 = self.create_item(plugin, 'main.str')
         pending1 = [BufferEntry(1000, 500, 42.0)]

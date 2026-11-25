@@ -47,7 +47,7 @@ class MikrotikPlugin(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh):
         """

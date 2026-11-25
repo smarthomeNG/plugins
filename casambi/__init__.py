@@ -42,7 +42,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.6'  # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.7'  # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -52,11 +52,6 @@ class Casambi(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.session = requests.Session()
         self.exit_event = threading.Event()

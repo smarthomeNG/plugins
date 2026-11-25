@@ -122,7 +122,7 @@ class Echo(object):
 
 
 class AlexaRc4shNG(SmartPlugin):
-    PLUGIN_VERSION = '1.0.4'
+    PLUGIN_VERSION = '1.0.5'
     ALLOW_MULTIINSTANCE = False
     """
     Main class of the Plugin. Does all plugin specific stuff and provides

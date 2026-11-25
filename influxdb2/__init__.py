@@ -50,7 +50,7 @@ class InfluxDB2(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '0.1.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '0.1.1'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):
@@ -225,11 +225,11 @@ class InfluxDB2(SmartPlugin):
             config_data = self.get_pluginitem_configdata(item.property.path)
 
             tags = {}
-            tags['caller'] = caller.replace(' ', '\ ')
+            tags['caller'] = caller.replace(' ', r'\ ')
             if source is not None:
-                tags['source'] = source.replace(' ', '\ ')
+                tags['source'] = source.replace(' ', r'\ ')
             if dest is not None:
-                tags['dest'] = dest.replace(' ', '\ ')
+                tags['dest'] = dest.replace(' ', r'\ ')
             tags['item'] = item.property.path
 
             tags.update(self.tags)  # add global tag definitions to actual tags
@@ -260,7 +260,7 @@ class InfluxDB2(SmartPlugin):
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.sh.items.find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional
@@ -381,7 +381,7 @@ class InfluxDB2(SmartPlugin):
 
     def replace_unwanted_chars(self, str):
 
-        str = str.replace(' ', '\ ').replace('ß', 'ss')
+        str = str.replace(' ', r'\ ').replace('ß', 'ss')
         str = str.replace('ä', 'ae').replace('Ä', 'Ae')
         str = str.replace('ö', 'oe').replace('Ö', 'Oe')
         str = str.replace('ü', 'ue').replace('Ü', 'Ue')
@@ -397,8 +397,8 @@ class InfluxDB2(SmartPlugin):
             v = tags[tag_key]
             # escape '=' in tag values
             if v is not None:
-                v = v.replace('=', '\=')
-                v = v.replace(' ', '\ ')
+                v = v.replace('=', r'\=')
+                v = v.replace(' ', r'\ ')
             kvs.append(f'{k}={v}')
         line_tags = ','.join(kvs)
 

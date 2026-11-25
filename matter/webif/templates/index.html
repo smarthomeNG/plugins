@@ -403,7 +403,7 @@
 					<button type="button" class="btn btn-shng btn-sm" onclick="nodeAction('suggest_item_node_id', {{ device.node_id }})" title="{{ _('Item-Definition für dieses Gerät anzeigen (Copy-Paste)') }}">
 						<i class="fas fa-code"></i>&nbsp;{{ _('Item-Definition') }}
 					</button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="nodeAction('create_item_node_id', {{ device.node_id }})" title="{{ _('Item-Definition als echtes Item anlegen') }}">
+					<button type="button" class="btn btn-shng btn-sm" onclick="nodeAction('create_item_node_id', {{ device.node_id }})" title="{{ _('Item-Definition als echtes Item unter {base} anlegen und in items/{file}.yaml speichern').format(base=server.settings.generated_items_base, file=server.generated_items_file()) if server else _('Item-Definition als echtes Item anlegen') }}">
 						<i class="fas fa-plus"></i>&nbsp;{{ _('Item erstellen') }}
 					</button>
 					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice(this)" data-node-id="{{ device.node_id }}" data-label="{{ device.label }}" title="{{ _('Funktioniert auch bei nicht erreichbarem Gerät (lokales Vergessen als Fallback)') }}">

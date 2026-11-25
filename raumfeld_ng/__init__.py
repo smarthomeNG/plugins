@@ -43,7 +43,7 @@ class Raumfeld_ng(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
 
     def __init__(self, sh):
         """
@@ -60,11 +60,6 @@ class Raumfeld_ng(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         # get parameter used throughout the plugin from metadata:
 
@@ -292,7 +287,7 @@ class Raumfeld_ng(SmartPlugin):
         self.ZoneConfig = self.getZoneConfig()
 
         # now we update a couple of rf items
-        items = self.get_sh().find_items('rf_attr')  # all raumfeld related items
+        items = self.get_sh().items.find_items('rf_attr')  # all raumfeld related items
         try:
             for i in items:  # check each item...
                 renderer = i.conf['rf_renderer_name']  # which somehow has a renderer-relation

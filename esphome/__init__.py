@@ -55,7 +55,7 @@ class EspHome(SmartPlugin):
     """
 
     PLUGIN_VERSION = (
-        '0.0.2'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+        '0.0.3'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
     )
 
     def __init__(self, sh):
@@ -232,7 +232,7 @@ class EspHome(SmartPlugin):
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.sh.items.find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional

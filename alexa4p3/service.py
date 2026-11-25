@@ -109,9 +109,9 @@ class AlexaService(object):
                 'Alexa: enabling SSL/TLS support with cert-file {} & key-file {}'.format(https_certfile, https_keyfile)
             )
             # TODO: client-certificates can be handled here as well: https://docs.python.org/2/library/ssl.html
-            self.server.socket = ssl.wrap_socket(
-                self.server.socket, server_side=True, certfile=https_certfile, keyfile=https_keyfile
-            )
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            context.load_cert_chain(certfile=https_certfile, keyfile=https_keyfile or None)
+            self.server.socket = context.wrap_socket(self.server.socket, server_side=True)
 
     def start(self):
         self.logger.info('Alexa: service starting')

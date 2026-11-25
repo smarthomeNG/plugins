@@ -46,7 +46,7 @@ except Exception:
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '2.3.0'
+    PLUGIN_VERSION = '3.0.0'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor

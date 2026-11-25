@@ -1,6 +1,7 @@
 """run_search: query -> media server -> device, against a fake server and a simulated device."""
 
-from contextlib import nullcontext
+import logging
+from contextlib import contextmanager, nullcontext
 
 import pytest
 
@@ -116,3 +117,55 @@ def test_unreachable_media_server_raises_for_the_caller_to_rediscover():
 
     with pytest.raises(MediaServerError):
         search('album: abbey', library, network, plugin, finder)
+
+
+@contextmanager
+def captured_logs():
+    """collect the messages the media search modules log at INFO and above"""
+    messages = []
+
+    class Collector(logging.Handler):
+        def emit(self, record):
+            messages.append(record.getMessage())
+
+    logger = logging.getLogger('plugins.yamahayxc.mediasearch')
+    handler, old_level = Collector(), logger.level
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    try:
+        yield messages
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(old_level)
+
+
+def test_nothing_found_is_logged_with_the_query():
+    library, device, network, plugin, finder = setup()
+
+    with captured_logs() as logs:
+        search('zzzz', library, network, plugin, finder)
+
+    assert any("nothing found for 'zzzz'" in message for message in logs)
+
+
+def test_track_without_album_container_is_logged_with_title_and_album():
+    library = make_library()
+    library.add('0$1$8$orphan', '0$1$8', 'Lonely Song', 'object.item.audioItem.musicTrack', 'No Such Album')
+    library, device, network, plugin, finder = setup(library)
+
+    with captured_logs() as logs:
+        report = search('lonely', library, network, plugin, finder)
+
+    assert report.status is SearchStatus.PATH_FAILED
+    assert any("no album container 'No Such Album' lists track 'Lonely Song'" in message for message in logs)
+    assert any("'Lonely Song'" in message and 'none could be located' in message for message in logs)
+
+
+def test_missing_menu_entry_is_logged_with_its_text_and_layer():
+    library, device, network, plugin, finder = setup()
+    device.browse.root.children[0].children[0].children.pop(1)
+
+    with captured_logs() as logs:
+        search('album: abbey', library, network, plugin, finder)
+
+    assert any("no entry 'Album' in layer 2" in message for message in logs)

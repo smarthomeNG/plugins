@@ -71,7 +71,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.1.2'
+    PLUGIN_VERSION = '3.0.0'
 
     ITEM_INFO = 'husky_info'
     ITEM_CONTROL = 'husky_control'

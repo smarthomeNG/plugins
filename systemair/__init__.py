@@ -27,7 +27,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Systemair(SmartPlugin):
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):

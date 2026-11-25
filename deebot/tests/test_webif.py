@@ -36,7 +36,7 @@ from .helpers import make_plugin
 @pytest.fixture
 def webif(sh):
     plugin = make_plugin(sh)
-    for each in sh.return_items():
+    for each in sh.items.return_items():
         plugin.parse_item(each)
     webif = WebInterface.__new__(WebInterface)
     webif.plugin = plugin

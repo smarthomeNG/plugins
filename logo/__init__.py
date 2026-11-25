@@ -27,7 +27,6 @@
 import ctypes
 import os
 import time
-import logging
 import threading
 
 from lib.module import Modules
@@ -36,16 +35,11 @@ from lib.item import Items
 
 
 class LOGO(SmartPlugin):
-    PLUGIN_VERSION = '1.2.4'
+    PLUGIN_VERSION = '1.2.5'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
@@ -178,7 +172,7 @@ class LOGO(SmartPlugin):
         self.close()
 
     def _write_read_loop(self):
-        threading.currentThread().name = self.get_instance_name() + 'cycle'  #'logo_cycle'
+        threading.current_thread().name = self.get_instance_name() + 'cycle'  #'logo_cycle'
         self.logger.debug('{0}: Starting write-read cycle'.format(self.get_instance_name()))
         while self.alive:
             start = time.time()

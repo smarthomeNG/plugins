@@ -110,7 +110,7 @@ class TestEnableTimescaleNativeAggregation(TestDatabaseBase):
                     raise RuntimeError('custom time function already set for hypertable "log"')
 
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 30
         item.conf['database_maxage_action'] = 'avg'
         item.conf['database_maxage_interval'] = '1h'
@@ -131,11 +131,11 @@ class TestEnableTimescaleNativeAggregation(TestDatabaseBase):
 
     def test_creates_one_cagg_per_distinct_interval(self):
         plugin = self.plugin()
-        item_1h = self.sh.return_item('main.num')
+        item_1h = self.sh.items.return_item('main.num')
         item_1h.conf['database_maxage'] = 30
         item_1h.conf['database_maxage_action'] = 'avg'
         item_1h.conf['database_maxage_interval'] = '1h'
-        item_1d = self.sh.return_item('main.bool')
+        item_1d = self.sh.items.return_item('main.bool')
         item_1d.conf['database_maxage'] = 30
         item_1d.conf['database_maxage_action'] = 'duty_cycle'
         item_1d.conf['database_maxage_interval'] = '24h'
@@ -151,11 +151,11 @@ class TestEnableTimescaleNativeAggregation(TestDatabaseBase):
 
     def test_items_sharing_an_interval_produce_only_one_cagg(self):
         plugin = self.plugin()
-        item_a = self.sh.return_item('main.num')
+        item_a = self.sh.items.return_item('main.num')
         item_a.conf['database_maxage'] = 30
         item_a.conf['database_maxage_action'] = 'avg'
         item_a.conf['database_maxage_interval'] = '1h'
-        item_b = self.sh.return_item('main.bool')
+        item_b = self.sh.items.return_item('main.bool')
         item_b.conf['database_maxage'] = 5
         item_b.conf['database_maxage_action'] = 'duty_cycle'
         item_b.conf['database_maxage_interval'] = '1h'
@@ -169,7 +169,7 @@ class TestEnableTimescaleNativeAggregation(TestDatabaseBase):
 
     def test_delete_action_items_are_skipped_entirely(self):
         plugin = self.plugin()
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 30
         item.conf['database_maxage_action'] = 'delete'
         item.conf['database_maxage_interval'] = '1h'
@@ -214,9 +214,9 @@ class TestCreateNativeCagg(TestDatabaseBase):
 class TestEnableTimescaleNativeRetention(TestDatabaseBase):
     def test_drop_after_uses_longest_maxage_plus_chunk_interval(self):
         plugin = self.plugin(timescale_chunk_interval='168h')  # 604800000ms
-        item_short = self.sh.return_item('main.num')
+        item_short = self.sh.items.return_item('main.num')
         item_short.conf['database_maxage'] = 5
-        item_long = self.sh.return_item('main.bool')
+        item_long = self.sh.items.return_item('main.bool')
         item_long.conf['database_maxage'] = 90
         plugin._items_with_maxage = [item_short, item_long]
         spy = _SpyDB()
@@ -229,7 +229,7 @@ class TestEnableTimescaleNativeRetention(TestDatabaseBase):
 
     def test_default_maxage_considered_as_a_floor(self):
         plugin = self.plugin(default_maxage=90, timescale_chunk_interval='168h')
-        item = self.sh.return_item('main.num')
+        item = self.sh.items.return_item('main.num')
         item.conf['database_maxage'] = 5
         plugin._items_with_maxage = [item]
         spy = _SpyDB()

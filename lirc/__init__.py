@@ -31,14 +31,13 @@ from .webif import WebInterface
 from lib.item import Items
 
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
 
 REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
 
 
 class LIRC(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     def __init__(self, smarthome):
         super().__init__()

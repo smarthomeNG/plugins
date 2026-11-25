@@ -48,7 +48,7 @@ def make_plugin(sh, **parameters) -> Deebot:
 
 
 def item(sh, name):
-    return sh.return_item(f'vac.{name}')
+    return sh.items.return_item(f'vac.{name}')
 
 
 def write(plugin, sh, name, value):

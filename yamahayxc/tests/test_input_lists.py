@@ -32,7 +32,7 @@ def start(items='items_inputs.yaml', names=None):
 
 
 def value(sh, path):
-    return sh.return_item('yamaha.' + path)()
+    return sh.items.return_item('yamaha.' + path)()
 
 
 def test_input_values_offer_only_the_configured_inputs_sorted_regardless_of_the_configured_order():
@@ -99,7 +99,7 @@ def test_a_selection_without_any_available_input_falls_back_to_all_inputs():
 
 def test_an_input_hidden_from_the_list_can_still_be_selected_by_a_write():
     plugin, sh, device, network = start()
-    item = sh.return_item('yamaha.dev.main.input')
+    item = sh.items.return_item('yamaha.dev.main.input')
     item('av3', 'test')
     device.calls.clear()
 

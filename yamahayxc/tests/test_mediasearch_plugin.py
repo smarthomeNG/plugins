@@ -1,5 +1,6 @@
 """Media search through the plugin: search item, status/result items, public method, worker and cursor lock."""
 
+import logging
 import threading
 import time
 from contextlib import ExitStack
@@ -23,9 +24,9 @@ class Setup:
         self.plugin, self.sh = make_plugin(
             'items_search.yaml', self.network, parameters={'media_server': setting}, initialize=False
         )
-        self.search_item = self.sh.return_item('yamaha.dev.search')
-        self.status = self.sh.return_item('yamaha.dev.search.status')
-        self.result = self.sh.return_item('yamaha.dev.search.result')
+        self.search_item = self.sh.items.return_item('yamaha.dev.search')
+        self.status = self.sh.items.return_item('yamaha.dev.search.status')
+        self.result = self.sh.items.return_item('yamaha.dev.search.result')
 
     def __enter__(self):
         self._stack = ExitStack()
@@ -149,7 +150,7 @@ def test_unreachable_media_server_is_an_error():
 def test_browse_writes_wait_for_a_running_replay():
     with Setup() as setup:
         setup.device.gate = threading.Event()
-        browse_return = setup.sh.return_item('yamaha.dev.browse_return')
+        browse_return = setup.sh.items.return_item('yamaha.dev.browse_return')
         setup.write('album: abbey')
         assert wait_until(lambda: 'v1/main/getStatus' in setup.device.paths())
         browse_return(True, 'test')
@@ -178,3 +179,20 @@ def test_status_is_disabled_after_startup_without_a_server():
         setup.plugin._initialize()
 
         assert setup.status() == 'disabled'
+
+
+def test_outcome_is_logged_with_query_and_hit():
+    messages = []
+
+    class Collector(logging.Handler):
+        def emit(self, record):
+            messages.append(record.getMessage())
+
+    with Setup() as setup:
+        setup.plugin.logger.addHandler(Collector())
+        setup.plugin.logger.setLevel(logging.INFO)
+
+        setup.write('album: abbey')
+        assert setup.settle('ok')
+
+    assert any("'album: abbey'" in m and 'ok' in m and "'Abbey Road'" in m for m in messages)

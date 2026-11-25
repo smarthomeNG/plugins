@@ -31,7 +31,7 @@ import shlex
 
 class RCswitch(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.2.2'
+    PLUGIN_VERSION = '1.2.3'
 
     def __init__(self, sh, **kwargs):
         super().__init__()

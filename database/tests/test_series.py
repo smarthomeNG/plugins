@@ -26,7 +26,7 @@ class TestDatabaseSeries(TestDatabaseBase):
         start time with item value, end time with item value
         """
         plugin = self.plugin()
-        item_change_ts = plugin._timestamp(self.sh.return_item('main.num').last_change())
+        item_change_ts = plugin._timestamp(self.sh.items.return_item('main.num').last_change())
         res = plugin._series('avg', start=self.t(0), end='now', item='main.num')
         self.assertSeriesCount(2, res)
         self.assertSeries(

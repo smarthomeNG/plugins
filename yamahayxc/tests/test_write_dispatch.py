@@ -17,7 +17,7 @@ def make_running_plugin():
 
 
 def write(plugin, sh, network, path, value):
-    item = sh.return_item(path)
+    item = sh.items.return_item(path)
     item(value, 'test')
     with network.active():
         plugin.update_item(item, 'test')

@@ -26,6 +26,7 @@
 
 from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
+from lib.network import Http
 import re
 import logging
 
@@ -44,18 +45,13 @@ class SolarLog(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._sh = sh
 
@@ -264,7 +260,7 @@ class SolarLog(SmartPlugin):
         pattern = r'ye\[yx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
 
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<out_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<out_{0}>[0-9]*)'.format(x)
 
         pattern += '"'
         re_entry = re.compile(pattern)
@@ -282,7 +278,7 @@ class SolarLog(SmartPlugin):
         pattern = r'mo\[mx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
 
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<out_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<out_{0}>[0-9]*)'.format(x)
 
         pattern += '"'
         re_entry = re.compile(pattern)
@@ -300,7 +296,7 @@ class SolarLog(SmartPlugin):
         pattern = r'da\[dx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
 
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<out_{0}>[0-9]*);(?P<pac_max_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<out_{0}>[0-9]*);(?P<pac_max_{0}>[0-9]*)'.format(x)
 
         pattern += '"'
         re_entry = re.compile(pattern)
@@ -323,7 +319,7 @@ class SolarLog(SmartPlugin):
         # TODO: add a pattern that matches sensor boxes
         # ATM only inverters and strings supported
         for x in range(0, self._count_inverter):
-            pattern += '\|(?P<pac_{0}>[0-9]*)'.format(x)
+            pattern += r'\|(?P<pac_{0}>[0-9]*)'.format(x)
 
             for y in range(0, self._count_strings[x]):
                 pattern += ';(?P<pdc_{0}_{1}>[0-9]*)'.format(x, y)
@@ -361,7 +357,7 @@ class SolarLog(SmartPlugin):
 
     def _read(self, filename):
         url = self.host + filename
-        return self._sh.tools.fetch_url(url).decode(encoding='latin_1')
+        return Http().get_binary(url, timeout=2, require_ok=True).decode(encoding='latin_1')
 
     def poll_deviceV3(self):
         """

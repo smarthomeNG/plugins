@@ -72,7 +72,7 @@ from .webif import WebInterface
 
 
 class KNX(SmartPlugin):
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '2.0.0'
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -94,11 +94,6 @@ class KNX(SmartPlugin):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         name = 'plugins.' + self.get_fullname()
         self._client = Tcp_client(

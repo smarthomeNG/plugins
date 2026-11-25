@@ -62,7 +62,7 @@ class viessmann(SmartDevicePlugin):
     Standalone mode is automatic device type discovery
     """
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '3.0.0'
 
     TRANSPORTS = (TransportRule(CONN_SER_DIR, requires='serialport'),)
     PROTOCOL = SDPProtocolViessmann

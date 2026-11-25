@@ -31,7 +31,7 @@ def test_stalled_device_does_not_delay_other_devices():
 
         try:
             assert returned_after < 1
-            assert wait_until(lambda: sh.return_item('yamaha.two.volume')() == 7)
+            assert wait_until(lambda: sh.items.return_item('yamaha.two.volume')() == 7)
         finally:
             one.gate.set()
 
@@ -43,7 +43,7 @@ def test_notifications_of_one_host_are_applied_in_order():
         for volume in (10, 20, 30):
             plugin._data_received(('127.0.0.1', 41100), json.dumps({'main': {'volume': volume}}))
 
-        assert wait_until(lambda: sh.return_item('yamaha.one.volume')() == 30)
+        assert wait_until(lambda: sh.items.return_item('yamaha.one.volume')() == 30)
 
 
 def test_notifications_after_stop_are_dropped():
@@ -52,4 +52,4 @@ def test_notifications_after_stop_are_dropped():
     plugin.stop()
     plugin._data_received(('127.0.0.1', 41100), json.dumps({'main': {'volume': 99}}))
 
-    assert not wait_until(lambda: sh.return_item('yamaha.one.volume')() == 99, timeout=0.2)
+    assert not wait_until(lambda: sh.items.return_item('yamaha.one.volume')() == 99, timeout=0.2)

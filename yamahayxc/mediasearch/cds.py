@@ -6,6 +6,7 @@ SearchQuery into ranked Candidates and resolves a Candidate into a Hit whose
 path the device can replay.
 """
 
+import logging
 import re
 import socket
 import time
@@ -33,6 +34,7 @@ _NS = {
 _DEVICE_NS = '{urn:schemas-upnp-org:device-1-0}'
 SSDP_GROUP = ('239.255.255.250', 1900)
 SSDP_SEARCH_TARGET = 'urn:schemas-upnp-org:device:MediaServer:1'
+logger = logging.getLogger(__name__)
 _PAGE_SIZE = 500
 # references to, and raw occurrences of, characters XML 1.0 forbids; some servers emit them in titles
 _FORBIDDEN_XML = re.compile(r'&#(?:[xX]([0-9a-fA-F]+)|([0-9]+));|[\x00-\x08\x0b\x0c\x0e-\x1f]')
@@ -255,6 +257,8 @@ class CdsSearchFinder:
         track_title = None
         if candidate.kind is HitKind.ALBUM:
             container = self.client.metadata(candidate.ref)
+            if container is None:
+                logger.info(f'media search: server does not know album {candidate.title!r} ({candidate.ref})')
         else:
             container = self._album_container(candidate)
             track_title = candidate.title
@@ -284,6 +288,7 @@ class CdsSearchFinder:
         ).objects:
             if self._position(album.id, lambda child: child.title.casefold() == track.title.casefold()) is not None:
                 return album
+        logger.info(f'media search: no album container {track.album!r} lists track {track.title!r}')
         return None
 
     def _position(self, parent_id: str, wanted: Callable[[CdsObject], bool]) -> int | None:

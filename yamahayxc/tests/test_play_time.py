@@ -16,8 +16,8 @@ def make_two_devices():
 def test_play_time_is_percent_of_total_time_from_the_same_response():
     plugin, sh = make_plugin('items_playtime.yaml', make_two_devices())
 
-    assert sh.return_item('yamaha.one.play_time')() == 50
-    assert sh.return_item('yamaha.two.play_time')() == 25
+    assert sh.items.return_item('yamaha.one.play_time')() == 50
+    assert sh.items.return_item('yamaha.two.play_time')() == 25
 
 
 def test_pushed_play_time_uses_the_total_time_of_its_own_host():
@@ -25,4 +25,4 @@ def test_pushed_play_time_uses_the_total_time_of_its_own_host():
 
     plugin._data_received(('127.0.0.1', 41100), json.dumps({'netusb': {'play_time': 150}}))
 
-    assert wait_until(lambda: sh.return_item('yamaha.one.play_time')() == 75)
+    assert wait_until(lambda: sh.items.return_item('yamaha.one.play_time')() == 75)

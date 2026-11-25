@@ -23,20 +23,19 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import threading
 import re
 import datetime
 
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-from lib.network import Tcp_client
+from lib.network import Http, Tcp_client
 
 from .webif import WebInterface
 
 
 class MPD(SmartPlugin):
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '2.0.0'
     STATUS = 'mpd_status'
     SONGINFO = 'mpd_songinfo'
     STATISTIC = 'mpd_statistic'
@@ -62,11 +61,6 @@ class MPD(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.logger.debug(f'init {__name__}')
         self._init_complete = False
@@ -467,7 +461,7 @@ class MPD(SmartPlugin):
                 if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seek':
                     val = item()
                     if val:
-                        pattern = re.compile('^\d+[ ]\d+$')
+                        pattern = re.compile(r'^\d+[ ]\d+$')
                         if pattern.match(val):
                             self._send('seek {}'.format(val))
                             return
@@ -476,7 +470,7 @@ class MPD(SmartPlugin):
                 if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekid':
                     val = item()
                     if val:
-                        pattern = re.compile('^\d+[ ]\d+$')
+                        pattern = re.compile(r'^\d+[ ]\d+$')
                         if pattern.match(val):
                             self._send('seekid {}'.format(val))
                             return
@@ -485,7 +479,7 @@ class MPD(SmartPlugin):
                 if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekcur':
                     val = item()
                     if val:
-                        pattern = re.compile('^[+-]?\d+$')
+                        pattern = re.compile(r'^[+-]?\d+$')
                         if pattern.match(val):
                             self._send('seekcur {}'.format(val))
                             return
@@ -582,8 +576,8 @@ class MPD(SmartPlugin):
         ext = ext.lower()
         play = []
         if ext in ('m3u', 'pls'):
-            content = self.get_sh().tools.fetch_url(url, timeout=4)
-            if content is False:
+            content = Http().get_binary(url, timeout=4, require_ok=True)
+            if content is None:
                 return play
             content = content.decode()
             if ext == 'pls':

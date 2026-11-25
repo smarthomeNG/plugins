@@ -113,6 +113,7 @@ def run_search(
     query = parse_query(raw_query)
     candidates = finder.find(query) if query else []
     if not candidates:
+        logger.info(f'media search: nothing found for {raw_query!r}')
         return SearchReport(SearchStatus.NO_MATCH, None)
 
     hit = None
@@ -121,6 +122,10 @@ def run_search(
         if hit:
             break
     if hit is None:
+        logger.warning(
+            f'media search: {len(candidates)} match(es) for {raw_query!r}, none could be located in the media '
+            f'server tree (tried {[c.title for c in candidates[:MAX_CANDIDATES]]})'
+        )
         return SearchReport(SearchStatus.PATH_FAILED, None)
 
     try:

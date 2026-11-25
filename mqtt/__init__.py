@@ -40,7 +40,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.1.0'
+    PLUGIN_VERSION = '3.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -339,7 +339,7 @@ class Mqtt2(MqttPlugin):
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.sh.items.find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional

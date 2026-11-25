@@ -468,14 +468,14 @@ class WebInterface(SmartPluginWebIf):
 
         self.plugin.dump(pathname)
         # self.plugin.dump(
-        #    '%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
+        #    '%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().get_basedir(), self.plugin.get_instance_name()))
 
         mime = 'application/octet-stream'
         # disposition should bie 'attachment' or 'inline'
         return cherrypy.lib.static.serve_file(pathname, mime, disposition='attachment', name=filename)
         # return cherrypy.lib.static.serve_file(
-        #    "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
-        #    mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
+        #    "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().get_basedir(), self.plugin.get_instance_name()),
+        #    mime, "%s/var/db/" % self.plugin.get_sh().get_basedir())
 
     @cherrypy.expose
     def db_sqldump(self):

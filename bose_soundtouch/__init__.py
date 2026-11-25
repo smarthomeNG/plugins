@@ -39,7 +39,7 @@ class BoseSoundtouch(SmartPlugin):
     """
 
     # Plugin parameters
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '1.0.2'
     PLUGIN_PARAMETER_IP = None
     PLUGIN_PARAMETER_PORT = None
 
@@ -74,10 +74,6 @@ class BoseSoundtouch(SmartPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
         super().__init__()
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         # If an package import with try/except is done, handle an import error like this:
 
@@ -256,7 +252,7 @@ class BoseSoundtouch(SmartPlugin):
     def updateSoundtouchStatus(self):
         status = None
         self.logger.debug('Updating Soundtouch Status...')
-        for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
+        for item in self.get_sh().items.find_items(self.ITEM_ACTION_ATTR):
             if status is None:
                 status = self.getSoundtouchDevice().status()
             if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'status.album':
@@ -280,7 +276,7 @@ class BoseSoundtouch(SmartPlugin):
     def updateSoundtouchVolume(self):
         volume = None
         self.logger.debug('Updating Soundtouch Volume...')
-        for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
+        for item in self.get_sh().items.find_items(self.ITEM_ACTION_ATTR):
             if volume is None:
                 volume = self.getSoundtouchDevice().volume()
             if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'volume.actual':
@@ -293,7 +289,7 @@ class BoseSoundtouch(SmartPlugin):
     def updateSoundtouchPresets(self):
         presets = None
         self.logger.debug('Updating Soundtouch Presets...')
-        for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
+        for item in self.get_sh().items.find_items(self.ITEM_ACTION_ATTR):
             if presets is None:
                 presets = self.getSoundtouchDevice().presets()
             if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.name' and len(presets) > 0:

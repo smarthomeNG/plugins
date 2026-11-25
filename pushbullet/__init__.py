@@ -20,7 +20,6 @@
 #########################################################################
 
 import logging
-import sys
 import json
 import requests
 import magic
@@ -33,7 +32,7 @@ class Pushbullet(SmartPlugin):
     _apiurl = 'https://api.pushbullet.com/v2/pushes'
     _upload_apiurl = 'https://api.pushbullet.com/v2/upload-request'
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()
@@ -103,27 +102,14 @@ class Pushbullet(SmartPlugin):
             if apikey is None:
                 apikey = self._apikey
 
-            if sys.version_info < (3, 5):
-                upload_request_response = requests.post(
-                    self._upload_apiurl,
-                    data=json.dumps(
-                        {
-                            'file_name': os.path.basename(filepath),
-                            'file_type': magic.from_file(filepath, mime=True).decode('UTF-8'),
-                        }
-                    ),
-                    headers=headers,
-                    auth=(apikey, ''),
-                )
-            else:
-                upload_request_response = requests.post(
-                    self._upload_apiurl,
-                    data=json.dumps(
-                        {'file_name': os.path.basename(filepath), 'file_type': magic.from_file(filepath, mime=True)}
-                    ),
-                    headers=headers,
-                    auth=(apikey, ''),
-                )
+            upload_request_response = requests.post(
+                self._upload_apiurl,
+                data=json.dumps(
+                    {'file_name': os.path.basename(filepath), 'file_type': magic.from_file(filepath, mime=True)}
+                ),
+                headers=headers,
+                auth=(apikey, ''),
+            )
 
             if self._is_response_ok(upload_request_response):
                 data = upload_request_response.json()

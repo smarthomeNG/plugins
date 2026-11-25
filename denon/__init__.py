@@ -62,7 +62,7 @@ from lib.item.item import Item
 class denon(SmartDevicePlugin):
     """Device class for Denon AV."""
 
-    PLUGIN_VERSION = '1.2.0'
+    PLUGIN_VERSION = '2.0.0'
 
     TRANSPORTS = (
         TransportRule(CONN_NET_TCP_CLI, requires='host'),

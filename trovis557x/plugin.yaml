@@ -10,7 +10,7 @@ plugin:
     keywords: iot samson trovis 5573 5576 5578 5579
     documentation: https://github.com/Tom-Bom-badil/samson_trovis_557x/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1390281-trovis-557x-heizungsregler-plugin
-    version: 2.0.0
+    version: 2.0.1
     sh_minversion: '1.5'
     # sh_maxversion:              # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False

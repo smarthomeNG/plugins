@@ -59,7 +59,7 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """Device class for Logitech Mediaserver/Squeezebox function."""
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '3.0.0'
 
     TRANSPORTS = (TransportRule(CONN_NET_TCP_CLI, requires='host'),)
     COMMAND_CLASS = SDPCommandParseStr

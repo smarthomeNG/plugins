@@ -28,7 +28,7 @@ def start(services=SERVICES, position=0, preset_numbers=()):
 
 
 def item(sh, name):
-    return sh.return_item('yamaha.dev.main.' + name)
+    return sh.items.return_item('yamaha.dev.main.' + name)
 
 
 def write(plugin, sh, name, value):

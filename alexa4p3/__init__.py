@@ -66,15 +66,11 @@ class protocoll(object):
 
 
 class Alexa4P3(SmartPlugin):
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '2.0.0'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__()
-        from bin.smarthome import VERSION
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.sh = self.get_sh()
         self.service_port = self.get_parameter_value('service_port')

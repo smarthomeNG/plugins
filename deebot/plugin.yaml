@@ -5,11 +5,11 @@ plugin:
         de: 'Plugin für Ecovacs Deebot Saugroboter über die Ecovacs Cloud'
         en: 'Plugin for Ecovacs Deebot vacuum robots using the Ecovacs cloud'
     maintainer: Morg
-    state: develop                  # change to ready when done with development
+    state: ready                  # change to ready when done with development
     keywords: iot vacuum robot clean ecovacs deebot
 
-    version: '0.4.0'                # Plugin version (must match the version specified in __init__.py)
-    sh_minversion: '1.12.2.2'       # minimum shNG version to use this plugin
+    version: '1.0.0'                # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: '2.0.0'             # minimum shNG version to use this plugin
     py_minversion: '3.14'           # minimum Python version to use for this plugin
     multi_instance: true            # plugin supports multi instance
     restartable: true
