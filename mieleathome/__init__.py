@@ -34,7 +34,7 @@ import requests
 import json
 import time
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import sys
 
@@ -132,14 +132,12 @@ class mieleathome(SmartPlugin):
         self.event_server.start()
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
 
-        # if you need to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
-
         myTokenRefresh = self.Expiration - 100
         self.scheduler_add('_refreshToken', self._refreshToken, cycle=myTokenRefresh)
         for device in self.miele_devices_by_deviceID:
             myPayload = self._getActions4Device(device)
-            self._parseAction4Device(myPayload, device)
+            if myPayload:
+                self._parseAction4Device(myPayload, device)
 
     def stop(self):
         """
@@ -149,8 +147,9 @@ class mieleathome(SmartPlugin):
         self.logger.debug('Stop method called')
         self.scheduler_remove('poll_device')
         self.scheduler_remove('_refreshToken')
-        self.event_server.alive = False
-        self.event_server.stop()
+        if self.event_server:
+            self.event_server.alive = False
+            self.event_server.stop()
         # self.event_server.join()
 
     def _getallDevices4Action(self):
@@ -264,18 +263,29 @@ class mieleathome(SmartPlugin):
         myHeaders = {'Authorization': 'Bearer {}'.format(self.AccessToken)}
 
         myUrl = self.Url + '/devices?language={}'.format(self.country[0:2])
-        myResult = requests.get(myUrl, headers=myHeaders, timeout=self.req_timeout)
+
+        try:
+            myResult = requests.get(myUrl, headers=myHeaders, timeout=self.req_timeout)
+
+        except Exception as err:
+            self.logger.warning(f'Exception during getalldevices request. Error: {err}')
+            return False
+
         try:
             if myResult.status_code == 200:
                 self.all_devices = json.loads(myResult.content.decode())
                 self.logger.debug('Got all devices from Miele-Cloud - start parsing to Items')
                 self._parseAllDevices(self.all_devices)
                 self.logger.debug('Got all devices from Miele-Cloud - stopped parsing to Items')
+                return True
             else:
+                return False
                 pass
+              
         except Exception:
             self.all_devices = {}
             self.logger.warning('Error while getting devices from {}'.format(myUrl))
+            return False
 
     def _parseAllDevices(self, myPayload):
         """ """
@@ -338,15 +348,17 @@ class mieleathome(SmartPlugin):
         myHeaders = {'Authorization': 'Bearer {}'.format(self.AccessToken)}
 
         myUrl = self.Url + '/devices/{}/actions'.format(deviceId)
-        myResult = requests.get(myUrl, headers=myHeaders, timeout=self.req_timeout)
         try:
-            if myResult.status_code == 200:
-                myActions = json.loads(myResult.content.decode())
-                self.logger.debug('Got all actions from Miele-Cloud for {} - start parsing to Items'.format(deviceId))
-                return myActions
+            myResult = requests.get(myUrl, headers=myHeaders, timeout=self.req_timeout)
         except Exception:
             self.logger.warning('Error while getting Actions for Device :{}'.format(deviceId))
+            return
 
+        if myResult.status_code == 200:
+            myActions = json.loads(myResult.content.decode())
+            self.logger.debug('Got all actions from Miele-Cloud for {} - start parsing to Items'.format(deviceId))
+            return myActions
+        
     def putCommand2Device(self, deviceID, myPayload):
         try:
             myHeaders = {'Authorization': 'Bearer {}'.format(self.AccessToken)}
@@ -518,16 +530,15 @@ class mieleathome(SmartPlugin):
         It is called by the scheduler which is set within run() method.
         """
         if self.auth:
-            try:
-                self._getalldevices()
+            ret = self._getalldevices()
+            if ret:
                 for device in self.miele_devices_by_deviceID:
                     myPayload = self._getActions4Device(device)
-                    self._parseAction4Device(myPayload, device)
-
-            except Exception as err:
-                self.logger.warning('mieleathome - error during _getalldevices in poll_device - {}'.format(err))
-                pass
-            if self.last_ping_timestamp < datetime.now() - timedelta(minutes=5):
+                    if myPayload:
+                        self.logger.debug(f'Parsing valid payload {myPayload}')
+                        self._parseAction4Device(myPayload, device)
+            
+            if self.last_ping_timestamp < self.shtime.add_seconds( self.shtime.now(), -5 * 60).replace(tzinfo=None):
                 self.logger.debug('mieleathome - no ping since 5 minutes - retry to get new Event-Connection')
                 try:
                     self.event_server.reconnect()
