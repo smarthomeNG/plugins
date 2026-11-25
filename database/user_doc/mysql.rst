@@ -2,11 +2,11 @@
 .. index:: database; MySQL installieren
 .. index:: database; MariaDB installieren
 
-.. role:: bluesup
+.. role:: redsup
 
-===========================================
-MySQL/MariaDB Installation :bluesup:`Neu`
-===========================================
+========================================
+MySQL/MariaDB Installation :redsup:`neu`
+========================================
 
 Diese Seite beschreibt die Installation und Grundeinrichtung eines MySQL/MariaDB Servers für die
 Nutzung mit dem ``database`` Plugin.

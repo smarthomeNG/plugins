@@ -1,9 +1,12 @@
 .. index:: Plugins; database (Datenbank Unterstützung)
 .. index:: database
 
-========
-database
-========
+.. role:: greensup
+.. role:: redsup
+
+===========================
+database :greensup:`Update`
+===========================
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
@@ -22,8 +25,8 @@ welches bereits mit Python oder MySQL gebundeled ist, und über das
 optional mit der `TimescaleDB <https://www.timescale.com/>`_ Extension - siehe
 "PostgreSQL+TimescaleDB Unterstützung" weiter unten).
 
-Installation der Datenbank
-===========================
+Installation der Datenbank :redsup:`neu`
+========================================
 
 .. index:: database; Datenbank installieren
 
@@ -64,8 +67,8 @@ und Grundeinrichtung des jeweiligen Datenbankservers auf den folgenden Seiten:
    user_doc/mysql
    user_doc/timescale
 
-Konfiguration
-=============
+Konfiguration :greensup:`Update`
+================================
 
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/database` beschrieben.
 
@@ -94,8 +97,8 @@ Ein typischer Anwendungsfall sind zum Beispiel monoton steigende Werte wie Zähl
 und für die doppelte Einträge durch smarthomeNG Neustarts störend in Datenbank und optionalen Plots in einer
 Visualisierung sind.
 
-Treiber-Auswahl
----------------
+Treiber-Auswahl :redsup:`neu`
+-----------------------------
 
 .. index:: database; driver
 
@@ -138,8 +141,8 @@ Beispiel für eine PostgreSQL+TimescaleDB-Instanz:
      Zurücksetzen des Parameters macht eine bereits umgestellte Datei nicht rückgängig.
 
 
-Kompaktierung statt Löschen (database_maxage_action)
-====================================================
+Kompaktierung statt Löschen (database_maxage_action) :redsup:`neu`
+==================================================================
 
 Standardmäßig löscht ``database_maxage`` alte Werte ersatzlos. Über das Item Attribut
 ``database_maxage_action`` kann stattdessen festgelegt werden, dass alte Rohwerte zu jeweils **einem**
@@ -156,8 +159,8 @@ Auf PostgreSQL+TimescaleDB kann diese Kompaktierung alternativ vom Datenbank-Ser
 Unterstützung" weiter unten.
 
 
-Item Attribute
---------------
+Item Attribute :redsup:`neu`
+----------------------------
 
 ``database_maxage_action``
     Legt fest, was mit Werten passiert, die älter als ``database_maxage`` sind. Standardwert ist
@@ -218,8 +221,8 @@ Werte, die älter als 90 Tage sind, werden zu einem Tagesmittelwert zusammengefa
 werden.
 
 
-Minimum/Maximum als eigenständige Items (database.min / database.max)
----------------------------------------------------------------------
+Minimum/Maximum als eigenständige Items (database.min / database.max) :redsup:`neu`
+-----------------------------------------------------------------------------------
 
 ``database_maxage_action`` liefert bewusst nur **einen** Wert pro Intervall - wer zusätzlich zum
 Mittelwert auch Minimum und/oder Maximum eines Intervalls dauerhaft speichern möchte, kann dafür die
@@ -266,8 +269,8 @@ eigenständig geloggte Items.
                    database_maxage: 90
 
 
-Fehlende Messwerte (Datenlücken)
-================================
+Fehlende Messwerte (Datenlücken) :greensup:`Update`
+===================================================
 
 Wenn ein Gerät (z. B. ein Wechselrichter) zeitweise nicht erreichbar ist, behält das Item
 in SmartHomeNG seinen letzten Wert. Ohne weiteres würde diese Zeitspanne fälschlicherweise
@@ -292,8 +295,8 @@ der Datenbank gelöscht. Alternativ können ältere Werte statt gelöscht zu wer
 Kompaktierungsintervall verdichtet werden, siehe oben "Kompaktierung statt Löschen".
 
 
-Automatisches Ungültigmarkieren bei ausbleibenden Änderungen oder Updates (database_invalid_after)
---------------------------------------------------------------------------------------------------
+Automatisches Ungültigmarkieren bei ausbleibenden Änderungen oder Updates (database_invalid_after) :redsup:`neu`
+----------------------------------------------------------------------------------------------------------------
 
 .. index:: database; database_invalid_after
 .. index:: database; invalid_check_cycle
@@ -333,8 +336,8 @@ Items automatisch wieder geschlossen, ohne dass ``item.db_mark_valid()`` explizi
 werden muss.
 
 
-PostgreSQL+TimescaleDB Unterstützung
-====================================
+PostgreSQL+TimescaleDB Unterstützung :redsup:`neu`
+==================================================
 
 .. index:: database; PostgreSQL
 .. index:: database; TimescaleDB
@@ -478,8 +481,8 @@ einer Meldung auf CRITICAL-Ebene im Log):
 Um die Meldung dauerhaft zu beseitigen, sollte die Konfiguration in der ``plugin.yaml`` an den
 tatsächlichen Zustand angepasst werden.
 
-Daten zwischen Datenbanken migrieren
-------------------------------------
+Daten zwischen Datenbanken migrieren :redsup:`neu`
+--------------------------------------------------
 
 .. index:: database; Migration
 .. index:: database; db_migrate
@@ -752,8 +755,8 @@ Differenz der Datenbank zwischen heute und vor einem Jahr:
     item.db('diff','365d', 'now')
 
 
-Datenqualität und Datenlücken
-=============================
+Datenqualität und Datenlücken :greensup:`Update`
+================================================
 
 Wenn eine Datenquelle (z. B. ein Wechselrichter oder ein Cloud-Dienst) zeitweise
 nicht erreichbar ist, behält das Item in SmartHomeNG seinen letzten bekannten Wert.
@@ -830,8 +833,8 @@ Einträge mit ``val_quality = 1`` werden bei folgenden Funktionen automatisch
 Bei Rohwertabfragen (``raw``) erscheinen Lückeneinträge als ``NULL``, damit
 Visualisierungen die Unterbrechung als echte Lücke darstellen können.
 
-Einzelnen Datensatz ungültig markieren (Webinterface)
------------------------------------------------------
+Einzelnen Datensatz ungültig markieren (Webinterface) :redsup:`neu`
+-------------------------------------------------------------------
 
 In der Detailansicht eines Items (``log``-Tabelle) lässt sich ein einzelner
 Datensatz über das Papierkorb-Symbol als ungültig markieren, statt ihn zu

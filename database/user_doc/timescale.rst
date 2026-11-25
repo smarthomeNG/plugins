@@ -2,11 +2,11 @@
 .. index:: database; PostgreSQL installieren
 .. index:: database; TimescaleDB installieren
 
-.. role:: bluesup
+.. role:: redsup
 
-=====================================================
-PostgreSQL/TimescaleDB Installation :bluesup:`Neu`
-=====================================================
+=================================================
+PostgreSQL/TimescaleDB Installation :redsup:`neu`
+=================================================
 
 Diese Seite beschreibt die Installation und Grundeinrichtung eines PostgreSQL Servers, optional
 erweitert um die `TimescaleDB <https://www.tigerdata.com>`__ Extension, für die Nutzung mit dem
