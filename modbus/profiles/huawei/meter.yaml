@@ -1,0 +1,154 @@
+# Converted from the modbus_tcp huawei structs; item paths and behaviour are unchanged.
+# Writable registers carry direction read_write. The group 'type' is renamed to 'meter_type': as a child item
+# name it collided with the item attribute 'type'.
+vendor: huawei
+device: meter
+title: Huawei power meter (via inverter)
+tier: shipped
+tested_with: []
+groups:
+    status:
+        type: num
+        address: 37100
+        datatype: uint16
+    frequency:
+        type: num
+        address: 37118
+        datatype: int16
+        factor: 0.01
+        attributes:
+            description: Hz
+    voltage:
+        phase_a:
+            type: num
+            address: 37101
+            datatype: int32
+            factor: 0.1
+            attributes:
+                description: V
+        phase_b:
+            type: num
+            address: 37103
+            datatype: int32
+            factor: 0.1
+            attributes:
+                description: V
+        phase_c:
+            type: num
+            address: 37105
+            datatype: int32
+            factor: 0.1
+            attributes:
+                description: V
+        line_ab:
+            type: num
+            address: 37126
+            datatype: int32
+            factor: 0.1
+            attributes:
+                description: V
+        line_bc:
+            type: num
+            address: 37128
+            datatype: int32
+            factor: 0.1
+            attributes:
+                description: V
+        line_ca:
+            type: num
+            address: 37130
+            datatype: int32
+            factor: 0.1
+            attributes:
+                description: V
+    current:
+        phase_a:
+            type: num
+            address: 37107
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: A
+        phase_b:
+            type: num
+            address: 37109
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: A
+        phase_c:
+            type: num
+            address: 37111
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: A
+    power:
+        active:
+            type: num
+            address: 37113
+            datatype: int32
+            attributes:
+                description: kW
+        reactive:
+            type: num
+            address: 37115
+            datatype: int32
+            attributes:
+                description: kVAr
+        factor:
+            type: num
+            address: 37117
+            datatype: int16
+            factor: 0.01
+            attributes:
+                description: PF
+        phase_a:
+            type: num
+            address: 37132
+            datatype: int32
+            attributes:
+                description: kW
+        phase_b:
+            type: num
+            address: 37134
+            datatype: int32
+            attributes:
+                description: kW
+        phase_c:
+            type: num
+            address: 37136
+            datatype: int32
+            attributes:
+                description: kW
+    energy:
+        exported:
+            type: num
+            address: 37119
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: kWh
+        accumulated:
+            type: num
+            address: 37121
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: kWh
+        reactive_accumulated:
+            type: num
+            address: 37123
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: kVArh
+    meter_type:
+        meter:
+            type: num
+            address: 37125
+            datatype: uint16
+        check:
+            type: num
+            address: 37138
+            datatype: uint16

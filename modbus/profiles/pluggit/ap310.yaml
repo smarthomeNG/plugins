@@ -1,0 +1,461 @@
+# Pluggit AP310 air handler, converted from the pluggit plugin (struct pluggit.pluggit): same
+# item names and paths. Needs the plugin parameter `adapter: pluggit` for the unit mode switches
+# (CurrentUnitMode.*, Bypass.ManualMode) and the speed level (switches to manual mode first).
+# Parameters are 32-bit, low word first; read-only ones are read as their low word (uint16),
+# writable ones written as both words (uint32), as the pluggit plugin did.
+# Differences to the pluggit plugin:
+# - FirmwareVersion, HACFirmwareVersion: str ('2.19') instead of num
+# - SystemTime.DateTime: item type datetime instead of foo
+# - SystemTime.Set: new, write-only; SystemTime and SystemTime.DateTime are read-only
+#   (the pluggit plugin wrote SystemTime to register 110, which Set does now)
+# - WeekProgram: read-only (the pluggit plugin read 466 but wrote 467); the day programs
+#   (Monday..Sunday) are left out, the pluggit plugin never decoded them
+vendor: pluggit
+device: ap310
+title: Pluggit AP310 air handler
+tier: shipped
+tested_with: []
+defaults:
+    word_order: little
+groups:
+    DHCPEnabled:
+        address: 26
+        type: bool
+    IPAdress:
+        address: 28
+        datatype: ipv4
+        type: str
+    IPMask:
+        address: 32
+        datatype: ipv4
+        type: str
+    IPGateway:
+        address: 36
+        datatype: ipv4
+        type: str
+    MACAdress:
+        address: 40
+        datatype: pluggit_mac
+        type: str
+    SystemComponents:
+        address: 2
+        type: num
+        FP1:
+            address: 2
+            bit: 0
+            type: bool
+        Week:
+            address: 2
+            bit: 1
+            type: bool
+        Bypass:
+            address: 2
+            bit: 2
+            type: bool
+        LRSwitch:
+            address: 2
+            bit: 3
+            type: bool
+        InternalPreheater:
+            address: 2
+            bit: 4
+            type: bool
+        ServoFlow:
+            address: 2
+            bit: 5
+            type: bool
+        RHSensor:
+            address: 2
+            bit: 6
+            type: bool
+        VOCSensor:
+            address: 2
+            bit: 7
+            type: bool
+        ExtOverride:
+            address: 2
+            bit: 8
+            type: bool
+        HAC1:
+            address: 2
+            bit: 9
+            type: bool
+        HRC2:
+            address: 2
+            bit: 10
+            type: bool
+        PCTool:
+            address: 2
+            bit: 11
+            type: bool
+        Apps:
+            address: 2
+            bit: 12
+            type: bool
+        ZeegBee:
+            address: 2
+            bit: 13
+            type: bool
+        DI1Override:
+            address: 2
+            bit: 14
+            type: bool
+        DI2Override:
+            address: 2
+            bit: 15
+            type: bool
+    SystemSerialNum:
+        address: 4
+        datatype: uint64
+        type: num
+    SystemName:
+        address: 8
+        datatype: string32
+        byte_order: little
+        type: str
+        direction: read_write
+    SwitchInBPosition:
+        address: 84
+        type: bool
+    SwitchInAPosition:
+        address: 86
+        type: bool
+    FirmwareVersion:
+        address: 24
+        datatype: pluggit_version
+        type: str
+    HACFirmwareVersion:
+        address: 192
+        datatype: pluggit_version_bcd
+        type: str
+    SystemTime:
+        address: 108
+        datatype: uint32
+        type: num
+        description: Device clock, seconds since 1970
+        DateTime:
+            address: 108
+            datatype: datetime32
+            type: datetime
+        Date:
+            address: 108
+            datatype: date32
+            type: foo
+        Time:
+            address: 108
+            datatype: time32
+            type: foo
+        Set:
+            address: 110
+            datatype: uint32
+            type: num
+            direction: write
+            description: Sets the device clock, seconds since 1970
+    WorkTime:
+        address: 624
+        type: num
+    ExploitationDate:
+        address: 668
+        datatype: uint32
+        type: foo
+        Date:
+            address: 668
+            datatype: date32
+            type: foo
+    BLState:
+        address: 472
+        type: num
+        Text:
+            address: 472
+            type: str
+            values:
+                0: Standby
+                1: Manual
+                2: Demand
+                3: Week program
+                4: Servo-flow
+                5: Away
+                6: Summer
+                7: DI Override
+                8: Hygrostat override
+                9: Fireplace
+                10: Installer
+                11: Fail Safe 1
+                12: Fail Safe 2
+                13: Fail Off
+                14: Defrost Off
+                15: Defrost
+                16: Night
+    CurrentUnitMode:
+        address: 168
+        datatype: uint32
+        type: num
+        direction: read_write
+        DemandMode:
+            address: 168
+            bit: 1
+            type: bool
+            direction: read_write
+        ManualMode:
+            address: 168
+            bit: 2
+            type: bool
+            direction: read_write
+        WeekProgramMode:
+            address: 168
+            bit: 3
+            type: bool
+            direction: read_write
+        AwayMode:
+            address: 168
+            bit: 4
+            type: bool
+            direction: read_write
+        FireplaceMode:
+            address: 168
+            bit: 6
+            type: bool
+            direction: read_write
+        SummerMode:
+            address: 168
+            bit: 11
+            type: bool
+            direction: read_write
+        NightMode:
+            address: 168
+            bit: 5
+            type: bool
+            direction: read_write
+            NightMode_StartHour:
+                address: 332
+                datatype: uint32
+                type: num
+                direction: read_write
+            NightMode_StartMin:
+                address: 334
+                datatype: uint32
+                type: num
+                direction: read_write
+            NightMode_EndHour:
+                address: 336
+                datatype: uint32
+                type: num
+                direction: read_write
+            NightMode_EndMin:
+                address: 338
+                datatype: uint32
+                type: num
+                direction: read_write
+        ManualBypass:
+            address: 168
+            bit: 7
+            type: bool
+            direction: read_write
+    FanSpeedLevel:
+        address: 324
+        datatype: uint32
+        type: num
+        direction: read_write
+    Fan1rpm:
+        address: 100
+        datatype: float32
+        type: num
+        round: 0
+    Fan2rpm:
+        address: 102
+        datatype: float32
+        type: num
+        round: 0
+    OutdoorTemperature:
+        address: 132
+        datatype: float32
+        type: num
+        description: Frischluft
+        round: 2
+    SupplyTemperature:
+        address: 134
+        datatype: float32
+        type: num
+        description: Zuluft
+        round: 2
+    ExtractTemperature:
+        address: 136
+        datatype: float32
+        type: num
+        description: Abluft
+        round: 2
+    ExhaustTemperature:
+        address: 138
+        datatype: float32
+        type: num
+        description: Fortluft
+        round: 2
+    RoomTemperature:
+        address: 140
+        datatype: float32
+        type: num
+        description: Raumtemperatur, kabellos
+        round: 2
+    FilterRemainingLifetime:
+        address: 554
+        type: num
+    FilterDefaultTime:
+        address: 556
+        datatype: uint32
+        type: num
+        direction: read_write
+    FilterReset:
+        address: 558
+        datatype: uint32
+        type: bool
+        direction: read_write
+    Alarm:
+        address: 516
+        type: num
+        Text:
+            address: 516
+            type: str
+            values:
+                0: No Alarm
+                1: Exhaust FAN Alarm
+                2: Supply FAN Alarm
+                3: Bypass Alarm
+                4: T1 Alarm
+                5: T2 Alarm
+                6: T3 Alarm
+                7: T4 Alarm
+                8: T5 Alarm
+                9: RH Alarm
+                10: Outdoor13 Alarm
+                11: Supply5 Alarm
+                12: Fire Alarm
+                13: Communication Alarm
+                14: FireTermostat Alarm
+                15: High waterlevel Alarm
+        ClearAlarm:
+            address: 514
+            datatype: uint32
+            type: num
+            direction: write
+    WeekProgram:
+        address: 466
+        type: num
+    Bypass:
+        address: 198
+        type: num
+        Text:
+            address: 198
+            type: str
+            values:
+                0: Closed
+                1: In process
+                32: Closing
+                64: Opening
+                255: Opened
+        Open:
+            address: 198
+            type: bool
+            values:
+                0: false
+                1: true
+                32: true
+                64: true
+                255: true
+        Tmin:
+            address: 444
+            datatype: float32
+            type: num
+            round: 1
+        Tmax:
+            address: 446
+            datatype: float32
+            type: num
+            round: 1
+        ManualMode:
+            address: 168
+            bit: 7
+            type: bool
+            direction: read_write
+            attributes:
+                enforce_updates: true
+        ManualTimeout:
+            address: 264
+            type: num
+    PreheaterPower:
+        address: 160
+        type: num
+    ReferenceExtractFanSpeed:
+        address: 518
+        type: num
+    ReferenceSupplyFanSpeed:
+        address: 520
+        type: num
+    FireplacePresent:
+        address: 540
+        type: bool
+    VOC_Sensor:
+        SensorValue:
+            address: 430
+            type: num
+        LowTreshold:
+            address: 562
+            datatype: uint32
+            type: num
+            direction: read_write
+        MiddleTreshold:
+            address: 564
+            datatype: uint32
+            type: num
+            direction: read_write
+        HighTreshold:
+            address: 566
+            datatype: uint32
+            type: num
+            direction: read_write
+    RH_Sensor:
+        SensorValue:
+            address: 196
+            type: num
+        SetPoint:
+            address: 340
+            type: num
+    HAC_Parts:
+        SystemIDComponents:
+            address: 611
+            type: num
+        CO2_Level:
+            address: 574
+            type: num
+        CO2_LowTreshold:
+            address: 568
+            datatype: uint32
+            type: num
+            direction: read_write
+        CO2_MiddleTreshold:
+            address: 570
+            datatype: uint32
+            type: num
+            direction: read_write
+        CO2_HighTreshold:
+            address: 572
+            datatype: uint32
+            type: num
+            direction: read_write
+        IdxHac1Components:
+            address: 244
+            type: num
+        SetpointT2:
+            address: 344
+            datatype: uint32
+            type: num
+            direction: read_write
+        SetpointT3:
+            address: 346
+            datatype: uint32
+            type: num
+            direction: read_write
+        SetpointT5:
+            address: 348
+            datatype: uint32
+            type: num
+            direction: read_write

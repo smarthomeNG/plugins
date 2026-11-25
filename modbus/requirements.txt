@@ -1,0 +1,2 @@
+pymodbus>=3.9,<3.10
+pyserial>=3.4

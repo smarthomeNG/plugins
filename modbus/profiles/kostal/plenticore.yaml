@@ -1,0 +1,565 @@
+# Kostal PLENTICORE plus / PIKO IQ, converted from kostalmodbus (tested there with PLENTICORE plus
+# 7.0, 8.5 and 10). The inverter answers as unit id 71: set slaveUnit: 71. Strings keep the
+# lengths kostalmodbus decoded (STR16 -> 24, STR32 -> 32 characters).
+vendor: kostal
+device: plenticore
+title: Kostal PLENTICORE plus / PIKO IQ
+tier: shipped
+tested_with: []
+defaults:
+    word_order: little
+groups:
+    info:
+        article_number:
+            address: 6
+            datatype: string16
+            type: str
+            description: Inverter article number
+        serial_number:
+            address: 14
+            datatype: string16
+            type: str
+            description: Inverter serial number
+        bidirectional_converters:
+            address: 30
+            datatype: uint16
+            type: num
+            description: Number of bidirectional converter
+        ac_phases:
+            address: 32
+            datatype: uint16
+            type: num
+            description: Number of AC phases
+        pv_strings:
+            address: 34
+            datatype: uint16
+            type: num
+            description: Number of PV strings
+        hardware_version:
+            address: 36
+            datatype: uint16
+            type: num
+            description: Hardware-Version
+        software_version_mc:
+            address: 38
+            datatype: string16
+            type: str
+            description: Software-Version Maincontroller (MC)
+        software_version_ioc:
+            address: 46
+            datatype: string16
+            type: str
+            description: Software-Version IO-Controller (IOC)
+        power_id:
+            address: 54
+            datatype: uint16
+            type: num
+            description: Power-ID
+        network_name:
+            address: 384
+            datatype: string32
+            type: str
+            description: Inverter Network Name
+        network:
+            ip_address:
+                address: 420
+                datatype: string16
+                type: str
+                description: IP-address
+            subnet_mask:
+                address: 428
+                datatype: string16
+                type: str
+                description: IP-subnetmask
+            gateway:
+                address: 436
+                datatype: string16
+                type: str
+                description: IP-gateway
+            dns1:
+                address: 446
+                datatype: string16
+                type: str
+                description: IP-DNS1
+            dns2:
+                address: 454
+                datatype: string16
+                type: str
+                description: IP-DNS2
+        firmware_mc:
+            address: 515
+            datatype: uint32
+            type: num
+            description: Firmware Maincontroller (MC)
+        max_power:
+            address: 531
+            datatype: uint16
+            type: num
+            description: Inverter Max Power W
+        manufacturer:
+            address: 535
+            datatype: string24
+            type: str
+            description: Inverter Manufacturer
+        serial_number_long:
+            address: 559
+            datatype: string24
+            type: str
+            description: Inverter Serial Number
+        product_name:
+            address: 768
+            datatype: string32
+            type: str
+            description: Productname
+        power_class:
+            address: 800
+            datatype: string32
+            type: str
+            description: Power class
+    state:
+        inverter_state:
+            address: 56
+            datatype: uint16
+            type: num
+            description: Inverter state2
+        controller_temperature:
+            address: 98
+            datatype: float32
+            type: num
+            description: Temperature of controller PCB °C
+        energy_manager_state:
+            address: 104
+            datatype: uint32
+            type: num
+            description: State of energy manager3
+        isolation_resistance:
+            address: 120
+            datatype: float32
+            type: num
+            description: Isolation resistance Ohm
+        power_limit_evu:
+            address: 122
+            datatype: float32
+            type: num
+            description: Power limit from EVU %
+        home_consumption_rate:
+            address: 124
+            datatype: float32
+            type: num
+            description: Total home consumption rate %
+        worktime:
+            address: 144
+            datatype: float32
+            type: num
+            description: Worktime s Float Seconds
+        cos_phi:
+            address: 150
+            datatype: float32
+            type: num
+            description: Actual cos
+        grid_frequency:
+            address: 152
+            datatype: float32
+            type: num
+            description: Grid frequency Hz
+    power:
+        dc_total:
+            address: 100
+            datatype: float32
+            type: num
+            description: Total DC power W
+        home_from_battery:
+            address: 106
+            datatype: float32
+            type: num
+            description: Home own consumption from battery W
+        home_from_grid:
+            address: 108
+            datatype: float32
+            type: num
+            description: Home own consumption from grid W
+        home_from_pv:
+            address: 116
+            datatype: float32
+            type: num
+            description: Home own consumption from PV W
+        ac_active:
+            address: 172
+            datatype: float32
+            type: num
+            description: Total AC active power W
+        ac_reactive:
+            address: 174
+            datatype: float32
+            type: num
+            description: Total AC reactive power Var
+        ac_apparent:
+            address: 178
+            datatype: float32
+            type: num
+            description: Total AC apparent power VA
+        generation:
+            address: 575
+            datatype: int16
+            type: num
+            description: Inverter Generation Power (actual) W
+        dc_total_sum:
+            address: 1066
+            datatype: float32
+            type: num
+            description: Total DC power (sum of all PV inputs) W
+    energy:
+        home_from_battery:
+            address: 110
+            datatype: float32
+            type: num
+            description: Total home consumption Battery Wh
+        home_from_grid:
+            address: 112
+            datatype: float32
+            type: num
+            description: Total home consumption Grid Wh
+        home_from_pv:
+            address: 114
+            datatype: float32
+            type: num
+            description: Total home consumption PV Wh
+        home_total:
+            address: 118
+            datatype: float32
+            type: num
+            description: Total home consumption Wh
+        yield_total:
+            address: 320
+            datatype: float32
+            type: num
+            description: Total yield Wh
+        yield_daily:
+            address: 322
+            datatype: float32
+            type: num
+            description: Daily yield Wh
+        yield_yearly:
+            address: 324
+            datatype: float32
+            type: num
+            description: Yearly yield Wh
+        yield_monthly:
+            address: 326
+            datatype: float32
+            type: num
+            description: Monthly yield Wh
+        generation:
+            address: 577
+            datatype: uint32
+            type: num
+            description: Generation Energy Wh
+        dc_pv_total:
+            address: 1056
+            datatype: float32
+            type: num
+            description: Total DC PV energy (sum of all PV inputs) Wh
+        dc_pv1:
+            address: 1058
+            datatype: float32
+            type: num
+            description: Total DC energy from PV1 Wh
+        dc_pv2:
+            address: 1060
+            datatype: float32
+            type: num
+            description: Total DC energy from PV2 Wh
+        dc_pv3:
+            address: 1062
+            datatype: float32
+            type: num
+            description: Total DC energy from PV3 Wh
+        ac_to_grid:
+            address: 1064
+            datatype: float32
+            type: num
+            description: Total energy AC-side to grid Wh
+    phases:
+        l1:
+            current:
+                address: 154
+                datatype: float32
+                type: num
+                description: Current Phase 1 A
+            power:
+                address: 156
+                datatype: float32
+                type: num
+                description: Active power Phase 1 W
+            voltage:
+                address: 158
+                datatype: float32
+                type: num
+                description: Voltage Phase 1 V
+        l2:
+            current:
+                address: 160
+                datatype: float32
+                type: num
+                description: Current Phase 2 A
+            power:
+                address: 162
+                datatype: float32
+                type: num
+                description: Active power Phase 2 W
+            voltage:
+                address: 164
+                datatype: float32
+                type: num
+                description: Voltage Phase 2 V
+        l3:
+            current:
+                address: 166
+                datatype: float32
+                type: num
+                description: Current Phase 3 A
+            power:
+                address: 168
+                datatype: float32
+                type: num
+                description: Active power Phase 3 W
+            voltage:
+                address: 170
+                datatype: float32
+                type: num
+                description: Voltage Phase 3 V
+    battery:
+        charge_current:
+            address: 190
+            datatype: float32
+            type: num
+            description: Battery charge current A
+        cycles:
+            address: 194
+            datatype: float32
+            type: num
+            description: Number of battery cycles
+        current:
+            address: 200
+            datatype: float32
+            type: num
+            description: Actual battery charge (-) / discharge (+) current A
+        fuse_state:
+            address: 202
+            datatype: float32
+            type: num
+            description: PSSB fuse state5
+        ready:
+            address: 208
+            datatype: float32
+            type: num
+            description: Battery ready flag
+        state_of_charge:
+            address: 210
+            datatype: float32
+            type: num
+            description: Act. state of charge %
+        temperature:
+            address: 214
+            datatype: float32
+            type: num
+            description: Battery temperature °C
+        voltage:
+            address: 216
+            datatype: float32
+            type: num
+            description: Battery voltage V
+        gross_capacity:
+            address: 512
+            datatype: uint32
+            type: num
+            description: Battery gross capacity Ah
+        state_of_charge_actual:
+            address: 514
+            datatype: uint16
+            type: num
+            description: Battery actual SOC %
+        manufacturer:
+            address: 517
+            datatype: string16
+            type: str
+            description: Battery Manufacturer
+        model_id:
+            address: 525
+            datatype: uint32
+            type: num
+            description: Battery Model ID
+        work_capacity:
+            address: 529
+            datatype: uint32
+            type: num
+            description: Work Capacity Wh
+        power:
+            address: 582
+            datatype: int16
+            type: num
+            description: Actual battery charge/discharge power W
+        firmware:
+            address: 586
+            datatype: uint32
+            type: num
+            description: Battery Firmware
+        battery_type:
+            address: 588
+            datatype: uint16
+            type: num
+            description: Battery Type6
+    powermeter:
+        cos_phi:
+            address: 218
+            datatype: float32
+            type: num
+            description: Cos φ (powermeter) cos
+        frequency:
+            address: 220
+            datatype: float32
+            type: num
+            description: Frequency (powermeter) Hz
+        l1:
+            current:
+                address: 222
+                datatype: float32
+                type: num
+                description: Current phase 1 (powermeter) A
+            active_power:
+                address: 224
+                datatype: float32
+                type: num
+                description: Active power phase 1 (powermeter) W
+            reactive_power:
+                address: 226
+                datatype: float32
+                type: num
+                description: Reactive power phase 1 (powermeter) Var
+            apparent_power:
+                address: 228
+                datatype: float32
+                type: num
+                description: Apparent power phase 1 (powermeter) VA
+            voltage:
+                address: 230
+                datatype: float32
+                type: num
+                description: Voltage phase 1 (powermeter) V
+        l2:
+            current:
+                address: 232
+                datatype: float32
+                type: num
+                description: Current phase 2 (powermeter) A
+            active_power:
+                address: 234
+                datatype: float32
+                type: num
+                description: Active power phase 2 (powermeter) W
+            reactive_power:
+                address: 236
+                datatype: float32
+                type: num
+                description: Reactive power phase 2 (powermeter) Var
+            apparent_power:
+                address: 238
+                datatype: float32
+                type: num
+                description: Apparent power phase 2 (powermeter) VA
+            voltage:
+                address: 240
+                datatype: float32
+                type: num
+                description: Voltage phase 2 (powermeter) V
+        l3:
+            current:
+                address: 242
+                datatype: float32
+                type: num
+                description: Current phase 3 (powermeter) A
+            active_power:
+                address: 244
+                datatype: float32
+                type: num
+                description: Active power phase 3 (powermeter) W
+            reactive_power:
+                address: 246
+                datatype: float32
+                type: num
+                description: Reactive power phase 3 (powermeter) Var
+            apparent_power:
+                address: 248
+                datatype: float32
+                type: num
+                description: Apparent power phase 3 (powermeter) VA
+            voltage:
+                address: 250
+                datatype: float32
+                type: num
+                description: Voltage phase 3 (powermeter) V
+        total:
+            active_power:
+                address: 252
+                datatype: float32
+                type: num
+                description: Total active power (powermeter) W
+            reactive_power:
+                address: 254
+                datatype: float32
+                type: num
+                description: Total reactive power (powermeter) Var
+            apparent_power:
+                address: 256
+                datatype: float32
+                type: num
+                description: Total apparent power (powermeter) VA
+    dc:
+        string1:
+            current:
+                address: 258
+                datatype: float32
+                type: num
+                description: Current DC1 A
+            power:
+                address: 260
+                datatype: float32
+                type: num
+                description: Power DC1 W
+            voltage:
+                address: 266
+                datatype: float32
+                type: num
+                description: Voltage DC1 V
+        string2:
+            current:
+                address: 268
+                datatype: float32
+                type: num
+                description: Current DC2 A
+            power:
+                address: 270
+                datatype: float32
+                type: num
+                description: Power DC2 W
+            voltage:
+                address: 276
+                datatype: float32
+                type: num
+                description: Voltage DC2 V
+        string3:
+            current:
+                address: 278
+                datatype: float32
+                type: num
+                description: Current DC3 A
+            power:
+                address: 280
+                datatype: float32
+                type: num
+                description: Power DC3 W
+            voltage:
+                address: 286
+                datatype: float32
+                type: num
+                description: Voltage DC3 V

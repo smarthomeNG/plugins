@@ -1,0 +1,801 @@
+# Converted from the modbus_tcp huawei structs; item paths and behaviour are unchanged.
+# Writable registers carry direction read_write.
+vendor: huawei
+device: emma
+title: Huawei EMMA energy manager
+tier: shipped
+tested_with: []
+groups:
+    general:
+        system:
+            software_version:
+                type: str
+                address: 30035
+                datatype: string30
+            model:
+                type: str
+                address: 30222
+                datatype: string40
+            number_of_inverters_found:
+                type: num
+                address: 30801
+                datatype: uint16
+            number_of_chargers_found:
+                type: num
+                address: 30804
+                datatype: uint16
+            backup_time_notification_threshold:
+                type: num
+                address: 30406
+                datatype: uint16
+                attributes:
+                    description: minutes
+            local_time_year:
+                type: num
+                address: 40490
+                datatype: uint16
+                direction: read_write
+        energy:
+            total:
+                absorbed:
+                    type: num
+                    address: 30302
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                consumption:
+                    type: num
+                    address: 30326
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_export:
+                    type: num
+                    address: 30332
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_import:
+                    type: num
+                    address: 30338
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                inverter_yield:
+                    type: num
+                    address: 30344
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                pv_yield:
+                    type: num
+                    address: 30348
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+            today:
+                consumption:
+                    type: num
+                    address: 30324
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_export:
+                    type: num
+                    address: 30330
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_import:
+                    type: num
+                    address: 30336
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                inverter_yield:
+                    type: num
+                    address: 30342
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                pv_yield:
+                    type: num
+                    address: 30346
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+            monthly:
+                pv_yield:
+                    type: num
+                    address: 30380
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                consumption:
+                    type: num
+                    address: 30382
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_export:
+                    type: num
+                    address: 30384
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_import:
+                    type: num
+                    address: 30394
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+            yearly:
+                pv_yield:
+                    type: num
+                    address: 30386
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                consumption:
+                    type: num
+                    address: 30388
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_export:
+                    type: num
+                    address: 30390
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                grid_import:
+                    type: num
+                    address: 30396
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+        power:
+            pv_output:
+                type: num
+                address: 30354
+                datatype: uint32
+                attributes:
+                    description: kW
+            load:
+                type: num
+                address: 30356
+                datatype: uint32
+                attributes:
+                    description: kW
+            feed_in:
+                type: num
+                address: 30358
+                datatype: int32
+                attributes:
+                    description: kW
+            inverter:
+                active:
+                    type: num
+                    address: 30364
+                    datatype: int32
+                    attributes:
+                        description: kW
+                rated:
+                    type: num
+                    address: 30362
+                    datatype: uint32
+                    attributes:
+                        description: kW
+        configuration:
+            threephase_imbalance_control:
+                type: bool
+                attributes:
+                    cache: true
+                    on_change: .register = 1 if value == True else 0
+                register:
+                    type: num
+                    address: 40110
+                    datatype: uint16
+                    direction: read_write
+                    attributes:
+                        on_change: .. = True if value == 1 else False
+            power_control_mode_at_grid_connection_point:
+                type: str
+                attributes:
+                    cache: true
+                    on_change: .register = sh..config_reverse(key=value)
+                config:
+                    type: dict
+                    attributes:
+                        initial_value: "{0: 'unlimited', 5: 'grid connection with zero power', 6: 'limited feed-in', 7: 'power-limited grid connected', 10: 'undefined'}"
+                config_reverse:
+                    type: dict
+                    attributes:
+                        initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7}"
+                register:
+                    type: num
+                    address: 40100
+                    datatype: uint16
+                    direction: read_write
+                    attributes:
+                        initial_value: 10
+                        cache: true
+                        on_change: .. = sh...config(key=value)
+            power_supply_configuration:
+                type: str
+                attributes:
+                    cache: true
+                    on_change: .register = sh..config_reverse(key=value)
+                config:
+                    type: dict
+                    attributes:
+                        initial_value: "{0: 'None', 1: 'mains only', 2: 'mains + generator', 3: 'generator only', 10: 'undefined'}"
+                config_reverse:
+                    type: dict
+                    attributes:
+                        initial_value: "{'None': 0, 'mains only': 1, 'mains + generator': 2, 'generator only': 3}"
+                register:
+                    type: num
+                    address: 41214
+                    datatype: uint16
+                    direction: read_write
+                    attributes:
+                        initial_value: 10
+                        cache: true
+                        on_change: .. = sh...config(key=value)
+            tou_preferred_surplus_pv_use:
+                type: num
+                address: 40001
+                datatype: uint16
+                direction: read_write
+                attributes:
+                    description: 0 = fed to grid, 1 = charge
+            tou_max_grid_charge_power:
+                type: num
+                address: 40002
+                datatype: uint32
+                direction: read_write
+                attributes:
+                    description: kW
+            limitation_mode:
+                type: num
+                address: 40101
+                datatype: uint16
+                direction: read_write
+                attributes:
+                    description: 0 = total power, 1 = single-phase power
+            max_feed_in_power_watt:
+                type: num
+                address: 40107
+                datatype: int32
+                direction: read_write
+                attributes:
+                    description: W
+            max_feed_in_power_percent:
+                type: num
+                address: 40109
+                datatype: uint16
+                factor: 0.1
+                direction: read_write
+                attributes:
+                    description: '%'
+    storage:
+        energy:
+            chargeable:
+                type: num
+                address: 30318
+                datatype: uint32
+                factor: 0.001
+                attributes:
+                    description: kWh
+            dischargeable:
+                type: num
+                address: 30320
+                datatype: uint32
+                factor: 0.001
+                attributes:
+                    description: kWh
+            capacity:
+                chargeable:
+                    type: num
+                    address: 30369
+                    datatype: uint32
+                    factor: 0.001
+                    attributes:
+                        description: kWh
+                dischargeable:
+                    type: num
+                    address: 30371
+                    datatype: uint32
+                    factor: 0.001
+                    attributes:
+                        description: kWh
+                rated:
+                    type: num
+                    address: 30322
+                    datatype: uint32
+                    factor: 0.001
+                    attributes:
+                        description: kWh
+            charged:
+                today:
+                    type: num
+                    address: 30306
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                monthly:
+                    type: num
+                    address: 30407
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                total:
+                    type: num
+                    address: 30308
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+            discharged:
+                today:
+                    type: num
+                    address: 30312
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                monthly:
+                    type: num
+                    address: 30409
+                    datatype: uint32
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+                total:
+                    type: num
+                    address: 30314
+                    datatype: uint64
+                    factor: 0.01
+                    attributes:
+                        description: kWh
+        charge_discharge_power:
+            type: num
+            address: 30360
+            datatype: int32
+            attributes:
+                description: kW
+        state_of_charge:
+            primary:
+                type: num
+                address: 30368
+                datatype: uint16
+                factor: 0.01
+                attributes:
+                    description: '%'
+            backup:
+                type: num
+                address: 30373
+                datatype: uint16
+                factor: 0.01
+                attributes:
+                    description: '%'
+        ess_control_mode:
+            type: str
+            attributes:
+                cache: true
+                on_change: .register = sh..config_reverse(key=value)
+            config:
+                type: dict
+                attributes:
+                    initial_value: "{1: 'reserved', 2: 'max self-consumption', 3: 'reserved', 4: 'fully fed to grid', 5: '3rd party dispatch', 10: 'undefined'}"
+            config_reverse:
+                type: dict
+                attributes:
+                    initial_value: "{'reserved': 1, 'max self-consumption': 2, 'reserved': 3, 'fully fed to grid': 4, '3rd party dispatch': 5}"
+            register:
+                type: num
+                address: 40000
+                datatype: int16
+                direction: read_write
+                attributes:
+                    initial_value: 10
+                    cache: true
+                    on_change: .. = sh...config(key=value)
+    built_in_energy_sensor:
+        voltage:
+            phase_a:
+                type: num
+                address: 31639
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            phase_b:
+                type: num
+                address: 31641
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            phase_c:
+                type: num
+                address: 31643
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_ab:
+                type: num
+                address: 31645
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_bc:
+                type: num
+                address: 31647
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_ca:
+                type: num
+                address: 31649
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+        current:
+            phase_a:
+                type: num
+                address: 31651
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+            phase_b:
+                type: num
+                address: 31653
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+            phase_c:
+                type: num
+                address: 31655
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+        power:
+            active:
+                type: num
+                address: 31657
+                datatype: int32
+                attributes:
+                    description: kW
+            factor:
+                type: num
+                address: 31661
+                datatype: int32
+                factor: 0.01
+            apparent:
+                type: num
+                address: 31663
+                datatype: int32
+                attributes:
+                    description: kVA
+            phase_a:
+                type: num
+                address: 31665
+                datatype: int32
+                attributes:
+                    description: kW
+            phase_b:
+                type: num
+                address: 31667
+                datatype: int32
+                attributes:
+                    description: kW
+            phase_c:
+                type: num
+                address: 31669
+                datatype: int32
+                attributes:
+                    description: kW
+        energy:
+            active:
+                type: num
+                address: 31671
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+            negative:
+                type: num
+                address: 31679
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+            positive:
+                type: num
+                address: 31687
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+    external_energy_sensor:
+        voltage:
+            phase_a:
+                type: num
+                address: 31895
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            phase_b:
+                type: num
+                address: 31897
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            phase_c:
+                type: num
+                address: 31899
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_ab:
+                type: num
+                address: 31901
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_bc:
+                type: num
+                address: 31903
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_ca:
+                type: num
+                address: 31905
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+        current:
+            phase_a:
+                type: num
+                address: 31907
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+            phase_b:
+                type: num
+                address: 31909
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+            phase_c:
+                type: num
+                address: 31911
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+        power:
+            active:
+                type: num
+                address: 31913
+                datatype: int32
+                attributes:
+                    description: kW
+            factor:
+                type: num
+                address: 31917
+                datatype: int32
+                factor: 0.01
+            apparent:
+                type: num
+                address: 31919
+                datatype: int32
+                attributes:
+                    description: kVA
+            phase_a:
+                type: num
+                address: 31921
+                datatype: int32
+                attributes:
+                    description: kW
+            phase_b:
+                type: num
+                address: 31923
+                datatype: int32
+                attributes:
+                    description: kW
+            phase_c:
+                type: num
+                address: 31925
+                datatype: int32
+                attributes:
+                    description: kW
+        energy:
+            active:
+                type: num
+                address: 31927
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+            negative:
+                type: num
+                address: 31935
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+            positive:
+                type: num
+                address: 31943
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+    external_meter:
+        status:
+            type: num
+            address: 30500
+            datatype: uint16
+        voltage:
+            phase_a:
+                type: num
+                address: 30502
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            phase_b:
+                type: num
+                address: 30504
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            phase_c:
+                type: num
+                address: 30506
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_ab:
+                type: num
+                address: 30508
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_bc:
+                type: num
+                address: 30510
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+            line_ca:
+                type: num
+                address: 30512
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: V
+        current:
+            phase_a:
+                type: num
+                address: 30514
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+            phase_b:
+                type: num
+                address: 30516
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+            phase_c:
+                type: num
+                address: 30518
+                datatype: int32
+                factor: 0.1
+                attributes:
+                    description: A
+        power:
+            active:
+                type: num
+                address: 30520
+                datatype: int32
+                attributes:
+                    description: kW
+            apparent:
+                type: num
+                address: 30526
+                datatype: int32
+                attributes:
+                    description: kVA
+            factor:
+                type: num
+                address: 30524
+                datatype: int32
+                factor: 0.01
+            phase_a:
+                type: num
+                address: 30528
+                datatype: int32
+                attributes:
+                    description: kW
+            phase_b:
+                type: num
+                address: 30530
+                datatype: int32
+                attributes:
+                    description: kW
+            phase_c:
+                type: num
+                address: 30532
+                datatype: int32
+                attributes:
+                    description: kW
+        energy:
+            total:
+                type: num
+                address: 30534
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+            positive:
+                type: num
+                address: 30550
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh
+            negative:
+                type: num
+                address: 30542
+                datatype: int64
+                factor: 0.01
+                attributes:
+                    description: kWh

@@ -1,0 +1,172 @@
+# Converted from the modbus_tcp huawei structs; item paths and behaviour are unchanged.
+# Writable registers carry direction read_write.
+vendor: huawei
+device: inverter
+title: Huawei SUN2000 inverter
+tier: shipped
+tested_with: []
+groups:
+    hardware:
+        model_name:
+            type: str
+            address: 30000
+            datatype: string30
+        serial_number:
+            type: str
+            address: 30015
+            datatype: string20
+        part_number:
+            type: str
+            address: 30025
+            datatype: string20
+        model_id:
+            type: num
+            address: 30070
+            datatype: uint16
+        product_sales_area:
+            type: str
+            address: 30105
+            datatype: string4
+        grid_standard_code_protocol_version:
+            type: num
+            address: 30109
+            datatype: uint16
+        status:
+            type: num
+            address: 32089
+            datatype: uint16
+            attributes:
+                description: status
+        capability:
+            nb_pv_strings:
+                type: num
+                address: 30071
+                datatype: uint16
+            nb_mpp_tracks:
+                type: num
+                address: 30072
+                datatype: uint16
+        startup:
+            type: num
+            address: 40200
+            datatype: uint16
+            direction: write
+        shutdown:
+            type: num
+            address: 40201
+            datatype: uint16
+            direction: write
+    software:
+        firmware_version:
+            type: str
+            address: 30035
+            datatype: string30
+        software_version:
+            type: str
+            address: 30050
+            datatype: string30
+        protocol_version_modbus:
+            type: num
+            address: 30068
+            datatype: uint32
+    limits:
+        rated_power:
+            type: num
+            address: 30073
+            datatype: uint32
+            attributes:
+                description: W
+        p_max:
+            type: num
+            address: 30075
+            datatype: uint32
+            attributes:
+                description: W
+        s_max:
+            type: num
+            address: 30077
+            datatype: uint32
+            attributes:
+                description: VA
+        q_max_out:
+            type: num
+            address: 30079
+            datatype: int32
+        q_max_in:
+            type: num
+            address: 30081
+            datatype: int32
+        p_max_real:
+            type: num
+            address: 30083
+            datatype: uint32
+            attributes:
+                description: W
+        s_max_real:
+            type: num
+            address: 30085
+            datatype: uint32
+            attributes:
+                description: VA
+    features:
+        feature_mask_1:
+            type: num
+            address: 30211
+            datatype: uint32
+        feature_mask_2:
+            type: num
+            address: 30213
+            datatype: uint32
+        feature_mask_3:
+            type: num
+            address: 30215
+            datatype: uint32
+        feature_mask_4:
+            type: num
+            address: 30217
+            datatype: uint32
+    frequency:
+        type: num
+        address: 32085
+        datatype: uint16
+        factor: 0.01
+        attributes:
+            description: Hz
+    efficiency:
+        type: num
+        address: 32086
+        datatype: uint16
+        factor: 0.01
+        attributes:
+            description: '%'
+    temperature:
+        type: num
+        address: 32087
+        datatype: int16
+        factor: 0.1
+        attributes:
+            description: °C
+    power:
+        input:
+            type: num
+            address: 32064
+            datatype: int32
+            attributes:
+                description: W
+        active:
+            type: num
+            address: 32080
+            datatype: int32
+            attributes:
+                description: W
+        reactive:
+            type: num
+            address: 32082
+            datatype: int32
+            attributes:
+                description: W
+        factor:
+            type: num
+            address: 32084
+            datatype: int16
+            factor: 0.01

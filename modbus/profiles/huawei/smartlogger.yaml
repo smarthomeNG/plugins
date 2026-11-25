@@ -1,0 +1,105 @@
+# Converted from the modbus_tcp huawei structs; item paths and behaviour are unchanged.
+# Writable registers carry direction read_write.
+vendor: huawei
+device: smartlogger
+title: Huawei SmartLogger
+tier: shipped
+tested_with: []
+groups:
+    system:
+        date_time:
+            type: num
+            address: 40000
+            datatype: uint32
+            direction: read_write
+        time_zone:
+            type: num
+            address: 40005
+            datatype: int32
+        local_time:
+            type: num
+            address: 40009
+            datatype: uint32
+    pv:
+        active_power:
+            type: num
+            address: 40388
+            datatype: uint32
+            factor: 0.01
+        reactive_power:
+            type: num
+            address: 40390
+            datatype: int32
+            factor: 0.01
+    storage:
+        active_power:
+            type: num
+            address: 40392
+            datatype: int32
+            factor: 0.01
+        soc:
+            type: num
+            address: 40515
+            datatype: uint16
+            factor: 0.1
+    inverter:
+        efficiency:
+            type: num
+            address: 40685
+            datatype: uint16
+            factor: 0.01
+    external_meter:
+        voltage:
+            phase_a:
+                type: num
+                address: 32260
+                datatype: uint32
+                factor: 0.01
+            phase_b:
+                type: num
+                address: 32262
+                datatype: uint32
+                factor: 0.01
+            phase_c:
+                type: num
+                address: 32264
+                datatype: uint32
+                factor: 0.01
+        current:
+            phase_a:
+                type: num
+                address: 32272
+                datatype: int32
+                factor: 0.1
+            phase_b:
+                type: num
+                address: 32274
+                datatype: int32
+                factor: 0.1
+            phase_c:
+                type: num
+                address: 32276
+                datatype: int32
+                factor: 0.1
+        power:
+            active:
+                type: num
+                address: 32278
+                datatype: int32
+                factor: 0.01
+            power_factor:
+                type: num
+                address: 32284
+                datatype: int16
+                factor: 0.01
+        energy:
+            total_active:
+                type: num
+                address: 32341
+                datatype: int64
+                factor: 0.01
+            total_reactive:
+                type: num
+                address: 32345
+                datatype: int64
+                factor: 0.01

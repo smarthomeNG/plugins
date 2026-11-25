@@ -1,0 +1,236 @@
+# Converted from the modbus_tcp huawei structs; item paths and behaviour are unchanged.
+# Writable registers carry direction read_write.
+vendor: huawei
+device: storage
+title: Huawei LUNA2000 battery (via inverter)
+tier: shipped
+tested_with: []
+groups:
+    power:
+        charge:
+            max:
+                type: num
+                address: 37046
+                datatype: uint32
+                attributes:
+                    description: W
+            max_set:
+                type: num
+                address: 47075
+                datatype: uint32
+                direction: read_write
+                attributes:
+                    description: W
+            forced:
+                charge:
+                    type: num
+                    address: 47247
+                    datatype: uint32
+                    direction: read_write
+                    attributes:
+                        description: W
+                discharge:
+                    type: num
+                    address: 47249
+                    datatype: uint32
+                    direction: read_write
+                    attributes:
+                        description: W
+        discharge:
+            max:
+                type: num
+                address: 37048
+                datatype: uint32
+                attributes:
+                    description: W
+            max_set:
+                type: num
+                address: 47077
+                datatype: uint32
+                direction: read_write
+                attributes:
+                    description: W
+        grid_charge:
+            current:
+                type: num
+                address: 47242
+                datatype: uint32
+                direction: read_write
+                attributes:
+                    description: W
+            max:
+                type: num
+                address: 47244
+                datatype: uint32
+                direction: read_write
+                attributes:
+                    description: W
+    capacity:
+        rated:
+            type: num
+            address: 37758
+            datatype: uint32
+            attributes:
+                description: kWh
+        state_of_charge:
+            type: num
+            address: 37760
+            datatype: uint16
+            factor: 0.1
+            attributes:
+                description: '%'
+        cutoff:
+            charge:
+                type: num
+                address: 47081
+                datatype: uint16
+                factor: 0.1
+                direction: read_write
+                attributes:
+                    description: '%'
+            discharge:
+                type: num
+                address: 47082
+                datatype: uint16
+                factor: 0.1
+                direction: read_write
+                attributes:
+                    description: '%'
+        forced_soc:
+            type: num
+            address: 47101
+            datatype: uint16
+            factor: 0.1
+            direction: read_write
+            attributes:
+                description: '%'
+        backup_soc:
+            type: num
+            address: 47102
+            datatype: uint16
+            factor: 0.1
+            direction: read_write
+            attributes:
+                description: '%'
+        grid_charge_cutoff:
+            type: num
+            address: 47088
+            datatype: uint16
+            factor: 0.1
+            direction: read_write
+            attributes:
+                description: '%'
+    energy:
+        total:
+            charge:
+                type: num
+                address: 37780
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: kWh
+            discharge:
+                type: num
+                address: 37782
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: kWh
+        daily:
+            charge:
+                type: num
+                address: 37784
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: kWh
+            discharge:
+                type: num
+                address: 37786
+                datatype: uint32
+                factor: 0.01
+                attributes:
+                    description: kWh
+    electrical:
+        bus:
+            voltage:
+                type: num
+                address: 37763
+                datatype: uint16
+                factor: 0.1
+                attributes:
+                    description: V
+            current:
+                type: num
+                address: 37764
+                datatype: int16
+                factor: 0.1
+                attributes:
+                    description: A
+    status:
+        running:
+            type: num
+            address: 37762
+            datatype: uint16
+        forced_mode:
+            type: num
+            address: 47100
+            datatype: uint16
+            direction: read_write
+            attributes:
+                description: mode
+        power_limit_grid:
+            type: num
+            address: 47079
+            datatype: int32
+            attributes:
+                description: W
+        working_mode_a:
+            type: num
+            address: 47004
+            datatype: int16
+        working_mode_settings:
+            type: num
+            address: 47086
+            datatype: uint16
+            direction: read_write
+        control_mode:
+            type: num
+            address: 47589
+            datatype: int16
+            direction: read_write
+    operation:
+        charge_from_grid:
+            type: bool
+            address: 47087
+            datatype: uint16
+            direction: read_write
+        excess_pv_use_tou:
+            type: num
+            address: 47299
+            datatype: uint16
+            direction: read_write
+    pricing:
+        time_of_use_price:
+            type: num
+            address: 47027
+            datatype: uint16
+        luna_price_periods:
+            type: num
+            address: 47255
+            direction: read_write
+        lg_resu_price_periods:
+            type: num
+            address: 47028
+            direction: read_write
+        fixed_charging_and_discharging_periods:
+            type: num
+            address: 47200
+            direction: read_write
+        lcoe:
+            type: num
+            address: 47069
+            datatype: uint32
+            factor: 0.01
+            attributes:
+                description: c/kWh

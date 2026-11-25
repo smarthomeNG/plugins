@@ -1,0 +1,922 @@
+# E3/DC S10 home power station, Modbus TCP "simple mode" (protocol "E3/DC" in the device's
+# Smart Home > Modbus menu, port 502, unit id 1). Addresses are 0-based (E3/DC documents them
+# 1-based: 40001 = magic; register document "Modbus/TCP-Schnittstelle" V2.30, 2024-10-22).
+# 32-bit values: low word first. Not mapped: DC string 3 (unused), the int16 copies of the meter
+# phases (doc 40106-40136), additional inverters 1-7 (40999 + 34 * index, same layout as
+# `inverter`), wallbox bit writes (function 05h, coil address undocumented).
+# The protocol setting "SunSpec" replaces this block (40000 = 'SunS'); its battery models carry no
+# values, so simple mode is the one to use.
+vendor: e3dc
+device: s10
+title: E3/DC S10 (simple mode)
+tier: shipped
+tested_with: ['S10 SE, firmware H20_2026_44, simple mode 1.2']
+defaults:
+    word_order: little
+groups:
+    info:
+        description: Device identification
+        magic:
+            address: 40000
+            datatype: uint16
+            type: num
+            description: Identifier, 0xE3DC (58332) when the simple mode is active
+        modbus_version:
+            address: 40001
+            datatype: uint16
+            type: num
+            description: Modbus firmware version, major in the high byte
+        register_count:
+            address: 40002
+            datatype: uint16
+            type: num
+            description: Number of supported registers
+        manufacturer:
+            address: 40003
+            datatype: string32
+            type: str
+            description: Manufacturer
+        model:
+            address: 40019
+            datatype: string32
+            type: str
+            description: Model
+        serial_number:
+            address: 40035
+            datatype: string32
+            type: str
+            description: Serial number
+        firmware:
+            address: 40051
+            datatype: string32
+            type: str
+            description: Firmware release
+    power:
+        description: Power flows in W
+        solar:
+            address: 40067
+            datatype: int32
+            type: num
+            description: PV production W
+        battery:
+            address: 40069
+            datatype: int32
+            type: num
+            description: Battery power W, positive = charging
+        house:
+            address: 40071
+            datatype: int32
+            type: num
+            description: House consumption W
+        grid:
+            address: 40073
+            datatype: int32
+            type: num
+            description: Grid power W, negative = feed-in
+        additional:
+            address: 40075
+            datatype: int32
+            type: num
+            description: Additional (external) production W
+        wallbox:
+            address: 40077
+            datatype: int32
+            type: num
+            description: Wallbox consumption W
+        wallbox_solar:
+            address: 40079
+            datatype: int32
+            type: num
+            description: Wallbox consumption from solar W
+    state:
+        description: Shares and battery state
+        autarky:
+            address: 40081
+            datatype: uint8_high
+            type: num
+            description: Autarky %
+        self_consumption:
+            address: 40081
+            datatype: uint8_low
+            type: num
+            description: Self consumption %
+        state_of_charge:
+            address: 40082
+            datatype: uint16
+            type: num
+            description: Battery state of charge %
+        emergency_power:
+            address: 40083
+            datatype: uint16
+            type: num
+            description: Emergency power status
+            text:
+                address: 40083
+                type: str
+                values:
+                    0: 'not supported'
+                    1: 'active'
+                    2: 'inactive'
+                    3: 'not available'
+                    4: 'motor switch off'
+        ems_status:
+            address: 40084
+            datatype: uint16
+            type: num
+            description: EMS status bits
+            charging_locked:
+                address: 40084
+                bit: 0
+                type: bool
+                description: Charging the batteries is locked
+            discharging_locked:
+                address: 40084
+                bit: 1
+                type: bool
+                description: Discharging the batteries is locked
+            emergency_possible:
+                address: 40084
+                bit: 2
+                type: bool
+                description: Emergency power possible (batteries charged)
+            weather_based_charging:
+                address: 40084
+                bit: 3
+                type: bool
+                description: Charge capacity held back for the forecast sunshine
+            curtailed:
+                address: 40084
+                bit: 4
+                type: bool
+                description: Output curtailed, maximum feed-in reached
+            charge_lock_time:
+                address: 40084
+                bit: 5
+                type: bool
+                description: Charge lock time active
+            discharge_lock_time:
+                address: 40084
+                bit: 6
+                type: bool
+                description: Discharge lock time active
+        sg_ready:
+            address: 40136
+            datatype: uint16
+            type: num
+            description: SG Ready status
+        power_ready:
+            address: 40187
+            datatype: uint16
+            type: num
+            description: Ready to deliver power (1 = grid connected, DCDC running, battery can discharge)
+    control:
+        description: Controls
+        feed_in_limit:
+            address: 40185
+            datatype: int32
+            type: num
+            description: Feed-in limit W as last written (the device accepts writes; a limit holds only when rewritten at least every 30 s)
+    dc:
+        description: DC strings
+        string_1:
+            voltage:
+                address: 40095
+                datatype: uint16
+                type: num
+                description: DC voltage string 1 V
+            current:
+                address: 40098
+                datatype: uint16
+                factor: 0.01
+                round: 2
+                type: num
+                description: DC current string 1 A
+            power:
+                address: 40101
+                datatype: uint16
+                type: num
+                description: DC power string 1 W
+        string_2:
+            voltage:
+                address: 40096
+                datatype: uint16
+                type: num
+                description: DC voltage string 2 V
+            current:
+                address: 40099
+                datatype: uint16
+                factor: 0.01
+                round: 2
+                type: num
+                description: DC current string 2 A
+            power:
+                address: 40102
+                datatype: uint16
+                type: num
+                description: DC power string 2 W
+    meters:
+        description: Power meters 0-7, phase power in W
+        meter_0:
+            meter_type:
+                address: 40104
+                datatype: uint16
+                type: num
+                description: Type of power meter 0
+                text:
+                    address: 40104
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40137
+                datatype: int32
+                type: num
+                description: Power meter 0 L1 W
+            l2:
+                address: 40139
+                datatype: int32
+                type: num
+                description: Power meter 0 L2 W
+            l3:
+                address: 40141
+                datatype: int32
+                type: num
+                description: Power meter 0 L3 W
+        meter_1:
+            meter_type:
+                address: 40108
+                datatype: uint16
+                type: num
+                description: Type of power meter 1
+                text:
+                    address: 40108
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40143
+                datatype: int32
+                type: num
+                description: Power meter 1 L1 W
+            l2:
+                address: 40145
+                datatype: int32
+                type: num
+                description: Power meter 1 L2 W
+            l3:
+                address: 40147
+                datatype: int32
+                type: num
+                description: Power meter 1 L3 W
+        meter_2:
+            meter_type:
+                address: 40112
+                datatype: uint16
+                type: num
+                description: Type of power meter 2
+                text:
+                    address: 40112
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40149
+                datatype: int32
+                type: num
+                description: Power meter 2 L1 W
+            l2:
+                address: 40151
+                datatype: int32
+                type: num
+                description: Power meter 2 L2 W
+            l3:
+                address: 40153
+                datatype: int32
+                type: num
+                description: Power meter 2 L3 W
+        meter_3:
+            meter_type:
+                address: 40116
+                datatype: uint16
+                type: num
+                description: Type of power meter 3
+                text:
+                    address: 40116
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40155
+                datatype: int32
+                type: num
+                description: Power meter 3 L1 W
+            l2:
+                address: 40157
+                datatype: int32
+                type: num
+                description: Power meter 3 L2 W
+            l3:
+                address: 40159
+                datatype: int32
+                type: num
+                description: Power meter 3 L3 W
+        meter_4:
+            meter_type:
+                address: 40120
+                datatype: uint16
+                type: num
+                description: Type of power meter 4
+                text:
+                    address: 40120
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40161
+                datatype: int32
+                type: num
+                description: Power meter 4 L1 W
+            l2:
+                address: 40163
+                datatype: int32
+                type: num
+                description: Power meter 4 L2 W
+            l3:
+                address: 40165
+                datatype: int32
+                type: num
+                description: Power meter 4 L3 W
+        meter_5:
+            meter_type:
+                address: 40124
+                datatype: uint16
+                type: num
+                description: Type of power meter 5
+                text:
+                    address: 40124
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40167
+                datatype: int32
+                type: num
+                description: Power meter 5 L1 W
+            l2:
+                address: 40169
+                datatype: int32
+                type: num
+                description: Power meter 5 L2 W
+            l3:
+                address: 40171
+                datatype: int32
+                type: num
+                description: Power meter 5 L3 W
+        meter_6:
+            meter_type:
+                address: 40128
+                datatype: uint16
+                type: num
+                description: Type of power meter 6
+                text:
+                    address: 40128
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40173
+                datatype: int32
+                type: num
+                description: Power meter 6 L1 W
+            l2:
+                address: 40175
+                datatype: int32
+                type: num
+                description: Power meter 6 L2 W
+            l3:
+                address: 40177
+                datatype: int32
+                type: num
+                description: Power meter 6 L3 W
+        meter_7:
+            meter_type:
+                address: 40132
+                datatype: uint16
+                type: num
+                description: Type of power meter 7
+                text:
+                    address: 40132
+                    type: str
+                    values:
+                        0: 'none'
+                        1: 'root meter'
+                        2: 'external production'
+                        3: 'bidirectional meter'
+                        4: 'external consumption'
+                        5: 'farm'
+                        6: 'unused'
+                        7: 'wallbox'
+                        8: 'external meter farm'
+                        9: 'data display'
+                        10: 'control bypass'
+            l1:
+                address: 40179
+                datatype: int32
+                type: num
+                description: Power meter 7 L1 W
+            l2:
+                address: 40181
+                datatype: int32
+                type: num
+                description: Power meter 7 L2 W
+            l3:
+                address: 40183
+                datatype: int32
+                type: num
+                description: Power meter 7 L3 W
+    wallbox:
+        description: Wallbox control registers 0-7 (read only, bit writes use function 05h)
+        wallbox_0:
+            address: 40087
+            datatype: uint16
+            type: num
+            description: Wallbox 0 control bits
+            available:
+                address: 40087
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40087
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40087
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40087
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40087
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40087
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_1:
+            address: 40088
+            datatype: uint16
+            type: num
+            description: Wallbox 1 control bits
+            available:
+                address: 40088
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40088
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40088
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40088
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40088
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40088
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_2:
+            address: 40089
+            datatype: uint16
+            type: num
+            description: Wallbox 2 control bits
+            available:
+                address: 40089
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40089
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40089
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40089
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40089
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40089
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_3:
+            address: 40090
+            datatype: uint16
+            type: num
+            description: Wallbox 3 control bits
+            available:
+                address: 40090
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40090
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40090
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40090
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40090
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40090
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_4:
+            address: 40091
+            datatype: uint16
+            type: num
+            description: Wallbox 4 control bits
+            available:
+                address: 40091
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40091
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40091
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40091
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40091
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40091
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_5:
+            address: 40092
+            datatype: uint16
+            type: num
+            description: Wallbox 5 control bits
+            available:
+                address: 40092
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40092
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40092
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40092
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40092
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40092
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_6:
+            address: 40093
+            datatype: uint16
+            type: num
+            description: Wallbox 6 control bits
+            available:
+                address: 40093
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40093
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40093
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40093
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40093
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40093
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+        wallbox_7:
+            address: 40094
+            datatype: uint16
+            type: num
+            description: Wallbox 7 control bits
+            available:
+                address: 40094
+                bit: 0
+                type: bool
+                description: Charger present and available
+            solar_mode:
+                address: 40094
+                bit: 1
+                type: bool
+                description: Solar mode (false = mixed mode)
+            charging_aborted:
+                address: 40094
+                bit: 2
+                type: bool
+                description: Charging aborted (false = enabled)
+            charging:
+                address: 40094
+                bit: 3
+                type: bool
+                description: Car is charging
+            plugged:
+                address: 40094
+                bit: 5
+                type: bool
+                description: Type 2 plug connected
+            one_phase:
+                address: 40094
+                bit: 12
+                type: bool
+                description: One phase active (false = three phases)
+    inverter:
+        description: Inverter (index 0), from 40999
+        apparent_l1:
+            address: 40999
+            datatype: int32
+            type: num
+            description: Apparent power L1 W
+        apparent_l2:
+            address: 41001
+            datatype: int32
+            type: num
+            description: Apparent power L2 W
+        apparent_l3:
+            address: 41003
+            datatype: int32
+            type: num
+            description: Apparent power L3 W
+        active_l1:
+            address: 41005
+            datatype: int32
+            type: num
+            description: Active power L1 W
+        active_l2:
+            address: 41007
+            datatype: int32
+            type: num
+            description: Active power L2 W
+        active_l3:
+            address: 41009
+            datatype: int32
+            type: num
+            description: Active power L3 W
+        reactive_l1:
+            address: 41011
+            datatype: int32
+            type: num
+            description: Reactive power L1 W
+        reactive_l2:
+            address: 41013
+            datatype: int32
+            type: num
+            description: Reactive power L2 W
+        reactive_l3:
+            address: 41015
+            datatype: int32
+            type: num
+            description: Reactive power L3 W
+        voltage_l1:
+            address: 41017
+            datatype: int16
+            factor: 0.1
+            round: 1
+            type: num
+            description: AC voltage L1 V
+        voltage_l2:
+            address: 41018
+            datatype: int16
+            factor: 0.1
+            round: 1
+            type: num
+            description: AC voltage L2 V
+        voltage_l3:
+            address: 41019
+            datatype: int16
+            factor: 0.1
+            round: 1
+            type: num
+            description: AC voltage L3 V
+        current_l1:
+            address: 41020
+            datatype: int16
+            factor: 0.01
+            round: 2
+            type: num
+            description: AC current L1 A
+        current_l2:
+            address: 41021
+            datatype: int16
+            factor: 0.01
+            round: 2
+            type: num
+            description: AC current L2 A
+        current_l3:
+            address: 41022
+            datatype: int16
+            factor: 0.01
+            round: 2
+            type: num
+            description: AC current L3 A
+        frequency:
+            address: 41023
+            datatype: int16
+            factor: 0.01
+            round: 2
+            type: num
+            description: Frequency Hz
+        dc_power_1:
+            address: 41024
+            datatype: int16
+            type: num
+            description: DC power string 1 W
+        dc_power_2:
+            address: 41025
+            datatype: int16
+            type: num
+            description: DC power string 2 W
+        dc_voltage_1:
+            address: 41027
+            datatype: int16
+            factor: 0.1
+            round: 1
+            type: num
+            description: DC voltage string 1 V
+        dc_voltage_2:
+            address: 41028
+            datatype: int16
+            factor: 0.1
+            round: 1
+            type: num
+            description: DC voltage string 2 V
+        dc_current_1:
+            address: 41030
+            datatype: int16
+            factor: 0.01
+            round: 2
+            type: num
+            description: DC current string 1 A
+        dc_current_2:
+            address: 41031
+            datatype: int16
+            factor: 0.01
+            round: 2
+            type: num
+            description: DC current string 2 A

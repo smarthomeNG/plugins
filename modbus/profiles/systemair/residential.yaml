@@ -1,0 +1,1184 @@
+# Systemair residential units (VR400, VR700, VR700DK, VR400DE, VTC300, VTC700, VTR150K, VTR200B,
+# VSR300, VSR500, VSR150, VTR300, VTR500, VSR300DE, VTC200), converted from the systemair plugin.
+# Modbus RTU: transport rtu, serialport, slaveUnit = the unit's address. Item names and
+# writable registers as in systemair.yaml (direction read_write). systemair_regaddr N is
+# register N-1, systemair_coiladdr N is discrete input N-1.
+vendor: systemair
+device: residential
+title: Systemair residential ventilation (VR, VTC, VTR, VSR)
+tier: shipped
+tested_with: []
+groups:
+    Lueftergeschwindigkeit:
+        address: 100
+        direction: read_write
+        type: num
+        description: '0: Aus; 1: Langsame Geschwindigkeit; 2: Mittlere Geschwindigkeit; 3: Schnelle Geschwindigkeit'
+    Luftstrom_Zuluft_Langsam:
+        address: 101
+        type: num
+        description: Luftstrom Zuluft bei Geschwindigkeitsmodus 'Langsam'
+    Luftstrom_Abluft_Langsam:
+        address: 102
+        direction: read_write
+        type: num
+        description: Luftstrom Abluft bei Geschwindigkeitsmodus 'Langsam'
+    Luftstrom_Zuluft_Mittel:
+        address: 103
+        direction: read_write
+        type: num
+        description: Luftstrom Zuluft bei Geschwindigkeitsmodus 'Mittel'
+    Luftstrom_Abluft_Mittel:
+        address: 104
+        direction: read_write
+        type: num
+        description: Luftstrom Abluft bei Geschwindigkeitsmodus 'Mittel'
+    Luftstrom_Zuluft_Schnell:
+        address: 105
+        type: num
+        description: Luftstrom Zuluft bei Geschwindigkeitsmodus 'Schnell'
+    Luftstrom_Abluft_Schnell:
+        address: 106
+        direction: read_write
+        type: num
+        description: Luftstrom Abluft bei Geschwindigkeitsmodus 'Schnell'
+    Masseinheit_Luftstrom:
+        address: 107
+        direction: read_write
+        type: num
+        description: '0: Liter pro Sekunde; 1: m3 pro Sekunde'
+    Luefter_Zuluft_PWM:
+        address: 108
+        type: num
+        description: 0-10v [0-100]
+        attributes:
+            eval: value / 10
+    Luefter_Abluft_PWM:
+        address: 109
+        type: num
+        description: 0-10v [0-100]
+        attributes:
+            eval: value / 10
+    Luefterdrehzahl_Zuluft:
+        address: 110
+        type: num
+        description: in Umdrehung pro Minute
+    Luefterdrehzahl_Abluft:
+        address: 111
+        type: num
+        description: in Umdrehung pro Minute
+    Lueftergeschwindigkeit_Display:
+        address: 112
+        type: num
+        description: Anzeige Lueftergeschwindigkeit auf Display KWL
+    Display_AUS_erlaubt:
+        address: 113
+        direction: read_write
+        type: num
+        description: Lüfter aus per Display KWL erlaubt?
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL1:
+        address: 115
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL2:
+        address: 116
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL3:
+        address: 117
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL4:
+        address: 118
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL5:
+        address: 119
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Abluft_LVL1:
+        address: 120
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Abluft_LVL2:
+        address: 121
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Abluft_LVL3:
+        address: 122
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Abluft_LVL4:
+        address: 123
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Abluft_LVL5:
+        address: 124
+        type: num
+        description: Anzahl Logeintraege
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL1_NR:
+        address: 125
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL2_NR:
+        address: 126
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL3_NR:
+        address: 127
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL4_NR:
+        address: 128
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Zuluft_LVL5_NR:
+        address: 129
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Abluft_LVL1_NR:
+        address: 130
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Abluft_LVL2_NR:
+        address: 131
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Abluft_LVL3_NR:
+        address: 132
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Abluft_LVL4_NR:
+        address: 133
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Geschwindigkeit_Log_Abluft_LVL5_NR:
+        address: 134
+        type: num
+        description: Anzahl Logeintraege, non-resettable
+    Luefter_Systemkurve_Zuluft:
+        address: 135
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 1-20'
+    Luefter_Systemkurve_Abluft:
+        address: 136
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 1-20'
+    Luefter_Kontrolltyp:
+        address: 137
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte:; 0: Luftfluss, 1: Geschwindigkeit'
+    Heizregister_Typ:
+        address: 200
+        direction: read_write
+        type: num
+        description: '0: kein Heizregister, 1: Wasser, 2: Elektrisch, 3: Schütz (Contactor)?'
+    Kuehler_Typ:
+        address: 201
+        direction: read_write
+        type: num
+        description: '0: kein Kuehler, 1: Wasser'
+    Status_Heizregister_Kuehler:
+        address: 202
+        type: num
+        description: keine Beschreibung, Wert default 0
+    Signal_Wasserheizregister_Kuehler:
+        address: 203
+        type: num
+        description: keine Beschreibung, Wert default 0
+    Signal_Kuehler:
+        address: 204
+        type: num
+        description: keine Beschreibung, Wert default 0
+    Frostschutzlevel:
+        address: 205
+        direction: read_write
+        type: num
+        description: 'Frotschutzlevel, erlaubte Werte: 70,80,90,100,110,120 = 7,8,9,10,11,12°C'
+    Sollwerttemperatur_Heizregister:
+        address: 206
+        direction: read_write
+        type: num
+        description: 'Sollwerttemperatur des Heizregisters; Werte 0 - 5 beziehen sich auf die Temperaturen von Temperaturlevel1_Heizregister bis Temperaturlevel5_Heizregister; anders als die offizielle Beschreibung: Wert 0 ist die Temp. von Temperaturlevel1_Heizregister, 1 von Temperaturlevel2_Heizregister usw.; Weitere Werte je nach Gerät (6-29) möglich; in Grad Celsius 0:0, 1:12, 2:13, 3:14, 4:15, 5:16, 6:17, 7:18, 8:19, 9:20, 10:21, 11:22 usw.'
+    Isttemperatur_Heizregister:
+        address: 207
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperaturlevel1_Heizregister:
+        address: 208
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperaturlevel2_Heizregister:
+        address: 209
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperaturlevel3_Heizregister:
+        address: 210
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperaturlevel4_Heizregister:
+        address: 211
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperaturlevel5_Heizregister:
+        address: 212
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperatursensor_1:
+        address: 213
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperatursensor_2:
+        address: 214
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperatursensor_3:
+        address: 215
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperatursensor_4:
+        address: 216
+        datatype: int16
+        factor: 0.1
+        type: num
+    Temperatursensor_5:
+        address: 217
+        datatype: int16
+        factor: 0.1
+        type: num
+    Status_Temperatursensor_Input1:
+        address: 3488
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: kein Fehler, 1: Fehler'
+    Status_Temperatursensor_Input2:
+        address: 3489
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: kein Fehler, 1: Fehler'
+    Status_Temperatursensor_Input3:
+        address: 3490
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: kein Fehler, 1: Fehler'
+    Status_Temperatursensor_Input4:
+        address: 3491
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: kein Fehler, 1: Fehler'
+    Status_Temperatursensor_Input5:
+        address: 3492
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: kein Fehler, 1: Fehler'
+    Vorheizregister_Typ:
+        address: 219
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte:; 0: kein Heizregister; 1: Elektrisches Heizregister'
+    Heizregister_Sollwert_LeaveHome_Funktion:
+        address: 220
+        type: num
+        description: Sollwert des Heizregister während der \"Home/Leave\"-Funktion
+        attributes:
+            eval: value / 10
+    Luftklappe_PWM:
+        address: 300
+        type: num
+        description: 0-10v [0-100]
+        attributes:
+            eval: value / 10
+    Status_Rotor:
+        address: 350
+        type: num
+        description: '0: keine Fehler, 1: Fehler'
+    Rotor_Relais_Aktiv:
+        address: 5616
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: nicht aktiv, 1: aktiv'
+    Wochenprogramm_Aktiv:
+        address: 6400
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: '0: aus, 1: ein'
+    Lueftergeschwindigkeit_Wochenprogramm_An:
+        address: 401
+        direction: read_write
+        type: num
+    Lueftergeschwindigkeit_Wochenprogramm_Aus:
+        address: 402
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag1_Periode1_Stunde:
+        address: 427
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag1_Periode1_Minute:
+        address: 404
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag1_Periode1_Stunde:
+        address: 405
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag1_Periode1_Minute:
+        address: 406
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag1_Periode2_Stunde:
+        address: 407
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag1_Periode2_Minute:
+        address: 408
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag1_Periode2_Stunde:
+        address: 409
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag1_Periode2_Minute:
+        address: 410
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag2_Periode1_Stunde:
+        address: 411
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag2_Periode1_Minute:
+        address: 412
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag2_Periode1_Stunde:
+        address: 413
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag2_Periode1_Minute:
+        address: 414
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag2_Periode2_Stunde:
+        address: 415
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag2_Periode2_Minute:
+        address: 416
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag2_Periode2_Stunde:
+        address: 417
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag2_Periode2_Minute:
+        address: 418
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag3_Periode1_Minute:
+        address: 420
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag3_Periode1_Stunde:
+        address: 421
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag3_Periode1_Minute:
+        address: 422
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag3_Periode2_Stunde:
+        address: 423
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag3_Periode2_Minute:
+        address: 424
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag3_Periode2_Stunde:
+        address: 425
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag3_Periode2_Minute:
+        address: 426
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag4_Periode1_Minute:
+        address: 428
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag4_Periode1_Stunde:
+        address: 429
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag4_Periode1_Minute:
+        address: 430
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag4_Periode2_Stunde:
+        address: 431
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag4_Periode2_Minute:
+        address: 432
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag4_Periode2_Stunde:
+        address: 433
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag4_Periode2_Minute:
+        address: 434
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag5_Periode1_Stunde:
+        address: 435
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag5_Periode1_Minute:
+        address: 436
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag5_Periode1_Stunde:
+        address: 437
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag5_Periode1_Minute:
+        address: 438
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag5_Periode2_Stunde:
+        address: 439
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag5_Periode2_Minute:
+        address: 440
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag5_Periode2_Stunde:
+        address: 441
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag5_Periode2_Minute:
+        address: 442
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag6_Periode1_Stunde:
+        address: 443
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag6_Periode1_Minute:
+        address: 444
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag6_Periode1_Stunde:
+        address: 445
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag6_Periode1_Minute:
+        address: 446
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag6_Periode2_Stunde:
+        address: 447
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag6_Periode2_Minute:
+        address: 448
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag6_Periode2_Stunde:
+        address: 449
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag6_Periode2_Minute:
+        address: 450
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag7_Periode1_Stunde:
+        address: 451
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag7_Periode1_Minute:
+        address: 452
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag7_Periode1_Stunde:
+        address: 453
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag7_Periode1_Minute:
+        address: 454
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Start_Wochenprogramm_Tag7_Periode2_Stunde:
+        address: 455
+        direction: read_write
+        type: num
+    Start_Wochenprogramm_Tag7_Periode2_Minute:
+        address: 456
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Ende_Wochenprogramm_Tag7_Periode2_Stunde:
+        address: 457
+        direction: read_write
+        type: num
+    Ende_Wochenprogramm_Tag7_Periode2_Minute:
+        address: 458
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0,10,15,20,30,40,45,50'
+    Sytem_Typ:
+        address: 500
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte:; 0: VR400, 1: VR700, 2: VR700DK, 3: VR400DE, 4: VC300, 5: VC700,; 8: VR400, 9: VR700, 12: VTR150K, 13: VTR200B, 14: VSR300, 15: VSR500; 16: VSR150, 17: VTR300, 18: VTR500, 19: VSR300DE, 20: VTC200'
+    System_Programmversion_High:
+        address: 501
+        type: num
+    System_Programmversion_Mid:
+        address: 502
+        type: num
+    System_Programmversion_Low:
+        address: 503
+        type: num
+    System_Bootversion_High:
+        address: 504
+        type: num
+    System_Bootversion_Mid:
+        address: 505
+        type: num
+    System_Bootversion_Low:
+        address: 506
+        type: num
+    Uhr_Sekunden:
+        address: 550
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0-60'
+    Uhr_Minuten:
+        address: 551
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0-60'
+    Uhr_Stunden:
+        address: 552
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 0-24'
+    Uhr_Tag:
+        address: 553
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 1-31'
+    Uhr_Monat:
+        address: 554
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 1-12'
+    Uhr_Jahr:
+        address: 555
+        direction: read_write
+        type: num
+        description: Wert 0 = 2000
+    Uhr_Wochentag:
+        address: 556
+        type: num
+        description: 'Werte: 0-6 (Montag bis Sonntag)'
+    Filter_Wechselzeitraum:
+        address: 600
+        direction: read_write
+        type: num
+        description: Wert in Monaten
+    Filter_Verbrauchte_Zeit:
+        address: 601
+        direction: read_write
+        type: num
+        description: Wert in Tagen
+    Defroster_VTC_Status:
+        address: 650
+        type: num
+        description: 'Werte:; 0: No defrosting ongoing, 1: Reduced flow defrosting, 2: Bypass defrosting, 3: Stop defrosting'
+    Defroster_VTC_Konfiguration:
+        address: 651
+        type: num
+        description: 'Werte:; 0: A, 1: B, 2: C, 3: D'
+    Defroster_VTC__UNBAL_ALLOWED:
+        address: 652
+        direction: read_write
+        type: num
+        description: 'Werte:; 0: Unbalance not allowed, 1: Unbalance allowed ?'
+    Defroster_VTC__Modus:
+        address: 653
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 1-5, keine Beschreibung'
+    Defroster_VTR_Status:
+        address: 670
+        type: num
+        description: 'Werte:; 0: Inactive, 1: niedrige Temperatur, 2: Defrosting'
+    Defroster_VTR__Modus:
+        address: 671
+        direction: read_write
+        type: num
+        description: 'erlaubte Werte: 1-5, keine Beschreibung'
+    DigitalInput_D1_Aktiv:
+        address: 11200
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_DI2_Aktiv:
+        address: 11201
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_DI3_Aktiv:
+        address: 11202
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_DI4_Aktiv:
+        address: 11203
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_DI5_Aktiv:
+        address: 11204
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_DI6_Aktiv:
+        address: 11205
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_DI7_Aktiv:
+        address: 11206
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: inaktiv, 1: aktiv'
+    DigitalInput_EXT_RUNNING_M:
+        address: 701
+        direction: read_write
+        type: num
+        description: Extended running time in minutes
+    DigitalInput_EXT_RUNNING_SPEED_LVL:
+        address: 702
+        direction: read_write
+        type: num
+        description: 'Fan speed level during extended running:; 0: Off, 1: Low speed, 2: Normal speed, 3: High speed'
+    DigitalInput_DI1_SF_LVL:
+        address: 703
+        direction: read_write
+        type: num
+        description: Supply fan speed level at activated digital input 1
+    DigitalInput_DI1_EF_LVL:
+        address: 704
+        direction: read_write
+        type: num
+        description: Extract fan speed level at activated digital input 1
+    DigitalInput_DI2_SF_LVL:
+        address: 705
+        direction: read_write
+        type: num
+        description: Supply fan speed level at activated digital input 2
+    DigitalInput_DI2_EF_LVL:
+        address: 706
+        direction: read_write
+        type: num
+        description: Extract fan speed level at activated digital input 2
+    DigitalInput_DI3_SF_LVL:
+        address: 707
+        direction: read_write
+        type: num
+        description: Supply fan speed level at activated digital input 3
+    DigitalInput_DI3_EF_LVL:
+        address: 708
+        direction: read_write
+        type: num
+        description: Extract fan speed level at activated digital input 3
+    PCU_Relay_Preheater:
+        address: 12000
+        table: DiscreteInput
+        datatype: bit
+        type: num
+    PCU_Relay_Reheater:
+        address: 12001
+        table: DiscreteInput
+        datatype: bit
+        type: num
+    PCU_Relay_Common_Heater_Preheater:
+        address: 12002
+        table: DiscreteInput
+        datatype: bit
+        type: num
+    Alarm_Filter:
+        address: 12800
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte:; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Luefter:
+        address: 12802
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Rotor:
+        address: 12803
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Frost:
+        address: 12804
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_PCU:
+        address: 12805
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Temperatursensor:
+        address: 12806
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Notfallthermostat:
+        address: 12807
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Lueftungsklappe:
+        address: 12808
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Alarm nicht aktiv, 1: Alarm aktiv'
+    Alarm_Relais_Aktiv:
+        address: 12816
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Werte; 0: Relais nicht aktiv, 1: Relais aktiv'
+    REG_DEMC_CO2_SP:
+        address: 850
+        direction: read_write
+        type: num
+        description: 'Werte:; 0-2000, 0: off'
+    REG_DEMC_CO2_P_BAND:
+        address: 851
+        direction: read_write
+        type: num
+        description: Werte:; 1-1200
+    REG_DEMC_CO2_I_TIME:
+        address: 852
+        direction: read_write
+        type: num
+        description: 'Werte:; 1-120, 0: no integration'
+    REG_DEMC_RH_SP:
+        address: 853
+        direction: read_write
+        type: num
+        description: 'Werte:; 0-100, 0: off'
+    REG_DEMC_RH_P_BAND:
+        address: 854
+        direction: read_write
+        type: num
+        description: Werte:; 1-100
+    REG_DEMC_RH_I_TIME:
+        address: 855
+        direction: read_write
+        type: num
+        description: 'Werte: 1-120, 0: no integration'
+    REG_DEMC_STATE:
+        address: 856
+        type: num
+        description: 'Werte: 0: Start up, 1: Waiting for sensor network,  2: Waiting for sensor data, 3: Auto mode, 4: normal mode,'
+    REG_DEMC_MODBUS_CO2_VALUE:
+        address: 857
+        direction: read_write
+        type: num
+        description: 'Werte: 0-2000 (in ppm)'
+    REG_DEMC_MODBUS_RH_VALUE:
+        address: 858
+        direction: read_write
+        type: num
+        description: 'Werte: 0-100 (in %)'
+    REG_WL_NODE_1_TYPE:
+        address: 900
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_1_VALUE_T:
+        address: 901
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_1_TYPE = 1: CO2 value; REG_WL_NODE_1_TYPE = 2: RH value; REG_WL_NODE_1_TYPE = 3: Coil Address 14417: input 1, Coil Address 14418: input 2; All other node types: 0'
+    REG_WL_NODE_1_STATUS:
+        address: 902
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_1_VALUE_T_D1:
+        address: 14416
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_xx_TYPE = 3'
+    REG_WL_NODE_1_VALUE_T_D2:
+        address: 14417
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_xx_TYPE = 3'
+    REG_WL_NODE_2_TYPE:
+        address: 910
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_2_VALUE_T:
+        address: 911
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_2_TYPE = 1: CO2 value; REG_WL_NODE_2_TYPE = 2: RH value; REG_WL_NODE_2_TYPE = 3: Coil Address 14577: input 1, Coil Address 14578: input 2; All other node types: 0'
+    REG_WL_NODE_2_STATUS:
+        address: 912
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_2_VALUE_T_D1:
+        address: 14576
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_2_TYPE = 3'
+    REG_WL_NODE_2_VALUE_T_D2:
+        address: 14577
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_2_TYPE = 3'
+    REG_WL_NODE_3_TYPE:
+        address: 920
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_3_VALUE_T:
+        address: 921
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_3_TYPE = 1: CO2 value; REG_WL_NODE_3_TYPE = 2: RH value; REG_WL_NODE_3_TYPE = 3: Coil Address 14737: input 1, Coil Address 14738: input 2; All other node types: 0'
+    REG_WL_NODE_3_STATUS:
+        address: 922
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_3_VALUE_T_D1:
+        address: 14736
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_3_TYPE = 3'
+    REG_WL_NODE_3_VALUE_T_D2:
+        address: 14737
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_3_TYPE = 3'
+    REG_WL_NODE_4_TYPE:
+        address: 930
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_4_VALUE_T:
+        address: 931
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_4_TYPE = 1: CO2 value; REG_WL_NODE_4_TYPE = 2: RH value; REG_WL_NODE_4_TYPE = 3: Coil Address 14897: input 1, Coil Address 14898: input 2; All other node types: 0'
+    REG_WL_NODE_4_STATUS:
+        address: 932
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_4_VALUE_T_D1:
+        address: 14896
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_4_TYPE = 3'
+    REG_WL_NODE_4_VALUE_T_D2:
+        address: 14897
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_4_TYPE = 3'
+    REG_WL_NODE_5_TYPE:
+        address: 940
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_5_VALUE_T:
+        address: 941
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_5_TYPE = 1: CO2 value; REG_WL_NODE_5_TYPE = 2: RH value; REG_WL_NODE_5_TYPE = 3: Coil Address 15057: input 1, Coil Address 15058: input 2; All other node types: 0'
+    REG_WL_NODE_5_STATUS:
+        address: 942
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_5_VALUE_T_D1:
+        address: 15056
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_5_TYPE = 3'
+    REG_WL_NODE_5_VALUE_T_D2:
+        address: 15057
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_5_TYPE = 3'
+    REG_WL_NODE_6_TYPE:
+        address: 950
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_6_VALUE_T:
+        address: 951
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_6_TYPE = 1: CO2 value; REG_WL_NODE_6_TYPE = 2: RH value; REG_WL_NODE_6_TYPE = 3: Coil Address 15217: input 1, Coil Address 15218: input 2; All other node types: 0'
+    REG_WL_NODE_6_STATUS:
+        address: 952
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_6_VALUE_T_D1:
+        address: 15216
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_6_TYPE = 3'
+    REG_WL_NODE_6_VALUE_T_D2:
+        address: 15217
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_6_TYPE = 3'
+    REG_WL_NODE_7_TYPE:
+        address: 960
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_7_VALUE_T:
+        address: 961
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_7_TYPE = 1: CO2 value; REG_WL_NODE_7_TYPE = 2: RH value; REG_WL_NODE_7_TYPE = 3: Coil Address 15377: input 1, Coil Address 15378: input 2; All other node types: 0'
+    REG_WL_NODE_7_STATUS:
+        address: 962
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_7_VALUE_T_D1:
+        address: 15376
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_7_TYPE = 3'
+    REG_WL_NODE_7_VALUE_T_D2:
+        address: 15377
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_7_TYPE = 3'
+    REG_WL_NODE_8_TYPE:
+        address: 970
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_8_VALUE_T:
+        address: 971
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_8_TYPE = 1: CO2 value; REG_WL_NODE_8_TYPE = 2: RH value; REG_WL_NODE_8_TYPE = 3: Coil Address 15537: input 1, Coil Address 15538: input 2; All other node types: 0'
+    REG_WL_NODE_8_STATUS:
+        address: 972
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_8_VALUE_T_D1:
+        address: 15536
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_8_TYPE = 3'
+    REG_WL_NODE_8_VALUE_T_D2:
+        address: 15537
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_8_TYPE = 3'
+    REG_WL_NODE_9_TYPE:
+        address: 980
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_9_VALUE_T:
+        address: 981
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_9_TYPE = 1: CO2 value; REG_WL_NODE_9_TYPE = 2: RH value; REG_WL_NODE_9_TYPE = 3: Coil Address 15697: input 1, Coil Address 15698: input 2; All other node types: 0'
+    REG_WL_NODE_9_STATUS:
+        address: 982
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_9_VALUE_T_D1:
+        address: 15696
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_9_TYPE = 3'
+    REG_WL_NODE_9_VALUE_T_D2:
+        address: 15697
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_9_TYPE = 3'
+    REG_WL_NODE_10_TYPE:
+        address: 990
+        type: num
+        description: 'Werte:; 0: No connected, 1: CO2 sensor, 2: RH sensor, 3: DI module, 4: User interface'
+    REG_WL_NODE_10_VALUE_T:
+        address: 991
+        type: num
+        description: 'Value depending on node type:; REG_WL_NODE_10_TYPE = 1: CO2 value; REG_WL_NODE_10_TYPE = 2: RH value; REG_WL_NODE_10_TYPE = 3: Coil Address 15857: input 1, Coil Address 15858: input 2; All other node types: 0'
+    REG_WL_NODE_10_STATUS:
+        address: 992
+        type: num
+        description: 'Node-Status:; 0: not bound, 1: OK, 2: Battery failure, 3: Communication failure, 4: No network, 5: Sensor failure'
+    REG_WL_NODE_10_VALUE_T_D1:
+        address: 15856
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_10_TYPE = 3'
+    REG_WL_NODE_10_VALUE_T_D2:
+        address: 15857
+        table: DiscreteInput
+        datatype: bit
+        type: num
+        description: 'Wert: nur wenn REG_WL_NODE_10_TYPE = 3'
+    REG_WL_DI_CONNECTION_1:
+        address: 1000
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_2:
+        address: 1001
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_3:
+        address: 1002
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_4:
+        address: 1003
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_5:
+        address: 1004
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_6:
+        address: 1005
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_7:
+        address: 1006
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_8:
+        address: 1007
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_9:
+        address: 1008
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_10:
+        address: 1009
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_11:
+        address: 1010
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_12:
+        address: 1011
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_13:
+        address: 1012
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_14:
+        address: 1013
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_15:
+        address: 1014
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_16:
+        address: 1015
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_17:
+        address: 1016
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_18:
+        address: 1017
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_19:
+        address: 1018
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'
+    REG_WL_DI_CONNECTION_20:
+        address: 1019
+        type: num
+        description: 'read / write? (schlechte Beschreibung); Werte: 0: Not connected, 1: DI1, 2: DI2, 3: DI3, 4: DI4, 5: DI5, 6: not acctepted, 7: DI7, Other values: not accepted'

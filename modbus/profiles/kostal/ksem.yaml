@@ -1,0 +1,88 @@
+# Kostal Smart Energy Meter, converted from ksemmodbus. The meter answers as unit id 71: set
+# slaveUnit: 71. ksemmodbus rounded the scaled values to 2 decimals; here they are not rounded.
+vendor: kostal
+device: ksem
+title: Kostal Smart Energy Meter
+tier: shipped
+tested_with: []
+groups:
+    power:
+        active_plus:
+            address: 0
+            datatype: uint32
+            type: num
+            factor: 0.1
+            description: Active Power + W
+        active_minus:
+            address: 2
+            datatype: uint32
+            type: num
+            factor: 0.1
+            description: Active Power - W
+        reactive_plus:
+            address: 4
+            datatype: uint32
+            type: num
+            factor: 0.1
+            description: Reactive Power + var
+        reactive_minus:
+            address: 6
+            datatype: uint32
+            type: num
+            factor: 0.1
+            description: Reactive Power - var
+        apparent_plus:
+            address: 16
+            datatype: uint32
+            type: num
+            factor: 0.1
+            description: Apparent power + VA
+        apparent_minus:
+            address: 18
+            datatype: uint32
+            type: num
+            factor: 0.1
+            description: Apparent power - VA
+        factor:
+            address: 24
+            datatype: float32
+            type: num
+            word_order: little
+            description: Power Factor
+    energy:
+        active_plus:
+            address: 512
+            datatype: uint64
+            type: num
+            factor: 0.0001
+            description: Active energy+ Wh
+        active_minus:
+            address: 516
+            datatype: uint64
+            type: num
+            factor: 0.0001
+            description: Active energy- Wh
+        reactive_plus:
+            address: 520
+            datatype: uint64
+            type: num
+            factor: 0.0001
+            description: Reactive energy+ varh
+        reactive_minus:
+            address: 524
+            datatype: uint64
+            type: num
+            factor: 0.0001
+            description: Reactive energy- varh
+        apparent_plus:
+            address: 544
+            datatype: uint64
+            type: num
+            factor: 0.0001
+            description: Apparent energy+ VAh
+        apparent_minus:
+            address: 548
+            datatype: uint64
+            type: num
+            factor: 0.0001
+            description: Apparent energy- VAh

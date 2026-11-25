@@ -115,21 +115,26 @@ class ModbusTestServer:
         """Current values of ``count`` holding registers from 0-based ``address``."""
         return list(self.context[self.unit].getValues(3, address, count))
 
+    def set_holding(self, address: int, values: list[int]) -> None:
+        """Store ``values`` in the holding registers from 0-based ``address`` on."""
+        self.context[self.unit].setValues(3, address, values)
+
 
 @pytest.fixture
 def modbus_server():
     """
     Start real pymodbus TCP servers on loopback; stopped at teardown.
 
-    Returns a factory ``start(unit, holding, block=None)``: ``holding`` maps a 0-based register
+    Returns a factory ``start(unit, holding, block=None, rtu=False)``: ``holding`` maps a 0-based register
     address to the register values stored from there on (all other holding registers read 0),
     ``unit`` is the device id the server answers as. ``block`` replaces the holding register
     block, for devices that react to writes; it is addressed like the context addresses it
-    (request address + 1).
+    (request address + 1). ``rtu=True`` frames requests and responses as Modbus RTU over TCP.
     The factory returns a ``ModbusTestServer``. pymodbus is imported lazily, so plugins without
     it are unaffected.
     """
     from pymodbus.datastore import ModbusSequentialDataBlock, ModbusServerContext
+    from pymodbus import FramerType
     from pymodbus.server import ModbusTcpServer
 
     try:
@@ -142,7 +147,7 @@ def modbus_server():
     thread.start()
     servers = []
 
-    def start(unit: int, holding: dict[int, list[int]], block: Any = None) -> ModbusTestServer:
+    def start(unit: int, holding: dict[int, list[int]], block: Any = None, rtu: bool = False) -> ModbusTestServer:
         if block is None:
             registers = [0] * 65536
             for addr, regs in holding.items():
@@ -162,7 +167,9 @@ def modbus_server():
             port = probe.getsockname()[1]
 
         async def create() -> ModbusTcpServer:
-            return ModbusTcpServer(context, address=('127.0.0.1', port))
+            return ModbusTcpServer(
+                context, address=('127.0.0.1', port), framer=FramerType.RTU if rtu else FramerType.SOCKET
+            )
 
         server = asyncio.run_coroutine_threadsafe(create(), loop).result(timeout=5)
         asyncio.run_coroutine_threadsafe(server.serve_forever(), loop)

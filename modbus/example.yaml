@@ -1,0 +1,211 @@
+paradigma:
+    TestInputRegister:
+        type: num
+        name: TestIR
+        enforce_updates: True
+        modBusObjectType: InputRegister
+        modBusAddress: 9997
+        modBusFactor: 0.1
+        modBusDataType: int16
+    TestHoldingRegister:
+        type: num
+        name: TestHR
+        enforce_updates: True
+        # modBusObjectType: HoldingRegister (default)
+        modBusAddress: 9998
+        modBusFactor: 0.1
+        modBusDataType: int16
+    TestCoil0:
+        type: bool
+        name: TestC0
+        enforce_updates: True
+        modBusObjectType: Coil
+        modBusAddress: 9996 #+1
+        modBusDataType: bit
+    TestCoil1:
+        type: bool
+        name: TestC1
+        enforce_updates: True
+        modBusObjectType: Coil
+        modBusAddress: 9997 #+1
+        modBusDataType: bit
+
+#solaredge_SE6000:
+Photovoltaik:
+    C_Version: 
+        type: str
+        name: C_Version
+        modBusAddress: 40044
+        modBusDataType: string16
+    AC_Leistung_sf: 
+        type: num
+        name: I_AC_Power_SF # SF- Skalierungsfaktor sunspec (z.B. -3)
+        enforce_updates: True
+        modBusAddress: 40084
+        modBusDataType: int16
+    AC_Leistung: 
+        type: num
+        name: I_AC_Power # Die Leistung ergit sich aus dem erhaltenen Registerwert und dem Skalierungsfaktor (AC_Leistung_sf)
+        enforce_updates: True
+        eval: value*10**sh.Photovoltaik.AC_Leistung_sf() # Berechnung der Leistung (erhaltene Registerwert * 10^Skalierungsfaktor)
+        modBusAddress: 40083
+        modBusFactor: 0.001
+    DC_Leistung_sf: 
+        type: num
+        name: I_DC_Power_SF
+        enforce_updates: True
+        modBusAddress: 40101
+        modBusDataType: int16
+    DC_Leistung: 
+        type: num
+        name: I_DC_Power
+        eval: value*10**sh.Photovoltaik.DC_Leistung_sf() # erhaltene Registerwert * 10^Skalierungsfaktor
+        enforce_updates: True
+        modBusAddress: 40100
+        modBusFactor: 0.001
+    Inverter_Temperatur_sf: 
+        type: num
+        name: I_Temp_Sink_SF
+        enforce_updates: True
+        modBusAddress: 40106
+        modBusDataType: int16
+    Inverter_Temperatur: 
+        type: num
+        name: I_Temp_Sink
+        database: yes
+        database_maxage: 365
+        eval: value*10**sh.Photovoltaik.Inverter_Temperatur_sf() # erhaltene Registerwert * 10^Skalierungsfaktor
+        modBusAddress: 40103
+        modBusDataType: int16
+    Zaehler_Strom_sf: 
+        type: num
+        name: M_AC_Current_SF
+        enforce_updates: True
+        modBusAddress: 40194
+        modBusDataType: int16
+    Zaehler_Strom: 
+        type: num
+        name: M_AC_Current
+        enforce_updates: True
+        database: yes
+        database_maxage: 365
+        eval: value*10**sh.Photovoltaik.Zaehler_Strom_sf() # erhaltene Registerwert * 10^Skalierungsfaktor
+        modBusAddress: 40190
+    Zaehler_Spannung_sf: 
+        type: num
+        name: M_AC_Voltage_SF
+        enforce_updates: True
+        modBusAddress: 40203
+        modBusDataType: int16
+    Zaehler_Spannung: 
+        type: num
+        name: M_AC_Voltage_L_N
+        enforce_updates: True
+        database: yes
+        database_maxage: 365
+        eval: value*10**sh.Photovoltaik.Zaehler_Spannung_sf() # erhaltene Registerwert * 10^Skalierungsfaktor
+        modBusAddress: 40195
+    Zaehler_Frequenz_sf: 
+        type: num
+        name: M_AC_Freq_SF
+        enforce_updates: True
+        modBusAddress: 40205
+        modBusDataType: int16
+    Zaehler_Frequenz: 
+        type: num
+        name: M_AC_Freq
+        enforce_updates: True
+        database: yes
+        database_maxage: 365
+        eval: value*10**sh.Photovoltaik.Zaehler_Frequenz_sf() # erhaltene Registerwert * 10^Skalierungsfaktor
+        modBusAddress: 40204
+    Zaehler_Leistung_sf: 
+        type: num
+        name: M_AC_Power_SF
+        enforce_updates: True
+        modBusAddress: 40210
+        modBusDataType: int16
+    Zaehler_Leistung: 
+        type: num
+        name: M_AC_Power
+        enforce_updates: True
+        eval: value*10**sh.Photovoltaik.Zaehler_Leistung_sf() # erhaltene Registerwert * 10^Skalierungsfaktor
+        modBusAddress: 40206
+        modBusDataType: int16
+        modBusFactor: 0.001
+        Status: # 0 Autark, 1 Export, 2 Import,
+            type: num 
+            eval_trigger: Photovoltaik.Zaehler_Leistung
+            eval: 1 if sh.Photovoltaik.Zaehler_Leistung() > 0.025 else 2 if sh.Photovoltaik.Zaehler_Leistung() < -0.025 else 0
+        StatusText: 
+            type: str
+            eval_trigger: Photovoltaik.Zaehler_Leistung
+            eval: "'Exportieren' if sh.Photovoltaik.Zaehler_Leistung() > 0.025 else 'Importieren' if sh.Photovoltaik.Zaehler_Leistung() < -0.025 else ''"
+    Speicher_Leistung: 
+        type: num
+        name: S_Power
+        enforce_updates: True
+        modBusAddress: 59764
+        modBusDataType: float32
+        modBusFactor: 0.001
+    Speicher_Energie: 
+        type: num
+        name: S_Available_Energy
+        modBusAddress: 59776
+        modBusDataType: float32
+        modBusFactor: 0.001
+    Speicher_SOE: 
+        type: num
+        name: S_SOE
+        modBusAddress: 59780
+        modBusDataType: float32
+    Speicher_Status: 
+        type: num
+        name: S_Status
+        modBusAddress: 59782
+        modBusDataType: uint32
+        Text: 
+            type: str
+            eval_trigger: Photovoltaik.Speicher_Status
+            eval: sh..lookup()[value]
+            lookup: 
+                type: dict
+                initial_value: "{0: 'Aus', 1: 'Standby', 2: 'Init', 3: 'Laden', 4: 'Entladen', 5: 'Fehler', 6: 'Leerlauf'}"
+                
+Siemens_LOGO:
+    AI1:
+        type: num
+        name: AI1
+        modBusObjectType: InputRegister
+        modBusAddress: 0
+        #modBusFactor: 0.1
+        #modBusDataType: int16
+    AM1:
+        type: num
+        name: AM1
+        modBusObjectType: HoldingRegister
+        modBusAddress: 528
+        modBusDirection: read_write
+        #modBusFactor: 1
+        #modBusDataType: int16
+    M1:
+        type: bool
+        name: M1
+        modBusObjectType: Coil
+        modBusAddress: 8256
+        modBusDataType: bit
+        modBusDirection: read_write
+    I1:
+        type: bool
+        name: I1
+        modBusObjectType: DiscreteInput
+        modBusAddress: 0
+        modBusDataType: bit
+    VM0:
+        type: num
+        name: VM0
+        modBusObjectType: HoldingRegister
+        modBusAddress: 0
+        modBusDirection: read_write
+        modBusFactor: 0.01
+        #modBusDataType: int16

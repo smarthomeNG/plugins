@@ -1,0 +1,38 @@
+# Converted from the modbus_tcp huawei structs; item paths and behaviour are unchanged.
+# Writable registers carry direction read_write.
+vendor: huawei
+device: sdongle
+title: Huawei SDongle
+tier: shipped
+tested_with: []
+groups:
+    energy:
+        input_power:
+            type: num
+            address: 37498
+            datatype: uint32
+            factor: 0.01
+        load_power:
+            type: num
+            address: 37500
+            datatype: uint32
+            factor: 0.01
+        grid_power:
+            type: num
+            address: 37502
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: positive = import from grid, negative = export to grid
+        battery_power:
+            type: num
+            address: 37504
+            datatype: int32
+            factor: 0.01
+            attributes:
+                description: positive = charging, negative = discharging
+        active_power:
+            type: num
+            address: 37516
+            datatype: int32
+            factor: 0.01
