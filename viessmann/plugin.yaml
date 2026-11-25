@@ -9,7 +9,7 @@ plugin:
     state: ready
     keywords: iot device sdp
     version: '3.0.0'
-    sh_minversion: '2.0.0-dev.2'
+    sh_minversion: '2.0.0'
 #   py_minversion:
     sdp_minversion: '2.0.0'
     multi_instance: false
