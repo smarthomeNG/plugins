@@ -1,0 +1,24 @@
+# Sample etc/plugin.yaml for trying the mcp plugin. testbed.sh fills in fresh tokens for the placeholders below.
+mcp:
+    plugin_name: mcp
+    token: __TOKEN__
+    port: 8765
+    # none: items without mcp_access are invisible; ro: they are readable
+    default_access: none
+    # true: children of an rw item are rw as well (the plugin warns at every start)
+    inherit_rw_access: false
+    expose: [plugins, scheduler, logics, threads, system, logs]
+    write_rate_limit: 30
+    # in addition to the built-in secret patterns
+    log_redact: ['SN-\d+']
+    # a second client: read-only, sees only what mcp_access frees, exposes the system group;
+    # the web interface can lift its ceiling to rw for 5 minutes, and then it may write only below mcpdemo.house
+    clients:
+        desktop:
+            token: __CLIENT_TOKEN__
+            default_access: none
+            max_access: ro
+            expose: [system]
+            write_paths: ['mcpdemo.house.*']
+            elevate_to: rw
+            elevate_minutes: 5

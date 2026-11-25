@@ -1,0 +1,35 @@
+house:
+    mcp_access: ro
+    living:
+        lamp:
+            type: bool
+            mcp_access: rw
+            dimmer:
+                type: num
+        temp:
+            type: num
+            value: 21.5
+            name: Living temperature
+            description: Temperature in the living room
+            knx_dpt: 9.001
+            knx_password: hunter2
+            eval: value * 1
+            eval_trigger: house.living.lamp
+    alarm:
+        mcp_access: none
+        siren:
+            type: bool
+    garage:
+        mcp_access: rw
+        door:
+            type: bool
+
+unmarked:
+    type: num
+    child:
+        type: num
+
+typo:
+    mcp_access: readwrite
+    child:
+        type: num

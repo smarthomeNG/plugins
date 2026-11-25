@@ -1,0 +1,84 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set update_interval = 0 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Endpunkt') }}</strong></td>
+			<td class="py-1">{{ endpoint }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Items mit mcp_access') }}</strong></td>
+			<td class="py-1">{{ item_count }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% set tabcount = 2 %}
+
+{% set tab1title = "<strong>" ~ _('Clients') ~ "</strong> (" ~ clients|length ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+	<table id="clienttable" class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<th>{{ _('Client') }}</th>
+				<th>default_access</th>
+				<th>max_access</th>
+				<th>expose</th>
+				<th>{{ _('Schreibpfade') }}</th>
+				<th>{{ _('Netze') }}</th>
+				<th>{{ _('Schreibfenster') }}</th>
+				<th>{{ _('Anfragen') }}</th>
+				<th>{{ _('Zuletzt') }}</th>
+				<th>{{ _('Erhöhung') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for c in clients %}
+			<tr>
+				<th>{{ c.name }}</th>
+				<td>{{ c.default_access }}</td>
+				<td>{{ c.effective_max_access }}{% if c.effective_max_access != c.max_access %} ({{ _('normal') }} {{ c.max_access }}){% endif %}</td>
+				<td>{{ c.expose|join(', ') or '-' }}</td>
+				<td>{{ c.write_paths|join(', ') if c.write_paths is not none else '-' }}</td>
+				<td>{{ c.allowed_networks|join(', ') if c.allowed_networks is not none else _('überall') }}</td>
+				<td>{{ c.write_rate_limit }}/min</td>
+				<td>{{ c.requests }}</td>
+				<td>{{ c.last_seen.strftime('%Y-%m-%d %H:%M:%S') if c.last_seen else '-' }}</td>
+				<td>
+					{% if c.elevate_to %}
+						{% if c.elevated_for is not none %}
+							{{ c.elevate_to }}, {{ _('noch') }} {{ (c.elevated_for // 60)|int + 1 }} min
+							<form method="post" action="revoke" style="display:inline">
+								<input type="hidden" name="client" value="{{ c.name }}">
+								<input type="hidden" name="csrf" value="{{ csrf }}">
+								<button type="submit" class="btn btn-shng btn-sm">{{ _('Beenden') }}</button>
+							</form>
+						{% else %}
+							<form method="post" action="elevate" style="display:inline">
+								<input type="hidden" name="client" value="{{ c.name }}">
+								<input type="hidden" name="csrf" value="{{ csrf }}">
+								<button type="submit" class="btn btn-shng btn-sm">{{ c.elevate_to }} {{ _('für') }} {{ c.elevate_minutes }} min</button>
+							</form>
+						{% endif %}
+					{% else %}-{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ _('Verbindung') ~ "</strong>" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+	<p>{{ _('Claude Code, ein Client pro Eintrag; das Token steht in plugin.yaml und wird hier nicht angezeigt:') }}</p>
+	<pre>claude mcp add --transport http shng {{ endpoint }} --header "Authorization: Bearer &lt;token&gt;"</pre>
+</div>
+{% endblock bodytab2 %}

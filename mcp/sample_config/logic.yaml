@@ -1,0 +1,4 @@
+# Sample etc/logic.yaml
+mcp_ticker:
+    filename: mcp_ticker.py
+    cycle: 15

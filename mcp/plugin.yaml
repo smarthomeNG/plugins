@@ -1,0 +1,183 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'MCP-Server (Model Context Protocol): stellt Items und Diagnosedaten für KI-Agenten bereit'
+        en: 'MCP (Model Context Protocol) server: gives AI agents access to items and diagnostics'
+    maintainer: morg42
+    state: develop
+    keywords: mcp, ai, agent, llm, gateway
+
+    version: 0.1.0                  # Plugin version
+    sh_minversion: '2.0.0'          # minimum shNG version to use this plugin
+    py_minversion: '3.11'           # minimum Python version to use this plugin
+    restartable: true
+    multi_instance: false           # plugin supports multi instance
+    classname: Mcp                  # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    bind_address:
+        type: ip
+        default: '127.0.0.1'
+        description:
+            de: 'Adresse, an die der MCP-Server gebunden wird. Eine andere Adresse als 127.0.0.1 öffnet den Server für das Netzwerk.'
+            en: 'Address the MCP server binds to. Any address other than 127.0.0.1 opens the server to the network.'
+
+    port:
+        type: int
+        default: 8765
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: 'Port des MCP-Servers (Endpunkt /mcp).'
+            en: 'Port of the MCP server (endpoint /mcp).'
+
+    tls_certfile:
+        type: str
+        default: ''
+        description:
+            de: 'PEM-Datei mit dem Zertifikat (und der Kette) für HTTPS. Nur zusammen mit tls_keyfile; ohne beide spricht der Server unverschlüsseltes HTTP.'
+            en: 'PEM file with the certificate (and chain) for HTTPS. Only together with tls_keyfile; without both the server speaks plain HTTP.'
+
+    tls_keyfile:
+        type: str
+        default: ''
+        description:
+            de: 'PEM-Datei mit dem privaten Schlüssel zum Zertifikat aus tls_certfile.'
+            en: 'PEM file with the private key of the certificate in tls_certfile.'
+
+    allowed_hosts:
+        type: list
+        default: []
+        description:
+            de: 'Zusätzlich zu 127.0.0.1, localhost und ::1 erlaubte Werte des Host-Headers, z.B. shng.example:* (Port als *). Ohne Angabe prüft das Plugin den Host nur bei einer Loopback-Adresse.'
+            en: 'Host header values allowed in addition to 127.0.0.1, localhost and ::1, for example shng.example:* (* stands for the port). Without any, the host is only checked for a loopback bind address.'
+
+    allowed_origins:
+        type: list
+        default: []
+        description:
+            de: 'Zusätzlich erlaubte Werte des Origin-Headers (Browser), z.B. https://app.example. Anfragen ohne Origin sind immer erlaubt.'
+            en: 'Origin header values (browsers) allowed in addition, for example https://app.example. Requests without an Origin are always allowed.'
+
+    auth_failure_limit:
+        type: int
+        default: 20
+        valid_min: 0
+        description:
+            de: 'Fehlgeschlagene Anmeldungen pro Minute und Adresse, danach antwortet der Server mit 429. Ein gültiges Token wird nie gebremst. 0 schaltet die Begrenzung ab.'
+            en: 'Failed authentications per minute and address before the server answers 429. A valid token is never throttled. 0 disables the limit.'
+
+    token:
+        type: str
+        mandatory: true
+        description:
+            de: 'Bearer-Token, das jeder Client senden muss. Ohne Token startet das Plugin nicht. Erzeugen z.B. mit: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            en: 'Bearer token every client must send. The plugin does not start without it. Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+
+    clients:
+        type: dict
+        default: {}
+        description:
+            de: 'Weitere Clients mit eigenem Token, z.B. ein Client ohne Dateizugriff auf den Host. Name -> Einstellungen: token (mindestens 16 Zeichen, Pflicht), default_access (none|ro, Standard none), inherit_rw_access (Standard false), expose (Standard []), max_access (none|ro|rw, Standard ro), write_rate_limit und write_paths (Pfadmuster, in denen rw erhalten bleibt) elevate_to und elevate_minutes (Ceiling, das im Webinterface zeitweise gewährt werden kann) sowie allowed_networks (Adressen oder Netze, von denen der Client sich verbinden darf). Der Parameter token gilt für den Client "local".'
+            en: 'Further clients, each with its own token, for example a client without file access on the host. Name -> settings: token (at least 16 characters, required), default_access (none|ro, default none), inherit_rw_access (default false), expose (default []), max_access (none|ro|rw, default ro), write_rate_limit and write_paths (path patterns where rw is kept) elevate_to and elevate_minutes (a ceiling the web interface can grant for a while) and allowed_networks (addresses or networks the client may connect from). The token parameter belongs to the client "local".'
+
+    default_access:
+        type: str
+        default: 'none'
+        valid_list:
+            - 'none'
+            - 'ro'
+        description:
+            de: 'Zugriff auf Items ohne Attribut mcp_access in ihrer Hierarchie. "rw" ist als Standard nicht erlaubt.'
+            en: 'Access to items without an mcp_access attribute in their ancestry. "rw" is not allowed as a default.'
+
+    inherit_rw_access:
+        type: bool
+        default: false
+        description:
+            de: 'Wenn true, erben Unter-Items den Zugriff "rw" von ihrem Eltern-Item. Nur für Test und Entwicklung; das Plugin warnt bei jedem Start.'
+            en: 'If true, child items inherit "rw" access from their parent item. For testing and development only; the plugin warns on every start.'
+
+    expose:
+        type: list
+        default: []
+        description:
+            de: 'Diagnosegruppen, die zusätzlich zu Items bereitgestellt werden: logs, scheduler, plugins, logics, threads, system, history.'
+            en: 'Diagnostic groups exposed in addition to items: logs, scheduler, plugins, logics, threads, system, history.'
+
+    log_redact:
+        type: list
+        default: []
+        description:
+            de: 'Reguläre Ausdrücke; Treffer in Lognachrichten werden durch *** ersetzt. Eingebaute Muster für Passwörter, Tokens und Zugangsdaten in URLs gelten immer.'
+            en: 'Regular expressions; matches in log messages are replaced by ***. Built-in patterns for passwords, tokens and credentials in URLs always apply.'
+
+    write_rate_limit:
+        type: int
+        default: 30
+        valid_min: 0
+        description:
+            de: 'Maximale Schreibzugriffe pro Minute über MCP (global). 0 schaltet die Begrenzung ab.'
+            en: 'Maximum writes per minute through MCP (global). 0 disables the limit.'
+
+    history_plugin:
+        type: str
+        default: ''
+        description:
+            de: 'Abschnittsname (plugin.yaml) der Instanz des database-Plugins, aus der get_item_history liest. Leer nimmt die erste laufende Instanz.'
+            en: 'plugin.yaml section of the database plugin instance get_item_history reads from. Empty takes the first running instance.'
+
+    history_max_days:
+        type: int
+        default: 7
+        valid_min: 1
+        description:
+            de: 'Größte Zeitspanne in Tagen, die eine Anfrage von get_item_history lesen darf.'
+            en: 'Longest span in days one get_item_history request may read.'
+
+    max_page_size:
+        type: int
+        default: 200
+        valid_min: 1
+        description:
+            de: 'Maximale Seitengröße für seitenweise Abfragen.'
+            en: 'Maximum page size for paged queries.'
+
+    wait_max_seconds:
+        type: int
+        default: 30
+        valid_min: 1
+        description:
+            de: 'Maximale Wartezeit von wait_for_change in Sekunden.'
+            en: 'Maximum wait time of wait_for_change in seconds.'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    mcp_access:
+        type: str
+        valid_list:
+            - 'none'
+            - 'ro'
+            - 'rw'
+        description:
+            de: 'Zugriff von MCP-Clients auf das Item: none (unsichtbar), ro (lesen) oder rw (lesen und schreiben). "none" und "ro" gelten auch für Unter-Items, "rw" nur für das Item selbst (außer inherit_rw_access ist gesetzt).'
+            en: 'Access of MCP clients to the item: none (invisible), ro (read) or rw (read and write). "none" and "ro" apply to child items too, "rw" only to the item itself (unless inherit_rw_access is set).'
+
+    mcp_rate_limit:
+        type: int
+        valid_min: 0
+        description:
+            de: 'Maximale Schreibzugriffe pro Minute über MCP für dieses Item (0 = unbegrenzt). Ersetzt für dieses Item das globale write_rate_limit.'
+            en: 'Maximum writes per minute through MCP for this item (0 = unlimited). Replaces the global write_rate_limit for this item.'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin

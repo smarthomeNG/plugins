@@ -1,0 +1,91 @@
+# Sample items for the mcp plugin. Expected access per item: see README.md.
+
+mcpdemo:
+    # one explicit ro makes the whole subtree readable
+    mcp_access: ro
+
+    counter:
+        type: num
+        value: 0
+        description: Incremented by the logic mcp_ticker every 15 s; try wait_for_change
+
+    house:
+        temperature:
+            type: num
+            value: 21.5
+            description: ro by inheritance; set_item must answer forbidden
+
+        humidity:
+            type: num
+            value: 45
+
+        lamp:
+            type: bool
+            value: false
+            mcp_access: rw
+            # at most 5 writes per minute for this item; it does not use the global budget
+            mcp_rate_limit: 5
+
+            brightness_note:
+                type: str
+                value: 'child of an rw item: ro unless inherit_rw_access is true'
+
+        dimmer:
+            type: num
+            value: 0
+            mcp_access: rw
+            # an eval applies writes asynchronously: set_item 150 reports the old value, get_item then shows 100
+            eval: min(max(value, 0), 100)
+
+        setpoint:
+            type: num
+            value: 20
+            mcp_access: rw
+            # 0 = no limit for this item (load tests)
+            mcp_rate_limit: 0
+            api_token: attribute names with token/key/pass/secret are hidden by get_item(detail='full')
+            knx_password: hidden as well
+            description: Heating setpoint
+
+        mode:
+            type: str
+            value: auto
+            mcp_access: rw
+
+    zone:
+        # without inherit_rw_access the children are ro; with it they are rw
+        mcp_access: rw
+
+        a:
+            type: bool
+            value: false
+
+        b:
+            type: num
+            value: 1
+
+    private:
+        mcp_access: none
+
+        secret_level:
+            type: num
+            value: 7
+            description: invisible, not_found like a missing item
+
+        exception:
+            type: bool
+            value: false
+            # an explicit value on the item itself wins over the none above it
+            mcp_access: rw
+
+    typo:
+        type: num
+        value: 3
+        # invalid value: treated as none, never as a grant
+        mcp_access: readwrite
+
+# outside the mcpdemo tree and without mcp_access: visible only with default_access: ro
+unmarked:
+    type: num
+    value: 1
+    description: Not marked for mcp

@@ -1,0 +1,25 @@
+rwnum:
+    type: num
+    mcp_access: rw
+    value: 1
+
+    child:
+        type: num
+        value: 7
+
+rwbool:
+    type: bool
+    mcp_access: rw
+    value: false
+
+rwlimited:
+    type: num
+    mcp_access: rw
+    mcp_rate_limit: 1
+    value: 0
+
+rwfree:
+    type: num
+    mcp_access: rw
+    mcp_rate_limit: 0
+    value: 0
