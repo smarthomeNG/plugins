@@ -232,7 +232,7 @@ Schaltung an Werktagen, nicht aber an Feiertagen:
 .. code:: python
 
    sh.eg.wohnen.leuchte.uzsu({'active':True, 'list':[
-   {'value':100, 'active':True, 'rrule':'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', 'holidays':'exclude', 'time': '06:30'}]})
+   {'value':100, 'active':True, 'rrule':'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', 'holidays':{'mode':'exclude', 'scope':'all'}, 'time': '06:30'}]})
 
 
 Datenformat
@@ -248,16 +248,19 @@ Jedes USZU Item wird als dict-Typ gespeichert. Darin enthalten sind einige allge
 
 -  **once**: ``True`` wenn ein Eintrag nach einmaligem Schalten deaktiviert werden soll, ``False`` wenn ein Eintrag weiterhin evaluiert werden bzw. aktiv bleiben soll. Serien bleiben bis zur letzten Schaltung aktiv.
 
--  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
+-  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang nach dem Muster ``[H:M<](sunrise|sunset)[+|-offset][<H:M]``, Offset in Grad oder mit Suffix ``m`` in Minuten, z.B. ``sunset``, ``sunrise+30m``, ``sunset-6``, ``06:00<sunrise<08:00``. ``series`` kennzeichnet eine Zeitreihe, die unter dem Key ``series`` definiert wird.
 
 -  **rrule**: Hier können Wiederholungsregeln wie in `rrule <https://dateutil.readthedocs.io/en/stable/rrule.html>`_ beschrieben festgelegt werden.
 
--  **holidays**: Verknüpft die Wochentage der ``rrule`` mit dem Feiertagskalender des Cores (``etc/holidays.yaml``). Gilt auch für Serien; das berechnete Wochenraster ``seriesCalculated`` berücksichtigt Feiertage nicht.
+-  **holidays**: dict, verknüpft die Wochentage der ``rrule`` mit dem Feiertagskalender des Cores (``etc/holidays.yaml``), Standard ``{'mode': 'ignore', 'scope': 'all'}``. Gilt auch für Serien; das berechnete Wochenraster ``seriesCalculated`` berücksichtigt Feiertage nicht.
 
-   -  ``exclude``: Schaltung entfällt an Feiertagen (z.B. Mo-Fr, aber nicht an Feiertagen)
-   -  ``include``: Schaltung erfolgt an den Wochentagen der ``rrule`` und zusätzlich an Feiertagen
-   -  ``only``: Schaltung erfolgt nur an Feiertagen, die Wochentage der ``rrule`` werden ignoriert
+   -  **mode**:
 
-   Ohne diesen Eintrag (oder mit einem anderen Wert) werden Feiertage nicht berücksichtigt. Hat der Eintrag keine ``rrule``, gilt eine tägliche Wiederholung.
+      -  ``ignore`` (Standard): nimmt die ausgewählten Wochentage unverändert
+      -  ``exclude``: schließt Feiertage aus den gewählten Wochentagen aus (z.B. Mo-Fr, aber nicht an Feiertagen)
+      -  ``include``: fügt Feiertage zu den gewählten Wochentagen hinzu
+      -  ``only``: ignoriert die Auswahl der Wochentage und berücksichtigt nur Feiertage
 
--  **holidays_scope**: ``all`` (Standard) berücksichtigt gesetzliche und selbst definierte Feiertage, ``public`` nur gesetzliche Feiertage.
+   -  **scope**: ``all`` (Standard) berücksichtigt gesetzliche und selbst definierte Feiertage, ``public`` nur gesetzliche Feiertage.
+
+   Hat der Eintrag keine ``rrule``, gilt eine tägliche Wiederholung. Beim Pluginstart und bei jeder Änderung des Items erhält ein Eintrag ohne ``holidays`` den Standard, ein ``holidays`` ohne ``scope`` den Scope ``all``, und die flachen Keys ``holidays`` (Modus als String) und ``holidays_scope`` werden in dieses dict umgewandelt. Ein ungültiger ``mode`` bleibt erhalten und wirkt wie ``ignore``.
