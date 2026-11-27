@@ -4,7 +4,8 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta
-from typing import TypedDict
+
+from typing_extensions import TypedDict
 
 # strptime directive -> regular expression matching what it parses
 _DATE_DIRECTIVES: dict[str, str] = {

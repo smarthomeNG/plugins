@@ -3,7 +3,10 @@
 from dataclasses import dataclass
 from collections.abc import Iterable, Sequence
 from datetime import datetime
-from typing import Literal, Protocol, TypedDict, TypeGuard, runtime_checkable
+from typing import Literal, Protocol, TypeGuard, runtime_checkable
+
+# pydantic builds tool schemas from these and rejects typing.TypedDict below Python 3.12
+from typing_extensions import TypedDict
 
 Access = Literal['none', 'ro', 'rw']
 DefaultAccess = Literal['none', 'ro']

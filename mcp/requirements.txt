@@ -1,1 +1,2 @@
 mcp>=2.3,<3
+typing_extensions
