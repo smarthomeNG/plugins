@@ -1,6 +1,9 @@
 import asyncio
+import logging
 import os
 import unittest
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 import anyio
 import httpx2
@@ -45,6 +48,31 @@ def make_plugin(vardir=None, **overrides):
         sh.get_vardir = lambda: str(vardir)
     Mcp._parameters = {**PARAMETERS, **overrides}
     return Mcp(sh)
+
+
+class _MessageCollector(logging.Handler):
+    """Keep the message of every record it handles."""
+
+    def __init__(self, level: int) -> None:
+        super().__init__(level)
+        self.messages: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.messages.append(record.getMessage())
+
+
+@contextmanager
+def warnings_of(logger: logging.Logger) -> Iterator[list[str]]:
+    """Collect the messages of WARNING or higher that *logger* emits inside the block; none is fine."""
+    collector = _MessageCollector(logging.WARNING)
+    level = logger.level
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(collector)
+    try:
+        yield collector.messages
+    finally:
+        logger.removeHandler(collector)
+        logger.setLevel(level)
 
 
 @pytest.fixture
@@ -214,11 +242,11 @@ def test_a_network_bind_warns_about_missing_tls_and_allowed_hosts():
 def test_a_loopback_bind_does_not_warn_about_tls():
     plugin = make_plugin()
     try:
-        with unittest.TestCase().assertLogs(plugin.logger, level='WARNING') as logs:
+        with warnings_of(plugin.logger) as warnings:
             plugin.run()
     finally:
         plugin.stop()
-    text = ' '.join(logs.output)
+    text = ' '.join(warnings)
     assert 'TLS' not in text
     assert 'allowed_hosts' not in text
 

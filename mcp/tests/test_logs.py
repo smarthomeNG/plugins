@@ -125,7 +125,12 @@ class TestEntries:
 class TestFilters:
     def test_level_is_a_minimum(self, tmp_path):
         page = reader(tmp_path).read('shng.log', level='WARNING')
-        assert messages(page) == ['failed', 'slow update', 'started']  # NOTICE ranks above WARNING in shng
+        assert messages(page) == ['failed', 'slow update']
+
+    def test_the_shng_level_notice_is_a_filter_level(self, tmp_path):
+        kept = messages(reader(tmp_path).read('shng.log', level='NOTICE'))
+        assert 'started' in kept
+        assert 'connected to gateway' not in kept
 
     def test_unparsed_entries_are_dropped_by_a_level_filter(self, tmp_path):
         content = 'free text\n2026-11-10 10:00:00 ERROR    x   bad\n'
@@ -227,7 +232,7 @@ class TestHandlerFormat:
     def test_level_and_since_filters_work_on_a_handler_format(self, tmp_path):
         with written_with(tmp_path, COMPACT, '%m%d %H%M%S'):
             log = reader(tmp_path, COMPACT_LOG)
-            assert messages(log.read('shng.log', level='WARNING')) == ['failed', 'slow update', 'started']
+            assert messages(log.read('shng.log', level='WARNING')) == ['failed', 'slow update']
             year = (log.read('shng.log')['entries'][0]['ts'] or '')[:4]
             assert messages(log.read('shng.log', since=f'{year}-11-10T10:01:00')) == ['tick', 'failed', 'slow update']
 

@@ -152,7 +152,7 @@ class TestGetItemDetail:
 
     def test_attributes_hide_secret_looking_names(self):
         attributes = self.tools.get_item('house.living.temp', detail='full')['attributes']
-        assert attributes['knx_dpt'] == '9.001'
+        assert attributes['knx_dpt'] == '9'
         assert 'knx_password' not in attributes
 
     def test_unknown_detail_is_rejected(self):
