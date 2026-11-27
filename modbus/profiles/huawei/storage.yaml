@@ -12,64 +12,73 @@ groups:
                 type: num
                 address: 37046
                 datatype: uint32
+                factor: 0.001
                 attributes:
-                    description: W
+                    description: kW
             max_set:
                 type: num
                 address: 47075
                 datatype: uint32
+                factor: 0.001
                 direction: read_write
                 attributes:
-                    description: W
+                    description: kW
             forced:
                 charge:
                     type: num
                     address: 47247
                     datatype: uint32
+                    factor: 0.001
                     direction: read_write
                     attributes:
-                        description: W
+                        description: kW
                 discharge:
                     type: num
                     address: 47249
                     datatype: uint32
+                    factor: 0.001
                     direction: read_write
                     attributes:
-                        description: W
+                        description: kW
         discharge:
             max:
                 type: num
                 address: 37048
                 datatype: uint32
+                factor: 0.001
                 attributes:
-                    description: W
+                    description: kW
             max_set:
                 type: num
                 address: 47077
                 datatype: uint32
+                factor: 0.001
                 direction: read_write
                 attributes:
-                    description: W
+                    description: kW
         grid_charge:
             current:
                 type: num
                 address: 47242
                 datatype: uint32
+                factor: 0.001
                 direction: read_write
                 attributes:
-                    description: W
+                    description: kW
             max:
                 type: num
                 address: 47244
                 datatype: uint32
+                factor: 0.001
                 direction: read_write
                 attributes:
-                    description: W
+                    description: kW
     capacity:
         rated:
             type: num
             address: 37758
             datatype: uint32
+            factor: 0.001
             attributes:
                 description: kWh
         state_of_charge:
@@ -183,8 +192,9 @@ groups:
             type: num
             address: 47079
             datatype: int32
+            factor: 0.001
             attributes:
-                description: W
+                description: kW
         working_mode_a:
             type: num
             address: 47004
@@ -215,18 +225,6 @@ groups:
             type: num
             address: 47027
             datatype: uint16
-        luna_price_periods:
-            type: num
-            address: 47255
-            direction: read_write
-        lg_resu_price_periods:
-            type: num
-            address: 47028
-            direction: read_write
-        fixed_charging_and_discharging_periods:
-            type: num
-            address: 47200
-            direction: read_write
         lcoe:
             type: num
             address: 47069

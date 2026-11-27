@@ -25,18 +25,18 @@ groups:
             type: num
             address: 40388
             datatype: uint32
-            factor: 0.01
+            factor: 0.001
         reactive_power:
             type: num
             address: 40390
             datatype: int32
-            factor: 0.01
+            factor: 0.001
     storage:
         active_power:
             type: num
             address: 40392
             datatype: int32
-            factor: 0.01
+            factor: 0.001
         soc:
             type: num
             address: 40515
@@ -86,12 +86,12 @@ groups:
                 type: num
                 address: 32278
                 datatype: int32
-                factor: 0.01
-            power_factor:
+                factor: 0.001
+            factor:
                 type: num
                 address: 32284
-                datatype: int16
-                factor: 0.01
+                datatype: int32
+                factor: 0.001
         energy:
             total_active:
                 type: num

@@ -217,6 +217,10 @@ im Profil sind die dort als ``rw`` markierten Werte (Sollwerte, Uhrzeit, Schalte
 Entwickler: nach einer Änderung an ``profiles/`` die plugin.yaml mit
 ``python -m plugins.modbus.profiles generate`` aktualisieren; ``check`` meldet veraltete
 Structs, ein Test prüft dasselbe.
+``python -m plugins.modbus.profiles import-struct <hersteller>`` schreibt die ``item_structs``
+eines Herstellers aus der plugin.yaml des modbus_tcp-Plugins (oder ``--source <plugin.yaml>``) als
+Profile; vorhandene Profildateien behalten alles oberhalb von ``groups:``, neue sind ``optional``.
+Die huawei-Profile sind so entstanden, ein Test vergleicht sie mit dem aktuellen Import.
 
 SunSpec
 -------

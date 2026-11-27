@@ -19,6 +19,10 @@ Command line, from the SmartHomeNG base directory::
     python -m plugins.modbus.profiles generate
     python -m plugins.modbus.profiles check
     python -m plugins.modbus.profiles export e3dc.s10 --structs-dir etc/../structs [--writable]
+    python -m plugins.modbus.profiles import-struct huawei [--source <plugin.yaml>] [--profile-dir <dir>]
+
+``import-struct`` writes the ``item_structs`` of a vendor in a plugin.yaml (default: modbus_tcp's) as
+profiles, see ``import_structs``; run ``generate`` afterwards for shipped ones.
 """
 
 from __future__ import annotations
@@ -42,6 +46,7 @@ from .model import Direction, Endian, Table
 PLUGIN_DIR = pathlib.Path(__file__).parent
 PROFILE_DIR = PLUGIN_DIR / 'profiles'
 PLUGIN_YAML = PLUGIN_DIR / 'plugin.yaml'
+MODBUS_TCP_YAML = PLUGIN_DIR.parent / 'modbus_tcp' / 'plugin.yaml'
 
 BEGIN = '    # >>> generated from profiles/ by `python -m plugins.modbus.profiles generate` - do not edit'
 END = '    # <<< end of generated profiles'
@@ -397,6 +402,101 @@ def check(profile_dir: pathlib.Path = PROFILE_DIR, plugin_yaml: pathlib.Path = P
     return sorted(vendor for vendor in set(shipped) | set(stored) if shipped.get(vendor) != stored.get(vendor))
 
 
+# --- modbus_tcp struct import ---
+
+_STRUCT_POINT_KEYS = {
+    f'{attributes.ADDRESS}@instance': 'address',
+    f'{attributes.DATATYPE}@instance': 'datatype',
+    f'{attributes.FACTOR}@instance': 'factor',
+    f'{attributes.DIRECTION}@instance': 'direction',
+}
+_STRUCT_DEFAULTS = {'factor': 1, 'direction': Direction.READ.value}
+
+
+def modbus_tcp_structs(vendor: str, source: pathlib.Path = MODBUS_TCP_YAML) -> dict[str, StructTree]:
+    """Device -> struct tree below ``item_structs: <vendor>`` of a plugin.yaml (default: modbus_tcp's)."""
+    try:
+        structs = (YAML(typ='safe').load(source.read_text()) or {}).get('item_structs') or {}
+    except (OSError, YAMLError) as e:
+        raise ProfileError(f'{source}: {e}') from None
+    devices = structs.get(vendor)
+    if not isinstance(devices, dict) or not devices:
+        raise ProfileError(f'{source}: no item_structs for vendor {vendor!r}')
+    return devices
+
+
+def import_structs(devices: Mapping[str, StructTree], vendor: str, profile_dir: pathlib.Path) -> list[pathlib.Path]:
+    """
+    Write modbus_tcp item structs (device -> struct tree) as profiles ``profile_dir/<vendor>/<device>.yaml``.
+
+    The inverse of ``to_struct`` for the attributes modbus_tcp structs use: the register attributes
+    ``modBusAddress``, ``modBusDataType``, ``modBusFactor`` and ``modBusDirection`` (``@instance``) become
+    point keys, a factor of 1 and the direction ``read`` are left out; ``type`` stays, ``name`` becomes
+    ``description``, every other scalar attribute goes to ``attributes``, mappings are child nodes. A
+    child named like a reserved item attribute (e.g. ``type``) is renamed to ``<parent>_<name>``.
+
+    An existing profile file keeps everything above ``groups:`` (comments, title, tier, ...); a new
+    one gets tier ``optional``. Returns the written files.
+
+    :raises ProfileError: a struct uses a register attribute the import does not translate
+    """
+    written = []
+    for device, tree in devices.items():
+        path = profile_dir / vendor / f'{device}.yaml'
+        if path.exists():
+            text = path.read_text()
+            head = text[: text.index('\ngroups:\n') + 1]
+        else:
+            head = _dump(
+                {
+                    'vendor': vendor,
+                    'device': device,
+                    'title': f'{vendor} {device}',
+                    'tier': 'optional',
+                    'tested_with': [],
+                }
+            )
+            head = '# Imported from modbus_tcp item structs.\n' + head
+        groups = _struct_children(tree, device, f'{vendor}.{device}')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(head + _dump({'groups': groups}))
+        written.append(path)
+    return written
+
+
+def _struct_children(tree: StructTree, parent: str, where: str) -> dict[str, Any]:
+    children = {}
+    for name, body in tree.items():
+        if isinstance(body, dict):
+            child = f'{parent}_{name}' if name in _RESERVED_NAMES else name
+            children[child] = _struct_node(body, child, f'{where}.{name}')
+    return children
+
+
+def _struct_node(tree: StructTree, name: str, where: str) -> dict[str, Any]:
+    """Profile node of one struct item: type, description, point keys, attributes, then children."""
+    unknown = sorted(key for key in tree if key.startswith('modBus') and key not in _STRUCT_POINT_KEYS)
+    if unknown:
+        raise ProfileError(f'{where}: register attribute {unknown[0]} is not translated by the import')
+    node: dict[str, Any] = {}
+    if 'type' in tree and not isinstance(tree['type'], dict):
+        node['type'] = tree['type']
+    if 'name' in tree and not isinstance(tree['name'], dict):
+        node['description'] = tree['name']
+    for struct_key, key in _STRUCT_POINT_KEYS.items():
+        if struct_key in tree and tree[struct_key] != _STRUCT_DEFAULTS.get(key):
+            node[key] = tree[struct_key]
+    extra = {
+        key: value
+        for key, value in tree.items()
+        if not isinstance(value, dict) and key not in ('type', 'name') and key not in _STRUCT_POINT_KEYS
+    }
+    if extra:
+        node['attributes'] = extra
+    node.update(_struct_children(tree, name, where))
+    return node
+
+
 # --- local export ---
 
 
@@ -430,6 +530,12 @@ def main(argv: list[str] | None = None) -> int:
     export_cmd.add_argument('profile', help='<vendor>.<device>, e.g. e3dc.s10')
     export_cmd.add_argument('--structs-dir', type=pathlib.Path, required=True)
     export_cmd.add_argument('--writable', action='store_true', help='keep the write directions of the profile')
+    import_cmd = commands.add_parser('import-struct', help="write a vendor's modbus_tcp item structs as profiles")
+    import_cmd.add_argument('vendor', help='key below item_structs, e.g. huawei')
+    import_cmd.add_argument(
+        '--source', type=pathlib.Path, default=MODBUS_TCP_YAML, help='default: modbus_tcp plugin.yaml'
+    )
+    import_cmd.add_argument('--profile-dir', type=pathlib.Path, default=PROFILE_DIR)
     args = parser.parse_args(argv)
     try:
         if args.command == 'generate':
@@ -439,6 +545,9 @@ def main(argv: list[str] | None = None) -> int:
             if stale:
                 print(f'plugin.yaml is out of date for: {", ".join(stale)}; run generate', file=sys.stderr)
                 return 1
+        elif args.command == 'import-struct':
+            for path in import_structs(modbus_tcp_structs(args.vendor, args.source), args.vendor, args.profile_dir):
+                print(path)
         else:
             print(export(PROFILE_DIR, args.profile, args.structs_dir, args.writable))
     except ProfileError as e:

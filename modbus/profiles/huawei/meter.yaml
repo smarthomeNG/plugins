@@ -88,37 +88,42 @@ groups:
             type: num
             address: 37113
             datatype: int32
+            factor: 0.001
             attributes:
                 description: kW
         reactive:
             type: num
             address: 37115
             datatype: int32
+            factor: 0.001
             attributes:
                 description: kVAr
         factor:
             type: num
             address: 37117
-            datatype: int16
-            factor: 0.01
+            datatype: int32
+            factor: 0.001
             attributes:
                 description: PF
         phase_a:
             type: num
             address: 37132
             datatype: int32
+            factor: 0.001
             attributes:
                 description: kW
         phase_b:
             type: num
             address: 37134
             datatype: int32
+            factor: 0.001
             attributes:
                 description: kW
         phase_c:
             type: num
             address: 37136
             datatype: int32
+            factor: 0.001
             attributes:
                 description: kW
     energy:

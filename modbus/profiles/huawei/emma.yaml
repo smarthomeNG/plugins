@@ -34,7 +34,6 @@ groups:
                 type: num
                 address: 40490
                 datatype: uint16
-                direction: read_write
         energy:
             total:
                 absorbed:
@@ -178,18 +177,21 @@ groups:
                 type: num
                 address: 30354
                 datatype: uint32
+                factor: 0.001
                 attributes:
                     description: kW
             load:
                 type: num
                 address: 30356
                 datatype: uint32
+                factor: 0.001
                 attributes:
                     description: kW
             feed_in:
                 type: num
                 address: 30358
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             inverter:
@@ -197,12 +199,14 @@ groups:
                     type: num
                     address: 30364
                     datatype: int32
+                    factor: 0.001
                     attributes:
                         description: kW
                 rated:
                     type: num
                     address: 30362
                     datatype: uint32
+                    factor: 0.001
                     attributes:
                         description: kW
         configuration:
@@ -230,7 +234,7 @@ groups:
                 config_reverse:
                     type: dict
                     attributes:
-                        initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7}"
+                        initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7, 'undefined': 10}"
                 register:
                     type: num
                     address: 40100
@@ -273,6 +277,7 @@ groups:
                 type: num
                 address: 40002
                 datatype: uint32
+                factor: 0.001
                 direction: read_write
                 attributes:
                     description: kW
@@ -286,7 +291,7 @@ groups:
             max_feed_in_power_watt:
                 type: num
                 address: 40107
-                datatype: int32
+                datatype: uint32
                 direction: read_write
                 attributes:
                     description: W
@@ -413,7 +418,7 @@ groups:
             config_reverse:
                 type: dict
                 attributes:
-                    initial_value: "{'reserved': 1, 'max self-consumption': 2, 'reserved': 3, 'fully fed to grid': 4, '3rd party dispatch': 5}"
+                    initial_value: "{'reserved': 1, 'max self-consumption': 2, 'fully fed to grid': 4, '3rd party dispatch': 5}"
             register:
                 type: num
                 address: 40000
@@ -494,35 +499,40 @@ groups:
                 type: num
                 address: 31657
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             factor:
                 type: num
                 address: 31661
                 datatype: int32
-                factor: 0.01
+                factor: 0.001
             apparent:
                 type: num
                 address: 31663
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kVA
             phase_a:
                 type: num
                 address: 31665
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             phase_b:
                 type: num
                 address: 31667
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             phase_c:
                 type: num
                 address: 31669
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
         energy:
@@ -618,35 +628,40 @@ groups:
                 type: num
                 address: 31913
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             factor:
                 type: num
                 address: 31917
                 datatype: int32
-                factor: 0.01
+                factor: 0.001
             apparent:
                 type: num
                 address: 31919
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kVA
             phase_a:
                 type: num
                 address: 31921
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             phase_b:
                 type: num
                 address: 31923
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             phase_c:
                 type: num
                 address: 31925
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
         energy:
@@ -746,35 +761,40 @@ groups:
                 type: num
                 address: 30520
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             apparent:
                 type: num
                 address: 30526
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kVA
             factor:
                 type: num
                 address: 30524
                 datatype: int32
-                factor: 0.01
+                factor: 0.001
             phase_a:
                 type: num
                 address: 30528
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             phase_b:
                 type: num
                 address: 30530
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
             phase_c:
                 type: num
                 address: 30532
                 datatype: int32
+                factor: 0.001
                 attributes:
                     description: kW
         energy:

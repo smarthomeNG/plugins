@@ -151,22 +151,25 @@ groups:
             type: num
             address: 32064
             datatype: int32
+            factor: 0.001
             attributes:
-                description: W
+                description: kW
         active:
             type: num
             address: 32080
             datatype: int32
+            factor: 0.001
             attributes:
-                description: W
+                description: kW
         reactive:
             type: num
             address: 32082
             datatype: int32
+            factor: 0.001
             attributes:
-                description: W
+                description: kVar
         factor:
             type: num
             address: 32084
-            datatype: int16
-            factor: 0.01
+            datatype: int32
+            factor: 0.001
