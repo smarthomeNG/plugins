@@ -1,0 +1,105 @@
+%YAML 1.1
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+---
+
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Push-Benachrichtigungen über einen Bark-Server'
+        en: 'Push notifications via a Bark server'
+    maintainer: Morg
+    tester: Morg                    # Who tests this plugin?
+    state: develop
+    keywords: iOS Bark Push Notification
+#    documentation: ''
+#    support: ''
+
+    version: 1.0.0                 # Plugin version
+    sh_minversion: '1.10'            # minimum shNG version to use this plugin
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
+    classname: Bark                # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+
+    pause_item:
+        type: str
+        default: ''
+        description:
+            de: 'Item, um die Ausführung des Plugins zu steuern'
+            en: 'item for controlling plugin execution'
+
+    server_url:
+        type: str
+        mandatory: true
+        description:
+            de: 'Basis-URL des Bark-Servers ohne "/push", z.B. "http://192.168.1.10:8080"'
+            en: 'Base URL of the Bark server without "/push", e.g. "http://192.168.1.10:8080"'
+
+    device_key:
+        type: str
+        mandatory: true
+        hide: true
+        description:
+            de: 'Geräteschlüssel, den die Bark-App anzeigt'
+            en: 'Device key shown by the Bark app'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    bark_text:
+        type: str
+        description:
+            de: 'Text der Benachrichtigung. "VAL" wird durch den Item-Wert ersetzt.'
+            en: 'Text of the notification. "VAL" is replaced by the item value.'
+
+    bark_values:
+        type: list(dict)
+        description:
+            de: 'Liste von "Wert: Text"-Paaren. Entspricht der Item-Wert einem Wert, wird dessen Text statt "bark_text" gesendet.'
+            en: 'List of "value: text" pairs. If the item value matches a value, its text is sent instead of "bark_text".'
+
+    bark_title:
+        type: str
+        description:
+            de: 'Überschrift der Benachrichtigung. "VAL" wird durch den Item-Wert ersetzt.'
+            en: 'Headline of the notification. "VAL" is replaced by the item value.'
+
+    bark_url:
+        type: str
+        description:
+            de: 'URL, die beim Antippen geöffnet wird. "VAL" wird durch den Item-Wert ersetzt.'
+            en: 'URL opened when the notification is tapped. "VAL" is replaced by the item value.'
+
+item_structs: NONE
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin
+
+    notify:
+        type: bool
+        description:
+            de: 'Versendet eine Push-Benachrichtigung. Liefert True, wenn der Server sie angenommen hat.'
+            en: 'Sends a push notification. Returns True if the server accepted it.'
+        parameters:
+            body:
+                type: str
+                description:
+                    de: 'Text der Benachrichtigung'
+                    en: 'Text of the notification'
+            title:
+                type: str
+                default: None*
+                description:
+                    de: 'Überschrift über dem Text'
+                    en: 'Headline above the text'
+            url:
+                type: str
+                default: None*
+                description:
+                    de: 'URL, die beim Antippen der Benachrichtigung geöffnet wird'
+                    en: 'URL opened when the notification is tapped'
+
+logic_parameters: NONE
